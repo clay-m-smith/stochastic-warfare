@@ -15,7 +15,7 @@
         <link rel="canonical" href="https://clay-m-smith.github.io/stochastic-warfare/specs/morale-state-ownership/">
       
       
-        <link rel="prev" href="../historical-outcome-envelope-integrity/">
+        <link rel="prev" href="../performance-flag-semantic-integrity/">
       
       
         <link rel="next" href="../era-override-execution/">
@@ -1859,6 +1859,62 @@
     
   
     Block 19 (135-137)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block20/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 20 (138-140)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block21/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 21 (141-142)
   
 
     
@@ -5321,6 +5377,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-118/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 118 - Performance-Flag Semantic Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5596,6 +5680,34 @@
     
   
     Historical Outcome-Envelope Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../performance-flag-semantic-integrity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Performance-Flag Semantic Integrity
   
 
     
@@ -6114,9 +6226,11 @@
 Phase 113 is complete and REM-019 is closed.</p>
 <p>Phase 114 extended the engine checkpoint to format 114 by adding the effective
 era runtime contract and clock/resolution validation. Phase 115 advances the
-checkpoint to format 115 for tactical-targeting state, and Phase 116 advances
-the current checkpoint to format 116 for fog-of-war contact continuation.
-None of those changes alters or duplicates the morale envelope below: current format 116 still
+checkpoint to format 115 for tactical-targeting state, and Phase 116 advanced
+it to format 116 for fog-of-war contact continuation. Phase 118's current
+format 118 adds performance receipts, cadence state, observer topology, and
+indexed FOW randomness. None of those changes alters or duplicates the morale
+envelope below: current format 118 still
 contains exactly one <code>morale_runtime</code>, and <code>RNGManager</code> remains the sole
 MORALE-stream owner.</p>
 <h2 id="purpose-and-scope">Purpose and scope<a class="headerlink" href="#purpose-and-scope" title="Permanent link">&para;</a></h2>
@@ -6376,10 +6490,11 @@ is not the causal acceptance proof for this ownership remediation.</p>
 <h2 id="phase-113-checkpoint-format">Phase 113 checkpoint format<a class="headerlink" href="#phase-113-checkpoint-format" title="Permanent link">&para;</a></h2>
 <blockquote>
 <p><strong>Current-format note:</strong> This section records the Phase 113 format transition
-historically. The current engine writes format 116, which preserves this
+historically. The current engine writes format 118, which preserves this
 exact morale topology, retains the independent Phase 114 era-runtime
-contract, Phase 115 tactical-targeting state, and Phase 116 fog-of-war
-contact state. Explicit formats 113 through 115 now reject as older versions.</p>
+contract, Phase 115 tactical-targeting state, Phase 116 fog-of-war contact
+state, and Phase 118 performance-semantic owners. Explicit formats 113
+through 117 now reject as older versions.</p>
 </blockquote>
 <p><code>SimulationEngine</code> advances the explicit format to <code>113</code>.</p>
 <ol>

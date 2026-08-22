@@ -2146,6 +2146,62 @@
   
   
     <li class="md-nav__item">
+      <a href="../../development-phases-block20/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 20 (138-140)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block21/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 21 (141-142)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../remediation-backlog/" class="md-nav__link">
         
   
@@ -5588,6 +5644,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-118/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 118 - Performance-Flag Semantic Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5860,6 +5944,34 @@
     
   
     Historical Outcome-Envelope Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/performance-flag-semantic-integrity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Performance-Flag Semantic Integrity
   
 
     
@@ -6478,10 +6590,11 @@ evaluation, and digest-bearing artifact. The catalog currently exposes zero
 production-validated scenarios.</p>
 <h3 id="running-a-historical-outcome-envelope-study">Running a Historical Outcome-Envelope Study<a class="headerlink" href="#running-a-historical-outcome-envelope-study" title="Permanent link">&para;</a></h3>
 <p>Use the checked-in runner for a declared study; send exploratory output to a
-new evidence path so the stable artifact is not overwritten:</p>
+path under the ignored <code>artifacts/</code> tree so generated evidence does not enter
+<code>main</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>uv<span class="w"> </span>run<span class="w"> </span>--no-sync<span class="w"> </span>python<span class="w"> </span>scripts/run_historical_backtest.py<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span>--plan<span class="w"> </span>data/validation/historical_studies/73_easting_phase117.yaml<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>--output<span class="w"> </span>docs/evidence/local/73-easting.json
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>--output<span class="w"> </span>artifacts/evidence/phase-117/73-easting.json
 </code></pre></div>
 <p>The route loads and audits the complete historical-claim ledger, validates the
 typed plan, prepares every seed through <code>SimulationRuntimeFactory</code>, retains
@@ -6494,9 +6607,14 @@ predeclared, source-backed, independent study and exact committed
 ledger/artifact/Git bindings.</p>
 <p>The retained Phase 117 73 Easting artifact is <code>FAIL</code>, with 0/20 joint successes
 and a one-sided lower confidence bound of 0.0. It is not promotion-eligible, so
-73 Easting remains unsupported for historical validation. See the
-<a href="../../specs/historical-outcome-envelope-integrity/">study contract</a> and
-<a href="../../evidence/phase-117/73-easting-phase117.json">retained artifact</a>.</p>
+73 Easting remains unsupported for historical validation. Its artifact
+SHA-256 is
+<code>57bfe7d89575e721d9cee30c213505c760da3cede642624c7ed7532051e524f4</code>,
+and its off-main locator is
+<code>branch=evidence/full; path=docs/evidence/phase-117/73-easting-phase117.json</code>.
+That branch is currently local and unpublished pending a separate
+evidence-remote or Git LFS decision. See the
+<a href="../../specs/historical-outcome-envelope-integrity/">study contract</a>.</p>
 <h2 id="using-the-web-ui">Using the Web UI<a class="headerlink" href="#using-the-web-ui" title="Permanent link">&para;</a></h2>
 <p>If you prefer a graphical interface over Python scripting, the project includes a full web application for browsing scenarios, running simulations, viewing interactive results, and editing configurations.</p>
 <h3 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h3>

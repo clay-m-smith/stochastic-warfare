@@ -18,7 +18,7 @@
         <link rel="prev" href="../phase-116/">
       
       
-        <link rel="next" href="../../specs/project-structure/">
+        <link rel="next" href="../phase-118/">
       
       
         
@@ -1859,6 +1859,62 @@
     
   
     Block 19 (135-137)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block20/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 20 (138-140)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block21/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 21 (141-142)
   
 
     
@@ -5520,6 +5576,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../phase-118/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 118 - Performance-Flag Semantic Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5792,6 +5876,34 @@
     
   
     Historical Outcome-Envelope Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/performance-flag-semantic-integrity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Performance-Flag Semantic Integrity
   
 
     
@@ -6262,7 +6374,9 @@ split by responsibility rather than by test fixture:</p>
   receipt recomputation, atomic write, and reload validation; and</li>
 <li><code>scripts/run_historical_backtest.py</code> is the bounded command boundary that
   loads the canonical ledger/plan, calls <code>SimulationRuntimeFactory.prepare</code>,
-  runs the study, and publishes only beneath <code>docs/evidence/</code>.</li>
+  and runs the study. Phase 117 originally published below <code>docs/evidence/</code>;
+  the current repository policy writes generated output below the ignored
+  <code>artifacts/evidence/phase-117/</code> tree and retains full publications off main.</li>
 </ul>
 <p>The plan and claim schemas share one stable lowercase ID contract. Seed
 interval counts and overlaps use arithmetic rather than constructing unbounded
@@ -6299,7 +6413,7 @@ binds every candidate file either to exact claim IDs or to an explicit
 reviewed-nonclaim rationale. Reviews are deliberately file-level rather than
 occurrence-level; semantic locators and the manual cross-document audit remain
 part of closure evidence.</p>
-<p>The current ledger contains 243 claims: 224 <code>unsupported</code>, 19
+<p>The current ledger contains 233 claims: 214 <code>unsupported</code>, 19
 <code>current_engine_regression_only</code>, and zero <code>production_validated</code>. Its surface
 inventory is:</p>
 <table>
@@ -6312,7 +6426,7 @@ inventory is:</p>
 <tbody>
 <tr>
 <td>Public documentation</td>
-<td style="text-align: right;">164 across 67 paths</td>
+<td style="text-align: right;">154 across 66 paths</td>
 </tr>
 <tr>
 <td>Scenario <code>documented_outcomes</code> collections</td>
@@ -6352,7 +6466,7 @@ inventory is:</p>
 </tr>
 </tbody>
 </table>
-<p>The 196 candidate-file reviews consist of 135 claim-bound reviews and 61
+<p>The 196 candidate-file reviews consist of 134 claim-bound reviews and 62
 explicit exclusions. Full ledger/data validation currently reports zero
 uninventoried collections, missing collections, unreviewed candidates, stale
 reviews, source-digest mismatches, source-rule mismatches, binding errors,
@@ -6971,7 +7085,7 @@ identity-drift guard and is replaced only from a write-frozen tree.</p>
 144.98s and persisted a reload-valid <code>FAIL</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>UV_CACHE_DIR=/tmp/sw-phase117-final-uv-cache uv run --no-sync python \
 <a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>  scripts/run_historical_backtest.py \
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>  --output docs/evidence/phase-117/73-easting-phase117.json
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>  --output artifacts/evidence/phase-117/73-easting-phase117.json
 <a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a># status=FAIL; runs=20; joint_successes=0; lower_confidence_bound=0.0;
 <a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a># promotion_eligible=false; artifact payload SHA-256 cb33583c...;
 <a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a># file SHA-256 ba367f39...; 887,834 bytes
@@ -7388,6 +7502,16 @@ School/commander controls; 451 frontend tests plus lint/build; the exact
 52/34/0 live projection; Ruff, diff, docs, provider, and repository-skill
 gates. The late async transport process, slow/E2E containment results, and
 hosted no-<code>.git</code> image are explicitly qualified rather than called passes.</p>
+<p>The later repository-wide evidence-storage policy removes the raw JSON from
+the main tree without changing this verdict. Its retained locator is
+<code>branch=evidence/full; immutable_ref=ebcb888a59d4259ccc1e9149cc0a7364f2a65853; path=docs/evidence/phase-117/73-easting-phase117.json</code>;
+the retained bytes are 917,974 bytes with raw SHA-256
+<code>4216ab05cf56c0246dc21f93f0f0dbed8367ac53ac88700fdfa54023699a9a89</code>
+and embedded artifact SHA-256
+<code>57bfe7d89575e721d9cee30c213505c760da3cede642624c7ed7532051e524f4</code>.
+New local runs write to <code>artifacts/evidence/phase-117/</code> and main validation
+does not require this branch to be fetched. This storage move neither promotes
+nor reinterprets the retained <code>FAIL</code>.</p>
 <p>The postmortem authorized this status transition and one coherent Phase 117
 commit after the status-only documentation changes are rebound into the final
 ledger, the same 20-run failed artifact is persisted again, and the exact

@@ -2355,6 +2355,62 @@
   
   
     <li class="md-nav__item">
+      <a href="../development-phases-block20/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 20 (138-140)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block21/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 21 (141-142)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../remediation-backlog/" class="md-nav__link">
         
   
@@ -5797,6 +5853,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-118/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 118 - Performance-Flag Semantic Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -6069,6 +6153,34 @@
     
   
     Historical Outcome-Envelope Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../specs/performance-flag-semantic-integrity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Performance-Flag Semantic Integrity
   
 
     
@@ -7009,12 +7121,22 @@
 <li>Each checkpoint = full state snapshot + PRNG state at that point</li>
 <li>To inspect any moment: replay forward from nearest prior checkpoint (fast, small window)</li>
 <li><strong>PRNG discipline requirements</strong>:</li>
-<li>All randomness through seeded <code>numpy.random.Generator</code>, never <code>random.random()</code> or system entropy</li>
-<li><strong>Dedicated PRNG streams per subsystem</strong> (combat, movement, intel, morale) forked from master seed — prevents cross-subsystem sequence contamination</li>
+<li>All randomness through <code>RNGManager</code>, never <code>random.random()</code>, global
+    <code>numpy.random</code>, or system entropy. The manager issues conventional seeded
+    <code>numpy.random.Generator</code> streams or typed identity-addressed indexed
+    decisions.</li>
+<li><strong>Dedicated conventional streams per subsystem</strong> (combat, movement, intel,
+    morale) forked from the master seed prevent cross-subsystem sequence
+    contamination; indexed decisions bind the complete semantic identity and
+    canonical transcript instead of worker completion order.</li>
 <li>Deterministic iteration order — no unordered sets/dicts driving sim logic</li>
-<li>Single-threaded simulation core (parallelism only for independent sub-sims with own PRNG forks)</li>
+<li>Parallel production work must use immutable inputs, manager-issued indexed
+    decisions, complete joins, and canonical commit ordering; conventional
+    stateful streams remain single-owner.</li>
 <li>No timing-dependent behavior in the deterministic path</li>
-<li><strong>Serialization</strong>: <code>numpy.random.Generator.bit_generator.state</code> captures exact PRNG state as a dict. <code>pickle</code>/<code>msgpack</code> for fast state serialization; <code>h5py</code>/<code>zarr</code> if state grows large.</li>
+<li><strong>Serialization</strong>: checkpoints preserve conventional generator state plus
+  indexed-allocation/transcript lifecycle through typed JSON-compatible owner
+  state.</li>
 <li><strong>User input log</strong>: all external decisions (orders, setting changes) timestamped and stored alongside checkpoints for full replay fidelity</li>
 </ul>
 <h3 id="4-multi-scale-interaction-full-tactical-resolution-always">4. Multi-scale Interaction — FULL TACTICAL RESOLUTION ALWAYS<a class="headerlink" href="#4-multi-scale-interaction-full-tactical-resolution-always" title="Permanent link">&para;</a></h3>

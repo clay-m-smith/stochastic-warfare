@@ -794,15 +794,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#modern-scenarios-37-total" class="md-nav__link">
+  <a href="#modern-scenarios" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Modern Scenarios (37 total)
+        Modern Scenarios
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Modern Scenarios (37 total)">
+    <nav class="md-nav" aria-label="Modern Scenarios">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -877,15 +877,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#historical-era-scenarios-15-total" class="md-nav__link">
+  <a href="#historical-era-scenarios" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Historical Era Scenarios (15 total)
+        Historical Era Scenarios
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Historical Era Scenarios (15 total)">
+    <nav class="md-nav" aria-label="Historical Era Scenarios">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -2274,6 +2274,62 @@
     
   
     Block 19 (135-137)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block20/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 20 (138-140)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block21/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 21 (141-142)
   
 
     
@@ -5736,6 +5792,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-118/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 118 - Performance-Flag Semantic Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -6008,6 +6092,34 @@
     
   
     Historical Outcome-Envelope Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/performance-flag-semantic-integrity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Performance-Flag Semantic Integrity
   
 
     
@@ -6327,15 +6439,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#modern-scenarios-37-total" class="md-nav__link">
+  <a href="#modern-scenarios" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Modern Scenarios (37 total)
+        Modern Scenarios
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Modern Scenarios (37 total)">
+    <nav class="md-nav" aria-label="Modern Scenarios">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -6410,15 +6522,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#historical-era-scenarios-15-total" class="md-nav__link">
+  <a href="#historical-era-scenarios" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Historical Era Scenarios (15 total)
+        Historical Era Scenarios
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Historical Era Scenarios (15 total)">
+    <nav class="md-nav" aria-label="Historical Era Scenarios">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -6600,7 +6712,7 @@ no cadence or physics numbers because the historical values previously stored
 there were unsourced.</p>
 <p>One resolved contract constructs the clock, engine interval cadence, medical
 and maintenance configs; participates in runtime/API fingerprints; and
-persists unchanged inside current checkpoint format 116. It does not automatically admit battle
+persists unchanged inside current checkpoint format 118. It does not automatically admit battle
 casualties, create facilities, register equipment for maintenance, initiate
 repairs/spares, construct communications equipment topology, or schedule a
 nuclear action. See the <a href="../../reference/eras/">era reference</a> and
@@ -6838,33 +6950,84 @@ claim of a complete availability-aware threat optimizer (REM-043 / Phase 130).
 The Salamis regression demonstrates the existing authored naval target domain
 for ancient projectile/melee attachments; it does not widen those weapons to
 other domains.</p>
+<p>The five governed performance controls are also strict boolean calibration
+fields. They are behavior-bearing model controls, not interchangeable speed
+switches:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nt">calibration_overrides</span><span class="p">:</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span><span class="nt">enable_detection_culling</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span><span class="nt">enable_scan_scheduling</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">  </span><span class="nt">enable_lod</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">  </span><span class="nt">enable_soa</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="w">  </span><span class="nt">enable_parallel_detection</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="w">  </span><span class="nt">lod_nearby_interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="w">  </span><span class="nt">lod_distant_interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20</span>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="w">  </span><span class="nt">lod_hysteresis_ticks</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+</code></pre></div>
+<p>Detection culling, SoA selection, and parallel detection are classified as
+semantics-preserving execution optimizations and are the three currently
+supported governed flags. Scan scheduling intentionally uses each sensor's
+authored scan interval, and LOD intentionally reduces only sensing cadence by
+ACTIVE/NEARBY/DISTANT tier; those two remain model-fidelity approximations, but
+their support disposition is now
+<code>unsupported_failed_semantic_validation</code>. LOD never reduces movement,
+engagement, morale, damage, or any other non-sensing integration rate.</p>
+<p>The immutable schema-2 <code>phase118-performance-semantics-v7</code> study completed all
+96 pairs / 396 attempts and independently reloaded as an eligible terminal
+<code>FAIL</code> under <code>EXTERNALLY_CONTENDED</code>; its manifest artifact SHA-256 is
+<code>bf9e00ce4a7774af29b5657c49bbbe4481b407a966d9922e48970022f5c6ad86</code>.
+Current scenario YAML, REST requests, comparisons/sweeps, live runtime drift,
+and current checkpoints reject <code>enable_scan_scheduling: true</code>,
+<code>enable_lod: true</code>, or a nondefault value for any of the three <code>lod_*</code> fields.
+The listed LOD values are compatibility defaults, not tunable supported
+settings. Authored configuration, typed calibration, flattened hot-path
+calibration, and the committed execution receipt must agree before work or
+receipt exposure. The canonical support table and retained evidence identity
+are available from <code>GET /api/meta/performance-flags</code>.</p>
+<p>The dormant scan-deferral algorithm, observer-support codecs, and archived
+format-118 state remain documented, but current supported production cannot
+emit a non-null observer-track support. REM-054 / Phase 141 owns restoring a
+supported production-reachable path. The
+terminal v6 <code>ERROR</code> is retained at
+<code>branch=evidence/full; path=docs/evidence/phase-118/v6-terminal/</code> (manifest
+artifact SHA-256
+<code>eb8e12f147c14ee4e83e7f5e80e4b1e50aa2bfe847d5e5e681b2462f7850051a</code>), and
+the terminal v7 <code>FAIL</code> is retained at
+<code>branch=evidence/full; path=docs/evidence/phase-118/v7-terminal/</code> (manifest
+artifact SHA-256
+<code>bf9e00ce4a7774af29b5657c49bbbe4481b407a966d9922e48970022f5c6ad86</code>).
+Those locators currently name a local, unpublished branch pending a separate
+evidence-remote or Git LFS decision. Ordinary <code>main</code> validation does not fetch
+or reinterpret either archive. Neither archive nor externally contended
+execution establishes a speedup or historical-calibration claim. The accepted
+qualified-negative postmortem closed Phase 118 / REM-031; REM-055 / Phase 142
+tracks the separately measured runtime regression.</p>
 <h3 id="optional-subsystems">Optional Subsystems<a class="headerlink" href="#optional-subsystems" title="Permanent link">&para;</a></h3>
 <p>Optional EW, space, and CBRN suites require an explicit true enable flag:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nt">ew_config</span><span class="p">:</span><span class="w">                           </span><span class="c1"># Electronic Warfare</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span><span class="nt">enable_ew</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span><span class="nt">enable_jamming</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">  </span><span class="nt">enable_spoofing</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>
-<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="nt">space_config</span><span class="p">:</span><span class="w">                        </span><span class="c1"># Space &amp; Satellite</span>
-<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="w">  </span><span class="nt">enable_space</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="w">  </span><span class="nt">constellation_ids</span><span class="p">:</span>
-<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gps_navstar</span>
-<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a><span class="w">  </span><span class="nt">enable_asat</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
-<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>
-<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a><span class="nt">cbrn_config</span><span class="p">:</span><span class="w">                         </span><span class="c1"># CBRN Effects</span>
-<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a><span class="w">  </span><span class="nt">enable_cbrn</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a><span class="w">  </span><span class="nt">update_interval_s</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10.0</span>
-<a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a><span class="w">  </span><span class="nt">auto_mopp_response</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<a id="__codelineno-12-16" name="__codelineno-12-16" href="#__codelineno-12-16"></a>
-<a id="__codelineno-12-17" name="__codelineno-12-17" href="#__codelineno-12-17"></a><span class="nt">escalation_config</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w">                </span><span class="c1"># Presence loads current default engines</span>
-<a id="__codelineno-12-18" name="__codelineno-12-18" href="#__codelineno-12-18"></a>
-<a id="__codelineno-12-19" name="__codelineno-12-19" href="#__codelineno-12-19"></a><span class="nt">school_config</span><span class="p">:</span><span class="w">                       </span><span class="c1"># Doctrinal AI Schools</span>
-<a id="__codelineno-12-20" name="__codelineno-12-20" href="#__codelineno-12-20"></a><span class="w">  </span><span class="nt">unit_assignments</span><span class="p">:</span>
-<a id="__codelineno-12-21" name="__codelineno-12-21" href="#__codelineno-12-21"></a><span class="w">    </span><span class="nt">blue_m1a2_0000</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">maneuverist</span>
-<a id="__codelineno-12-22" name="__codelineno-12-22" href="#__codelineno-12-22"></a><span class="w">    </span><span class="nt">red_t72m_0000</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">attrition</span>
-<a id="__codelineno-12-23" name="__codelineno-12-23" href="#__codelineno-12-23"></a>
-<a id="__codelineno-12-24" name="__codelineno-12-24" href="#__codelineno-12-24"></a><span class="nt">dew_config</span><span class="p">:</span><span class="w">                          </span><span class="c1"># Directed Energy Weapons</span>
-<a id="__codelineno-12-25" name="__codelineno-12-25" href="#__codelineno-12-25"></a><span class="w">  </span><span class="nt">base_extinction_per_km</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.2</span><span class="w">        </span><span class="c1"># Consumed DEWConfig tuning field</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nt">ew_config</span><span class="p">:</span><span class="w">                           </span><span class="c1"># Electronic Warfare</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span><span class="nt">enable_ew</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">  </span><span class="nt">enable_jamming</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">  </span><span class="nt">enable_spoofing</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="nt">space_config</span><span class="p">:</span><span class="w">                        </span><span class="c1"># Space &amp; Satellite</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="w">  </span><span class="nt">enable_space</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="w">  </span><span class="nt">constellation_ids</span><span class="p">:</span>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gps_navstar</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="w">  </span><span class="nt">enable_asat</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a><span class="nt">cbrn_config</span><span class="p">:</span><span class="w">                         </span><span class="c1"># CBRN Effects</span>
+<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a><span class="w">  </span><span class="nt">enable_cbrn</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a><span class="w">  </span><span class="nt">update_interval_s</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10.0</span>
+<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a><span class="w">  </span><span class="nt">auto_mopp_response</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a>
+<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a><span class="nt">escalation_config</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w">                </span><span class="c1"># Presence loads current default engines</span>
+<a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a>
+<a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a><span class="nt">school_config</span><span class="p">:</span><span class="w">                       </span><span class="c1"># Doctrinal AI Schools</span>
+<a id="__codelineno-13-20" name="__codelineno-13-20" href="#__codelineno-13-20"></a><span class="w">  </span><span class="nt">unit_assignments</span><span class="p">:</span>
+<a id="__codelineno-13-21" name="__codelineno-13-21" href="#__codelineno-13-21"></a><span class="w">    </span><span class="nt">blue_m1a2_0000</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">maneuverist</span>
+<a id="__codelineno-13-22" name="__codelineno-13-22" href="#__codelineno-13-22"></a><span class="w">    </span><span class="nt">red_t72m_0000</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">attrition</span>
+<a id="__codelineno-13-23" name="__codelineno-13-23" href="#__codelineno-13-23"></a>
+<a id="__codelineno-13-24" name="__codelineno-13-24" href="#__codelineno-13-24"></a><span class="nt">dew_config</span><span class="p">:</span><span class="w">                          </span><span class="c1"># Directed Energy Weapons</span>
+<a id="__codelineno-13-25" name="__codelineno-13-25" href="#__codelineno-13-25"></a><span class="w">  </span><span class="nt">base_extinction_per_km</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.2</span><span class="w">        </span><span class="c1"># Consumed DEWConfig tuning field</span>
 </code></pre></div>
 <p>EW, Space, and CBRN require their explicit true enable flags; omitting their
 block/flag or setting the flag false leaves that suite absent. Escalation and
@@ -6894,21 +7057,25 @@ source-audits repository claims separately. Scenario list and detail APIs
 publish only that ledger's typed <code>historical_validation</code> summary; detail
 responses remove <code>documented_outcomes</code> and <code>sources</code> from the returned config.
 See the <a href="../../specs/historical-outcome-envelope-integrity/">historical outcome-envelope contract</a>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nt">documented_outcomes</span><span class="p">:</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">exchange_ratio</span>
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">    </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">28.0</span>
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">    </span><span class="nt">tolerance_factor</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2.0</span>
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">    </span><span class="nt">unit</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;red:blue</span><span class="nv"> </span><span class="s">destroyed&quot;</span>
-<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="w">    </span><span class="nt">source</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;McMaster,</span><span class="nv"> </span><span class="s">Eagles</span><span class="nv"> </span><span class="s">in</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">Desert&quot;</span>
-<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="w">    </span><span class="nt">source_quality</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
-<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="w">    </span><span class="nt">notes</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Eagle</span><span class="nv"> </span><span class="s">Troop</span><span class="nv"> </span><span class="s">only&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nt">documented_outcomes</span><span class="p">:</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">exchange_ratio</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">    </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">28.0</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">    </span><span class="nt">tolerance_factor</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2.0</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="w">    </span><span class="nt">unit</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;red:blue</span><span class="nv"> </span><span class="s">destroyed&quot;</span>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="w">    </span><span class="nt">source</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;McMaster,</span><span class="nv"> </span><span class="s">Eagles</span><span class="nv"> </span><span class="s">in</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">Desert&quot;</span>
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="w">    </span><span class="nt">source_quality</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="w">    </span><span class="nt">notes</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Eagle</span><span class="nv"> </span><span class="s">Troop</span><span class="nv"> </span><span class="s">only&quot;</span>
 </code></pre></div>
 <p>The retained Phase 117 73 Easting artifact completed as <code>FAIL</code>: 0/20 runs met
 the full joint envelope, the one-sided lower confidence bound was 0.0, and the
-study was not promotion-eligible. It therefore leaves 73 Easting unsupported;
-see the <a href="../../evidence/phase-117/73-easting-phase117.json">artifact</a>.</p>
+study was not promotion-eligible. It therefore leaves 73 Easting unsupported.
+The retained artifact SHA-256 is
+<code>57bfe7d89575e721d9cee30c213505c760da3cede642624c7ed7532051e524f4</code>;
+its local, unpublished locator is
+<code>branch=evidence/full; path=docs/evidence/phase-117/73-easting-phase117.json</code>,
+pending a separate evidence-remote or Git LFS decision.</p>
 <hr />
-<h2 id="modern-scenarios-37-total">Modern Scenarios (37 total)<a class="headerlink" href="#modern-scenarios-37-total" title="Permanent link">&para;</a></h2>
+<h2 id="modern-scenarios">Modern Scenarios<a class="headerlink" href="#modern-scenarios" title="Permanent link">&para;</a></h2>
 <h3 id="engagement-scenarios">Engagement Scenarios<a class="headerlink" href="#engagement-scenarios" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -7171,8 +7338,8 @@ see the <a href="../../evidence/phase-117/73-easting-phase117.json">artifact</a>
 </tbody>
 </table>
 <h3 id="internal-benchmark-fixtures">Internal Benchmark Fixtures<a class="headerlink" href="#internal-benchmark-fixtures" title="Permanent link">&para;</a></h3>
-<p>These two catalog scenarios complete the 37-scenario modern total. They are
-large synthetic performance fixtures, not historical-validation evidence.</p>
+<p>These catalog scenarios are large synthetic performance fixtures, not
+historical-validation evidence.</p>
 <table>
 <thead>
 <tr>
@@ -7192,7 +7359,7 @@ large synthetic performance fixtures, not historical-validation evidence.</p>
 </tbody>
 </table>
 <hr />
-<h2 id="historical-era-scenarios-15-total">Historical Era Scenarios (15 total)<a class="headerlink" href="#historical-era-scenarios-15-total" title="Permanent link">&para;</a></h2>
+<h2 id="historical-era-scenarios">Historical Era Scenarios<a class="headerlink" href="#historical-era-scenarios" title="Permanent link">&para;</a></h2>
 <h3 id="ww2">WW2<a class="headerlink" href="#ww2" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -7340,22 +7507,23 @@ large synthetic performance fixtures, not historical-validation evidence.</p>
 <li>Modify forces, terrain, objectives, and victory conditions</li>
 <li>Validate against the pydantic schema by loading with <code>ScenarioLoader</code>:</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.scenario</span><span class="w"> </span><span class="kn">import</span> <span class="n">ScenarioLoader</span>
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="n">loader</span> <span class="o">=</span> <span class="n">ScenarioLoader</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">))</span>
-<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="k">try</span><span class="p">:</span>
-<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>    <span class="n">ctx</span> <span class="o">=</span> <span class="n">loader</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;my_scenario.yaml&quot;</span><span class="p">))</span>
-<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Valid scenario!&quot;</span><span class="p">)</span>
-<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Validation error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.simulation.scenario</span><span class="w"> </span><span class="kn">import</span> <span class="n">ScenarioLoader</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="n">loader</span> <span class="o">=</span> <span class="n">ScenarioLoader</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">))</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>    <span class="n">ctx</span> <span class="o">=</span> <span class="n">loader</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;my_scenario.yaml&quot;</span><span class="p">))</span>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Valid scenario!&quot;</span><span class="p">)</span>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Validation error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </code></pre></div>
 <h3 id="tips">Tips<a class="headerlink" href="#tips" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Unit types must match YAML filenames in <code>data/units/</code> (or <code>data/eras/{era}/units/</code>)</li>
 <li>Terrain dimensions should be appropriate for the engagement scale</li>
 <li>Victory conditions need at least one terminal condition to end the simulation</li>
-<li>Calibration overrides can compensate for known modeling gaps</li>
+<li>Calibration overrides must remain source-backed and may not conceal a known
+  engine or data-model gap</li>
 <li>Optional subsystem configs can be omitted entirely to disable them</li>
 </ul>
 

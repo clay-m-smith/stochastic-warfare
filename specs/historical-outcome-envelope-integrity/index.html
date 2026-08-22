@@ -18,7 +18,7 @@
         <link rel="prev" href="../fog-of-war-contact-continuation/">
       
       
-        <link rel="next" href="../morale-state-ownership/">
+        <link rel="next" href="../performance-flag-semantic-integrity/">
       
       
         
@@ -1859,6 +1859,62 @@
     
   
     Block 19 (135-137)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block20/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 20 (138-140)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block21/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 21 (141-142)
   
 
     
@@ -5321,6 +5377,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-118/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 118 - Performance-Flag Semantic Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5805,6 +5889,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../performance-flag-semantic-integrity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Performance-Flag Semantic Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -6390,6 +6502,16 @@ Absolute or platform-specific paths, empty or dot paths/components, parent
 traversal, noncanonical spellings, and symlink components are rejected.
 Publication never resolves an output alias to its referent, so a failed or
 malicious alias cannot overwrite another evidence file.</p>
+<p>The repository runner writes generated output beneath the ignored
+<code>artifacts/evidence/phase-117/</code> tree by default. Raw vectors and terminal
+publications do not enter <code>main</code>; an owner-retained publication is copied
+byte-for-byte into an evidence-only commit and cited by branch,
+repository-relative path, digest, verdict, and qualifications. Storage does not alter
+eligibility. In particular, the current accepted-evidence loader contract still
+requires its canonical artifact path and committed Git identities, so an
+off-main archival copy cannot populate <code>accepted_evidence</code> or promote a claim.
+The current ledger has no accepted evidence; REM-048 / Phase 135 remains
+responsible for any future package-bound accepted-evidence attestation.</p>
 <p>Each observation receipt identifies the seed, side, exact unit ID and authored
 unit type considered by scoped extractors, observed status, observation time,
 boundary/censoring state, and source/config/provenance identities. Artifact
@@ -6436,7 +6558,13 @@ zero scoped Iraqi tanks, zero scoped Iraqi personnel carriers, and
 cutoff-censored duration, so joint coverage was 0/20 with lower bound 0.0. The
 American-loss gate was in range for all 20.
 This leaves 73 Easting <code>unsupported</code>; a clean hosted reproduction binds the
-final phase commit without converting the failure into a pass.</p>
+final phase commit without converting the failure into a pass. The retained
+artifact SHA-256 is
+<code>57bfe7d89575e721d9cee30c213505c760da3cede642624c7ed7532051e524f4</code>,
+with locator
+<code>branch=evidence/full; path=docs/evidence/phase-117/73-easting-phase117.json</code>.
+That evidence branch is currently local and unpublished pending a separate
+evidence-remote or Git LFS decision.</p>
 <p>The real plan also declares that its Army outcome source informed the shipped
 scenario's legacy metadata. Even a hypothetical <code>PASS</code> would therefore remain
 ineligible for <code>production_validated</code>; its value is a transparent same-event

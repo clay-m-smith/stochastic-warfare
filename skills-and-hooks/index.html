@@ -1877,6 +1877,62 @@
   
   
     <li class="md-nav__item">
+      <a href="../development-phases-block20/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 20 (138-140)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-phases-block21/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 21 (141-142)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../remediation-backlog/" class="md-nav__link">
         
   
@@ -5319,6 +5375,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devlog/phase-118/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 118 - Performance-Flag Semantic Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5594,6 +5678,34 @@
     
   
     Historical Outcome-Envelope Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../specs/performance-flag-semantic-integrity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Performance-Flag Semantic Integrity
   
 
     
@@ -6631,9 +6743,11 @@ aliases, and byte-identical Claude mirrors.</p>
 <h3 id="validate-conventions">/validate-conventions<a class="headerlink" href="#validate-conventions" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Reviews code against project-specific rules:</li>
-<li>No bare <code>random</code> module imports or calls (all RNG through seeded numpy Generators)</li>
+<li>No bare <code>random</code> module imports or calls (all RNG through
+    <code>RNGManager</code>-owned conventional generators or typed indexed decisions)</li>
 <li>Deterministic iteration order (no <code>set()</code> or unordered dict driving sim logic)</li>
-<li>PRNG stream discipline (subsystems use their own forked streams)</li>
+<li>PRNG authority discipline (subsystems use their assigned conventional
+    streams or manager-issued identity-addressed transactions)</li>
 <li>Proper coordinate system usage (ENU/UTM internally, geodetic only at boundaries)</li>
 <li>Logging framework usage (no bare <code>print()</code> in sim core)</li>
 <li>Type hints on public API functions</li>
@@ -6678,6 +6792,11 @@ aliases, and byte-identical Claude mirrors.</p>
 <li>Treats a completed <code>PASS</code>, completed <code>FAIL</code>, and execution/evidence <code>ERROR</code>
   distinctly: <code>ERROR</code> has no historical verdict, and <code>PASS</code> alone does not make
   a repository claim <code>production_validated</code></li>
+<li>Writes generated artifacts beneath ignored <code>artifacts/evidence/</code>; raw result
+  vectors and terminal publications do not enter <code>main</code>. A retained publication
+  reports its verdict, qualifications, digest, and plain locator in the form
+  <code>branch=evidence/full; path=&lt;repo-relative path&gt;</code>, including whether that
+  branch is unpublished or externally backed</li>
 <li>Never widens an envelope, lowers a threshold, changes seeds or metrics, or
   redefines the event/population after observing a miss; preserves the <code>FAIL</code>
   and records the specific remediation instead</li>
@@ -6693,7 +6812,9 @@ aliases, and byte-identical Claude mirrors.</p>
 <h3 id="audit-determinism">/audit-determinism<a class="headerlink" href="#audit-determinism" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Deep verification of PRNG discipline in a module</li>
-<li>Traces all stochastic paths to verify: seeded generators used, no cross-stream contamination, deterministic iteration, no timing-dependent behavior</li>
+<li>Traces all stochastic paths to verify: seeded manager authority, conventional
+  stream or indexed-decision lifecycle, no cross-authority contamination,
+  deterministic iteration, and no timing-dependent behavior</li>
 <li>Reports any path that could break replay fidelity</li>
 <li>More thorough than /validate-conventions — this is structural analysis, not pattern matching</li>
 </ul>
@@ -6845,7 +6966,8 @@ aliases, and byte-identical Claude mirrors.</p>
 <li><strong>Checks</strong>:</li>
 <li>No bare Python <code>random</code>, legacy global <code>numpy.random</code>, or direct
     <code>default_rng()</code> construction outside the central RNG owner; production
-    draws use injected <code>RNGManager.get_stream(ModuleId.&lt;SUBSYSTEM&gt;)</code> generators</li>
+    decisions use injected <code>RNGManager.get_stream(ModuleId.&lt;SUBSYSTEM&gt;)</code>
+    generators or a typed indexed transaction issued by that manager</li>
 <li>No <code>set()</code> iteration or unordered dict iteration driving simulation logic</li>
 <li>No bare <code>print()</code> (use logging framework)</li>
 <li>No wall-clock time in simulation logic</li>

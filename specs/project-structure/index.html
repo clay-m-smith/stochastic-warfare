@@ -15,7 +15,7 @@
         <link rel="canonical" href="https://clay-m-smith.github.io/stochastic-warfare/specs/project-structure/">
       
       
-        <link rel="prev" href="../../devlog/phase-117/">
+        <link rel="prev" href="../../devlog/phase-118/">
       
       
         <link rel="next" href="../checkpoint-state/">
@@ -1859,6 +1859,62 @@
     
   
     Block 19 (135-137)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block20/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 20 (138-140)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block21/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 21 (141-142)
   
 
     
@@ -5321,6 +5377,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-118/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 118 - Performance-Flag Semantic Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -6083,6 +6167,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../performance-flag-semantic-integrity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Performance-Flag Semantic Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../morale-state-ownership/" class="md-nav__link">
         
   
@@ -6662,8 +6774,8 @@
 
 
 <h1 id="project-structure-module-decomposition">Project Structure &amp; Module Decomposition<a class="headerlink" href="#project-structure-module-decomposition" title="Permanent link">&para;</a></h1>
-<p><strong>Status</strong>: Living reference, current through the Phase 117 implementation.
-<strong>Last Updated</strong>: 2026-08-02</p>
+<p><strong>Status</strong>: Living reference, current through completed Phase 118.
+<strong>Last Updated</strong>: 2026-08-22</p>
 <hr />
 <h2 id="package-tree">Package Tree<a class="headerlink" href="#package-tree" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>stochastic-warfare/
@@ -6684,7 +6796,7 @@
 <a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>│   ├── runtime_errors.py              # Typed runtime-failure to HTTP-error translation
 <a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>│   ├── main.py                       # Settings-owned app factory, lifespan, CORS
 <a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>│   └── routers/                      # Route handlers
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>│       ├── meta.py                   # Health, eras, doctrines, terrain types
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>│       ├── meta.py                   # Health, eras, doctrines, terrain, and performance-flag support
 <a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>│       ├── scenarios.py              # Scenario listing/detail + claim-ledger projection
 <a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>│       ├── units.py                  # Unit listing/detail
 <a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>│       ├── runs.py                   # Run lifecycle, events, narrative, WebSocket, batch
@@ -6828,172 +6940,172 @@
 <a id="__codelineno-0-160" name="__codelineno-0-160" href="#__codelineno-0-160"></a>│   │   ├── api.md                    # API class reference
 <a id="__codelineno-0-161" name="__codelineno-0-161" href="#__codelineno-0-161"></a>│   │   ├── eras.md                   # Era framework &amp; mechanics
 <a id="__codelineno-0-162" name="__codelineno-0-162" href="#__codelineno-0-162"></a>│   │   └── units.md                  # Units &amp; equipment catalog
-<a id="__codelineno-0-163" name="__codelineno-0-163" href="#__codelineno-0-163"></a>│   ├── evidence/
-<a id="__codelineno-0-164" name="__codelineno-0-164" href="#__codelineno-0-164"></a>│   │   └── phase-117/                # Stable digest-bearing historical study evidence
-<a id="__codelineno-0-165" name="__codelineno-0-165" href="#__codelineno-0-165"></a>│   └── specs/                        # Per-module specifications
-<a id="__codelineno-0-166" name="__codelineno-0-166" href="#__codelineno-0-166"></a>│       └── project-structure.md      # (this document)
-<a id="__codelineno-0-167" name="__codelineno-0-167" href="#__codelineno-0-167"></a>├── data/
-<a id="__codelineno-0-168" name="__codelineno-0-168" href="#__codelineno-0-168"></a>│   ├── units/                        # YAML unit type definitions
-<a id="__codelineno-0-169" name="__codelineno-0-169" href="#__codelineno-0-169"></a>│   │   ├── armor/                    # M1A2, T-72, Leopard 2, etc.
-<a id="__codelineno-0-170" name="__codelineno-0-170" href="#__codelineno-0-170"></a>│   │   ├── infantry/                 # Rifle squad, mechanized, etc.
-<a id="__codelineno-0-171" name="__codelineno-0-171" href="#__codelineno-0-171"></a>│   │   ├── artillery/                # M109, MLRS, mortar teams, etc.
-<a id="__codelineno-0-172" name="__codelineno-0-172" href="#__codelineno-0-172"></a>│   │   ├── air_fixed_wing/           # F-16, A-10, Su-27, etc.
-<a id="__codelineno-0-173" name="__codelineno-0-173" href="#__codelineno-0-173"></a>│   │   ├── air_rotary_wing/          # AH-64, UH-60, Mi-24, etc.
-<a id="__codelineno-0-174" name="__codelineno-0-174" href="#__codelineno-0-174"></a>│   │   ├── air_defense/              # Patriot, S-300, MANPADS, etc.
-<a id="__codelineno-0-175" name="__codelineno-0-175" href="#__codelineno-0-175"></a>│   │   ├── missiles/                 # SSM launchers: MLRS/HIMARS, Iskander, Tomahawk TEL, coastal defense (Bastion, NSM)
-<a id="__codelineno-0-176" name="__codelineno-0-176" href="#__codelineno-0-176"></a>│   │   ├── support/                  # Engineers, logistics vehicles, HQ, comms, medical
-<a id="__codelineno-0-177" name="__codelineno-0-177" href="#__codelineno-0-177"></a>│   │   ├── naval_surface/            # Destroyers, frigates, cruisers, carriers, patrol craft
-<a id="__codelineno-0-178" name="__codelineno-0-178" href="#__codelineno-0-178"></a>│   │   ├── naval_subsurface/         # Attack submarines, ballistic missile submarines
-<a id="__codelineno-0-179" name="__codelineno-0-179" href="#__codelineno-0-179"></a>│   │   ├── naval_amphibious/         # LHD, LPD, LST, landing craft, marines
-<a id="__codelineno-0-180" name="__codelineno-0-180" href="#__codelineno-0-180"></a>│   │   ├── naval_mine_warfare/       # Minesweepers, minelayers, mine hunters
-<a id="__codelineno-0-181" name="__codelineno-0-181" href="#__codelineno-0-181"></a>│   │   └── naval_auxiliary/          # Oilers, supply ships, hospital ships, salvage
-<a id="__codelineno-0-182" name="__codelineno-0-182" href="#__codelineno-0-182"></a>│   ├── weapons/                      # Weapon system definitions (referenced by units)
-<a id="__codelineno-0-183" name="__codelineno-0-183" href="#__codelineno-0-183"></a>│   ├── ammunition/                   # Ammunition type definitions (AP, HE, HEAT, smoke, illum, guided, rockets, missiles, bombs, autocannon)
-<a id="__codelineno-0-184" name="__codelineno-0-184" href="#__codelineno-0-184"></a>│   ├── sensors/                      # Sensor type definitions (referenced by units)
-<a id="__codelineno-0-185" name="__codelineno-0-185" href="#__codelineno-0-185"></a>│   ├── signatures/                   # Unit signature profiles (visual, thermal, RCS, acoustic, EM)
-<a id="__codelineno-0-186" name="__codelineno-0-186" href="#__codelineno-0-186"></a>│   ├── comms/                        # Communication equipment definitions (SINCGARS, Harris HF, Link 16, SATCOM, etc.)
-<a id="__codelineno-0-187" name="__codelineno-0-187" href="#__codelineno-0-187"></a>│   ├── ew/                           # EW equipment definitions [Phase 16]
-<a id="__codelineno-0-188" name="__codelineno-0-188" href="#__codelineno-0-188"></a>│   │   ├── jammers/                 # Jammer definitions (AN/ALQ-99, AN/TLQ-32, Krasukha-4, AN/SLQ-32, AN/ALQ-131, R-330Zh)
-<a id="__codelineno-0-189" name="__codelineno-0-189" href="#__codelineno-0-189"></a>│   │   ├── eccm_suites/            # ECCM suite definitions (US fighter, US destroyer, Soviet SAM, Patriot)
-<a id="__codelineno-0-190" name="__codelineno-0-190" href="#__codelineno-0-190"></a>│   │   └── sigint_collectors/      # SIGINT collector definitions (RC-135, ground station)
-<a id="__codelineno-0-191" name="__codelineno-0-191" href="#__codelineno-0-191"></a>│   ├── space/                        # Space &amp; satellite definitions [Phase 17]
-<a id="__codelineno-0-192" name="__codelineno-0-192" href="#__codelineno-0-192"></a>│   │   ├── constellations/          # Constellation definitions (GPS NAVSTAR, GLONASS, Milstar, WGS, Keyhole, Lacrosse, SBIRS, Molniya, SIGINT LEO)
-<a id="__codelineno-0-193" name="__codelineno-0-193" href="#__codelineno-0-193"></a>│   │   └── asat_weapons/           # ASAT weapon definitions (SM-3 Block IIA, Nudol, ground laser)
-<a id="__codelineno-0-194" name="__codelineno-0-194" href="#__codelineno-0-194"></a>│   ├── cbrn/                         # CBRN agent &amp; weapon definitions [Phase 18]
-<a id="__codelineno-0-195" name="__codelineno-0-195" href="#__codelineno-0-195"></a>│   │   ├── agents/                  # Agent definitions (VX, sarin, mustard, chlorine, hydrogen_cyanide, anthrax, cs137)
-<a id="__codelineno-0-196" name="__codelineno-0-196" href="#__codelineno-0-196"></a>│   │   ├── nuclear/                 # Nuclear weapon definitions (10kT, 100kT, 1MT)
-<a id="__codelineno-0-197" name="__codelineno-0-197" href="#__codelineno-0-197"></a>│   │   └── delivery/               # Delivery system definitions (artillery shell, aerial bomb, SCUD warhead)
-<a id="__codelineno-0-198" name="__codelineno-0-198" href="#__codelineno-0-198"></a>│   ├── logistics/                    # Logistics data definitions
-<a id="__codelineno-0-199" name="__codelineno-0-199" href="#__codelineno-0-199"></a>│   │   ├── supply_items/            # Supply item definitions by NATO class (I, III, IV, VIII, IX)
-<a id="__codelineno-0-200" name="__codelineno-0-200" href="#__codelineno-0-200"></a>│   │   ├── transport_profiles/      # Transport vehicle profiles (truck, C-130, rail, sealift)
-<a id="__codelineno-0-201" name="__codelineno-0-201" href="#__codelineno-0-201"></a>│   │   └── medical_facilities/      # Medical facility definitions (aid station, field hospital)
-<a id="__codelineno-0-202" name="__codelineno-0-202" href="#__codelineno-0-202"></a>│   ├── organizations/                # TO&amp;E definitions per nation/era
-<a id="__codelineno-0-203" name="__codelineno-0-203" href="#__codelineno-0-203"></a>│   │   ├── us_modern/               # US Army/USMC/Navy modern structure (CABTF, Stryker Co, Paladin Bty)
-<a id="__codelineno-0-204" name="__codelineno-0-204" href="#__codelineno-0-204"></a>│   │   ├── russian/                 # Russian ground/naval/air structure (BTG)
-<a id="__codelineno-0-205" name="__codelineno-0-205" href="#__codelineno-0-205"></a>│   │   ├── chinese/                 # PLA structure (Combined Arms Brigade)
-<a id="__codelineno-0-206" name="__codelineno-0-206" href="#__codelineno-0-206"></a>│   │   ├── uk/                      # UK armoured battlegroup
-<a id="__codelineno-0-207" name="__codelineno-0-207" href="#__codelineno-0-207"></a>│   │   ├── generic/                 # Generic force templates (mech company)
-<a id="__codelineno-0-208" name="__codelineno-0-208" href="#__codelineno-0-208"></a>│   │   ├── irregular/               # Insurgent, militia, guerrilla organizational templates
-<a id="__codelineno-0-209" name="__codelineno-0-209" href="#__codelineno-0-209"></a>│   │   └── historical/              # WW2, Napoleonic, etc. (future era support)
-<a id="__codelineno-0-210" name="__codelineno-0-210" href="#__codelineno-0-210"></a>│   ├── doctrine/                     # Doctrinal templates per nation/era/domain
-<a id="__codelineno-0-211" name="__codelineno-0-211" href="#__codelineno-0-211"></a>│   │   ├── us/                      # US doctrine: FM 3-0 operations framework, mission command
-<a id="__codelineno-0-212" name="__codelineno-0-212" href="#__codelineno-0-212"></a>│   │   ├── russian/                 # Russian doctrine: deep operations, correlation of forces
-<a id="__codelineno-0-213" name="__codelineno-0-213" href="#__codelineno-0-213"></a>│   │   ├── nato/                    # NATO doctrinal procedures
-<a id="__codelineno-0-214" name="__codelineno-0-214" href="#__codelineno-0-214"></a>│   │   ├── chinese/                 # PLA Active Defense [Phase 28]
-<a id="__codelineno-0-215" name="__codelineno-0-215" href="#__codelineno-0-215"></a>│   │   ├── idf/                     # IDF Preemptive Strike [Phase 28]
-<a id="__codelineno-0-216" name="__codelineno-0-216" href="#__codelineno-0-216"></a>│   │   └── generic/                 # Era/domain-generic tactical patterns (airborne, amphibious, naval sea control)
-<a id="__codelineno-0-217" name="__codelineno-0-217" href="#__codelineno-0-217"></a>│   ├── schools/                      # Doctrinal school definitions [Phase 19]
-<a id="__codelineno-0-218" name="__codelineno-0-218" href="#__codelineno-0-218"></a>│   │   └── (9 files)                # clausewitzian, maneuverist, attrition, airland_battle, air_power, sun_tzu, deep_battle, maritime_mahanian, maritime_corbettian
-<a id="__codelineno-0-219" name="__codelineno-0-219" href="#__codelineno-0-219"></a>│   ├── commander_profiles/           # Commander personality archetypes (risk tolerance, style, preferences)
-<a id="__codelineno-0-220" name="__codelineno-0-220" href="#__codelineno-0-220"></a>│   ├── maritime/                     # Maritime-specific data: port facilities, sea lanes, chokepoints, bathymetry reference
-<a id="__codelineno-0-221" name="__codelineno-0-221" href="#__codelineno-0-221"></a>│   ├── eras/                         # Era-specific data packages [Phase 20+]
-<a id="__codelineno-0-222" name="__codelineno-0-222" href="#__codelineno-0-222"></a>│   │   ├── ww2/                     # WW2 era data [Phases 20, 29]
-<a id="__codelineno-0-223" name="__codelineno-0-223" href="#__codelineno-0-223"></a>│   │   │   ├── units/               # 25 unit defs (5 armor, 3 infantry, 5 air, 8 naval, 4 artillery)
-<a id="__codelineno-0-224" name="__codelineno-0-224" href="#__codelineno-0-224"></a>│   │   │   │   ├── armor/           # Tiger I, Panther, Sherman, Panzer IV, T-34/85
-<a id="__codelineno-0-225" name="__codelineno-0-225" href="#__codelineno-0-225"></a>│   │   │   │   ├── infantry/        # US/Soviet/Wehrmacht rifle squads
-<a id="__codelineno-0-226" name="__codelineno-0-226" href="#__codelineno-0-226"></a>│   │   │   │   ├── air/             # B-17G, Bf 109G, P-51D, Spitfire IX, A6M Zero [P29]
-<a id="__codelineno-0-227" name="__codelineno-0-227" href="#__codelineno-0-227"></a>│   │   │   │   ├── naval/           # Iowa BB, Fletcher DD, Type VIIC, Essex CV, Shokaku CV, Type IXC, Flower, LST [P29]
-<a id="__codelineno-0-228" name="__codelineno-0-228" href="#__codelineno-0-228"></a>│   │   │   │   └── artillery/       # M1 105mm, sFH 18, PaK 40, 6-pdr AT [P29]
-<a id="__codelineno-0-229" name="__codelineno-0-229" href="#__codelineno-0-229"></a>│   │   │   ├── weapons/             # 14 weapon defs (guns, naval, torpedoes) [P29: +6]
-<a id="__codelineno-0-230" name="__codelineno-0-230" href="#__codelineno-0-230"></a>│   │   │   ├── ammunition/          # 19 ammo defs (tank/small_arms/naval/torpedoes/aircraft/depth_charges) [P29: +6]
-<a id="__codelineno-0-231" name="__codelineno-0-231" href="#__codelineno-0-231"></a>│   │   │   ├── sensors/             # 4 sensor definitions (eyeball, radar, naval radar, hydrophone)
-<a id="__codelineno-0-232" name="__codelineno-0-232" href="#__codelineno-0-232"></a>│   │   │   ├── signatures/          # 25 signature profiles [P29: +10]
-<a id="__codelineno-0-233" name="__codelineno-0-233" href="#__codelineno-0-233"></a>│   │   │   ├── doctrine/            # 4 doctrine templates
-<a id="__codelineno-0-234" name="__codelineno-0-234" href="#__codelineno-0-234"></a>│   │   │   ├── commanders/          # 3 commander profiles
-<a id="__codelineno-0-235" name="__codelineno-0-235" href="#__codelineno-0-235"></a>│   │   │   ├── comms/               # 2 comm definitions (field telephone, SCR-300 radio) [P29]
-<a id="__codelineno-0-236" name="__codelineno-0-236" href="#__codelineno-0-236"></a>│   │   │   └── scenarios/           # 4 catalog collections (Kursk, Midway, Normandy Bocage, Stalingrad)
-<a id="__codelineno-0-237" name="__codelineno-0-237" href="#__codelineno-0-237"></a>│   │   ├── ww1/                     # WW1 era data [Phases 21, 29]
-<a id="__codelineno-0-238" name="__codelineno-0-238" href="#__codelineno-0-238"></a>│   │   │   ├── units/               # 16 unit defs (3 infantry, 2 armor, 1 cavalry, 5 naval, 3 ground, 2 air) [P29: +10]
-<a id="__codelineno-0-239" name="__codelineno-0-239" href="#__codelineno-0-239"></a>│   │   │   │   ├── naval/           # Iron Duke BB, Konig BB, Invincible BC, G-class DD, U-boat [P29]
-<a id="__codelineno-0-240" name="__codelineno-0-240" href="#__codelineno-0-240"></a>│   │   │   │   └── air/             # SPAD XIII, Fokker D.VII [P29]
-<a id="__codelineno-0-241" name="__codelineno-0-241" href="#__codelineno-0-241"></a>│   │   │   ├── weapons/             # 13 weapon defs (rifles, MGs, artillery, grenades, naval, aircraft guns) [P29: +5]
-<a id="__codelineno-0-242" name="__codelineno-0-242" href="#__codelineno-0-242"></a>│   │   │   ├── ammunition/          # 14 ammo defs (ball, AP, HE, shrapnel, gas, naval, aircraft) [P29: +4]
-<a id="__codelineno-0-243" name="__codelineno-0-243" href="#__codelineno-0-243"></a>│   │   │   ├── sensors/             # 5 sensor definitions
-<a id="__codelineno-0-244" name="__codelineno-0-244" href="#__codelineno-0-244"></a>│   │   │   ├── signatures/          # 16 signature profiles [P29: +10]
-<a id="__codelineno-0-245" name="__codelineno-0-245" href="#__codelineno-0-245"></a>│   │   │   ├── doctrine/            # 3 doctrine templates
-<a id="__codelineno-0-246" name="__codelineno-0-246" href="#__codelineno-0-246"></a>│   │   │   ├── commanders/          # 3 commander profiles
-<a id="__codelineno-0-247" name="__codelineno-0-247" href="#__codelineno-0-247"></a>│   │   │   ├── comms/               # 2 comm definitions (field telephone, runner messenger)
-<a id="__codelineno-0-248" name="__codelineno-0-248" href="#__codelineno-0-248"></a>│   │   │   └── scenarios/           # 3 catalog collections (Somme Day 1, Cambrai, Jutland)
-<a id="__codelineno-0-249" name="__codelineno-0-249" href="#__codelineno-0-249"></a>│   │   ├── napoleonic/              # Napoleonic era data [Phases 22, 29]
-<a id="__codelineno-0-250" name="__codelineno-0-250" href="#__codelineno-0-250"></a>│   │   │   ├── units/               # 21 unit defs (infantry, cavalry, artillery, naval, engineer, supply) [P29: +11]
-<a id="__codelineno-0-251" name="__codelineno-0-251" href="#__codelineno-0-251"></a>│   │   │   │   └── naval/           # Ship of line 74, First Rate 100, Frigate 32, Corvette, Fire Ship [P29]
-<a id="__codelineno-0-252" name="__codelineno-0-252" href="#__codelineno-0-252"></a>│   │   │   ├── weapons/             # 13 weapon defs (muskets, cannons, naval, rockets) [P29: +4]
-<a id="__codelineno-0-253" name="__codelineno-0-253" href="#__codelineno-0-253"></a>│   │   │   ├── ammunition/          # 13 ammo defs (musket balls, roundshot, canister, naval, rockets) [P29: +4]
-<a id="__codelineno-0-254" name="__codelineno-0-254" href="#__codelineno-0-254"></a>│   │   │   ├── sensors/             # 3 sensor definitions
-<a id="__codelineno-0-255" name="__codelineno-0-255" href="#__codelineno-0-255"></a>│   │   │   ├── signatures/          # 21 signature profiles [P29: +11]
-<a id="__codelineno-0-256" name="__codelineno-0-256" href="#__codelineno-0-256"></a>│   │   │   ├── doctrine/            # 3 doctrine templates
-<a id="__codelineno-0-257" name="__codelineno-0-257" href="#__codelineno-0-257"></a>│   │   │   ├── commanders/          # 3 commander profiles
-<a id="__codelineno-0-258" name="__codelineno-0-258" href="#__codelineno-0-258"></a>│   │   │   ├── comms/               # 2 comm definitions (mounted courier, drum/bugle signals)
-<a id="__codelineno-0-259" name="__codelineno-0-259" href="#__codelineno-0-259"></a>│   │   │   └── scenarios/           # 3 catalog collections (Austerlitz, Waterloo, Trafalgar)
-<a id="__codelineno-0-260" name="__codelineno-0-260" href="#__codelineno-0-260"></a>│   │   └── ancient_medieval/        # Ancient &amp; Medieval era data [Phases 23, 29]
-<a id="__codelineno-0-261" name="__codelineno-0-261" href="#__codelineno-0-261"></a>│   │       ├── units/               # 17 unit defs (infantry, cavalry, mounted, naval, siege) [P29: +10]
-<a id="__codelineno-0-262" name="__codelineno-0-262" href="#__codelineno-0-262"></a>│   │       │   └── naval/           # Trireme, Quinquereme, Longship, Dromon, Cog, War Galley [P29]
-<a id="__codelineno-0-263" name="__codelineno-0-263" href="#__codelineno-0-263"></a>│   │       ├── weapons/             # 16 weapon defs (melee, ranged, siege, naval) [P29: +3]
-<a id="__codelineno-0-264" name="__codelineno-0-264" href="#__codelineno-0-264"></a>│   │       ├── ammunition/          # 10 ammo defs (arrows, bolts, javelins, stones, naval) [P29: +2]
-<a id="__codelineno-0-265" name="__codelineno-0-265" href="#__codelineno-0-265"></a>│   │       ├── sensors/             # 3 sensor definitions
-<a id="__codelineno-0-266" name="__codelineno-0-266" href="#__codelineno-0-266"></a>│   │       ├── signatures/          # 17 signature profiles [P29: +10]
-<a id="__codelineno-0-267" name="__codelineno-0-267" href="#__codelineno-0-267"></a>│   │       ├── doctrine/            # 3 doctrine templates
-<a id="__codelineno-0-268" name="__codelineno-0-268" href="#__codelineno-0-268"></a>│   │       ├── commanders/          # 4 commander profiles (Hannibal, Henry V, William Conqueror, Subotai) [P29: +1]
-<a id="__codelineno-0-269" name="__codelineno-0-269" href="#__codelineno-0-269"></a>│   │       ├── comms/               # 2 comm definitions (battle horn, banner signal)
-<a id="__codelineno-0-270" name="__codelineno-0-270" href="#__codelineno-0-270"></a>│   │       └── scenarios/           # 4 catalog collections (Cannae, Agincourt, Hastings, Salamis)
-<a id="__codelineno-0-271" name="__codelineno-0-271" href="#__codelineno-0-271"></a>│   ├── validation/                   # Historical claim ledger and typed study plans
-<a id="__codelineno-0-272" name="__codelineno-0-272" href="#__codelineno-0-272"></a>│   │   ├── historical_claims.yaml
-<a id="__codelineno-0-273" name="__codelineno-0-273" href="#__codelineno-0-273"></a>│   │   └── historical_studies/
-<a id="__codelineno-0-274" name="__codelineno-0-274" href="#__codelineno-0-274"></a>│   │       ├── 73_easting_phase117.yaml
-<a id="__codelineno-0-275" name="__codelineno-0-275" href="#__codelineno-0-275"></a>│   │       └── agincourt_era_control_phase117.yaml
-<a id="__codelineno-0-276" name="__codelineno-0-276" href="#__codelineno-0-276"></a>│   └── scenarios/                    # Complete scenario packages
-<a id="__codelineno-0-277" name="__codelineno-0-277" href="#__codelineno-0-277"></a>│       ├── example_scenario/
-<a id="__codelineno-0-278" name="__codelineno-0-278" href="#__codelineno-0-278"></a>│       │   ├── scenario.yaml         # Master scenario config: start date/time (UTC), duration, initial weather, time zone
-<a id="__codelineno-0-279" name="__codelineno-0-279" href="#__codelineno-0-279"></a>│       │   ├── terrain/              # Terrain data: elevation, classification, soil, vegetation, infrastructure
-<a id="__codelineno-0-280" name="__codelineno-0-280" href="#__codelineno-0-280"></a>│       │   ├── infrastructure/       # Road/rail/bridge networks, building data, utilities
-<a id="__codelineno-0-281" name="__codelineno-0-281" href="#__codelineno-0-281"></a>│       │   ├── population/           # Civilian population data and disposition
-<a id="__codelineno-0-282" name="__codelineno-0-282" href="#__codelineno-0-282"></a>│       │   ├── maritime/             # Bathymetry, ports, sea lanes, acoustic environment profiles, tidal harmonic constituents
-<a id="__codelineno-0-283" name="__codelineno-0-283" href="#__codelineno-0-283"></a>│       │   ├── environment/          # Climate zone, prevailing weather patterns, seasonal parameters, magnetic declination grid
-<a id="__codelineno-0-284" name="__codelineno-0-284" href="#__codelineno-0-284"></a>│       │   ├── forces/               # OOB and initial dispositions per side (land, air, naval)
-<a id="__codelineno-0-285" name="__codelineno-0-285" href="#__codelineno-0-285"></a>│       │   └── objectives/           # Victory conditions and ROE
-<a id="__codelineno-0-286" name="__codelineno-0-286" href="#__codelineno-0-286"></a>│       ├── 73_easting/              # Phase 7: 73 Easting historical catalog scenario
-<a id="__codelineno-0-287" name="__codelineno-0-287" href="#__codelineno-0-287"></a>│       ├── falklands_naval/         # Phase 7: Falklands naval historical catalog scenario
-<a id="__codelineno-0-288" name="__codelineno-0-288" href="#__codelineno-0-288"></a>│       ├── golan_heights/           # Phase 7: Golan Heights historical catalog scenario
-<a id="__codelineno-0-289" name="__codelineno-0-289" href="#__codelineno-0-289"></a>│       ├── test_campaign/           # Phase 9: Minimal campaign test (2 sides, 1 objective, 24h)
-<a id="__codelineno-0-290" name="__codelineno-0-290" href="#__codelineno-0-290"></a>│       ├── test_campaign_multi/     # Phase 9: Multiple engagement points (2 objectives, 48h)
-<a id="__codelineno-0-291" name="__codelineno-0-291" href="#__codelineno-0-291"></a>│       ├── test_campaign_reinforce/ # Phase 9: Reinforcement schedule test (3 waves)
-<a id="__codelineno-0-292" name="__codelineno-0-292" href="#__codelineno-0-292"></a>│       ├── test_campaign_logistics/ # Phase 108: enabled deterministic logistics fixture
-<a id="__codelineno-0-293" name="__codelineno-0-293" href="#__codelineno-0-293"></a>│       ├── golan_campaign/         # Phase 10: Golan Heights 4-day historical catalog campaign
-<a id="__codelineno-0-294" name="__codelineno-0-294" href="#__codelineno-0-294"></a>│       ├── falklands_campaign/     # Phase 10: Falklands San Carlos 5-day historical catalog campaign
-<a id="__codelineno-0-295" name="__codelineno-0-295" href="#__codelineno-0-295"></a>│       ├── bekaa_valley_1982/     # Phase 16: Bekaa Valley SEAD mechanics scenario (Israeli EW vs Syrian SAMs)
-<a id="__codelineno-0-296" name="__codelineno-0-296" href="#__codelineno-0-296"></a>│       ├── gulf_war_ew_1991/      # Phase 16: Gulf War EW mechanics scenario (Coalition vs Iraqi IADS)
-<a id="__codelineno-0-297" name="__codelineno-0-297" href="#__codelineno-0-297"></a>│       ├── space_gps_denial/      # Phase 17: PGM accuracy comparison (full GPS vs degraded vs denied)
-<a id="__codelineno-0-298" name="__codelineno-0-298" href="#__codelineno-0-298"></a>│       ├── space_isr_gap/         # Phase 17: Satellite overpass gap exploitation mechanics scenario
-<a id="__codelineno-0-299" name="__codelineno-0-299" href="#__codelineno-0-299"></a>│       ├── space_asat_escalation/ # Phase 110: Catalog-backed exact-target direct-ascent ASAT scenario
-<a id="__codelineno-0-300" name="__codelineno-0-300" href="#__codelineno-0-300"></a>│       ├── cbrn_chemical_defense/ # Phase 18: Chemical attack on defended position (dispersal, MOPP, casualties)
-<a id="__codelineno-0-301" name="__codelineno-0-301" href="#__codelineno-0-301"></a>│       ├── cbrn_nuclear_tactical/ # Phase 18: Tactical nuclear weapon blast/EMP/fallout mechanics scenario
-<a id="__codelineno-0-302" name="__codelineno-0-302" href="#__codelineno-0-302"></a>│       ├── halabja_1988/         # Phase 24: Iraqi chemical escalation against Kurdish town
-<a id="__codelineno-0-303" name="__codelineno-0-303" href="#__codelineno-0-303"></a>│       ├── srebrenica_1995/      # Phase 24: Bosnian Serb protected zone violation
-<a id="__codelineno-0-304" name="__codelineno-0-304" href="#__codelineno-0-304"></a>│       ├── eastern_front_1943/   # Phase 24: German-Soviet mutual escalation (Kursk sector)
-<a id="__codelineno-0-305" name="__codelineno-0-305" href="#__codelineno-0-305"></a>│       └── coin_campaign/        # Phase 24: Modern COIN composite scenario (IED, insurgency, COIN)
-<a id="__codelineno-0-306" name="__codelineno-0-306" href="#__codelineno-0-306"></a>├── tests/
-<a id="__codelineno-0-307" name="__codelineno-0-307" href="#__codelineno-0-307"></a>│   ├── conftest.py                   # Shared fixtures (rng, event_bus, sim_clock) + helpers
-<a id="__codelineno-0-308" name="__codelineno-0-308" href="#__codelineno-0-308"></a>│   ├── unit/                         # Fast, isolated unit tests
-<a id="__codelineno-0-309" name="__codelineno-0-309" href="#__codelineno-0-309"></a>│   ├── integration/                  # Multi-module integration tests
-<a id="__codelineno-0-310" name="__codelineno-0-310" href="#__codelineno-0-310"></a>│   ├── benchmarks/                   # Performance benchmarks + determinism verification [Phase 13]
-<a id="__codelineno-0-311" name="__codelineno-0-311" href="#__codelineno-0-311"></a>│   ├── validation/                   # Data, contract, scenario, and evidence validation
-<a id="__codelineno-0-312" name="__codelineno-0-312" href="#__codelineno-0-312"></a>│   ├── api/                          # Explicit API partition
-<a id="__codelineno-0-313" name="__codelineno-0-313" href="#__codelineno-0-313"></a>│   └── e2e/                          # Explicit end-to-end partition
-<a id="__codelineno-0-314" name="__codelineno-0-314" href="#__codelineno-0-314"></a>├── scripts/
-<a id="__codelineno-0-315" name="__codelineno-0-315" href="#__codelineno-0-315"></a>│   ├── run_pytest_partition.py       # Exact selectors, manifests, deterministic shards
-<a id="__codelineno-0-316" name="__codelineno-0-316" href="#__codelineno-0-316"></a>│   ├── validate_test_partitions.py   # Disjoint exact-union audit
-<a id="__codelineno-0-317" name="__codelineno-0-317" href="#__codelineno-0-317"></a>│   ├── validate_test_evidence.py     # Weak/no-direct evidence-ledger audit
-<a id="__codelineno-0-318" name="__codelineno-0-318" href="#__codelineno-0-318"></a>│   ├── run_paired_benchmark.py       # Same-host paired + non-timing transition execution
-<a id="__codelineno-0-319" name="__codelineno-0-319" href="#__codelineno-0-319"></a>│   ├── run_historical_backtest.py    # Strict production study + atomic artifact publication
-<a id="__codelineno-0-320" name="__codelineno-0-320" href="#__codelineno-0-320"></a>│   ├── validate_docs_links.py        # Markdown target/fragment validation
-<a id="__codelineno-0-321" name="__codelineno-0-321" href="#__codelineno-0-321"></a>│   └── visualize/                    # Matplotlib visualization utilities
-<a id="__codelineno-0-322" name="__codelineno-0-322" href="#__codelineno-0-322"></a>└── stochastic_warfare/               # ===== MAIN PACKAGE =====
-<a id="__codelineno-0-323" name="__codelineno-0-323" href="#__codelineno-0-323"></a>    ├── __init__.py
-<a id="__codelineno-0-324" name="__codelineno-0-324" href="#__codelineno-0-324"></a>    ├── build_identity.py              # Strict immutable-package source identity
-<a id="__codelineno-0-325" name="__codelineno-0-325" href="#__codelineno-0-325"></a>    ├── scenario_names.py              # Canonical scenario-name normalization
-<a id="__codelineno-0-326" name="__codelineno-0-326" href="#__codelineno-0-326"></a>    ├── core/                         # Foundational infrastructure
-<a id="__codelineno-0-327" name="__codelineno-0-327" href="#__codelineno-0-327"></a>    │   ├── __init__.py
-<a id="__codelineno-0-328" name="__codelineno-0-328" href="#__codelineno-0-328"></a>    │   ├── rng.py                    # Central RNG manager, stream forking
+<a id="__codelineno-0-163" name="__codelineno-0-163" href="#__codelineno-0-163"></a>│   └── specs/                        # Per-module specifications
+<a id="__codelineno-0-164" name="__codelineno-0-164" href="#__codelineno-0-164"></a>│       └── project-structure.md      # (this document)
+<a id="__codelineno-0-165" name="__codelineno-0-165" href="#__codelineno-0-165"></a>├── data/
+<a id="__codelineno-0-166" name="__codelineno-0-166" href="#__codelineno-0-166"></a>│   ├── units/                        # YAML unit type definitions
+<a id="__codelineno-0-167" name="__codelineno-0-167" href="#__codelineno-0-167"></a>│   │   ├── armor/                    # M1A2, T-72, Leopard 2, etc.
+<a id="__codelineno-0-168" name="__codelineno-0-168" href="#__codelineno-0-168"></a>│   │   ├── infantry/                 # Rifle squad, mechanized, etc.
+<a id="__codelineno-0-169" name="__codelineno-0-169" href="#__codelineno-0-169"></a>│   │   ├── artillery/                # M109, MLRS, mortar teams, etc.
+<a id="__codelineno-0-170" name="__codelineno-0-170" href="#__codelineno-0-170"></a>│   │   ├── air_fixed_wing/           # F-16, A-10, Su-27, etc.
+<a id="__codelineno-0-171" name="__codelineno-0-171" href="#__codelineno-0-171"></a>│   │   ├── air_rotary_wing/          # AH-64, UH-60, Mi-24, etc.
+<a id="__codelineno-0-172" name="__codelineno-0-172" href="#__codelineno-0-172"></a>│   │   ├── air_defense/              # Patriot, S-300, MANPADS, etc.
+<a id="__codelineno-0-173" name="__codelineno-0-173" href="#__codelineno-0-173"></a>│   │   ├── missiles/                 # SSM launchers: MLRS/HIMARS, Iskander, Tomahawk TEL, coastal defense (Bastion, NSM)
+<a id="__codelineno-0-174" name="__codelineno-0-174" href="#__codelineno-0-174"></a>│   │   ├── support/                  # Engineers, logistics vehicles, HQ, comms, medical
+<a id="__codelineno-0-175" name="__codelineno-0-175" href="#__codelineno-0-175"></a>│   │   ├── naval_surface/            # Destroyers, frigates, cruisers, carriers, patrol craft
+<a id="__codelineno-0-176" name="__codelineno-0-176" href="#__codelineno-0-176"></a>│   │   ├── naval_subsurface/         # Attack submarines, ballistic missile submarines
+<a id="__codelineno-0-177" name="__codelineno-0-177" href="#__codelineno-0-177"></a>│   │   ├── naval_amphibious/         # LHD, LPD, LST, landing craft, marines
+<a id="__codelineno-0-178" name="__codelineno-0-178" href="#__codelineno-0-178"></a>│   │   ├── naval_mine_warfare/       # Minesweepers, minelayers, mine hunters
+<a id="__codelineno-0-179" name="__codelineno-0-179" href="#__codelineno-0-179"></a>│   │   └── naval_auxiliary/          # Oilers, supply ships, hospital ships, salvage
+<a id="__codelineno-0-180" name="__codelineno-0-180" href="#__codelineno-0-180"></a>│   ├── weapons/                      # Weapon system definitions (referenced by units)
+<a id="__codelineno-0-181" name="__codelineno-0-181" href="#__codelineno-0-181"></a>│   ├── ammunition/                   # Ammunition type definitions (AP, HE, HEAT, smoke, illum, guided, rockets, missiles, bombs, autocannon)
+<a id="__codelineno-0-182" name="__codelineno-0-182" href="#__codelineno-0-182"></a>│   ├── sensors/                      # Sensor type definitions (referenced by units)
+<a id="__codelineno-0-183" name="__codelineno-0-183" href="#__codelineno-0-183"></a>│   ├── signatures/                   # Unit signature profiles (visual, thermal, RCS, acoustic, EM)
+<a id="__codelineno-0-184" name="__codelineno-0-184" href="#__codelineno-0-184"></a>│   ├── comms/                        # Communication equipment definitions (SINCGARS, Harris HF, Link 16, SATCOM, etc.)
+<a id="__codelineno-0-185" name="__codelineno-0-185" href="#__codelineno-0-185"></a>│   ├── ew/                           # EW equipment definitions [Phase 16]
+<a id="__codelineno-0-186" name="__codelineno-0-186" href="#__codelineno-0-186"></a>│   │   ├── jammers/                 # Jammer definitions (AN/ALQ-99, AN/TLQ-32, Krasukha-4, AN/SLQ-32, AN/ALQ-131, R-330Zh)
+<a id="__codelineno-0-187" name="__codelineno-0-187" href="#__codelineno-0-187"></a>│   │   ├── eccm_suites/            # ECCM suite definitions (US fighter, US destroyer, Soviet SAM, Patriot)
+<a id="__codelineno-0-188" name="__codelineno-0-188" href="#__codelineno-0-188"></a>│   │   └── sigint_collectors/      # SIGINT collector definitions (RC-135, ground station)
+<a id="__codelineno-0-189" name="__codelineno-0-189" href="#__codelineno-0-189"></a>│   ├── space/                        # Space &amp; satellite definitions [Phase 17]
+<a id="__codelineno-0-190" name="__codelineno-0-190" href="#__codelineno-0-190"></a>│   │   ├── constellations/          # Constellation definitions (GPS NAVSTAR, GLONASS, Milstar, WGS, Keyhole, Lacrosse, SBIRS, Molniya, SIGINT LEO)
+<a id="__codelineno-0-191" name="__codelineno-0-191" href="#__codelineno-0-191"></a>│   │   └── asat_weapons/           # ASAT weapon definitions (SM-3 Block IIA, Nudol, ground laser)
+<a id="__codelineno-0-192" name="__codelineno-0-192" href="#__codelineno-0-192"></a>│   ├── cbrn/                         # CBRN agent &amp; weapon definitions [Phase 18]
+<a id="__codelineno-0-193" name="__codelineno-0-193" href="#__codelineno-0-193"></a>│   │   ├── agents/                  # Agent definitions (VX, sarin, mustard, chlorine, hydrogen_cyanide, anthrax, cs137)
+<a id="__codelineno-0-194" name="__codelineno-0-194" href="#__codelineno-0-194"></a>│   │   ├── nuclear/                 # Nuclear weapon definitions (10kT, 100kT, 1MT)
+<a id="__codelineno-0-195" name="__codelineno-0-195" href="#__codelineno-0-195"></a>│   │   └── delivery/               # Delivery system definitions (artillery shell, aerial bomb, SCUD warhead)
+<a id="__codelineno-0-196" name="__codelineno-0-196" href="#__codelineno-0-196"></a>│   ├── logistics/                    # Logistics data definitions
+<a id="__codelineno-0-197" name="__codelineno-0-197" href="#__codelineno-0-197"></a>│   │   ├── supply_items/            # Supply item definitions by NATO class (I, III, IV, VIII, IX)
+<a id="__codelineno-0-198" name="__codelineno-0-198" href="#__codelineno-0-198"></a>│   │   ├── transport_profiles/      # Transport vehicle profiles (truck, C-130, rail, sealift)
+<a id="__codelineno-0-199" name="__codelineno-0-199" href="#__codelineno-0-199"></a>│   │   └── medical_facilities/      # Medical facility definitions (aid station, field hospital)
+<a id="__codelineno-0-200" name="__codelineno-0-200" href="#__codelineno-0-200"></a>│   ├── organizations/                # TO&amp;E definitions per nation/era
+<a id="__codelineno-0-201" name="__codelineno-0-201" href="#__codelineno-0-201"></a>│   │   ├── us_modern/               # US Army/USMC/Navy modern structure (CABTF, Stryker Co, Paladin Bty)
+<a id="__codelineno-0-202" name="__codelineno-0-202" href="#__codelineno-0-202"></a>│   │   ├── russian/                 # Russian ground/naval/air structure (BTG)
+<a id="__codelineno-0-203" name="__codelineno-0-203" href="#__codelineno-0-203"></a>│   │   ├── chinese/                 # PLA structure (Combined Arms Brigade)
+<a id="__codelineno-0-204" name="__codelineno-0-204" href="#__codelineno-0-204"></a>│   │   ├── uk/                      # UK armoured battlegroup
+<a id="__codelineno-0-205" name="__codelineno-0-205" href="#__codelineno-0-205"></a>│   │   ├── generic/                 # Generic force templates (mech company)
+<a id="__codelineno-0-206" name="__codelineno-0-206" href="#__codelineno-0-206"></a>│   │   ├── irregular/               # Insurgent, militia, guerrilla organizational templates
+<a id="__codelineno-0-207" name="__codelineno-0-207" href="#__codelineno-0-207"></a>│   │   └── historical/              # WW2, Napoleonic, etc. (future era support)
+<a id="__codelineno-0-208" name="__codelineno-0-208" href="#__codelineno-0-208"></a>│   ├── doctrine/                     # Doctrinal templates per nation/era/domain
+<a id="__codelineno-0-209" name="__codelineno-0-209" href="#__codelineno-0-209"></a>│   │   ├── us/                      # US doctrine: FM 3-0 operations framework, mission command
+<a id="__codelineno-0-210" name="__codelineno-0-210" href="#__codelineno-0-210"></a>│   │   ├── russian/                 # Russian doctrine: deep operations, correlation of forces
+<a id="__codelineno-0-211" name="__codelineno-0-211" href="#__codelineno-0-211"></a>│   │   ├── nato/                    # NATO doctrinal procedures
+<a id="__codelineno-0-212" name="__codelineno-0-212" href="#__codelineno-0-212"></a>│   │   ├── chinese/                 # PLA Active Defense [Phase 28]
+<a id="__codelineno-0-213" name="__codelineno-0-213" href="#__codelineno-0-213"></a>│   │   ├── idf/                     # IDF Preemptive Strike [Phase 28]
+<a id="__codelineno-0-214" name="__codelineno-0-214" href="#__codelineno-0-214"></a>│   │   └── generic/                 # Era/domain-generic tactical patterns (airborne, amphibious, naval sea control)
+<a id="__codelineno-0-215" name="__codelineno-0-215" href="#__codelineno-0-215"></a>│   ├── schools/                      # Doctrinal school definitions [Phase 19]
+<a id="__codelineno-0-216" name="__codelineno-0-216" href="#__codelineno-0-216"></a>│   │   └── (9 files)                # clausewitzian, maneuverist, attrition, airland_battle, air_power, sun_tzu, deep_battle, maritime_mahanian, maritime_corbettian
+<a id="__codelineno-0-217" name="__codelineno-0-217" href="#__codelineno-0-217"></a>│   ├── commander_profiles/           # Commander personality archetypes (risk tolerance, style, preferences)
+<a id="__codelineno-0-218" name="__codelineno-0-218" href="#__codelineno-0-218"></a>│   ├── maritime/                     # Maritime-specific data: port facilities, sea lanes, chokepoints, bathymetry reference
+<a id="__codelineno-0-219" name="__codelineno-0-219" href="#__codelineno-0-219"></a>│   ├── eras/                         # Era-specific data packages [Phase 20+]
+<a id="__codelineno-0-220" name="__codelineno-0-220" href="#__codelineno-0-220"></a>│   │   ├── ww2/                     # WW2 era data [Phases 20, 29]
+<a id="__codelineno-0-221" name="__codelineno-0-221" href="#__codelineno-0-221"></a>│   │   │   ├── units/               # Armor, infantry, air, naval, and artillery definitions
+<a id="__codelineno-0-222" name="__codelineno-0-222" href="#__codelineno-0-222"></a>│   │   │   │   ├── armor/           # Tiger I, Panther, Sherman, Panzer IV, T-34/85
+<a id="__codelineno-0-223" name="__codelineno-0-223" href="#__codelineno-0-223"></a>│   │   │   │   ├── infantry/        # US/Soviet/Wehrmacht rifle squads
+<a id="__codelineno-0-224" name="__codelineno-0-224" href="#__codelineno-0-224"></a>│   │   │   │   ├── air/             # B-17G, Bf 109G, P-51D, Spitfire IX, A6M Zero [P29]
+<a id="__codelineno-0-225" name="__codelineno-0-225" href="#__codelineno-0-225"></a>│   │   │   │   ├── naval/           # Iowa BB, Fletcher DD, Type VIIC, Essex CV, Shokaku CV, Type IXC, Flower, LST [P29]
+<a id="__codelineno-0-226" name="__codelineno-0-226" href="#__codelineno-0-226"></a>│   │   │   │   └── artillery/       # M1 105mm, sFH 18, PaK 40, 6-pdr AT [P29]
+<a id="__codelineno-0-227" name="__codelineno-0-227" href="#__codelineno-0-227"></a>│   │   │   ├── weapons/             # Ground, naval, torpedo, and aircraft weapon definitions
+<a id="__codelineno-0-228" name="__codelineno-0-228" href="#__codelineno-0-228"></a>│   │   │   ├── ammunition/          # Ground, naval, torpedo, aircraft, and depth-charge ammunition
+<a id="__codelineno-0-229" name="__codelineno-0-229" href="#__codelineno-0-229"></a>│   │   │   ├── sensors/             # Visual, radar, naval-radar, and hydrophone definitions
+<a id="__codelineno-0-230" name="__codelineno-0-230" href="#__codelineno-0-230"></a>│   │   │   ├── signatures/          # Unit signature profiles
+<a id="__codelineno-0-231" name="__codelineno-0-231" href="#__codelineno-0-231"></a>│   │   │   ├── doctrine/            # Doctrine templates
+<a id="__codelineno-0-232" name="__codelineno-0-232" href="#__codelineno-0-232"></a>│   │   │   ├── commanders/          # Commander profiles
+<a id="__codelineno-0-233" name="__codelineno-0-233" href="#__codelineno-0-233"></a>│   │   │   ├── comms/               # Field telephone and radio definitions
+<a id="__codelineno-0-234" name="__codelineno-0-234" href="#__codelineno-0-234"></a>│   │   │   └── scenarios/           # Kursk, Midway, Normandy Bocage, and Stalingrad collections
+<a id="__codelineno-0-235" name="__codelineno-0-235" href="#__codelineno-0-235"></a>│   │   ├── ww1/                     # WW1 era data [Phases 21, 29]
+<a id="__codelineno-0-236" name="__codelineno-0-236" href="#__codelineno-0-236"></a>│   │   │   ├── units/               # Infantry, armor, cavalry, naval, ground, and air definitions
+<a id="__codelineno-0-237" name="__codelineno-0-237" href="#__codelineno-0-237"></a>│   │   │   │   ├── naval/           # Iron Duke BB, Konig BB, Invincible BC, G-class DD, U-boat [P29]
+<a id="__codelineno-0-238" name="__codelineno-0-238" href="#__codelineno-0-238"></a>│   │   │   │   └── air/             # SPAD XIII, Fokker D.VII [P29]
+<a id="__codelineno-0-239" name="__codelineno-0-239" href="#__codelineno-0-239"></a>│   │   │   ├── weapons/             # Rifle, machine-gun, artillery, naval, and aircraft definitions
+<a id="__codelineno-0-240" name="__codelineno-0-240" href="#__codelineno-0-240"></a>│   │   │   ├── ammunition/          # Ball, AP, HE, shrapnel, gas, naval, and aircraft ammunition
+<a id="__codelineno-0-241" name="__codelineno-0-241" href="#__codelineno-0-241"></a>│   │   │   ├── sensors/             # Era sensor definitions
+<a id="__codelineno-0-242" name="__codelineno-0-242" href="#__codelineno-0-242"></a>│   │   │   ├── signatures/          # Unit signature profiles
+<a id="__codelineno-0-243" name="__codelineno-0-243" href="#__codelineno-0-243"></a>│   │   │   ├── doctrine/            # Doctrine templates
+<a id="__codelineno-0-244" name="__codelineno-0-244" href="#__codelineno-0-244"></a>│   │   │   ├── commanders/          # Commander profiles
+<a id="__codelineno-0-245" name="__codelineno-0-245" href="#__codelineno-0-245"></a>│   │   │   ├── comms/               # Field telephone and runner-messenger definitions
+<a id="__codelineno-0-246" name="__codelineno-0-246" href="#__codelineno-0-246"></a>│   │   │   └── scenarios/           # Somme Day 1, Cambrai, and Jutland collections
+<a id="__codelineno-0-247" name="__codelineno-0-247" href="#__codelineno-0-247"></a>│   │   ├── napoleonic/              # Napoleonic era data [Phases 22, 29]
+<a id="__codelineno-0-248" name="__codelineno-0-248" href="#__codelineno-0-248"></a>│   │   │   ├── units/               # Infantry, cavalry, artillery, naval, engineer, and supply definitions
+<a id="__codelineno-0-249" name="__codelineno-0-249" href="#__codelineno-0-249"></a>│   │   │   │   └── naval/           # Ship of line 74, First Rate 100, Frigate 32, Corvette, Fire Ship [P29]
+<a id="__codelineno-0-250" name="__codelineno-0-250" href="#__codelineno-0-250"></a>│   │   │   ├── weapons/             # Musket, cannon, naval, and rocket definitions
+<a id="__codelineno-0-251" name="__codelineno-0-251" href="#__codelineno-0-251"></a>│   │   │   ├── ammunition/          # Musket ball, roundshot, canister, naval, and rocket ammunition
+<a id="__codelineno-0-252" name="__codelineno-0-252" href="#__codelineno-0-252"></a>│   │   │   ├── sensors/             # Era sensor definitions
+<a id="__codelineno-0-253" name="__codelineno-0-253" href="#__codelineno-0-253"></a>│   │   │   ├── signatures/          # Unit signature profiles
+<a id="__codelineno-0-254" name="__codelineno-0-254" href="#__codelineno-0-254"></a>│   │   │   ├── doctrine/            # Doctrine templates
+<a id="__codelineno-0-255" name="__codelineno-0-255" href="#__codelineno-0-255"></a>│   │   │   ├── commanders/          # Commander profiles
+<a id="__codelineno-0-256" name="__codelineno-0-256" href="#__codelineno-0-256"></a>│   │   │   ├── comms/               # Mounted courier and drum/bugle definitions
+<a id="__codelineno-0-257" name="__codelineno-0-257" href="#__codelineno-0-257"></a>│   │   │   └── scenarios/           # Austerlitz, Waterloo, and Trafalgar collections
+<a id="__codelineno-0-258" name="__codelineno-0-258" href="#__codelineno-0-258"></a>│   │   └── ancient_medieval/        # Ancient &amp; Medieval era data [Phases 23, 29]
+<a id="__codelineno-0-259" name="__codelineno-0-259" href="#__codelineno-0-259"></a>│   │       ├── units/               # Infantry, cavalry, mounted, naval, and siege definitions
+<a id="__codelineno-0-260" name="__codelineno-0-260" href="#__codelineno-0-260"></a>│   │       │   └── naval/           # Trireme, Quinquereme, Longship, Dromon, Cog, War Galley [P29]
+<a id="__codelineno-0-261" name="__codelineno-0-261" href="#__codelineno-0-261"></a>│   │       ├── weapons/             # Melee, ranged, siege, and naval definitions
+<a id="__codelineno-0-262" name="__codelineno-0-262" href="#__codelineno-0-262"></a>│   │       ├── ammunition/          # Arrow, bolt, javelin, stone, and naval ammunition
+<a id="__codelineno-0-263" name="__codelineno-0-263" href="#__codelineno-0-263"></a>│   │       ├── sensors/             # Era sensor definitions
+<a id="__codelineno-0-264" name="__codelineno-0-264" href="#__codelineno-0-264"></a>│   │       ├── signatures/          # Unit signature profiles
+<a id="__codelineno-0-265" name="__codelineno-0-265" href="#__codelineno-0-265"></a>│   │       ├── doctrine/            # Doctrine templates
+<a id="__codelineno-0-266" name="__codelineno-0-266" href="#__codelineno-0-266"></a>│   │       ├── commanders/          # Hannibal, Henry V, William the Conqueror, and Subotai profiles
+<a id="__codelineno-0-267" name="__codelineno-0-267" href="#__codelineno-0-267"></a>│   │       ├── comms/               # Battle-horn and banner-signal definitions
+<a id="__codelineno-0-268" name="__codelineno-0-268" href="#__codelineno-0-268"></a>│   │       └── scenarios/           # Cannae, Agincourt, Hastings, and Salamis collections
+<a id="__codelineno-0-269" name="__codelineno-0-269" href="#__codelineno-0-269"></a>│   ├── validation/                   # Historical claim ledger and retained study plans
+<a id="__codelineno-0-270" name="__codelineno-0-270" href="#__codelineno-0-270"></a>│   │   ├── historical_claims.yaml
+<a id="__codelineno-0-271" name="__codelineno-0-271" href="#__codelineno-0-271"></a>│   │   └── historical_studies/
+<a id="__codelineno-0-272" name="__codelineno-0-272" href="#__codelineno-0-272"></a>│   │       ├── 73_easting_phase117.yaml
+<a id="__codelineno-0-273" name="__codelineno-0-273" href="#__codelineno-0-273"></a>│   │       └── agincourt_era_control_phase117.yaml
+<a id="__codelineno-0-274" name="__codelineno-0-274" href="#__codelineno-0-274"></a>│   └── scenarios/                    # Complete scenario packages
+<a id="__codelineno-0-275" name="__codelineno-0-275" href="#__codelineno-0-275"></a>│       ├── example_scenario/
+<a id="__codelineno-0-276" name="__codelineno-0-276" href="#__codelineno-0-276"></a>│       │   ├── scenario.yaml         # Master scenario config: start date/time (UTC), duration, initial weather, time zone
+<a id="__codelineno-0-277" name="__codelineno-0-277" href="#__codelineno-0-277"></a>│       │   ├── terrain/              # Terrain data: elevation, classification, soil, vegetation, infrastructure
+<a id="__codelineno-0-278" name="__codelineno-0-278" href="#__codelineno-0-278"></a>│       │   ├── infrastructure/       # Road/rail/bridge networks, building data, utilities
+<a id="__codelineno-0-279" name="__codelineno-0-279" href="#__codelineno-0-279"></a>│       │   ├── population/           # Civilian population data and disposition
+<a id="__codelineno-0-280" name="__codelineno-0-280" href="#__codelineno-0-280"></a>│       │   ├── maritime/             # Bathymetry, ports, sea lanes, acoustic environment profiles, tidal harmonic constituents
+<a id="__codelineno-0-281" name="__codelineno-0-281" href="#__codelineno-0-281"></a>│       │   ├── environment/          # Climate zone, prevailing weather patterns, seasonal parameters, magnetic declination grid
+<a id="__codelineno-0-282" name="__codelineno-0-282" href="#__codelineno-0-282"></a>│       │   ├── forces/               # OOB and initial dispositions per side (land, air, naval)
+<a id="__codelineno-0-283" name="__codelineno-0-283" href="#__codelineno-0-283"></a>│       │   └── objectives/           # Victory conditions and ROE
+<a id="__codelineno-0-284" name="__codelineno-0-284" href="#__codelineno-0-284"></a>│       ├── 73_easting/              # Phase 7: 73 Easting historical catalog scenario
+<a id="__codelineno-0-285" name="__codelineno-0-285" href="#__codelineno-0-285"></a>│       ├── falklands_naval/         # Phase 7: Falklands naval historical catalog scenario
+<a id="__codelineno-0-286" name="__codelineno-0-286" href="#__codelineno-0-286"></a>│       ├── golan_heights/           # Phase 7: Golan Heights historical catalog scenario
+<a id="__codelineno-0-287" name="__codelineno-0-287" href="#__codelineno-0-287"></a>│       ├── test_campaign/           # Phase 9: Minimal campaign test (2 sides, 1 objective, 24h)
+<a id="__codelineno-0-288" name="__codelineno-0-288" href="#__codelineno-0-288"></a>│       ├── test_campaign_multi/     # Phase 9: Multiple engagement points (2 objectives, 48h)
+<a id="__codelineno-0-289" name="__codelineno-0-289" href="#__codelineno-0-289"></a>│       ├── test_campaign_reinforce/ # Phase 9: Reinforcement schedule test (3 waves)
+<a id="__codelineno-0-290" name="__codelineno-0-290" href="#__codelineno-0-290"></a>│       ├── test_campaign_logistics/ # Phase 108: enabled deterministic logistics fixture
+<a id="__codelineno-0-291" name="__codelineno-0-291" href="#__codelineno-0-291"></a>│       ├── golan_campaign/         # Phase 10: Golan Heights 4-day historical catalog campaign
+<a id="__codelineno-0-292" name="__codelineno-0-292" href="#__codelineno-0-292"></a>│       ├── falklands_campaign/     # Phase 10: Falklands San Carlos 5-day historical catalog campaign
+<a id="__codelineno-0-293" name="__codelineno-0-293" href="#__codelineno-0-293"></a>│       ├── bekaa_valley_1982/     # Phase 16: Bekaa Valley SEAD mechanics scenario (Israeli EW vs Syrian SAMs)
+<a id="__codelineno-0-294" name="__codelineno-0-294" href="#__codelineno-0-294"></a>│       ├── gulf_war_ew_1991/      # Phase 16: Gulf War EW mechanics scenario (Coalition vs Iraqi IADS)
+<a id="__codelineno-0-295" name="__codelineno-0-295" href="#__codelineno-0-295"></a>│       ├── space_gps_denial/      # Phase 17: PGM accuracy comparison (full GPS vs degraded vs denied)
+<a id="__codelineno-0-296" name="__codelineno-0-296" href="#__codelineno-0-296"></a>│       ├── space_isr_gap/         # Phase 17: Satellite overpass gap exploitation mechanics scenario
+<a id="__codelineno-0-297" name="__codelineno-0-297" href="#__codelineno-0-297"></a>│       ├── space_asat_escalation/ # Phase 110: Catalog-backed exact-target direct-ascent ASAT scenario
+<a id="__codelineno-0-298" name="__codelineno-0-298" href="#__codelineno-0-298"></a>│       ├── cbrn_chemical_defense/ # Phase 18: Chemical attack on defended position (dispersal, MOPP, casualties)
+<a id="__codelineno-0-299" name="__codelineno-0-299" href="#__codelineno-0-299"></a>│       ├── cbrn_nuclear_tactical/ # Phase 18: Tactical nuclear weapon blast/EMP/fallout mechanics scenario
+<a id="__codelineno-0-300" name="__codelineno-0-300" href="#__codelineno-0-300"></a>│       ├── halabja_1988/         # Phase 24: Iraqi chemical escalation against Kurdish town
+<a id="__codelineno-0-301" name="__codelineno-0-301" href="#__codelineno-0-301"></a>│       ├── srebrenica_1995/      # Phase 24: Bosnian Serb protected zone violation
+<a id="__codelineno-0-302" name="__codelineno-0-302" href="#__codelineno-0-302"></a>│       ├── eastern_front_1943/   # Phase 24: German-Soviet mutual escalation (Kursk sector)
+<a id="__codelineno-0-303" name="__codelineno-0-303" href="#__codelineno-0-303"></a>│       └── coin_campaign/        # Phase 24: Modern COIN composite scenario (IED, insurgency, COIN)
+<a id="__codelineno-0-304" name="__codelineno-0-304" href="#__codelineno-0-304"></a>├── tests/
+<a id="__codelineno-0-305" name="__codelineno-0-305" href="#__codelineno-0-305"></a>│   ├── conftest.py                   # Shared fixtures (rng, event_bus, sim_clock) + helpers
+<a id="__codelineno-0-306" name="__codelineno-0-306" href="#__codelineno-0-306"></a>│   ├── unit/                         # Fast, isolated unit tests
+<a id="__codelineno-0-307" name="__codelineno-0-307" href="#__codelineno-0-307"></a>│   ├── integration/                  # Multi-module integration tests
+<a id="__codelineno-0-308" name="__codelineno-0-308" href="#__codelineno-0-308"></a>│   ├── benchmarks/                   # Performance benchmarks + determinism verification [Phase 13]
+<a id="__codelineno-0-309" name="__codelineno-0-309" href="#__codelineno-0-309"></a>│   ├── validation/                   # Data, contract, scenario, and evidence validation
+<a id="__codelineno-0-310" name="__codelineno-0-310" href="#__codelineno-0-310"></a>│   ├── api/                          # Explicit API partition
+<a id="__codelineno-0-311" name="__codelineno-0-311" href="#__codelineno-0-311"></a>│   └── e2e/                          # Explicit end-to-end partition
+<a id="__codelineno-0-312" name="__codelineno-0-312" href="#__codelineno-0-312"></a>├── scripts/
+<a id="__codelineno-0-313" name="__codelineno-0-313" href="#__codelineno-0-313"></a>│   ├── run_pytest_partition.py       # Exact selectors, manifests, deterministic shards
+<a id="__codelineno-0-314" name="__codelineno-0-314" href="#__codelineno-0-314"></a>│   ├── validate_test_partitions.py   # Disjoint exact-union audit
+<a id="__codelineno-0-315" name="__codelineno-0-315" href="#__codelineno-0-315"></a>│   ├── validate_test_evidence.py     # Weak/no-direct evidence-ledger audit
+<a id="__codelineno-0-316" name="__codelineno-0-316" href="#__codelineno-0-316"></a>│   ├── run_paired_benchmark.py       # Same-host paired + non-timing transition execution
+<a id="__codelineno-0-317" name="__codelineno-0-317" href="#__codelineno-0-317"></a>│   ├── run_historical_backtest.py    # Strict production study + atomic artifact publication
+<a id="__codelineno-0-318" name="__codelineno-0-318" href="#__codelineno-0-318"></a>│   ├── validate_docs_links.py        # Markdown target/fragment validation
+<a id="__codelineno-0-319" name="__codelineno-0-319" href="#__codelineno-0-319"></a>│   └── visualize/                    # Matplotlib visualization utilities
+<a id="__codelineno-0-320" name="__codelineno-0-320" href="#__codelineno-0-320"></a>└── stochastic_warfare/               # ===== MAIN PACKAGE =====
+<a id="__codelineno-0-321" name="__codelineno-0-321" href="#__codelineno-0-321"></a>    ├── __init__.py
+<a id="__codelineno-0-322" name="__codelineno-0-322" href="#__codelineno-0-322"></a>    ├── build_identity.py              # Strict immutable-package source identity
+<a id="__codelineno-0-323" name="__codelineno-0-323" href="#__codelineno-0-323"></a>    ├── scenario_names.py              # Canonical scenario-name normalization
+<a id="__codelineno-0-324" name="__codelineno-0-324" href="#__codelineno-0-324"></a>    ├── core/                         # Foundational infrastructure
+<a id="__codelineno-0-325" name="__codelineno-0-325" href="#__codelineno-0-325"></a>    │   ├── __init__.py
+<a id="__codelineno-0-326" name="__codelineno-0-326" href="#__codelineno-0-326"></a>    │   ├── rng.py                    # Central conventional-stream and typed indexed-decision RNG authority
+<a id="__codelineno-0-327" name="__codelineno-0-327" href="#__codelineno-0-327"></a>    │   ├── indexed_rng.py            # Identity-addressed Philox transactions for parallel FOW decisions
+<a id="__codelineno-0-328" name="__codelineno-0-328" href="#__codelineno-0-328"></a>    │   ├── performance_receipts.py   # Typed per-flag branch/execution receipts
 <a id="__codelineno-0-329" name="__codelineno-0-329" href="#__codelineno-0-329"></a>    │   ├── clock.py                  # Simulation clock, tick management, calendar-aware (real date/time, UTC)
 <a id="__codelineno-0-330" name="__codelineno-0-330" href="#__codelineno-0-330"></a>    │   ├── events.py                 # Event system (MRO-based publish dispatch, within-tick event queue)
 <a id="__codelineno-0-331" name="__codelineno-0-331" href="#__codelineno-0-331"></a>    │   ├── config.py                 # YAML config loading, pydantic base models
@@ -7085,241 +7197,248 @@
 <a id="__codelineno-0-417" name="__codelineno-0-417" href="#__codelineno-0-417"></a>    │   ├── sensors.py                # Sensor models (visual, thermal, radar, acoustic, seismic); cached sensor_type
 <a id="__codelineno-0-418" name="__codelineno-0-418" href="#__codelineno-0-418"></a>    │   ├── signatures.py             # Unit signature profiles: visual, thermal, radar cross-section, acoustic, EM emission
 <a id="__codelineno-0-419" name="__codelineno-0-419" href="#__codelineno-0-419"></a>    │   ├── detection.py              # SNR-based detection probability engine (Pd, Pfa, ROC)
-<a id="__codelineno-0-420" name="__codelineno-0-420" href="#__codelineno-0-420"></a>    │   ├── identification.py         # Classification &amp; ID confidence (detected → classified → identified)
-<a id="__codelineno-0-421" name="__codelineno-0-421" href="#__codelineno-0-421"></a>    │   ├── estimation.py             # Kalman filter state estimation (pre-alloc H/I₄ matrices, belief state)
-<a id="__codelineno-0-422" name="__codelineno-0-422" href="#__codelineno-0-422"></a>    │   ├── intel_fusion.py           # Multi-source fusion, atomic side ordinals, IMINT receipts/associations
-<a id="__codelineno-0-423" name="__codelineno-0-423" href="#__codelineno-0-423"></a>    │   ├── deception.py              # Decoys, feints, false signals, camouflage effectiveness
-<a id="__codelineno-0-424" name="__codelineno-0-424" href="#__codelineno-0-424"></a>    │   ├── sonar.py                  # Sonar models: active/passive, towed array, hull-mounted, sonobuoy, dipping
-<a id="__codelineno-0-425" name="__codelineno-0-425" href="#__codelineno-0-425"></a>    │   ├── underwater_detection.py   # Submarine detection: acoustic propagation through environment, MAD, wake detection, periscope detection
-<a id="__codelineno-0-426" name="__codelineno-0-426" href="#__codelineno-0-426"></a>    │   └── fog_of_war.py             # Per-side views, bounded witnesses, fusion aliases, strict format-116 staged restore
-<a id="__codelineno-0-427" name="__codelineno-0-427" href="#__codelineno-0-427"></a>    ├── combat/                       # Combat resolution
-<a id="__codelineno-0-428" name="__codelineno-0-428" href="#__codelineno-0-428"></a>    │   ├── __init__.py
-<a id="__codelineno-0-429" name="__codelineno-0-429" href="#__codelineno-0-429"></a>    │   ├── events.py                 # Combat events (engagement, hit, kill, fratricide, suppression)
-<a id="__codelineno-0-430" name="__codelineno-0-430" href="#__codelineno-0-430"></a>    │   ├── engagement.py             # Engagement sequencing, target selection, range determination
-<a id="__codelineno-0-431" name="__codelineno-0-431" href="#__codelineno-0-431"></a>    │   ├── ballistics.py             # Projectile physics: trajectory, drag, wind, Coriolis (long range)
-<a id="__codelineno-0-432" name="__codelineno-0-432" href="#__codelineno-0-432"></a>    │   ├── hit_probability.py        # P(hit) model: range, weapon, skill, target motion, conditions
-<a id="__codelineno-0-433" name="__codelineno-0-433" href="#__codelineno-0-433"></a>    │   ├── damage.py                 # Terminal effects: lethality, armor penetration, behind-armor effects
-<a id="__codelineno-0-434" name="__codelineno-0-434" href="#__codelineno-0-434"></a>    │   ├── suppression.py            # Suppression mechanics: volume of fire → suppression state
-<a id="__codelineno-0-435" name="__codelineno-0-435" href="#__codelineno-0-435"></a>    │   ├── indirect_fire.py          # Artillery execution, including scheduled exact-attachment time-on-target lifecycle and terminal effects
-<a id="__codelineno-0-436" name="__codelineno-0-436" href="#__codelineno-0-436"></a>    │   ├── indirect_fire_config.py   # Strict time-on-target scenario declarations and immutable resolved combat plans [Phase 111]
-<a id="__codelineno-0-437" name="__codelineno-0-437" href="#__codelineno-0-437"></a>    │   ├── missiles.py               # Surface-to-surface missiles: TBMs, cruise missiles, coastal defense SSMs, kill chain
-<a id="__codelineno-0-438" name="__codelineno-0-438" href="#__codelineno-0-438"></a>    │   ├── missile_defense.py        # BMD, cruise missile defense, C-RAM/short-range air defense vs rockets &amp; artillery
-<a id="__codelineno-0-439" name="__codelineno-0-439" href="#__codelineno-0-439"></a>    │   ├── air_combat.py             # Air-to-air engagement model, BVR and WVR
-<a id="__codelineno-0-440" name="__codelineno-0-440" href="#__codelineno-0-440"></a>    │   ├── air_ground.py             # CAS, SEAD/DEAD, close air support integration with ground
-<a id="__codelineno-0-441" name="__codelineno-0-441" href="#__codelineno-0-441"></a>    │   ├── air_defense.py            # SAM/AAA engagement envelopes, shoot-look-shoot, EMCON
-<a id="__codelineno-0-442" name="__codelineno-0-442" href="#__codelineno-0-442"></a>    │   ├── ammunition.py             # Ammo types (AP, HE, HEAT, smoke, illum), consumption, selection
-<a id="__codelineno-0-443" name="__codelineno-0-443" href="#__codelineno-0-443"></a>    │   ├── naval_surface.py          # Surface warfare: anti-ship missiles, naval gunfire, torpedo attack, point defense
-<a id="__codelineno-0-444" name="__codelineno-0-444" href="#__codelineno-0-444"></a>    │   ├── naval_subsurface.py       # Submarine warfare: torpedo engagements, submarine-launched missiles, evasion
-<a id="__codelineno-0-445" name="__codelineno-0-445" href="#__codelineno-0-445"></a>    │   ├── naval_mine.py             # Mine warfare: mine laying, sweeping, hunting, mine types (contact, influence, smart)
-<a id="__codelineno-0-446" name="__codelineno-0-446" href="#__codelineno-0-446"></a>    │   ├── naval_gunfire_support.py  # Shore bombardment, naval fire support for ground forces
-<a id="__codelineno-0-447" name="__codelineno-0-447" href="#__codelineno-0-447"></a>    │   ├── amphibious_assault.py     # Beach assault resolution, shore defenses, landing operations
-<a id="__codelineno-0-448" name="__codelineno-0-448" href="#__codelineno-0-448"></a>    │   ├── carrier_ops.py            # Carrier flight operations, sortie generation rate, deck cycle, CAP management
-<a id="__codelineno-0-449" name="__codelineno-0-449" href="#__codelineno-0-449"></a>    │   ├── fratricide.py             # Friendly fire: IFF uncertainty, deconfliction, identification errors
-<a id="__codelineno-0-450" name="__codelineno-0-450" href="#__codelineno-0-450"></a>    │   ├── iads.py                   # IADS sector model: radar handoff chain, SEAD degradation, sector health [Phase 12f]
-<a id="__codelineno-0-451" name="__codelineno-0-451" href="#__codelineno-0-451"></a>    │   ├── air_campaign.py           # Air campaign management: sortie capacity, pilot fatigue, weather days, attrition [Phase 12f]
-<a id="__codelineno-0-452" name="__codelineno-0-452" href="#__codelineno-0-452"></a>    │   ├── strategic_targeting.py    # Strategic targeting: TPL generation, BDA cycle, target-effect chains [Phase 12f]
-<a id="__codelineno-0-453" name="__codelineno-0-453" href="#__codelineno-0-453"></a>    │   ├── naval_gunnery.py          # WW2 naval gunnery: bracket firing, fire control quality, 2D Gaussian dispersion [Phase 20b]
-<a id="__codelineno-0-454" name="__codelineno-0-454" href="#__codelineno-0-454"></a>    │   ├── strategic_bombing.py      # WW2 strategic bombing: CEP area damage, flak, fighter escort, target regeneration [Phase 20b]
-<a id="__codelineno-0-455" name="__codelineno-0-455" href="#__codelineno-0-455"></a>    │   ├── barrage.py                # WW1 artillery barrage: standing/creeping/box, fire density, suppression, drift, friendly fire [Phase 21b]
-<a id="__codelineno-0-456" name="__codelineno-0-456" href="#__codelineno-0-456"></a>    │   ├── gas_warfare.py            # WW1 gas warfare adapter: cylinder release, gas shells, projectors, mask→MOPP mapping [Phase 21b]
-<a id="__codelineno-0-457" name="__codelineno-0-457" href="#__codelineno-0-457"></a>    │   ├── volley_fire.py            # Napoleonic massed musket fire: Binomial aggregate, range table, smoke, canister [Phase 22b]
-<a id="__codelineno-0-458" name="__codelineno-0-458" href="#__codelineno-0-458"></a>    │   ├── melee.py                  # Contact combat: Napoleonic (bayonet/cavalry charge, pursuit) + Ancient (pike push, shield wall, mounted charge, reach/flanking) [Phase 22b, 23b]
-<a id="__codelineno-0-459" name="__codelineno-0-459" href="#__codelineno-0-459"></a>    │   ├── archery.py                # Massed archery: Binomial aggregate, 5 missile types, armor reduction, per-archer ammo [Phase 23b]
-<a id="__codelineno-0-460" name="__codelineno-0-460" href="#__codelineno-0-460"></a>    │   ├── siege.py                  # Siege warfare: daily state machine (encirclement→bombardment→breach→assault→fallen/relief) [Phase 23b]
-<a id="__codelineno-0-461" name="__codelineno-0-461" href="#__codelineno-0-461"></a>    │   ├── unconventional.py         # IED emplacement/detection/detonation, guerrilla hit-and-run, human shields [Phase 24c]
-<a id="__codelineno-0-462" name="__codelineno-0-462" href="#__codelineno-0-462"></a>    │   └── directed_energy.py       # DEW engine: Beer-Lambert laser transmittance, laser/HPM Pk, engagement execution [Phase 28.5]
-<a id="__codelineno-0-463" name="__codelineno-0-463" href="#__codelineno-0-463"></a>    ├── morale/                       # Morale &amp; human factors
-<a id="__codelineno-0-464" name="__codelineno-0-464" href="#__codelineno-0-464"></a>    │   ├── __init__.py
-<a id="__codelineno-0-465" name="__codelineno-0-465" href="#__codelineno-0-465"></a>    │   ├── runtime.py                # One immutable-record owner for transitions, status/routes, aggregation, and checkpoint state
-<a id="__codelineno-0-466" name="__codelineno-0-466" href="#__codelineno-0-466"></a>    │   ├── config.py                 # Typed morale configuration and defaults
-<a id="__codelineno-0-467" name="__codelineno-0-467" href="#__codelineno-0-467"></a>    │   ├── events.py                 # Morale events (state change, rout, rally, surrender)
-<a id="__codelineno-0-468" name="__codelineno-0-468" href="#__codelineno-0-468"></a>    │   ├── state.py                  # Stateless Markov transition selector: steady/shaken/broken/routed/surrendered
-<a id="__codelineno-0-469" name="__codelineno-0-469" href="#__codelineno-0-469"></a>    │   ├── cohesion.py               # Unit cohesion, nearby friendlies, leadership, unit history/reputation
-<a id="__codelineno-0-470" name="__codelineno-0-470" href="#__codelineno-0-470"></a>    │   ├── stress.py                 # Stress/fatigue/sleep deprivation accumulation (random walk with drift)
-<a id="__codelineno-0-471" name="__codelineno-0-471" href="#__codelineno-0-471"></a>    │   ├── experience.py             # Training level, combat experience learning curve, skill progression
-<a id="__codelineno-0-472" name="__codelineno-0-472" href="#__codelineno-0-472"></a>    │   ├── psychology.py             # PSYOP effects, propaganda, surrender inducement, civilian reaction
-<a id="__codelineno-0-473" name="__codelineno-0-473" href="#__codelineno-0-473"></a>    │   └── rout.py                   # Rout/rally/cascade planning; partial surrender/POW API rejects pending REM-033
-<a id="__codelineno-0-474" name="__codelineno-0-474" href="#__codelineno-0-474"></a>    ├── c2/                           # Command &amp; Control (Phase 5: plumbing; Phase 8: AI/planning)
-<a id="__codelineno-0-475" name="__codelineno-0-475" href="#__codelineno-0-475"></a>    │   ├── __init__.py
-<a id="__codelineno-0-476" name="__codelineno-0-476" href="#__codelineno-0-476"></a>    │   ├── events.py                 # C2 events (command status, succession, comms, orders, ROE, coordination, initiative)
-<a id="__codelineno-0-477" name="__codelineno-0-477" href="#__codelineno-0-477"></a>    │   ├── command.py                # Command authority, command relationships (OPCON, TACON, ADCON, support)
-<a id="__codelineno-0-478" name="__codelineno-0-478" href="#__codelineno-0-478"></a>    │   ├── orders/                   # Order system
-<a id="__codelineno-0-479" name="__codelineno-0-479" href="#__codelineno-0-479"></a>    │   │   ├── __init__.py
-<a id="__codelineno-0-480" name="__codelineno-0-480" href="#__codelineno-0-480"></a>    │   │   ├── types.py              # Order type hierarchy: OPORD, FRAGO, WARNO, and domain-specific orders
-<a id="__codelineno-0-481" name="__codelineno-0-481" href="#__codelineno-0-481"></a>    │   │   ├── individual.py         # Individual/fire team level: move to, engage, take cover, suppress, breach
-<a id="__codelineno-0-482" name="__codelineno-0-482" href="#__codelineno-0-482"></a>    │   │   ├── tactical.py           # Squad through battalion: assault, defend, ambush, patrol, recon, screen, guard
-<a id="__codelineno-0-483" name="__codelineno-0-483" href="#__codelineno-0-483"></a>    │   │   ├── operational.py        # Brigade through corps: main effort, reserve commit, phase lines, deep ops, shaping
-<a id="__codelineno-0-484" name="__codelineno-0-484" href="#__codelineno-0-484"></a>    │   │   ├── strategic.py          # Theater/campaign: force allocation, strategic objectives, political constraints, alliance
-<a id="__codelineno-0-485" name="__codelineno-0-485" href="#__codelineno-0-485"></a>    │   │   ├── naval_orders.py       # Naval-specific: formation orders, ASW prosecution, strike assignment, convoy routing, blockade
-<a id="__codelineno-0-486" name="__codelineno-0-486" href="#__codelineno-0-486"></a>    │   │   ├── air_orders.py         # Air-specific: ATO (Air Tasking Order), ACO, SPINS, strike packages, CAP assignments
-<a id="__codelineno-0-487" name="__codelineno-0-487" href="#__codelineno-0-487"></a>    │   │   ├── propagation.py        # Order transmission: delays, degradation, misinterpretation probability
-<a id="__codelineno-0-488" name="__codelineno-0-488" href="#__codelineno-0-488"></a>    │   │   └── execution.py          # Order execution tracking: compliance, adaptation, deviation reporting
-<a id="__codelineno-0-489" name="__codelineno-0-489" href="#__codelineno-0-489"></a>    │   ├── planning/                 # Planning process [PHASE 8b]
-<a id="__codelineno-0-490" name="__codelineno-0-490" href="#__codelineno-0-490"></a>    │   │   ├── __init__.py
-<a id="__codelineno-0-491" name="__codelineno-0-491" href="#__codelineno-0-491"></a>    │   │   ├── process.py            # MDMP state machine (INTUITIVE/DIRECTIVE/RAPID/MDMP), 1/3-2/3 rule
-<a id="__codelineno-0-492" name="__codelineno-0-492" href="#__codelineno-0-492"></a>    │   │   ├── mission_analysis.py   # Mission analysis: specified/implied/essential tasks, risks, constraints, key terrain
-<a id="__codelineno-0-493" name="__codelineno-0-493" href="#__codelineno-0-493"></a>    │   │   ├── coa.py                # COA development, Lanchester wargaming, weighted comparison, softmax selection
-<a id="__codelineno-0-494" name="__codelineno-0-494" href="#__codelineno-0-494"></a>    │   │   ├── estimates.py          # Running estimates (5 types), periodic update, significant change events
-<a id="__codelineno-0-495" name="__codelineno-0-495" href="#__codelineno-0-495"></a>    │   │   └── phases.py             # Condition-based operational phasing with branches and sequels
-<a id="__codelineno-0-496" name="__codelineno-0-496" href="#__codelineno-0-496"></a>    │   ├── communications.py         # Comms reliability, bandwidth, degradation, EMCON, means (radio/wire/messenger/data link), compute_c2_effectiveness() [Phase 53]
-<a id="__codelineno-0-497" name="__codelineno-0-497" href="#__codelineno-0-497"></a>    │   ├── roe.py                    # Rules of engagement, escalation, political constraints, law of armed conflict
-<a id="__codelineno-0-498" name="__codelineno-0-498" href="#__codelineno-0-498"></a>    │   ├── coordination.py           # Fire support coord, airspace deconfliction, boundaries, sea-land-air integration
-<a id="__codelineno-0-499" name="__codelineno-0-499" href="#__codelineno-0-499"></a>    │   ├── naval_c2.py              # Fleet org (TF/TG/TU), naval data links, submarine comms (VLF/ELF)
-<a id="__codelineno-0-500" name="__codelineno-0-500" href="#__codelineno-0-500"></a>    │   ├── mission_command.py        # Commander&#39;s intent, mission-type orders, subordinate initiative/adaptation
-<a id="__codelineno-0-501" name="__codelineno-0-501" href="#__codelineno-0-501"></a>    │   ├── joint_ops.py             # Joint task force command: service coordination, liaison, coalition caveats [Phase 12a]
-<a id="__codelineno-0-502" name="__codelineno-0-502" href="#__codelineno-0-502"></a>    │   ├── courier.py               # Napoleonic courier C2: physical messenger, terrain speed, interception risk, courier pool [Phase 22b]
-<a id="__codelineno-0-503" name="__codelineno-0-503" href="#__codelineno-0-503"></a>    │   ├── visual_signals.py        # Ancient C2: banner/horn/runner/fire beacon, synchronous presence-based signaling [Phase 23b]
-<a id="__codelineno-0-504" name="__codelineno-0-504" href="#__codelineno-0-504"></a>    │   └── ai/                       # AI decision-making [PHASE 8a]
-<a id="__codelineno-0-505" name="__codelineno-0-505" href="#__codelineno-0-505"></a>    │       ├── __init__.py
-<a id="__codelineno-0-506" name="__codelineno-0-506" href="#__codelineno-0-506"></a>    │       ├── ooda.py               # OODA loop timer/FSM (echelon-scaled, log-normal friction)
-<a id="__codelineno-0-507" name="__codelineno-0-507" href="#__codelineno-0-507"></a>    │       ├── commander.py          # YAML personality profiles (aggression, caution, flexibility, experience, decision_speed)
-<a id="__codelineno-0-508" name="__codelineno-0-508" href="#__codelineno-0-508"></a>    │       ├── assessment.py         # 7-factor situation assessment (force ratio, terrain, supply, morale, intel, env, C2)
-<a id="__codelineno-0-509" name="__codelineno-0-509" href="#__codelineno-0-509"></a>    │       ├── decisions.py          # 5 echelon-specific decision functions (individual through corps+)
-<a id="__codelineno-0-510" name="__codelineno-0-510" href="#__codelineno-0-510"></a>    │       ├── adaptation.py         # 7-trigger plan adaptation (casualties, force ratio, supply, morale, opportunity, surprise, C2)
-<a id="__codelineno-0-511" name="__codelineno-0-511" href="#__codelineno-0-511"></a>    │       ├── doctrine.py           # YAML doctrine templates (US, Russian, NATO, generic) with action/echelon filtering
-<a id="__codelineno-0-512" name="__codelineno-0-512" href="#__codelineno-0-512"></a>    │       ├── stratagems.py         # 6 stratagem types with echelon+experience gating (deception, concentration, surprise, etc.)
-<a id="__codelineno-0-513" name="__codelineno-0-513" href="#__codelineno-0-513"></a>    │       ├── sof_ops.py            # SOF mission lifecycle: infiltration, HVT targeting, sabotage, direct action [Phase 24c]
-<a id="__codelineno-0-514" name="__codelineno-0-514" href="#__codelineno-0-514"></a>    │       └── schools/              # Doctrinal AI schools — Strategy pattern [Phase 19]
-<a id="__codelineno-0-515" name="__codelineno-0-515" href="#__codelineno-0-515"></a>    │           ├── __init__.py       # SchoolRegistry + SchoolLoader
-<a id="__codelineno-0-516" name="__codelineno-0-516" href="#__codelineno-0-516"></a>    │           ├── base.py           # SchoolDefinition pydantic model + DoctrinalSchool ABC (8 hooks)
-<a id="__codelineno-0-517" name="__codelineno-0-517" href="#__codelineno-0-517"></a>    │           ├── clausewitzian.py  # Center-of-gravity, decisive engagement, culmination awareness
-<a id="__codelineno-0-518" name="__codelineno-0-518" href="#__codelineno-0-518"></a>    │           ├── maneuverist.py    # Tempo/OODA ×0.7, bypass, indirect approach
-<a id="__codelineno-0-519" name="__codelineno-0-519" href="#__codelineno-0-519"></a>    │           ├── attrition.py      # Exchange ratio, fire superiority, deliberate operations
-<a id="__codelineno-0-520" name="__codelineno-0-520" href="#__codelineno-0-520"></a>    │           ├── airland_battle.py # Echelon-dependent deep/close, sensor-to-shooter
-<a id="__codelineno-0-521" name="__codelineno-0-521" href="#__codelineno-0-521"></a>    │           ├── air_power.py      # Five Rings, air superiority prerequisite
-<a id="__codelineno-0-522" name="__codelineno-0-522" href="#__codelineno-0-522"></a>    │           ├── sun_tzu.py        # Intel ×3, opponent modeling, counter-posture scoring
-<a id="__codelineno-0-523" name="__codelineno-0-523" href="#__codelineno-0-523"></a>    │           ├── deep_battle.py    # Echeloned assault, reserve management, operational depth
-<a id="__codelineno-0-524" name="__codelineno-0-524" href="#__codelineno-0-524"></a>    │           └── maritime.py       # MahanianSchool + CorbettianSchool
-<a id="__codelineno-0-525" name="__codelineno-0-525" href="#__codelineno-0-525"></a>    ├── logistics/                    # Supply &amp; logistics
-<a id="__codelineno-0-526" name="__codelineno-0-526" href="#__codelineno-0-526"></a>    │   ├── __init__.py
-<a id="__codelineno-0-527" name="__codelineno-0-527" href="#__codelineno-0-527"></a>    │   ├── config.py                 # Strict opt-in scenario logistics schema
-<a id="__codelineno-0-528" name="__codelineno-0-528" href="#__codelineno-0-528"></a>    │   ├── events.py                 # Logistics events (supply delivery/shortage/depletion, convoy, maintenance, engineering, medical, POW, naval, disruption)
-<a id="__codelineno-0-529" name="__codelineno-0-529" href="#__codelineno-0-529"></a>    │   ├── runtime.py                # Fixed-cadence topology, direct resupply, idle demand, checkpoint state
-<a id="__codelineno-0-530" name="__codelineno-0-530" href="#__codelineno-0-530"></a>    │   ├── supply_network.py         # Supply chain graph (networkx), leverages terrain infrastructure
-<a id="__codelineno-0-531" name="__codelineno-0-531" href="#__codelineno-0-531"></a>    │   ├── supply_classes.py         # Military supply classification (Class I-X), ammo types, fuel types
-<a id="__codelineno-0-532" name="__codelineno-0-532" href="#__codelineno-0-532"></a>    │   ├── consumption.py            # Per-unit consumption models (ammo by type, fuel by activity, food, water)
-<a id="__codelineno-0-533" name="__codelineno-0-533" href="#__codelineno-0-533"></a>    │   ├── transport.py              # Transport units, convoys, airlift, aerial resupply/airdrop
-<a id="__codelineno-0-534" name="__codelineno-0-534" href="#__codelineno-0-534"></a>    │   ├── stockpile.py              # Depot and stockpile management, captured supplies/equipment
-<a id="__codelineno-0-535" name="__codelineno-0-535" href="#__codelineno-0-535"></a>    │   ├── maintenance.py            # Equipment maintenance cycles, repair, breakdown probability, spare parts
-<a id="__codelineno-0-536" name="__codelineno-0-536" href="#__codelineno-0-536"></a>    │   ├── engineering.py            # Engineer operations: bridging, road building, fortification, obstacle emplacement/clearing
-<a id="__codelineno-0-537" name="__codelineno-0-537" href="#__codelineno-0-537"></a>    │   ├── medical.py                # Casualty evacuation chain, triage queueing, treatment, return-to-duty
-<a id="__codelineno-0-538" name="__codelineno-0-538" href="#__codelineno-0-538"></a>    │   ├── prisoners.py              # POW handling, processing, resource cost of prisoner management
-<a id="__codelineno-0-539" name="__codelineno-0-539" href="#__codelineno-0-539"></a>    │   ├── naval_logistics.py         # Underway replenishment (UNREP/RAS), port operations, sealift, LOTS
-<a id="__codelineno-0-540" name="__codelineno-0-540" href="#__codelineno-0-540"></a>    │   ├── naval_basing.py           # Naval bases, forward operating bases, anchorage, port capacity/throughput
-<a id="__codelineno-0-541" name="__codelineno-0-541" href="#__codelineno-0-541"></a>    │   ├── disruption.py             # Interdiction, route destruction, sabotage, blockade
-<a id="__codelineno-0-542" name="__codelineno-0-542" href="#__codelineno-0-542"></a>    │   ├── production.py             # Supply regeneration: production facilities, infrastructure-coupled output [Phase 12b]
-<a id="__codelineno-0-543" name="__codelineno-0-543" href="#__codelineno-0-543"></a>    │   └── foraging.py              # Napoleonic foraging: terrain productivity, seasonal modifiers, depletion/recovery, ambush [Phase 22b]
-<a id="__codelineno-0-544" name="__codelineno-0-544" href="#__codelineno-0-544"></a>    ├── population/                    # Civilian population &amp; COIN [Phase 12e]
-<a id="__codelineno-0-545" name="__codelineno-0-545" href="#__codelineno-0-545"></a>    │   ├── __init__.py
-<a id="__codelineno-0-546" name="__codelineno-0-546" href="#__codelineno-0-546"></a>    │   ├── events.py                 # Population events (displacement, collateral, disposition, HUMINT tip)
-<a id="__codelineno-0-547" name="__codelineno-0-547" href="#__codelineno-0-547"></a>    │   ├── civilians.py              # Civilian entity manager: regions, disposition, displacement tracking
-<a id="__codelineno-0-548" name="__codelineno-0-548" href="#__codelineno-0-548"></a>    │   ├── displacement.py           # Refugee displacement: combat-driven movement, transport penalty
-<a id="__codelineno-0-549" name="__codelineno-0-549" href="#__codelineno-0-549"></a>    │   ├── collateral.py             # Collateral damage tracking, escalation threshold
-<a id="__codelineno-0-550" name="__codelineno-0-550" href="#__codelineno-0-550"></a>    │   ├── humint.py                 # Civilian HUMINT: Poisson tip generation, disposition-dependent flow
-<a id="__codelineno-0-551" name="__codelineno-0-551" href="#__codelineno-0-551"></a>    │   ├── influence.py              # Population disposition dynamics: Markov chain transitions
-<a id="__codelineno-0-552" name="__codelineno-0-552" href="#__codelineno-0-552"></a>    │   └── insurgency.py             # Insurgency dynamics: Markov radicalization pipeline, cell operations, discovery [Phase 24e]
-<a id="__codelineno-0-553" name="__codelineno-0-553" href="#__codelineno-0-553"></a>    ├── validation/                    # Legacy diagnostics + production historical studies
-<a id="__codelineno-0-554" name="__codelineno-0-554" href="#__codelineno-0-554"></a>    │   ├── __init__.py
-<a id="__codelineno-0-555" name="__codelineno-0-555" href="#__codelineno-0-555"></a>    │   ├── historical_data.py         # Legacy historical comparison models + YAML loader
-<a id="__codelineno-0-556" name="__codelineno-0-556" href="#__codelineno-0-556"></a>    │   ├── metrics.py                 # Engagement-level metric extraction from simulation results
-<a id="__codelineno-0-557" name="__codelineno-0-557" href="#__codelineno-0-557"></a>    │   ├── scenario_runner.py         # Legacy lightweight diagnostic orchestrator
-<a id="__codelineno-0-558" name="__codelineno-0-558" href="#__codelineno-0-558"></a>    │   ├── monte_carlo.py             # Legacy Monte Carlo comparison diagnostics
-<a id="__codelineno-0-559" name="__codelineno-0-559" href="#__codelineno-0-559"></a>    │   ├── campaign_data.py           # Campaign-level historical data models, AIExpectation, CampaignDataLoader
-<a id="__codelineno-0-560" name="__codelineno-0-560" href="#__codelineno-0-560"></a>    │   ├── campaign_runner.py         # Campaign runner through factory prepare_config + RuntimeSession
-<a id="__codelineno-0-561" name="__codelineno-0-561" href="#__codelineno-0-561"></a>    │   ├── campaign_metrics.py        # Campaign-level metric extraction (units destroyed, exchange ratio, etc.)
-<a id="__codelineno-0-562" name="__codelineno-0-562" href="#__codelineno-0-562"></a>    │   ├── ai_validation.py           # AI decision quality analysis from recorder events
-<a id="__codelineno-0-563" name="__codelineno-0-563" href="#__codelineno-0-563"></a>    │   ├── movement_diagnostics.py    # Typed semantic movement evaluator
-<a id="__codelineno-0-564" name="__codelineno-0-564" href="#__codelineno-0-564"></a>    │   ├── performance.py             # cProfile + tracemalloc campaign performance profiling
-<a id="__codelineno-0-565" name="__codelineno-0-565" href="#__codelineno-0-565"></a>    │   └── historical_backtest/       # Phase 117 production claim/evidence boundary
-<a id="__codelineno-0-566" name="__codelineno-0-566" href="#__codelineno-0-566"></a>    │       ├── __init__.py             # Public typed backtest API
-<a id="__codelineno-0-567" name="__codelineno-0-567" href="#__codelineno-0-567"></a>    │       ├── common.py               # Strict models, digests, and no-symlink guards
-<a id="__codelineno-0-568" name="__codelineno-0-568" href="#__codelineno-0-568"></a>    │       ├── claims.py               # Claim ledger, source audit, public dispositions
-<a id="__codelineno-0-569" name="__codelineno-0-569" href="#__codelineno-0-569"></a>    │       ├── studies.py              # Typed study plan, lineage, metrics, policy
-<a id="__codelineno-0-570" name="__codelineno-0-570" href="#__codelineno-0-570"></a>    │       ├── runner.py               # Factory-owned runs and observation receipts
-<a id="__codelineno-0-571" name="__codelineno-0-571" href="#__codelineno-0-571"></a>    │       ├── evaluator.py            # Exact joint Clopper--Pearson verdict
-<a id="__codelineno-0-572" name="__codelineno-0-572" href="#__codelineno-0-572"></a>    │       └── artifacts.py            # Digest-bearing atomic PASS/FAIL/ERROR artifacts
-<a id="__codelineno-0-573" name="__codelineno-0-573" href="#__codelineno-0-573"></a>    ├── tools/                         # Developer tooling — MCP server, analysis, visualization [Phase 14]
-<a id="__codelineno-0-574" name="__codelineno-0-574" href="#__codelineno-0-574"></a>    │   ├── __init__.py
-<a id="__codelineno-0-575" name="__codelineno-0-575" href="#__codelineno-0-575"></a>    │   ├── serializers.py             # JSON serialization for numpy, datetime, enum, Position
-<a id="__codelineno-0-576" name="__codelineno-0-576" href="#__codelineno-0-576"></a>    │   ├── result_store.py            # In-memory LRU cache for run results
-<a id="__codelineno-0-577" name="__codelineno-0-577" href="#__codelineno-0-577"></a>    │   ├── mcp_server.py              # FastMCP server with 7 tools (run, query, MC, compare, list, modify)
-<a id="__codelineno-0-578" name="__codelineno-0-578" href="#__codelineno-0-578"></a>    │   ├── mcp_resources.py           # MCP resource providers (scenarios, units, results)
-<a id="__codelineno-0-579" name="__codelineno-0-579" href="#__codelineno-0-579"></a>    │   ├── _run_helpers.py            # Production factory/session batch boundary + provenance
-<a id="__codelineno-0-580" name="__codelineno-0-580" href="#__codelineno-0-580"></a>    │   ├── narrative.py               # Battle narrative generation from events (registry-based formatters)
-<a id="__codelineno-0-581" name="__codelineno-0-581" href="#__codelineno-0-581"></a>    │   ├── tempo_analysis.py          # Operational tempo FFT + OODA cycle extraction
-<a id="__codelineno-0-582" name="__codelineno-0-582" href="#__codelineno-0-582"></a>    │   ├── comparison.py              # Common-seed paired exact-sign + Holm comparison
-<a id="__codelineno-0-583" name="__codelineno-0-583" href="#__codelineno-0-583"></a>    │   ├── sensitivity.py             # Strict paired-seed parameter sweep
-<a id="__codelineno-0-584" name="__codelineno-0-584" href="#__codelineno-0-584"></a>    │   ├── doctrine_compare.py        # Doctrine-only production comparison
-<a id="__codelineno-0-585" name="__codelineno-0-585" href="#__codelineno-0-585"></a>    │   ├── charts.py                  # 6 reusable chart functions (force, engagement, supply, morale, MC)
-<a id="__codelineno-0-586" name="__codelineno-0-586" href="#__codelineno-0-586"></a>    │   └── replay.py                  # Animated battle replay (FuncAnimation)
-<a id="__codelineno-0-587" name="__codelineno-0-587" href="#__codelineno-0-587"></a>    ├── ew/                            # Electronic Warfare [Phase 16]
-<a id="__codelineno-0-588" name="__codelineno-0-588" href="#__codelineno-0-588"></a>    │   ├── __init__.py
-<a id="__codelineno-0-589" name="__codelineno-0-589" href="#__codelineno-0-589"></a>    │   ├── events.py                  # EW events (7 types: jamming, spoofing, intercept, decoy, ECCM, emitter, spectrum)
-<a id="__codelineno-0-590" name="__codelineno-0-590" href="#__codelineno-0-590"></a>    │   ├── spectrum.py                # EM spectrum manager: frequency allocation, conflict detection, bandwidth overlap
-<a id="__codelineno-0-591" name="__codelineno-0-591" href="#__codelineno-0-591"></a>    │   ├── emitters.py                # Emitter registry: active emitters with type/freq/side queries
-<a id="__codelineno-0-592" name="__codelineno-0-592" href="#__codelineno-0-592"></a>    │   ├── jamming.py                 # Jamming models: J/S ratio, burn-through range, radar SNR penalty, comms jam factor
-<a id="__codelineno-0-593" name="__codelineno-0-593" href="#__codelineno-0-593"></a>    │   ├── spoofing.py                # GPS spoofing: zones, position offset, INS cross-check detection, PGM offset
-<a id="__codelineno-0-594" name="__codelineno-0-594" href="#__codelineno-0-594"></a>    │   ├── decoys_ew.py               # Electronic decoys: chaff/flare/towed decoy/DRFM deployment, missile diversion
-<a id="__codelineno-0-595" name="__codelineno-0-595" href="#__codelineno-0-595"></a>    │   ├── eccm.py                    # ECCM: frequency hopping, spread spectrum, sidelobe blanking, adaptive nulling
-<a id="__codelineno-0-596" name="__codelineno-0-596" href="#__codelineno-0-596"></a>    │   └── sigint.py                  # SIGINT: intercept probability, AOA/TDOA geolocation, traffic analysis
-<a id="__codelineno-0-597" name="__codelineno-0-597" href="#__codelineno-0-597"></a>    ├── space/                         # Space &amp; Satellite Domain [Phase 17]
-<a id="__codelineno-0-598" name="__codelineno-0-598" href="#__codelineno-0-598"></a>    │   ├── __init__.py
-<a id="__codelineno-0-599" name="__codelineno-0-599" href="#__codelineno-0-599"></a>    │   ├── events.py                  # Space overpass, accuracy, SATCOM, ASAT, degradation, debris, and early-warning events
-<a id="__codelineno-0-600" name="__codelineno-0-600" href="#__codelineno-0-600"></a>    │   ├── config.py                  # Strict dependency-neutral constellation, ASAT definition/asset/order, and runtime schemas
-<a id="__codelineno-0-601" name="__codelineno-0-601" href="#__codelineno-0-601"></a>    │   ├── catalog.py                 # Duplicate-safe complete catalog loading, reference resolution, and topology fingerprint
-<a id="__codelineno-0-602" name="__codelineno-0-602" href="#__codelineno-0-602"></a>    │   ├── orbits.py                  # Simplified Keplerian orbital mechanics: period, ground track, J2 precession
-<a id="__codelineno-0-603" name="__codelineno-0-603" href="#__codelineno-0-603"></a>    │   ├── constellations.py          # Manager-owned satellite transitions and ordered/checkpointed SpaceEngine orchestration
-<a id="__codelineno-0-604" name="__codelineno-0-604" href="#__codelineno-0-604"></a>    │   ├── gps.py                     # GPS accuracy model: DOP from visible satellites, INS drift, CEP scaling
-<a id="__codelineno-0-605" name="__codelineno-0-605" href="#__codelineno-0-605"></a>    │   ├── isr.py                     # Typed owner-scoped ISR reports, delayed queue, checkpoint lifecycle
-<a id="__codelineno-0-606" name="__codelineno-0-606" href="#__codelineno-0-606"></a>    │   ├── early_warning.py           # Missile early warning: GEO/HEO IR detection, BMD Pk bonus
-<a id="__codelineno-0-607" name="__codelineno-0-607" href="#__codelineno-0-607"></a>    │   ├── satcom.py                  # SATCOM availability: coverage windows, bandwidth capacity, reliability
-<a id="__codelineno-0-608" name="__codelineno-0-608" href="#__codelineno-0-608"></a>    │   └── asat.py                    # Scheduled finite direct-ascent KKV actions, observable results, and Poisson debris cascade
-<a id="__codelineno-0-609" name="__codelineno-0-609" href="#__codelineno-0-609"></a>    ├── cbrn/                          # CBRN Effects [Phase 18]
-<a id="__codelineno-0-610" name="__codelineno-0-610" href="#__codelineno-0-610"></a>    │   ├── __init__.py
-<a id="__codelineno-0-611" name="__codelineno-0-611" href="#__codelineno-0-611"></a>    │   ├── events.py                  # CBRN events (contamination, exposure, decontamination, nuclear, MOPP, casualty)
-<a id="__codelineno-0-612" name="__codelineno-0-612" href="#__codelineno-0-612"></a>    │   ├── agents.py                  # CBRN agent definitions: nerve/blister/choking/blood/biological/radiological, LCt50/LD50
-<a id="__codelineno-0-613" name="__codelineno-0-613" href="#__codelineno-0-613"></a>    │   ├── dispersal.py               # Pasquill-Gifford atmospheric dispersal: Gaussian puff/plume, wind advection, stability classes
-<a id="__codelineno-0-614" name="__codelineno-0-614" href="#__codelineno-0-614"></a>    │   ├── contamination.py           # Contamination grid overlay: concentration tracking, decay, evaporation, washout, absorption
-<a id="__codelineno-0-615" name="__codelineno-0-615" href="#__codelineno-0-615"></a>    │   ├── protection.py              # MOPP levels 0-4: movement/detection/fatigue degradation, equipment effectiveness
-<a id="__codelineno-0-616" name="__codelineno-0-616" href="#__codelineno-0-616"></a>    │   ├── casualties.py              # Probit dose-response model: dosage accumulation, incapacitation, lethality
-<a id="__codelineno-0-617" name="__codelineno-0-617" href="#__codelineno-0-617"></a>    │   ├── decontamination.py         # 3-tier decon: hasty (60%), deliberate (95%), thorough (99%), equipment requirements
-<a id="__codelineno-0-618" name="__codelineno-0-618" href="#__codelineno-0-618"></a>    │   ├── nuclear.py                 # Nuclear effects: Hopkinson-Cranz blast, thermal fluence, radiation, EMP, fallout, craters
-<a id="__codelineno-0-619" name="__codelineno-0-619" href="#__codelineno-0-619"></a>    │   └── engine.py                  # CBRNEngine orchestrator: per-tick dispersal, contamination, exposure, MOPP management
-<a id="__codelineno-0-620" name="__codelineno-0-620" href="#__codelineno-0-620"></a>    ├── escalation/                   # Escalation dynamics &amp; political pressure [Phase 24]
-<a id="__codelineno-0-621" name="__codelineno-0-621" href="#__codelineno-0-621"></a>    │   ├── __init__.py
-<a id="__codelineno-0-622" name="__codelineno-0-622" href="#__codelineno-0-622"></a>    │   ├── ladder.py                 # 11-level escalation state machine, desperation index, hysteresis de-escalation
-<a id="__codelineno-0-623" name="__codelineno-0-623" href="#__codelineno-0-623"></a>    │   ├── political.py              # International + domestic political pressure model, threshold effects
-<a id="__codelineno-0-624" name="__codelineno-0-624" href="#__codelineno-0-624"></a>    │   ├── consequences.py           # War crimes consequence cascading: morale, hardening, hostility, pressure
-<a id="__codelineno-0-625" name="__codelineno-0-625" href="#__codelineno-0-625"></a>    │   ├── events.py                 # 8 escalation event types (level change, war crime, political pressure, etc.)
-<a id="__codelineno-0-626" name="__codelineno-0-626" href="#__codelineno-0-626"></a>    │   └── war_termination.py        # Negotiated war termination: ceasefire, armistice, capitulation
-<a id="__codelineno-0-627" name="__codelineno-0-627" href="#__codelineno-0-627"></a>    └── simulation/                   # Top-level simulation orchestration
-<a id="__codelineno-0-628" name="__codelineno-0-628" href="#__codelineno-0-628"></a>        ├── __init__.py
-<a id="__codelineno-0-629" name="__codelineno-0-629" href="#__codelineno-0-629"></a>        ├── engine.py                 # Master simulation loop (hybrid tick + event)
-<a id="__codelineno-0-630" name="__codelineno-0-630" href="#__codelineno-0-630"></a>        ├── campaign.py               # Campaign-level management, strategic AI, reinforcement pipeline; legacy scripted-action boundary remains REM-045
-<a id="__codelineno-0-631" name="__codelineno-0-631" href="#__codelineno-0-631"></a>        ├── battle.py                 # Tactical battle resolution manager
-<a id="__codelineno-0-632" name="__codelineno-0-632" href="#__codelineno-0-632"></a>        ├── scenario.py               # Scenario loading, setup, initialization; SimulationContext includes stratagem_engine, iads_engine, ato_engine [Phase 53]
-<a id="__codelineno-0-633" name="__codelineno-0-633" href="#__codelineno-0-633"></a>        ├── runtime.py                # Authoritative prepared-scenario/runtime-session boundary and provenance [Phase 112]
-<a id="__codelineno-0-634" name="__codelineno-0-634" href="#__codelineno-0-634"></a>        ├── era_runtime.py            # Frozen effective cadence/treatment/repair contract and executable-horizon sources [Phase 114]
-<a id="__codelineno-0-635" name="__codelineno-0-635" href="#__codelineno-0-635"></a>        ├── force_builder.py          # Typed deterministic initial-force construction [Phase 112]
-<a id="__codelineno-0-636" name="__codelineno-0-636" href="#__codelineno-0-636"></a>        ├── movement_diagnostics.py   # Ordered observational movement reasons and checkpoint state [Phase 112]
-<a id="__codelineno-0-637" name="__codelineno-0-637" href="#__codelineno-0-637"></a>        ├── tactical_targeting.py     # Typed interval/picture/decision/revalidation owner and checkpoint state [Phase 115]
-<a id="__codelineno-0-638" name="__codelineno-0-638" href="#__codelineno-0-638"></a>        ├── targeting_exposure.py     # Privileged and opaque side-FOW targeting projections [Phase 115]
-<a id="__codelineno-0-639" name="__codelineno-0-639" href="#__codelineno-0-639"></a>        ├── equipment_mappings.py     # Ordered typed equipment-name registry and reviewed data decisions [Phase 109]
-<a id="__codelineno-0-640" name="__codelineno-0-640" href="#__codelineno-0-640"></a>        ├── loadouts.py               # RuntimeLoadoutBuilder, semantic preflight, topology/fingerprint [Phase 109]
-<a id="__codelineno-0-641" name="__codelineno-0-641" href="#__codelineno-0-641"></a>        ├── time_on_target.py         # Initial-roster/runtime-loadout resolver for exact scheduled indirect-fire plans [Phase 111]
-<a id="__codelineno-0-642" name="__codelineno-0-642" href="#__codelineno-0-642"></a>        ├── victory.py                # Victory conditions, war termination criteria, objective evaluation
-<a id="__codelineno-0-643" name="__codelineno-0-643" href="#__codelineno-0-643"></a>        ├── recorder.py               # Event/state recording for replay &amp; analysis
-<a id="__codelineno-0-644" name="__codelineno-0-644" href="#__codelineno-0-644"></a>        ├── metrics.py                # Simulation output metrics, statistical aggregation, analysis hooks
-<a id="__codelineno-0-645" name="__codelineno-0-645" href="#__codelineno-0-645"></a>        ├── aggregation.py           # Force aggregation/disaggregation engine for campaign-scale [Phase 13a]
-<a id="__codelineno-0-646" name="__codelineno-0-646" href="#__codelineno-0-646"></a>        ├── calibration.py           # Typed CalibrationSchema pydantic model replacing free-form dict [Phase 49]
-<a id="__codelineno-0-647" name="__codelineno-0-647" href="#__codelineno-0-647"></a>        ├── unit_arrays.py           # Structure-of-Arrays (SoA) data layer for hot-path unit data [Phase 88]
-<a id="__codelineno-0-648" name="__codelineno-0-648" href="#__codelineno-0-648"></a>        └── deployment.py            # Configurable deployment modes (legacy/bounding_box/clustered/doctrinal/manual) + DeploymentConfig + FormationTemplateLoader consuming data/formations/*.yaml [Phase 104]
+<a id="__codelineno-0-420" name="__codelineno-0-420" href="#__codelineno-0-420"></a>    │   ├── cadence.py                # Typed sensor scan scheduling and sensing-only LOD cadence
+<a id="__codelineno-0-421" name="__codelineno-0-421" href="#__codelineno-0-421"></a>    │   ├── sensor_roles.py            # Closed modeled sensor-role enum shared below simulation loadouts
+<a id="__codelineno-0-422" name="__codelineno-0-422" href="#__codelineno-0-422"></a>    │   ├── observer_support.py        # Bounded seven-role radar track-support identity, projection, and strict codecs
+<a id="__codelineno-0-423" name="__codelineno-0-423" href="#__codelineno-0-423"></a>    │   ├── identification.py         # Classification &amp; ID confidence (detected → classified → identified)
+<a id="__codelineno-0-424" name="__codelineno-0-424" href="#__codelineno-0-424"></a>    │   ├── estimation.py             # Kalman filter state estimation (pre-alloc H/I₄ matrices, belief state)
+<a id="__codelineno-0-425" name="__codelineno-0-425" href="#__codelineno-0-425"></a>    │   ├── intel_fusion.py           # Correlation-safe same-epoch fusion, detached prediction/update/replacement, atomic side ordinals
+<a id="__codelineno-0-426" name="__codelineno-0-426" href="#__codelineno-0-426"></a>    │   ├── deception.py              # Decoys, feints, false signals, camouflage effectiveness
+<a id="__codelineno-0-427" name="__codelineno-0-427" href="#__codelineno-0-427"></a>    │   ├── sonar.py                  # Sonar models: active/passive, towed array, hull-mounted, sonobuoy, dipping
+<a id="__codelineno-0-428" name="__codelineno-0-428" href="#__codelineno-0-428"></a>    │   ├── underwater_detection.py   # Submarine detection: acoustic propagation through environment, MAD, wake detection, periscope detection
+<a id="__codelineno-0-429" name="__codelineno-0-429" href="#__codelineno-0-429"></a>    │   └── fog_of_war.py             # Per-side views, indexed decisions, receipts, fusion aliases, strict format-118 staged restore
+<a id="__codelineno-0-430" name="__codelineno-0-430" href="#__codelineno-0-430"></a>    ├── combat/                       # Combat resolution
+<a id="__codelineno-0-431" name="__codelineno-0-431" href="#__codelineno-0-431"></a>    │   ├── __init__.py
+<a id="__codelineno-0-432" name="__codelineno-0-432" href="#__codelineno-0-432"></a>    │   ├── events.py                 # Combat events (engagement, hit, kill, fratricide, suppression)
+<a id="__codelineno-0-433" name="__codelineno-0-433" href="#__codelineno-0-433"></a>    │   ├── engagement.py             # Engagement sequencing, target selection, range determination
+<a id="__codelineno-0-434" name="__codelineno-0-434" href="#__codelineno-0-434"></a>    │   ├── ballistics.py             # Projectile physics: trajectory, drag, wind, Coriolis (long range)
+<a id="__codelineno-0-435" name="__codelineno-0-435" href="#__codelineno-0-435"></a>    │   ├── hit_probability.py        # P(hit) model: range, weapon, skill, target motion, conditions
+<a id="__codelineno-0-436" name="__codelineno-0-436" href="#__codelineno-0-436"></a>    │   ├── damage.py                 # Terminal effects: lethality, armor penetration, behind-armor effects
+<a id="__codelineno-0-437" name="__codelineno-0-437" href="#__codelineno-0-437"></a>    │   ├── suppression.py            # Suppression mechanics: volume of fire → suppression state
+<a id="__codelineno-0-438" name="__codelineno-0-438" href="#__codelineno-0-438"></a>    │   ├── indirect_fire.py          # Artillery execution, including scheduled exact-attachment time-on-target lifecycle and terminal effects
+<a id="__codelineno-0-439" name="__codelineno-0-439" href="#__codelineno-0-439"></a>    │   ├── indirect_fire_config.py   # Strict time-on-target scenario declarations and immutable resolved combat plans [Phase 111]
+<a id="__codelineno-0-440" name="__codelineno-0-440" href="#__codelineno-0-440"></a>    │   ├── missiles.py               # Surface-to-surface missiles: TBMs, cruise missiles, coastal defense SSMs, kill chain
+<a id="__codelineno-0-441" name="__codelineno-0-441" href="#__codelineno-0-441"></a>    │   ├── missile_defense.py        # BMD, cruise missile defense, C-RAM/short-range air defense vs rockets &amp; artillery
+<a id="__codelineno-0-442" name="__codelineno-0-442" href="#__codelineno-0-442"></a>    │   ├── air_combat.py             # Air-to-air engagement model, BVR and WVR
+<a id="__codelineno-0-443" name="__codelineno-0-443" href="#__codelineno-0-443"></a>    │   ├── air_ground.py             # CAS, SEAD/DEAD, close air support integration with ground
+<a id="__codelineno-0-444" name="__codelineno-0-444" href="#__codelineno-0-444"></a>    │   ├── air_defense.py            # SAM/AAA engagement envelopes, shoot-look-shoot, EMCON
+<a id="__codelineno-0-445" name="__codelineno-0-445" href="#__codelineno-0-445"></a>    │   ├── ammunition.py             # Ammo types (AP, HE, HEAT, smoke, illum), consumption, selection
+<a id="__codelineno-0-446" name="__codelineno-0-446" href="#__codelineno-0-446"></a>    │   ├── naval_surface.py          # Surface warfare: anti-ship missiles, naval gunfire, torpedo attack, point defense
+<a id="__codelineno-0-447" name="__codelineno-0-447" href="#__codelineno-0-447"></a>    │   ├── naval_subsurface.py       # Submarine warfare: torpedo engagements, submarine-launched missiles, evasion
+<a id="__codelineno-0-448" name="__codelineno-0-448" href="#__codelineno-0-448"></a>    │   ├── naval_mine.py             # Mine warfare: mine laying, sweeping, hunting, mine types (contact, influence, smart)
+<a id="__codelineno-0-449" name="__codelineno-0-449" href="#__codelineno-0-449"></a>    │   ├── naval_gunfire_support.py  # Shore bombardment, naval fire support for ground forces
+<a id="__codelineno-0-450" name="__codelineno-0-450" href="#__codelineno-0-450"></a>    │   ├── amphibious_assault.py     # Beach assault resolution, shore defenses, landing operations
+<a id="__codelineno-0-451" name="__codelineno-0-451" href="#__codelineno-0-451"></a>    │   ├── carrier_ops.py            # Carrier flight operations, sortie generation rate, deck cycle, CAP management
+<a id="__codelineno-0-452" name="__codelineno-0-452" href="#__codelineno-0-452"></a>    │   ├── fratricide.py             # Friendly fire: IFF uncertainty, deconfliction, identification errors
+<a id="__codelineno-0-453" name="__codelineno-0-453" href="#__codelineno-0-453"></a>    │   ├── iads.py                   # IADS sector model: radar handoff chain, SEAD degradation, sector health [Phase 12f]
+<a id="__codelineno-0-454" name="__codelineno-0-454" href="#__codelineno-0-454"></a>    │   ├── air_campaign.py           # Air campaign management: sortie capacity, pilot fatigue, weather days, attrition [Phase 12f]
+<a id="__codelineno-0-455" name="__codelineno-0-455" href="#__codelineno-0-455"></a>    │   ├── strategic_targeting.py    # Strategic targeting: TPL generation, BDA cycle, target-effect chains [Phase 12f]
+<a id="__codelineno-0-456" name="__codelineno-0-456" href="#__codelineno-0-456"></a>    │   ├── naval_gunnery.py          # WW2 naval gunnery: bracket firing, fire control quality, 2D Gaussian dispersion [Phase 20b]
+<a id="__codelineno-0-457" name="__codelineno-0-457" href="#__codelineno-0-457"></a>    │   ├── strategic_bombing.py      # WW2 strategic bombing: CEP area damage, flak, fighter escort, target regeneration [Phase 20b]
+<a id="__codelineno-0-458" name="__codelineno-0-458" href="#__codelineno-0-458"></a>    │   ├── barrage.py                # WW1 artillery barrage: standing/creeping/box, fire density, suppression, drift, friendly fire [Phase 21b]
+<a id="__codelineno-0-459" name="__codelineno-0-459" href="#__codelineno-0-459"></a>    │   ├── gas_warfare.py            # WW1 gas warfare adapter: cylinder release, gas shells, projectors, mask→MOPP mapping [Phase 21b]
+<a id="__codelineno-0-460" name="__codelineno-0-460" href="#__codelineno-0-460"></a>    │   ├── volley_fire.py            # Napoleonic massed musket fire: Binomial aggregate, range table, smoke, canister [Phase 22b]
+<a id="__codelineno-0-461" name="__codelineno-0-461" href="#__codelineno-0-461"></a>    │   ├── melee.py                  # Contact combat: Napoleonic (bayonet/cavalry charge, pursuit) + Ancient (pike push, shield wall, mounted charge, reach/flanking) [Phase 22b, 23b]
+<a id="__codelineno-0-462" name="__codelineno-0-462" href="#__codelineno-0-462"></a>    │   ├── archery.py                # Massed archery: Binomial aggregate, 5 missile types, armor reduction, per-archer ammo [Phase 23b]
+<a id="__codelineno-0-463" name="__codelineno-0-463" href="#__codelineno-0-463"></a>    │   ├── siege.py                  # Siege warfare: daily state machine (encirclement→bombardment→breach→assault→fallen/relief) [Phase 23b]
+<a id="__codelineno-0-464" name="__codelineno-0-464" href="#__codelineno-0-464"></a>    │   ├── unconventional.py         # IED emplacement/detection/detonation, guerrilla hit-and-run, human shields [Phase 24c]
+<a id="__codelineno-0-465" name="__codelineno-0-465" href="#__codelineno-0-465"></a>    │   └── directed_energy.py       # DEW engine: Beer-Lambert laser transmittance, laser/HPM Pk, engagement execution [Phase 28.5]
+<a id="__codelineno-0-466" name="__codelineno-0-466" href="#__codelineno-0-466"></a>    ├── morale/                       # Morale &amp; human factors
+<a id="__codelineno-0-467" name="__codelineno-0-467" href="#__codelineno-0-467"></a>    │   ├── __init__.py
+<a id="__codelineno-0-468" name="__codelineno-0-468" href="#__codelineno-0-468"></a>    │   ├── runtime.py                # One immutable-record owner for transitions, status/routes, aggregation, and checkpoint state
+<a id="__codelineno-0-469" name="__codelineno-0-469" href="#__codelineno-0-469"></a>    │   ├── config.py                 # Typed morale configuration and defaults
+<a id="__codelineno-0-470" name="__codelineno-0-470" href="#__codelineno-0-470"></a>    │   ├── events.py                 # Morale events (state change, rout, rally, surrender)
+<a id="__codelineno-0-471" name="__codelineno-0-471" href="#__codelineno-0-471"></a>    │   ├── state.py                  # Stateless Markov transition selector: steady/shaken/broken/routed/surrendered
+<a id="__codelineno-0-472" name="__codelineno-0-472" href="#__codelineno-0-472"></a>    │   ├── cohesion.py               # Unit cohesion, nearby friendlies, leadership, unit history/reputation
+<a id="__codelineno-0-473" name="__codelineno-0-473" href="#__codelineno-0-473"></a>    │   ├── stress.py                 # Stress/fatigue/sleep deprivation accumulation (random walk with drift)
+<a id="__codelineno-0-474" name="__codelineno-0-474" href="#__codelineno-0-474"></a>    │   ├── experience.py             # Training level, combat experience learning curve, skill progression
+<a id="__codelineno-0-475" name="__codelineno-0-475" href="#__codelineno-0-475"></a>    │   ├── psychology.py             # PSYOP effects, propaganda, surrender inducement, civilian reaction
+<a id="__codelineno-0-476" name="__codelineno-0-476" href="#__codelineno-0-476"></a>    │   └── rout.py                   # Rout/rally/cascade planning; partial surrender/POW API rejects pending REM-033
+<a id="__codelineno-0-477" name="__codelineno-0-477" href="#__codelineno-0-477"></a>    ├── c2/                           # Command &amp; Control (Phase 5: plumbing; Phase 8: AI/planning)
+<a id="__codelineno-0-478" name="__codelineno-0-478" href="#__codelineno-0-478"></a>    │   ├── __init__.py
+<a id="__codelineno-0-479" name="__codelineno-0-479" href="#__codelineno-0-479"></a>    │   ├── events.py                 # C2 events (command status, succession, comms, orders, ROE, coordination, initiative)
+<a id="__codelineno-0-480" name="__codelineno-0-480" href="#__codelineno-0-480"></a>    │   ├── command.py                # Command authority, command relationships (OPCON, TACON, ADCON, support)
+<a id="__codelineno-0-481" name="__codelineno-0-481" href="#__codelineno-0-481"></a>    │   ├── orders/                   # Order system
+<a id="__codelineno-0-482" name="__codelineno-0-482" href="#__codelineno-0-482"></a>    │   │   ├── __init__.py
+<a id="__codelineno-0-483" name="__codelineno-0-483" href="#__codelineno-0-483"></a>    │   │   ├── types.py              # Order type hierarchy: OPORD, FRAGO, WARNO, and domain-specific orders
+<a id="__codelineno-0-484" name="__codelineno-0-484" href="#__codelineno-0-484"></a>    │   │   ├── individual.py         # Individual/fire team level: move to, engage, take cover, suppress, breach
+<a id="__codelineno-0-485" name="__codelineno-0-485" href="#__codelineno-0-485"></a>    │   │   ├── tactical.py           # Squad through battalion: assault, defend, ambush, patrol, recon, screen, guard
+<a id="__codelineno-0-486" name="__codelineno-0-486" href="#__codelineno-0-486"></a>    │   │   ├── operational.py        # Brigade through corps: main effort, reserve commit, phase lines, deep ops, shaping
+<a id="__codelineno-0-487" name="__codelineno-0-487" href="#__codelineno-0-487"></a>    │   │   ├── strategic.py          # Theater/campaign: force allocation, strategic objectives, political constraints, alliance
+<a id="__codelineno-0-488" name="__codelineno-0-488" href="#__codelineno-0-488"></a>    │   │   ├── naval_orders.py       # Naval-specific: formation orders, ASW prosecution, strike assignment, convoy routing, blockade
+<a id="__codelineno-0-489" name="__codelineno-0-489" href="#__codelineno-0-489"></a>    │   │   ├── air_orders.py         # Air-specific: ATO (Air Tasking Order), ACO, SPINS, strike packages, CAP assignments
+<a id="__codelineno-0-490" name="__codelineno-0-490" href="#__codelineno-0-490"></a>    │   │   ├── propagation.py        # Order transmission: delays, degradation, misinterpretation probability
+<a id="__codelineno-0-491" name="__codelineno-0-491" href="#__codelineno-0-491"></a>    │   │   └── execution.py          # Order execution tracking: compliance, adaptation, deviation reporting
+<a id="__codelineno-0-492" name="__codelineno-0-492" href="#__codelineno-0-492"></a>    │   ├── planning/                 # Planning process [PHASE 8b]
+<a id="__codelineno-0-493" name="__codelineno-0-493" href="#__codelineno-0-493"></a>    │   │   ├── __init__.py
+<a id="__codelineno-0-494" name="__codelineno-0-494" href="#__codelineno-0-494"></a>    │   │   ├── process.py            # MDMP state machine (INTUITIVE/DIRECTIVE/RAPID/MDMP), 1/3-2/3 rule
+<a id="__codelineno-0-495" name="__codelineno-0-495" href="#__codelineno-0-495"></a>    │   │   ├── mission_analysis.py   # Mission analysis: specified/implied/essential tasks, risks, constraints, key terrain
+<a id="__codelineno-0-496" name="__codelineno-0-496" href="#__codelineno-0-496"></a>    │   │   ├── coa.py                # COA development, Lanchester wargaming, weighted comparison, softmax selection
+<a id="__codelineno-0-497" name="__codelineno-0-497" href="#__codelineno-0-497"></a>    │   │   ├── estimates.py          # Running estimates (5 types), periodic update, significant change events
+<a id="__codelineno-0-498" name="__codelineno-0-498" href="#__codelineno-0-498"></a>    │   │   └── phases.py             # Condition-based operational phasing with branches and sequels
+<a id="__codelineno-0-499" name="__codelineno-0-499" href="#__codelineno-0-499"></a>    │   ├── communications.py         # Comms reliability, bandwidth, degradation, EMCON, means (radio/wire/messenger/data link), compute_c2_effectiveness() [Phase 53]
+<a id="__codelineno-0-500" name="__codelineno-0-500" href="#__codelineno-0-500"></a>    │   ├── roe.py                    # Rules of engagement, escalation, political constraints, law of armed conflict
+<a id="__codelineno-0-501" name="__codelineno-0-501" href="#__codelineno-0-501"></a>    │   ├── coordination.py           # Fire support coord, airspace deconfliction, boundaries, sea-land-air integration
+<a id="__codelineno-0-502" name="__codelineno-0-502" href="#__codelineno-0-502"></a>    │   ├── naval_c2.py              # Fleet org (TF/TG/TU), naval data links, submarine comms (VLF/ELF)
+<a id="__codelineno-0-503" name="__codelineno-0-503" href="#__codelineno-0-503"></a>    │   ├── mission_command.py        # Commander&#39;s intent, mission-type orders, subordinate initiative/adaptation
+<a id="__codelineno-0-504" name="__codelineno-0-504" href="#__codelineno-0-504"></a>    │   ├── joint_ops.py             # Joint task force command: service coordination, liaison, coalition caveats [Phase 12a]
+<a id="__codelineno-0-505" name="__codelineno-0-505" href="#__codelineno-0-505"></a>    │   ├── courier.py               # Napoleonic courier C2: physical messenger, terrain speed, interception risk, courier pool [Phase 22b]
+<a id="__codelineno-0-506" name="__codelineno-0-506" href="#__codelineno-0-506"></a>    │   ├── visual_signals.py        # Ancient C2: banner/horn/runner/fire beacon, synchronous presence-based signaling [Phase 23b]
+<a id="__codelineno-0-507" name="__codelineno-0-507" href="#__codelineno-0-507"></a>    │   └── ai/                       # AI decision-making [PHASE 8a]
+<a id="__codelineno-0-508" name="__codelineno-0-508" href="#__codelineno-0-508"></a>    │       ├── __init__.py
+<a id="__codelineno-0-509" name="__codelineno-0-509" href="#__codelineno-0-509"></a>    │       ├── ooda.py               # OODA loop timer/FSM (echelon-scaled, log-normal friction)
+<a id="__codelineno-0-510" name="__codelineno-0-510" href="#__codelineno-0-510"></a>    │       ├── commander.py          # YAML personality profiles (aggression, caution, flexibility, experience, decision_speed)
+<a id="__codelineno-0-511" name="__codelineno-0-511" href="#__codelineno-0-511"></a>    │       ├── assessment.py         # 7-factor situation assessment (force ratio, terrain, supply, morale, intel, env, C2)
+<a id="__codelineno-0-512" name="__codelineno-0-512" href="#__codelineno-0-512"></a>    │       ├── decisions.py          # 5 echelon-specific decision functions (individual through corps+)
+<a id="__codelineno-0-513" name="__codelineno-0-513" href="#__codelineno-0-513"></a>    │       ├── adaptation.py         # 7-trigger plan adaptation (casualties, force ratio, supply, morale, opportunity, surprise, C2)
+<a id="__codelineno-0-514" name="__codelineno-0-514" href="#__codelineno-0-514"></a>    │       ├── doctrine.py           # YAML doctrine templates (US, Russian, NATO, generic) with action/echelon filtering
+<a id="__codelineno-0-515" name="__codelineno-0-515" href="#__codelineno-0-515"></a>    │       ├── stratagems.py         # 6 stratagem types with echelon+experience gating (deception, concentration, surprise, etc.)
+<a id="__codelineno-0-516" name="__codelineno-0-516" href="#__codelineno-0-516"></a>    │       ├── sof_ops.py            # SOF mission lifecycle: infiltration, HVT targeting, sabotage, direct action [Phase 24c]
+<a id="__codelineno-0-517" name="__codelineno-0-517" href="#__codelineno-0-517"></a>    │       └── schools/              # Doctrinal AI schools — Strategy pattern [Phase 19]
+<a id="__codelineno-0-518" name="__codelineno-0-518" href="#__codelineno-0-518"></a>    │           ├── __init__.py       # SchoolRegistry + SchoolLoader
+<a id="__codelineno-0-519" name="__codelineno-0-519" href="#__codelineno-0-519"></a>    │           ├── base.py           # SchoolDefinition pydantic model + DoctrinalSchool ABC (8 hooks)
+<a id="__codelineno-0-520" name="__codelineno-0-520" href="#__codelineno-0-520"></a>    │           ├── clausewitzian.py  # Center-of-gravity, decisive engagement, culmination awareness
+<a id="__codelineno-0-521" name="__codelineno-0-521" href="#__codelineno-0-521"></a>    │           ├── maneuverist.py    # Tempo/OODA ×0.7, bypass, indirect approach
+<a id="__codelineno-0-522" name="__codelineno-0-522" href="#__codelineno-0-522"></a>    │           ├── attrition.py      # Exchange ratio, fire superiority, deliberate operations
+<a id="__codelineno-0-523" name="__codelineno-0-523" href="#__codelineno-0-523"></a>    │           ├── airland_battle.py # Echelon-dependent deep/close, sensor-to-shooter
+<a id="__codelineno-0-524" name="__codelineno-0-524" href="#__codelineno-0-524"></a>    │           ├── air_power.py      # Five Rings, air superiority prerequisite
+<a id="__codelineno-0-525" name="__codelineno-0-525" href="#__codelineno-0-525"></a>    │           ├── sun_tzu.py        # Intel ×3, opponent modeling, counter-posture scoring
+<a id="__codelineno-0-526" name="__codelineno-0-526" href="#__codelineno-0-526"></a>    │           ├── deep_battle.py    # Echeloned assault, reserve management, operational depth
+<a id="__codelineno-0-527" name="__codelineno-0-527" href="#__codelineno-0-527"></a>    │           └── maritime.py       # MahanianSchool + CorbettianSchool
+<a id="__codelineno-0-528" name="__codelineno-0-528" href="#__codelineno-0-528"></a>    ├── logistics/                    # Supply &amp; logistics
+<a id="__codelineno-0-529" name="__codelineno-0-529" href="#__codelineno-0-529"></a>    │   ├── __init__.py
+<a id="__codelineno-0-530" name="__codelineno-0-530" href="#__codelineno-0-530"></a>    │   ├── config.py                 # Strict opt-in scenario logistics schema
+<a id="__codelineno-0-531" name="__codelineno-0-531" href="#__codelineno-0-531"></a>    │   ├── events.py                 # Logistics events (supply delivery/shortage/depletion, convoy, maintenance, engineering, medical, POW, naval, disruption)
+<a id="__codelineno-0-532" name="__codelineno-0-532" href="#__codelineno-0-532"></a>    │   ├── runtime.py                # Fixed-cadence topology, direct resupply, idle demand, checkpoint state
+<a id="__codelineno-0-533" name="__codelineno-0-533" href="#__codelineno-0-533"></a>    │   ├── supply_network.py         # Supply chain graph (networkx), leverages terrain infrastructure
+<a id="__codelineno-0-534" name="__codelineno-0-534" href="#__codelineno-0-534"></a>    │   ├── supply_classes.py         # Military supply classification (Class I-X), ammo types, fuel types
+<a id="__codelineno-0-535" name="__codelineno-0-535" href="#__codelineno-0-535"></a>    │   ├── consumption.py            # Per-unit consumption models (ammo by type, fuel by activity, food, water)
+<a id="__codelineno-0-536" name="__codelineno-0-536" href="#__codelineno-0-536"></a>    │   ├── transport.py              # Transport units, convoys, airlift, aerial resupply/airdrop
+<a id="__codelineno-0-537" name="__codelineno-0-537" href="#__codelineno-0-537"></a>    │   ├── stockpile.py              # Depot and stockpile management, captured supplies/equipment
+<a id="__codelineno-0-538" name="__codelineno-0-538" href="#__codelineno-0-538"></a>    │   ├── maintenance.py            # Equipment maintenance cycles, repair, breakdown probability, spare parts
+<a id="__codelineno-0-539" name="__codelineno-0-539" href="#__codelineno-0-539"></a>    │   ├── engineering.py            # Engineer operations: bridging, road building, fortification, obstacle emplacement/clearing
+<a id="__codelineno-0-540" name="__codelineno-0-540" href="#__codelineno-0-540"></a>    │   ├── medical.py                # Casualty evacuation chain, triage queueing, treatment, return-to-duty
+<a id="__codelineno-0-541" name="__codelineno-0-541" href="#__codelineno-0-541"></a>    │   ├── prisoners.py              # POW handling, processing, resource cost of prisoner management
+<a id="__codelineno-0-542" name="__codelineno-0-542" href="#__codelineno-0-542"></a>    │   ├── naval_logistics.py         # Underway replenishment (UNREP/RAS), port operations, sealift, LOTS
+<a id="__codelineno-0-543" name="__codelineno-0-543" href="#__codelineno-0-543"></a>    │   ├── naval_basing.py           # Naval bases, forward operating bases, anchorage, port capacity/throughput
+<a id="__codelineno-0-544" name="__codelineno-0-544" href="#__codelineno-0-544"></a>    │   ├── disruption.py             # Interdiction, route destruction, sabotage, blockade
+<a id="__codelineno-0-545" name="__codelineno-0-545" href="#__codelineno-0-545"></a>    │   ├── production.py             # Supply regeneration: production facilities, infrastructure-coupled output [Phase 12b]
+<a id="__codelineno-0-546" name="__codelineno-0-546" href="#__codelineno-0-546"></a>    │   └── foraging.py              # Napoleonic foraging: terrain productivity, seasonal modifiers, depletion/recovery, ambush [Phase 22b]
+<a id="__codelineno-0-547" name="__codelineno-0-547" href="#__codelineno-0-547"></a>    ├── population/                    # Civilian population &amp; COIN [Phase 12e]
+<a id="__codelineno-0-548" name="__codelineno-0-548" href="#__codelineno-0-548"></a>    │   ├── __init__.py
+<a id="__codelineno-0-549" name="__codelineno-0-549" href="#__codelineno-0-549"></a>    │   ├── events.py                 # Population events (displacement, collateral, disposition, HUMINT tip)
+<a id="__codelineno-0-550" name="__codelineno-0-550" href="#__codelineno-0-550"></a>    │   ├── civilians.py              # Civilian entity manager: regions, disposition, displacement tracking
+<a id="__codelineno-0-551" name="__codelineno-0-551" href="#__codelineno-0-551"></a>    │   ├── displacement.py           # Refugee displacement: combat-driven movement, transport penalty
+<a id="__codelineno-0-552" name="__codelineno-0-552" href="#__codelineno-0-552"></a>    │   ├── collateral.py             # Collateral damage tracking, escalation threshold
+<a id="__codelineno-0-553" name="__codelineno-0-553" href="#__codelineno-0-553"></a>    │   ├── humint.py                 # Civilian HUMINT: Poisson tip generation, disposition-dependent flow
+<a id="__codelineno-0-554" name="__codelineno-0-554" href="#__codelineno-0-554"></a>    │   ├── influence.py              # Population disposition dynamics: Markov chain transitions
+<a id="__codelineno-0-555" name="__codelineno-0-555" href="#__codelineno-0-555"></a>    │   └── insurgency.py             # Insurgency dynamics: Markov radicalization pipeline, cell operations, discovery [Phase 24e]
+<a id="__codelineno-0-556" name="__codelineno-0-556" href="#__codelineno-0-556"></a>    ├── validation/                    # Legacy diagnostics + production historical studies
+<a id="__codelineno-0-557" name="__codelineno-0-557" href="#__codelineno-0-557"></a>    │   ├── __init__.py
+<a id="__codelineno-0-558" name="__codelineno-0-558" href="#__codelineno-0-558"></a>    │   ├── historical_data.py         # Legacy historical comparison models + YAML loader
+<a id="__codelineno-0-559" name="__codelineno-0-559" href="#__codelineno-0-559"></a>    │   ├── metrics.py                 # Engagement-level metric extraction from simulation results
+<a id="__codelineno-0-560" name="__codelineno-0-560" href="#__codelineno-0-560"></a>    │   ├── scenario_runner.py         # Legacy lightweight diagnostic orchestrator
+<a id="__codelineno-0-561" name="__codelineno-0-561" href="#__codelineno-0-561"></a>    │   ├── monte_carlo.py             # Legacy Monte Carlo comparison diagnostics
+<a id="__codelineno-0-562" name="__codelineno-0-562" href="#__codelineno-0-562"></a>    │   ├── campaign_data.py           # Campaign-level historical data models, AIExpectation, CampaignDataLoader
+<a id="__codelineno-0-563" name="__codelineno-0-563" href="#__codelineno-0-563"></a>    │   ├── campaign_runner.py         # Campaign runner through factory prepare_config + RuntimeSession
+<a id="__codelineno-0-564" name="__codelineno-0-564" href="#__codelineno-0-564"></a>    │   ├── campaign_metrics.py        # Campaign-level metric extraction (units destroyed, exchange ratio, etc.)
+<a id="__codelineno-0-565" name="__codelineno-0-565" href="#__codelineno-0-565"></a>    │   ├── ai_validation.py           # AI decision quality analysis from recorder events
+<a id="__codelineno-0-566" name="__codelineno-0-566" href="#__codelineno-0-566"></a>    │   ├── movement_diagnostics.py    # Typed semantic movement evaluator
+<a id="__codelineno-0-567" name="__codelineno-0-567" href="#__codelineno-0-567"></a>    │   ├── performance.py             # cProfile + tracemalloc campaign performance profiling
+<a id="__codelineno-0-568" name="__codelineno-0-568" href="#__codelineno-0-568"></a>    │   └── historical_backtest/       # Phase 117 production claim/evidence boundary
+<a id="__codelineno-0-569" name="__codelineno-0-569" href="#__codelineno-0-569"></a>    │       ├── __init__.py             # Public typed backtest API
+<a id="__codelineno-0-570" name="__codelineno-0-570" href="#__codelineno-0-570"></a>    │       ├── common.py               # Strict models, digests, and no-symlink guards
+<a id="__codelineno-0-571" name="__codelineno-0-571" href="#__codelineno-0-571"></a>    │       ├── claims.py               # Claim ledger, source audit, public dispositions
+<a id="__codelineno-0-572" name="__codelineno-0-572" href="#__codelineno-0-572"></a>    │       ├── studies.py              # Typed study plan, lineage, metrics, policy
+<a id="__codelineno-0-573" name="__codelineno-0-573" href="#__codelineno-0-573"></a>    │       ├── runner.py               # Factory-owned runs and observation receipts
+<a id="__codelineno-0-574" name="__codelineno-0-574" href="#__codelineno-0-574"></a>    │       ├── evaluator.py            # Exact joint Clopper--Pearson verdict
+<a id="__codelineno-0-575" name="__codelineno-0-575" href="#__codelineno-0-575"></a>    │       └── artifacts.py            # Digest-bearing atomic PASS/FAIL/ERROR artifacts
+<a id="__codelineno-0-576" name="__codelineno-0-576" href="#__codelineno-0-576"></a>    ├── tools/                         # Developer tooling — MCP server, analysis, visualization [Phase 14]
+<a id="__codelineno-0-577" name="__codelineno-0-577" href="#__codelineno-0-577"></a>    │   ├── __init__.py
+<a id="__codelineno-0-578" name="__codelineno-0-578" href="#__codelineno-0-578"></a>    │   ├── serializers.py             # JSON serialization for numpy, datetime, enum, Position
+<a id="__codelineno-0-579" name="__codelineno-0-579" href="#__codelineno-0-579"></a>    │   ├── result_store.py            # In-memory LRU cache for run results
+<a id="__codelineno-0-580" name="__codelineno-0-580" href="#__codelineno-0-580"></a>    │   ├── mcp_server.py              # FastMCP server with 7 tools (run, query, MC, compare, list, modify)
+<a id="__codelineno-0-581" name="__codelineno-0-581" href="#__codelineno-0-581"></a>    │   ├── mcp_resources.py           # MCP resource providers (scenarios, units, results)
+<a id="__codelineno-0-582" name="__codelineno-0-582" href="#__codelineno-0-582"></a>    │   ├── _run_helpers.py            # Production factory/session batch boundary + provenance
+<a id="__codelineno-0-583" name="__codelineno-0-583" href="#__codelineno-0-583"></a>    │   ├── narrative.py               # Battle narrative generation from events (registry-based formatters)
+<a id="__codelineno-0-584" name="__codelineno-0-584" href="#__codelineno-0-584"></a>    │   ├── tempo_analysis.py          # Operational tempo FFT + OODA cycle extraction
+<a id="__codelineno-0-585" name="__codelineno-0-585" href="#__codelineno-0-585"></a>    │   ├── comparison.py              # Common-seed paired exact-sign + Holm comparison
+<a id="__codelineno-0-586" name="__codelineno-0-586" href="#__codelineno-0-586"></a>    │   ├── sensitivity.py             # Strict paired-seed parameter sweep
+<a id="__codelineno-0-587" name="__codelineno-0-587" href="#__codelineno-0-587"></a>    │   ├── doctrine_compare.py        # Doctrine-only production comparison
+<a id="__codelineno-0-588" name="__codelineno-0-588" href="#__codelineno-0-588"></a>    │   ├── charts.py                  # 6 reusable chart functions (force, engagement, supply, morale, MC)
+<a id="__codelineno-0-589" name="__codelineno-0-589" href="#__codelineno-0-589"></a>    │   └── replay.py                  # Animated battle replay (FuncAnimation)
+<a id="__codelineno-0-590" name="__codelineno-0-590" href="#__codelineno-0-590"></a>    ├── ew/                            # Electronic Warfare [Phase 16]
+<a id="__codelineno-0-591" name="__codelineno-0-591" href="#__codelineno-0-591"></a>    │   ├── __init__.py
+<a id="__codelineno-0-592" name="__codelineno-0-592" href="#__codelineno-0-592"></a>    │   ├── events.py                  # EW events (7 types: jamming, spoofing, intercept, decoy, ECCM, emitter, spectrum)
+<a id="__codelineno-0-593" name="__codelineno-0-593" href="#__codelineno-0-593"></a>    │   ├── spectrum.py                # EM spectrum manager: frequency allocation, conflict detection, bandwidth overlap
+<a id="__codelineno-0-594" name="__codelineno-0-594" href="#__codelineno-0-594"></a>    │   ├── emitters.py                # Emitter registry: active emitters with type/freq/side queries
+<a id="__codelineno-0-595" name="__codelineno-0-595" href="#__codelineno-0-595"></a>    │   ├── jamming.py                 # Jamming models: J/S ratio, burn-through range, radar SNR penalty, comms jam factor
+<a id="__codelineno-0-596" name="__codelineno-0-596" href="#__codelineno-0-596"></a>    │   ├── spoofing.py                # GPS spoofing: zones, position offset, INS cross-check detection, PGM offset
+<a id="__codelineno-0-597" name="__codelineno-0-597" href="#__codelineno-0-597"></a>    │   ├── decoys_ew.py               # Electronic decoys: chaff/flare/towed decoy/DRFM deployment, missile diversion
+<a id="__codelineno-0-598" name="__codelineno-0-598" href="#__codelineno-0-598"></a>    │   ├── eccm.py                    # ECCM: frequency hopping, spread spectrum, sidelobe blanking, adaptive nulling
+<a id="__codelineno-0-599" name="__codelineno-0-599" href="#__codelineno-0-599"></a>    │   └── sigint.py                  # SIGINT: intercept probability, AOA/TDOA geolocation, traffic analysis
+<a id="__codelineno-0-600" name="__codelineno-0-600" href="#__codelineno-0-600"></a>    ├── space/                         # Space &amp; Satellite Domain [Phase 17]
+<a id="__codelineno-0-601" name="__codelineno-0-601" href="#__codelineno-0-601"></a>    │   ├── __init__.py
+<a id="__codelineno-0-602" name="__codelineno-0-602" href="#__codelineno-0-602"></a>    │   ├── events.py                  # Space overpass, accuracy, SATCOM, ASAT, degradation, debris, and early-warning events
+<a id="__codelineno-0-603" name="__codelineno-0-603" href="#__codelineno-0-603"></a>    │   ├── config.py                  # Strict dependency-neutral constellation, ASAT definition/asset/order, and runtime schemas
+<a id="__codelineno-0-604" name="__codelineno-0-604" href="#__codelineno-0-604"></a>    │   ├── catalog.py                 # Duplicate-safe complete catalog loading, reference resolution, and topology fingerprint
+<a id="__codelineno-0-605" name="__codelineno-0-605" href="#__codelineno-0-605"></a>    │   ├── orbits.py                  # Simplified Keplerian orbital mechanics: period, ground track, J2 precession
+<a id="__codelineno-0-606" name="__codelineno-0-606" href="#__codelineno-0-606"></a>    │   ├── constellations.py          # Manager-owned satellite transitions and ordered/checkpointed SpaceEngine orchestration
+<a id="__codelineno-0-607" name="__codelineno-0-607" href="#__codelineno-0-607"></a>    │   ├── gps.py                     # GPS accuracy model: DOP from visible satellites, INS drift, CEP scaling
+<a id="__codelineno-0-608" name="__codelineno-0-608" href="#__codelineno-0-608"></a>    │   ├── isr.py                     # Typed owner-scoped ISR reports, delayed queue, checkpoint lifecycle
+<a id="__codelineno-0-609" name="__codelineno-0-609" href="#__codelineno-0-609"></a>    │   ├── early_warning.py           # Missile early warning: GEO/HEO IR detection, BMD Pk bonus
+<a id="__codelineno-0-610" name="__codelineno-0-610" href="#__codelineno-0-610"></a>    │   ├── satcom.py                  # SATCOM availability: coverage windows, bandwidth capacity, reliability
+<a id="__codelineno-0-611" name="__codelineno-0-611" href="#__codelineno-0-611"></a>    │   └── asat.py                    # Scheduled finite direct-ascent KKV actions, observable results, and Poisson debris cascade
+<a id="__codelineno-0-612" name="__codelineno-0-612" href="#__codelineno-0-612"></a>    ├── cbrn/                          # CBRN Effects [Phase 18]
+<a id="__codelineno-0-613" name="__codelineno-0-613" href="#__codelineno-0-613"></a>    │   ├── __init__.py
+<a id="__codelineno-0-614" name="__codelineno-0-614" href="#__codelineno-0-614"></a>    │   ├── events.py                  # CBRN events (contamination, exposure, decontamination, nuclear, MOPP, casualty)
+<a id="__codelineno-0-615" name="__codelineno-0-615" href="#__codelineno-0-615"></a>    │   ├── agents.py                  # CBRN agent definitions: nerve/blister/choking/blood/biological/radiological, LCt50/LD50
+<a id="__codelineno-0-616" name="__codelineno-0-616" href="#__codelineno-0-616"></a>    │   ├── dispersal.py               # Pasquill-Gifford atmospheric dispersal: Gaussian puff/plume, wind advection, stability classes
+<a id="__codelineno-0-617" name="__codelineno-0-617" href="#__codelineno-0-617"></a>    │   ├── contamination.py           # Contamination grid overlay: concentration tracking, decay, evaporation, washout, absorption
+<a id="__codelineno-0-618" name="__codelineno-0-618" href="#__codelineno-0-618"></a>    │   ├── protection.py              # MOPP levels 0-4: movement/detection/fatigue degradation, equipment effectiveness
+<a id="__codelineno-0-619" name="__codelineno-0-619" href="#__codelineno-0-619"></a>    │   ├── casualties.py              # Probit dose-response model: dosage accumulation, incapacitation, lethality
+<a id="__codelineno-0-620" name="__codelineno-0-620" href="#__codelineno-0-620"></a>    │   ├── decontamination.py         # 3-tier decon: hasty (60%), deliberate (95%), thorough (99%), equipment requirements
+<a id="__codelineno-0-621" name="__codelineno-0-621" href="#__codelineno-0-621"></a>    │   ├── nuclear.py                 # Nuclear effects: Hopkinson-Cranz blast, thermal fluence, radiation, EMP, fallout, craters
+<a id="__codelineno-0-622" name="__codelineno-0-622" href="#__codelineno-0-622"></a>    │   └── engine.py                  # CBRNEngine orchestrator: per-tick dispersal, contamination, exposure, MOPP management
+<a id="__codelineno-0-623" name="__codelineno-0-623" href="#__codelineno-0-623"></a>    ├── escalation/                   # Escalation dynamics &amp; political pressure [Phase 24]
+<a id="__codelineno-0-624" name="__codelineno-0-624" href="#__codelineno-0-624"></a>    │   ├── __init__.py
+<a id="__codelineno-0-625" name="__codelineno-0-625" href="#__codelineno-0-625"></a>    │   ├── ladder.py                 # 11-level escalation state machine, desperation index, hysteresis de-escalation
+<a id="__codelineno-0-626" name="__codelineno-0-626" href="#__codelineno-0-626"></a>    │   ├── political.py              # International + domestic political pressure model, threshold effects
+<a id="__codelineno-0-627" name="__codelineno-0-627" href="#__codelineno-0-627"></a>    │   ├── consequences.py           # War crimes consequence cascading: morale, hardening, hostility, pressure
+<a id="__codelineno-0-628" name="__codelineno-0-628" href="#__codelineno-0-628"></a>    │   ├── events.py                 # 8 escalation event types (level change, war crime, political pressure, etc.)
+<a id="__codelineno-0-629" name="__codelineno-0-629" href="#__codelineno-0-629"></a>    │   └── war_termination.py        # Negotiated war termination: ceasefire, armistice, capitulation
+<a id="__codelineno-0-630" name="__codelineno-0-630" href="#__codelineno-0-630"></a>    └── simulation/                   # Top-level simulation orchestration
+<a id="__codelineno-0-631" name="__codelineno-0-631" href="#__codelineno-0-631"></a>        ├── __init__.py
+<a id="__codelineno-0-632" name="__codelineno-0-632" href="#__codelineno-0-632"></a>        ├── engine.py                 # Master simulation loop (hybrid tick + event)
+<a id="__codelineno-0-633" name="__codelineno-0-633" href="#__codelineno-0-633"></a>        ├── campaign.py               # Campaign-level management, strategic AI, reinforcement pipeline; legacy scripted-action boundary remains REM-045
+<a id="__codelineno-0-634" name="__codelineno-0-634" href="#__codelineno-0-634"></a>        ├── battle.py                 # Tactical battle resolution manager
+<a id="__codelineno-0-635" name="__codelineno-0-635" href="#__codelineno-0-635"></a>        ├── scenario.py               # Scenario loading, setup, initialization; SimulationContext includes stratagem_engine, iads_engine, ato_engine [Phase 53]
+<a id="__codelineno-0-636" name="__codelineno-0-636" href="#__codelineno-0-636"></a>        ├── runtime.py                # Authoritative prepared-scenario/runtime-session boundary and provenance [Phase 112]
+<a id="__codelineno-0-637" name="__codelineno-0-637" href="#__codelineno-0-637"></a>        ├── performance_flags.py      # Five-flag registry, support dispositions, and live cross-bound guards [Phase 118]
+<a id="__codelineno-0-638" name="__codelineno-0-638" href="#__codelineno-0-638"></a>        ├── era_runtime.py            # Frozen effective cadence/treatment/repair contract and executable-horizon sources [Phase 114]
+<a id="__codelineno-0-639" name="__codelineno-0-639" href="#__codelineno-0-639"></a>        ├── force_builder.py          # Typed deterministic initial-force construction [Phase 112]
+<a id="__codelineno-0-640" name="__codelineno-0-640" href="#__codelineno-0-640"></a>        ├── movement_diagnostics.py   # Ordered observational movement reasons and checkpoint state [Phase 112]
+<a id="__codelineno-0-641" name="__codelineno-0-641" href="#__codelineno-0-641"></a>        ├── tactical_targeting.py     # Typed interval/picture/decision/revalidation/support owner and format-118 checkpoint state [Phases 115, 118]
+<a id="__codelineno-0-642" name="__codelineno-0-642" href="#__codelineno-0-642"></a>        ├── targeting_exposure.py     # Atomic stored-frame decoder plus privileged and opaque side-FOW projections [Phases 115, 118]
+<a id="__codelineno-0-643" name="__codelineno-0-643" href="#__codelineno-0-643"></a>        ├── equipment_mappings.py     # Ordered typed equipment-name registry and reviewed data decisions [Phase 109]
+<a id="__codelineno-0-644" name="__codelineno-0-644" href="#__codelineno-0-644"></a>        ├── loadouts.py               # RuntimeLoadoutBuilder, semantic preflight, topology/fingerprint [Phase 109]
+<a id="__codelineno-0-645" name="__codelineno-0-645" href="#__codelineno-0-645"></a>        ├── time_on_target.py         # Initial-roster/runtime-loadout resolver for exact scheduled indirect-fire plans [Phase 111]
+<a id="__codelineno-0-646" name="__codelineno-0-646" href="#__codelineno-0-646"></a>        ├── victory.py                # Victory conditions, war termination criteria, objective evaluation
+<a id="__codelineno-0-647" name="__codelineno-0-647" href="#__codelineno-0-647"></a>        ├── recorder.py               # Event/state recording for replay &amp; analysis
+<a id="__codelineno-0-648" name="__codelineno-0-648" href="#__codelineno-0-648"></a>        ├── metrics.py                # Simulation output metrics, statistical aggregation, analysis hooks
+<a id="__codelineno-0-649" name="__codelineno-0-649" href="#__codelineno-0-649"></a>        ├── aggregation.py           # Force aggregation/disaggregation engine for campaign-scale [Phase 13a]
+<a id="__codelineno-0-650" name="__codelineno-0-650" href="#__codelineno-0-650"></a>        ├── calibration.py           # Typed CalibrationSchema pydantic model replacing free-form dict [Phase 49]
+<a id="__codelineno-0-651" name="__codelineno-0-651" href="#__codelineno-0-651"></a>        ├── unit_arrays.py           # Structure-of-Arrays (SoA) data layer for hot-path unit data [Phase 88]
+<a id="__codelineno-0-652" name="__codelineno-0-652" href="#__codelineno-0-652"></a>        └── deployment.py            # Configurable deployment modes (legacy/bounding_box/clustered/doctrinal/manual) + DeploymentConfig + FormationTemplateLoader consuming data/formations/*.yaml [Phase 104]
 </code></pre></div>
 <hr />
 <h2 id="module-responsibilities-boundaries">Module Responsibilities &amp; Boundaries<a class="headerlink" href="#module-responsibilities-boundaries" title="Permanent link">&para;</a></h2>
 <h3 id="core">core/<a class="headerlink" href="#core" title="Permanent link">&para;</a></h3>
 <p><strong>Owns</strong>: Infrastructure that every other module depends on. No domain logic.
-- RNG manager is the single source of truth for all randomness
+- <code>RNGManager</code> is the single source of truth for all randomness. It owns both
+  conventional stateful streams and typed identity-addressed indexed decisions;
+  domain modules may consume either manager-issued form but may not construct an
+  independent RNG authority.
 - Clock is the single source of truth for simulation time
   - <strong>Calendar-aware</strong>: the clock tracks real calendar date and time, not just an abstract tick counter. Scenario start defines a specific date/time (e.g., "1991-02-24T04:00:00Z"). Every tick advances real calendar time. This is critical because seasons, astronomical positions, tidal states, weather patterns, and daylight hours are ALL date-dependent.
   - <strong>UTC internally</strong>: all simulation time in UTC. Time zone conversions for display only (via coordinates module — longitude determines local solar time).
@@ -7332,8 +7451,8 @@
   <code>EraConfig</code> registry, seven enforced capability gates, sensor allowlists, and
   strict sparse cadence/treatment/repair declarations. The simulation-layer
   <code>EraRuntimeContract</code> resolves effective values before RNG construction and
-  owns clock/domain configuration plus format-116 persistence [Phases 20, 107,
-  114--116]</p>
+  owns clock/domain configuration plus format-118 persistence [Phases 20, 107,
+  114--118]</p>
 <p><strong>Depends on</strong>: Nothing (leaf dependency)</p>
 <h3 id="coordinates">coordinates/<a class="headerlink" href="#coordinates" title="Permanent link">&para;</a></h3>
 <p><strong>Owns</strong>: All coordinate math. The only module that knows about geodetic ↔ projected transforms.
@@ -7721,7 +7840,7 @@ the production scenario loop.</p>
 - <strong>Era runtime</strong>: one frozen <code>EraRuntimeContract</code> materializes sparse
   strategic/operational/tactical cadence and medical/maintenance overrides
   before RNG, clock, or engine construction. Clock, engine intervals, medical,
-  maintenance, API cadence, fingerprints, and format-116 checkpoints consume
+  maintenance, API cadence, fingerprints, and format-118 checkpoints consume
   that same boundary; unsupported C2/nuclear metadata rejects [Phase 114].
 - <strong>Initial force construction</strong>: <code>RuntimeForceBuilder</code> validates exact typed
   unit groups, per-instance overrides, deterministic IDs/domains, cardinality,
@@ -7737,14 +7856,22 @@ the production scenario loop.</p>
   identity to context, engine, and battle manager, owns the post-FOW interval
   and immutable <code>(tick, battle, shooter)</code> pictures. Movement and ordinary
   direct engagement consume the same exact attachment/contact/range decision
-  and post-movement revalidation. Format-116 checkpoints preserve that evidence
+  and post-movement revalidation. Format-118 checkpoints preserve that evidence
   together with exact roster-backed side contacts, bounded current observer
-  witnesses, fusion-owned track aliases, exact staged type/alias integrity, and
-  DETECTION RNG authority. Explicit empty views and dynamic between-interval
-  checkpoints remain valid, while disabled ordinary state rejects. Privileged
-  versus target-independent side-ordinal FOW projections remain viewer-bound in
-  API/replay readers. Active deception and custom/populated COP topology reject
-  explicitly under REM-046 and REM-036 [Phases 115--116].
+  witnesses, bounded radar observer-track supports, fusion-owned track aliases,
+  exact staged type/alias integrity, and indexed DETECTION RNG authority.
+  Explicit empty views and dynamic between-interval checkpoints remain valid,
+  while disabled ordinary state rejects. One atomic stored-frame decoder binds
+  privileged evidence, the complete root roster/side set, every side-safe view,
+  and target-to-track associations before API or replay exposure. Privileged
+  support identity/covariance remains root-only; the side projection retains
+  only its distinct source and opaque track. The support codecs and checkpoint
+  topology remain valid for archived/dormant format-118 evidence, but current
+  supported production cannot emit a non-null observer-track support because
+  scan scheduling and LOD activation reject. REM-054 / Phase 141 owns a future
+  supported production-reachable path. Active deception and custom/populated
+  COP topology reject explicitly under REM-046 and REM-036 [Phases 115--116,
+  118].
 - <strong>Morale ownership</strong>: one <code>MoraleRuntime</code> registers the initial and arriving
   roster, coordinates stochastic/melee/rally/cascade mutations and aggregate
   archives, exposes the stable read-only consumer mapping, and owns the sole
@@ -7770,6 +7897,36 @@ the production scenario loop.</p>
   same <code>SimulationRuntimeFactory</code> boundary, retaining per-seed observation
   receipts and applying exact joint-coverage evaluation before publishing an
   atomic digest-bearing artifact [Phase 117].
+- <strong>Performance-semantic ownership</strong>: the immutable five-flag registry
+  classifies detection culling, SoA selection, and parallel detection as
+  semantics-preserving execution optimizations, while scan scheduling and LOD
+  are explicit model-fidelity approximations. The immutable schema-2
+  <code>phase118-performance-semantics-v7</code> study completed all 96 pairs / 396
+  attempts and independently reloaded as a terminal <code>FAIL</code> under
+  <code>EXTERNALLY_CONTENDED</code>, with manifest artifact SHA-256
+  <code>bf9e00ce4a7774af29b5657c49bbbe4481b407a966d9922e48970022f5c6ad86</code>.
+  The three exact optimizations retain <code>supported_exact_validated</code>; scan
+  scheduling and LOD are <code>unsupported_failed_semantic_validation</code>. Current
+  YAML, API, analysis, runtime, and checkpoint boundaries reject either retired
+  flag enabled and nondefault LOD tuning. Authored configuration, typed
+  calibration, flattened calibration, and committed receipt flags are
+  cross-bound before work and receipt exposure. <code>RuntimeSession</code> exposes the
+  typed receipt, while <code>GET /api/meta/performance-flags</code> exposes the registry
+  and retained evidence identity. The FOW owner uses manager-issued indexed
+  Philox decisions so canonical stochastic identities do not depend on thread
+  scheduling or selector order. Format-118 checkpoints preserve flags,
+  receipts, cadence state, and indexed RNG lifecycle. The raw v6 terminal
+  <code>ERROR</code>, v7 terminal <code>FAIL</code>, frozen plan, typed 1,408-entry
+  execution-to-retirement handoff, and one-off validation tooling are
+  intentionally off main. Their durable locators are
+  <code>branch=evidence/full; path=docs/evidence/phase-118/v6-terminal/</code>,
+  <code>branch=evidence/full; path=docs/evidence/phase-118/v7-terminal/</code>,
+  <code>branch=evidence/full; path=data/validation/performance_semantics/phase118.yaml</code>,
+  and
+  <code>branch=evidence/full; path=docs/evidence/phase-118/runtime-manifest-handoff.json</code>.
+  The accepted qualified-negative postmortem closed Phase 118 / REM-031; no
+  speed claim follows, and REM-055 / Phase 142 owns the measured
+  transactional-FOW runtime regression [Phase 118].
 - Does NOT contain domain logic — only sequencing and coordination</p>
 <p><strong>Depends on</strong>: Everything (top of the dependency tree)</p>
 <hr />
@@ -7800,7 +7957,9 @@ the production scenario loop.</p>
 <li><strong>Modules communicate through interfaces, not internals</strong>: Each module exposes a clean public API in its <code>__init__.py</code>. Internal implementation details are private.</li>
 <li><strong>Domain logic lives in domain modules, not in simulation/</strong>: The <code>simulation/</code> module orchestrates but never computes. If you're writing an <code>if</code> statement about combat in <code>simulation/engine.py</code>, it belongs in <code>combat/</code> instead.</li>
 <li><strong>Entities are data, modules are behavior</strong>: <code>entities/</code> defines what a tank IS (stats, state). <code>movement/</code> defines how a tank MOVES. <code>combat/</code> defines how a tank FIGHTS. This separation allows the same entity to be acted on by multiple systems cleanly.</li>
-<li><strong>All stochastic behavior goes through core/rng.py</strong>: No module creates its own RNG. All request a stream from the central manager.</li>
+<li><strong>All stochastic behavior goes through core/rng.py</strong>: No module creates its
+   own RNG authority. Every decision consumes either a conventional stream or a
+   typed indexed transaction issued by the central manager.</li>
 <li><strong>All time goes through core/clock.py</strong>: No module tracks its own time. All query the simulation clock.</li>
 <li><strong>All config goes through core/config.py patterns</strong>: No ad-hoc config parsing. YAML → pydantic → validated config objects.</li>
 <li><strong>Terrain is mostly read-only during simulation</strong>: Natural terrain (elevation, land cover) is loaded once at scenario start and does not change. Infrastructure (bridges, roads, buildings) CAN be modified by combat events via the event bus (e.g., <code>BridgeDestroyedEvent</code>), but only as discrete state changes — never continuous mutation. Population disposition may shift in response to events (bombardment → hostile shift).</li>

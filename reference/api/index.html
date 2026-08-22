@@ -874,6 +874,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#performance-flag-support-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance-flag support contract
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#scenario-historical-validation-contract" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2369,6 +2380,62 @@
     
   
     Block 19 (135-137)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block20/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 20 (138-140)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block21/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 21 (141-142)
   
 
     
@@ -5831,6 +5898,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-118/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 118 - Performance-Flag Semantic Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -6123,6 +6218,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../specs/performance-flag-semantic-integrity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Performance-Flag Semantic Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../specs/morale-state-ownership/" class="md-nav__link">
         
   
@@ -6289,6 +6412,17 @@
     <span class="md-ellipsis">
       
         Endpoints
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-flag-support-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance-flag support contract
       
     </span>
   </a>
@@ -6768,6 +6902,16 @@
 </tr>
 <tr>
 <td>GET</td>
+<td><code>/api/health/live</code></td>
+<td>Process liveness probe</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/health/ready</code></td>
+<td>Dependency and catalog readiness probe</td>
+</tr>
+<tr>
+<td>GET</td>
 <td><code>/api/meta/eras</code></td>
 <td>Available eras with disabled modules</td>
 </tr>
@@ -6780,6 +6924,11 @@
 <td>GET</td>
 <td><code>/api/meta/terrain-types</code></td>
 <td>Terrain type list</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/meta/performance-flags</code></td>
+<td>Canonical governed-flag classifications, current support dispositions, and retained v7 evidence identity</td>
 </tr>
 <tr>
 <td>GET</td>
@@ -6909,12 +7058,12 @@
 <tr>
 <td>GET</td>
 <td><code>/api/meta/schools</code></td>
-<td>Doctrinal schools (9) with OODA multiplier</td>
+<td>Base/global doctrinal schools with OODA multiplier</td>
 </tr>
 <tr>
 <td>GET</td>
 <td><code>/api/meta/commanders</code></td>
-<td>13 base/global commander profiles with personality traits; 13 era-specific profiles remain omitted (REM-049)</td>
+<td>Base/global commander profiles with personality traits; era-specific profiles remain omitted (REM-049)</td>
 </tr>
 <tr>
 <td>GET</td>
@@ -6948,6 +7097,36 @@
 </tr>
 </tbody>
 </table>
+<h3 id="performance-flag-support-contract">Performance-flag support contract<a class="headerlink" href="#performance-flag-support-contract" title="Permanent link">&para;</a></h3>
+<p><code>GET /api/meta/performance-flags</code> returns the immutable registry in canonical
+order. Each row contains <code>flag</code>, <code>classification</code>, <code>support_disposition</code>,
+<code>required_meaning</code>, <code>evidence_plan_id</code>,
+<code>evidence_manifest_artifact_sha256</code>, and <code>retained_shard_status</code>.</p>
+<p>The retained plan is <code>phase118-performance-semantics-v7</code>. It completed all 96
+pairs / 396 attempts and independently reloaded as an eligible terminal
+<code>FAIL</code> under <code>EXTERNALLY_CONTENDED</code>; the immutable manifest artifact SHA-256
+is <code>bf9e00ce4a7774af29b5657c49bbbe4481b407a966d9922e48970022f5c6ad86</code>.
+Detection culling, SoA selection, and parallel detection are
+<code>supported_exact_validated</code> with retained <code>PASS</code>. Scan scheduling and LOD are
+<code>unsupported_failed_semantic_validation</code> with retained <code>FAIL</code>.</p>
+<p>Run, inline-scenario, comparison, and sensitivity request boundaries reject a
+retired flag enabled or any nondefault LOD tuning value with HTTP 422 before a
+run/batch row or background task is created. The same fail-closed disposition
+applies to scenario YAML, direct analysis/runtime construction, live owner
+drift, and current-checkpoint restore. The v7 result and its externally
+contended qualification support no speed claim. The accepted
+qualified-negative postmortem closed Phase 118 / REM-031. The terminal v6
+<code>ERROR</code> remains negative evidence at
+<code>branch=evidence/full; path=docs/evidence/phase-118/v6-terminal/</code> (manifest
+artifact SHA-256
+<code>eb8e12f147c14ee4e83e7f5e80e4b1e50aa2bfe847d5e5e681b2462f7850051a</code>), and
+the v7 <code>FAIL</code> remains at
+<code>branch=evidence/full; path=docs/evidence/phase-118/v7-terminal/</code> (manifest
+artifact SHA-256
+<code>bf9e00ce4a7774af29b5657c49bbbe4481b407a966d9922e48970022f5c6ad86</code>).
+Those locators currently name a local, unpublished branch pending a separate
+evidence-remote or Git LFS decision. Ordinary <code>main</code> validation neither fetches
+nor reinterprets either study.</p>
 <h3 id="scenario-historical-validation-contract">Scenario historical-validation contract<a class="headerlink" href="#scenario-historical-validation-contract" title="Permanent link">&para;</a></h3>
 <p>Both scenario endpoints require a <code>historical_validation</code> object loaded from
 the canonical repository claim ledger. The API audits the ledger self-digest,
@@ -7008,33 +7187,74 @@ production-validated scenarios, and the retained Phase 117 73 Easting study is
 a completed <code>FAIL</code> rather than accepted evidence.</p>
 <h3 id="frame-targeting-exposure">Frame targeting exposure<a class="headerlink" href="#frame-targeting-exposure" title="Permanent link">&para;</a></h3>
 <p>Completed runs store the paired targeting projections introduced with format
-115 at each captured map frame. Current checkpoint format 116 additionally
-preserves the contact/witness evidence behind a current consumable projection;
-the REST schema itself is unchanged:</p>
+115 at each captured map frame. Format 118 adds the strict root discriminator
+<code>targeting_exposure_schema_version=118</code>, a required runtime-owned
+<code>fog_of_war_enabled</code> mode, a required-nullable
+<code>observer_track_support</code> field to each privileged targeting decision and the
+<code>FOW_OBSERVER_TRACK_SUPPORT</code> contact-source value. A non-null support record is
+exact engine evidence: it identifies the reporting side, observer, source
+equipment index, sensor, one of the seven supported fire-control-radar roles,
+and target; binds the exact fusion track; and exposes observation/native-
+deadline chronology plus the projected position, velocity, and 4x4 covariance.
+It is not a historical sensor-accuracy claim.</p>
+<p>The support field remains required-nullable so immutable format-118 evidence
+and the dormant scan-deferral algorithm decode strictly. Current supported
+production cannot emit a non-null support because scan scheduling and LOD
+activation are rejected after the terminal semantic <code>FAIL</code>; REM-054 / Phase
+141 owns restoring a supported production-reachable emission path.</p>
 <ul>
 <li><code>scope=PRIVILEGED_ENGINE</code> returns exact engine/evaluator evidence, including
-  ground-truth target and source-attachment identity. It is the current default
-  when <code>scope</code> is omitted and rejects a <code>side</code> parameter.</li>
+  ground-truth target and source-attachment identity and, when used, the full
+  observer-track support record. It is the current default when <code>scope</code> is
+  omitted and rejects a <code>side</code> parameter.</li>
 <li><code>scope=SIDE_FOW&amp;side=&lt;side-id&gt;</code> returns only that side's frame roster and
   opaque current owner-side track evidence. Track IDs are target-independent,
   side-local ordinals allocated in canonical first-detection order; hidden
-  target/entity and attachment identity is omitted. The stored payload's exact
-  <code>viewer_side</code> must match the requested side, including for an empty side.
-  Missing <code>side</code> returns 422; a side absent from the captured projection
-  returns 409.</li>
+  target/entity and attachment identity is omitted. A supported decision may
+  expose <code>contact_source=FOW_OBSERVER_TRACK_SUPPORT</code> and its opaque
+  <code>target_track_id</code>, but never the nested support identity, target ID, source
+  index, sensor ID/role, covariance, or observation/native-deadline chronology.
+  The stored payload's exact <code>viewer_side</code> must match the requested side,
+  including for an empty side. Missing <code>side</code> returns 422; a side absent from
+  the captured projection returns 409.</li>
 </ul>
 <p>Targeting-decision ordinals in <code>SIDE_FOW</code> are separately recomputed from zero
 per battle and viewer side; they are not the privileged all-sides picture
 ordinal and therefore do not reveal how many opposing shooters sort ahead of
-the viewer. The decoder re-derives and compares every public decision and
-revalidation field against the privileged source plus the root-only
-association. An internally valid but altered standoff, logical time,
-disposition, or outcome is rejected rather than trusted as stored public data.</p>
+the viewer. One atomic stored-frame decoder validates the privileged decisions
+and outcomes, root roster, complete set of side views and side rosters, and
+every root target-to-track association before either API scope or replay
+returns. It re-derives and compares every public decision and revalidation
+field against the privileged source plus the root-only association. An
+internally valid but altered standoff, logical time, disposition, support
+track, or outcome is rejected rather than trusted as stored public data. A
+frame that declares SIDE_FOW unavailable must have empty side and association
+envelopes; a current FOW frame must contain exactly one view for every root-
+roster side. The strict root FOW mode must equal both SIDE_FOW availability
+and every nonempty decision interval, so an empty FOW interval cannot be
+downgraded merely by clearing its side envelopes. Current capture rejects a
+nonboolean effective runtime mode instead of coercing it.</p>
 <p>The stored root frame carries a privileged-only exact target-to-track
 association map so the decoder can prove that each opaque track identifier is
 the same contact used by the engine decision. Missing associations or same-side
 track rebinding reject; this map is never returned in <code>SIDE_FOW</code>, replay, or
 frontend payloads.</p>
+<p>Tick-range filters are applied only after every stored frame has passed the
+shared strict decoder. A malformed stored tick therefore returns 409 instead
+of bypassing validation or escaping as a server error; standalone replay also
+validates every tick before sorting.</p>
+<p>The stored-frame boundary accepts exactly one older decision topology: all
+nonempty decisions in a pre-118 frame may uniformly omit only
+<code>observer_track_support</code>, which is re-emitted as explicit <code>null</code>. A complete
+unversioned Phase 115--117 paired frame remains readable even when its decision
+list is empty, but every scope, availability, side view, root roster, and
+association must validate. A bare unversioned empty privileged frame is
+unsupported because it is indistinguishable from a stripped current frame.
+Mixed current and pre-118 decisions, a deleted marker that leaves the
+current-only FOW mode, any other missing/extra decision field, or a legacy
+decision that claims <code>FOW_OBSERVER_TRACK_SUPPORT</code> rejects. Live runtime and
+checkpoint decoders remain format-118 strict. These checks establish internal
+semantic consistency; stored frames are not cryptographically authenticated.</p>
 <p>The route does not yet authenticate the caller or derive an authorized side.
 Consequently these query parameters are evidence-projection controls, not an
 access-control boundary, and the privileged default is unsuitable as a
@@ -7240,6 +7460,16 @@ a new preparation observes the replacement.</p>
 <td>Return the result only after <code>step()</code> reports terminal</td>
 </tr>
 <tr>
+<td><code>RuntimeSession.performance_execution_receipt()</code></td>
+<td><code>PerformanceExecutionReceipt</code></td>
+<td>Cross-bind authored, typed, flattened, and committed flag owners, then return the committed typed receipt for supported effective flags and controlled production work</td>
+</tr>
+<tr>
+<td><code>RuntimeSession.fow_indexed_interval_record()</code></td>
+<td><code>FOWIndexedIntervalRecord \| None</code></td>
+<td>Return the latest committed raw identity-addressed FOW decision record</td>
+</tr>
+<tr>
 <td><code>RuntimeSession.provenance()</code></td>
 <td><code>RuntimeProvenance</code></td>
 <td>Capture code/data/catalog/doctrine/loadout identity and initial/arriving assignments</td>
@@ -7295,8 +7525,10 @@ commit and clean code-revision result. It also checks that docs and tests are
 absent, loads the historical claim ledger through <code>load_scenario_catalog()</code>,
 audits every API-published scenario claim, and verifies the expected
 unsupported/current-engine-regression status for 73 Easting. Phase 117's local
-packaged-loader tests exercise the same ledger boundary, but the hosted image
-smoke remains pending until this phase is pushed and its workflow completes.
+packaged-loader tests exercise the same ledger boundary. The Phase 117 push
+prerequisite is satisfied at <code>84cf4c4</code>, but no successful hosted image result
+is recorded in the repository; the smoke remains unverified pending a
+successful workflow run.
 The current ledger has zero accepted artifacts, so neither check proves future
 nonempty accepted-evidence support in a no-<code>.git</code> image. REM-048 / Phase 135
 owns the build-time attestation and package receipt required for that case.</p>
@@ -7821,11 +8053,15 @@ exact metric bindings, committed ledger/artifact identities, compatible Git
 ancestry, and unchanged runtime source/data identities. <code>FAIL</code> is completed
 negative evidence. <code>ERROR</code> is not a verdict and is never promotable. An invalid
 plan rejects before an artifact is produced.</p>
-<p>The repository runner is <code>scripts/run_historical_backtest.py</code>. Its checked-in
-73 Easting result is <code>FAIL</code> with 0/20 joint successes, lower confidence bound
-0.0, and no promotion eligibility; see the
-<a href="../../specs/historical-outcome-envelope-integrity/">contract</a> and
-<a href="../../evidence/phase-117/73-easting-phase117.json">artifact</a>.</p>
+<p>The repository runner is <code>scripts/run_historical_backtest.py</code>; generated output
+belongs under ignored <code>artifacts/evidence/phase-117/</code>. The retained 73 Easting
+result is <code>FAIL</code> with 0/20 joint successes, lower confidence bound 0.0, and no
+promotion eligibility. Its artifact SHA-256 is
+<code>57bfe7d89575e721d9cee30c213505c760da3cede642624c7ed7532051e524f4</code>,
+and its local, unpublished locator is
+<code>branch=evidence/full; path=docs/evidence/phase-117/73-easting-phase117.json</code>,
+pending a separate evidence-remote or Git LFS decision. See the
+<a href="../../specs/historical-outcome-envelope-integrity/">contract</a>.</p>
 <h3 id="montecarloharness">MonteCarloHarness<a class="headerlink" href="#montecarloharness" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.validation.monte_carlo</span><span class="w"> </span><span class="kn">import</span> <span class="n">MonteCarloHarness</span>
 </code></pre></div>
@@ -7998,7 +8234,10 @@ typed historical backtest boundary above for historical verdicts.</p>
 <h3 id="rngmanager">RNGManager<a class="headerlink" href="#rngmanager" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">stochastic_warfare.core.rng</span><span class="w"> </span><span class="kn">import</span> <span class="n">RNGManager</span>
 </code></pre></div>
-<p>Central PRNG management. Creates independent per-module random number generator streams from a single seed.</p>
+<p>Central stochastic authority. It creates independent conventional per-module
+generators and owns the typed identity-addressed FOW allocation/commit
+lifecycle used when parallel completion order must not select a different
+decision.</p>
 <p><strong>Constructor:</strong></p>
 <table>
 <thead>
@@ -8033,13 +8272,41 @@ typed historical backtest boundary above for historical verdicts.</p>
 <td><code>np.random.Generator</code></td>
 <td>Independent PRNG stream for a module</td>
 </tr>
+<tr>
+<td><code>begin_fow_detection_interval()</code></td>
+<td><code>engine_tick, reporting_sides, module=DETECTION</code></td>
+<td><code>FOWIndexedAllocation</code></td>
+<td>Begin one strict ordered-side indexed decision transaction</td>
+</tr>
+<tr>
+<td><code>prepare_fow_detection_interval_commit()</code></td>
+<td><code>allocation</code></td>
+<td><code>FOWIndexedCommitPlan</code></td>
+<td>Stage the canonical transcript record without publication</td>
+</tr>
+<tr>
+<td><code>commit_fow_detection_interval()</code></td>
+<td><code>allocation</code></td>
+<td><code>FOWIndexedIntervalRecord</code></td>
+<td>Validate and publish a complete indexed interval</td>
+</tr>
+<tr>
+<td><code>abort_fow_detection_interval()</code></td>
+<td><code>allocation</code></td>
+<td><code>None</code></td>
+<td>Poison and abort an incomplete indexed interval</td>
+</tr>
 </tbody>
 </table>
 <p><strong>PRNG Discipline:</strong></p>
 <ul>
-<li>Every module gets its own stream via <code>get_stream(ModuleId.COMBAT)</code>, <code>get_stream(ModuleId.DETECTION)</code>, etc.</li>
+<li>Each conventional <code>ModuleId</code> gets its own stream via
+  <code>get_stream(ModuleId.COMBAT)</code>, <code>get_stream(ModuleId.DETECTION)</code>, etc.</li>
 <li>Streams are independent -- adding randomness in one module doesn't affect others</li>
-<li>Same seed always produces the same sequence per module</li>
+<li>Indexed FOW values bind to strict semantic identities and a canonical
+  transcript rather than worker draw order</li>
+<li>Same seed, code/data/configuration, and runtime topology reproduce the same
+  conventional streams and indexed decisions</li>
 </ul>
 <hr />
 <h3 id="eventbus">EventBus<a class="headerlink" href="#eventbus" title="Permanent link">&para;</a></h3>
@@ -8601,7 +8868,7 @@ non-morale concealment lifecycle.</p>
 </tr>
 </tbody>
 </table>
-<p><strong>LOD Tuning (Phase 85):</strong></p>
+<p><strong>LOD compatibility fields (retired from tuning):</strong></p>
 <table>
 <thead>
 <tr>
@@ -8616,28 +8883,92 @@ non-morale concealment lifecycle.</p>
 <td><code>enable_lod</code></td>
 <td><code>bool</code></td>
 <td><code>False</code></td>
-<td>Enable level-of-detail unit resolution tiering (ACTIVE/NEARBY/DISTANT)</td>
+<td>Must remain <code>False</code>; the sensing-only approximation is explicitly unsupported after failed semantic validation</td>
 </tr>
 <tr>
 <td><code>lod_nearby_interval</code></td>
 <td><code>int</code></td>
 <td><code>5</code></td>
-<td>Update frequency (ticks) for NEARBY-tier units</td>
+<td>Compatibility value must remain exactly <code>5</code></td>
 </tr>
 <tr>
 <td><code>lod_distant_interval</code></td>
 <td><code>int</code></td>
 <td><code>20</code></td>
-<td>Update frequency (ticks) for DISTANT-tier units</td>
+<td>Compatibility value must remain exactly <code>20</code></td>
 </tr>
 <tr>
 <td><code>lod_hysteresis_ticks</code></td>
 <td><code>int</code></td>
 <td><code>3</code></td>
-<td>Ticks before downgrade from higher tier (immediate promotion)</td>
+<td>Compatibility value must remain exactly <code>3</code></td>
 </tr>
 </tbody>
 </table>
+<p><strong>Performance semantic classifications (Phase 118):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Default</th>
+<th>Classification</th>
+<th>Current support</th>
+<th>Retained v7 verdict</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>enable_detection_culling</code></td>
+<td><code>True</code></td>
+<td>Semantics-preserving execution optimization</td>
+<td><code>supported_exact_validated</code></td>
+<td><code>PASS</code></td>
+</tr>
+<tr>
+<td><code>enable_scan_scheduling</code></td>
+<td><code>False</code></td>
+<td>Model-fidelity approximation</td>
+<td><code>unsupported_failed_semantic_validation</code></td>
+<td><code>FAIL</code></td>
+</tr>
+<tr>
+<td><code>enable_lod</code></td>
+<td><code>False</code></td>
+<td>Model-fidelity approximation (sensing cadence only)</td>
+<td><code>unsupported_failed_semantic_validation</code></td>
+<td><code>FAIL</code></td>
+</tr>
+<tr>
+<td><code>enable_soa</code></td>
+<td><code>False</code></td>
+<td>Semantics-preserving execution optimization</td>
+<td><code>supported_exact_validated</code></td>
+<td><code>PASS</code></td>
+</tr>
+<tr>
+<td><code>enable_parallel_detection</code></td>
+<td><code>False</code></td>
+<td>Semantics-preserving execution optimization</td>
+<td><code>supported_exact_validated</code></td>
+<td><code>PASS</code></td>
+</tr>
+</tbody>
+</table>
+<p>The runtime receipt proves which branch executed and how much work it admitted,
+deferred, selected, or dispatched. These classifications are semantic
+contracts, not historical calibration or speed evidence. The immutable
+schema-2 v7 study completed all 96 pairs / 396 attempts and independently
+reloaded as a terminal <code>FAIL</code> under <code>EXTERNALLY_CONTENDED</code>, with manifest
+artifact SHA-256
+<code>bf9e00ce4a7774af29b5657c49bbbe4481b407a966d9922e48970022f5c6ad86</code>.
+Current YAML, API, comparison/sensitivity, live runtime, and current-checkpoint
+boundaries reject either unsupported flag enabled and reject nondefault LOD
+compatibility values. Authored configuration, typed calibration, flattened
+calibration, and the committed receipt must agree before work or receipt
+exposure. Use <code>GET /api/meta/performance-flags</code> for the canonical registry and
+retained evidence identity. The accepted qualified-negative postmortem closed
+Phase 118 / REM-031; REM-055 / Phase 142 tracks the separately measured
+transactional-FOW runtime regression without changing this API contract.</p>
 <p><strong>Targeting Integrity (Phase 115):</strong></p>
 <table>
 <thead>
@@ -8775,7 +9106,7 @@ era contract, and runtime topology. An incompatible restore fails before
 mutating the target. See the
 <a href="../../specs/checkpoint-state/">checkpoint state contract</a> for the canonical
 schema and bounded legacy-migration rules.</p>
-<p>The current engine checkpoint schema is version 116. In addition to force,
+<p>The current engine checkpoint schema is version 118. In addition to force,
 loadout, logistics, space/ASAT, and time-on-target state, it preserves one
 <code>morale_runtime</code> envelope, one fully effective <code>era_runtime_contract</code>, and one
 strict tactical-targeting interval/picture/decision/revalidation envelope. One
@@ -8784,6 +9115,10 @@ bounded current observer witnesses, fusion state, exact contact-to-fusion track
 object identity, and the cross-validated DETECTION RNG mirror. Current FOW
 targeting decisions keep their exact consumability only when that contact,
 witness, interval, roster, and loadout evidence agrees.
+Format 118 additionally preserves the performance execution receipt, sensing
+cadence, FOW observer topology, detection scan counts, and the complete
+<code>RNGManager</code>-owned indexed FOW transcript. Cross-owner completeness, interval,
+entry, cadence, and effective-flag disagreements reject before mutation.
 The private publication plan is exact-owner-, content-, type-, shape-, and
 alias-bound. Disabled runtimes may retain explicitly allocated empty side views
 and non-FOW Space tracks, while ordinary contacts/witnesses/FOW IDs reject.
@@ -8796,7 +9131,7 @@ Commander/OODA assignments, bounded movement diagnostics, and typed Space ISR
 pending reports, delivery receipts, and owner/target IMINT associations remain
 included. Current-format restore is atomic and validates exact topology,
 status/route consistency, chronology, owner/RNG bindings, selected era
-identity, and clock/current-resolution agreement. Explicit version 115 and
+identity, and clock/current-resolution agreement. Explicit version 116 and
 every other non-current version reject.</p>
 <p>Phase 112's typed Space ISR proof uses an explicit empty ordinary-contact
 topology, including publicly allocated empty views. Phase 116 separately

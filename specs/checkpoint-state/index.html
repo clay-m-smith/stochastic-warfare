@@ -1879,6 +1879,62 @@
   
   
     <li class="md-nav__item">
+      <a href="../../development-phases-block20/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 20 (138-140)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block21/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 21 (141-142)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../remediation-backlog/" class="md-nav__link">
         
   
@@ -5321,6 +5377,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/phase-118/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 118 - Performance-Flag Semantic Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -5590,6 +5674,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#performance-receipts-cadence-and-indexed-fow-randomness" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance receipts, cadence, and indexed FOW randomness
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#runtime-loadout-topology" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5830,6 +5925,34 @@
     
   
     Historical Outcome-Envelope Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../performance-flag-semantic-integrity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Performance-Flag Semantic Integrity
   
 
     
@@ -6099,6 +6222,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#performance-receipts-cadence-and-indexed-fow-randomness" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance receipts, cadence, and indexed FOW randomness
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#runtime-loadout-topology" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6197,8 +6331,15 @@
 
 <h1 id="checkpoint-state-contract">Checkpoint State Contract<a class="headerlink" href="#checkpoint-state-contract" title="Permanent link">&para;</a></h1>
 <h2 id="status">Status<a class="headerlink" href="#status" title="Permanent link">&para;</a></h2>
-<p>Verified through the completed Phase 116 fog-of-war contact-continuation
-boundary. The current engine format is 116.</p>
+<p>Current through the Phase 118 performance-semantic implementation. The current
+engine format is 118. The immutable schema-2
+<code>phase118-performance-semantics-v7</code> study completed all 96 pairs / 396 attempts
+and independently reloaded as an eligible terminal <code>FAIL</code> under
+<code>EXTERNALLY_CONTENDED</code>; its manifest artifact SHA-256 is
+<code>bf9e00ce4a7774af29b5657c49bbbe4481b407a966d9922e48970022f5c6ad86</code>.
+The accepted qualified-negative postmortem closed Phase 118 / REM-031. The
+semantic evidence supports no speed claim; REM-055 / Phase 142 owns the
+separately measured transactional-FOW runtime regression.</p>
 <h2 id="purpose">Purpose<a class="headerlink" href="#purpose" title="Permanent link">&para;</a></h2>
 <p>A checkpoint is a deterministic branch point. Restoring it must reproduce the
 mutable simulation state at time <code>T</code>, and continuing from it must produce the
@@ -6207,15 +6348,24 @@ same subsequent state and events as the uninterrupted seeded run.</p>
 validated effective scenario configuration and repository/data-catalog
 revision. Checkpoint restore replaces mutable state; it does not rebuild engine
 topology or reinterpret a different scenario.</p>
-<p><code>SimulationEngine</code> writes checkpoint format version <code>116</code>. Any explicit version
-other than <code>116</code>, including <code>115</code>, is rejected before runtime mutation. An
+<p><code>SimulationEngine</code> writes checkpoint format version <code>118</code>. Any explicit version
+other than <code>118</code>, including <code>116</code>, is rejected before runtime mutation. An
 absent version selects the bounded legacy-migration path described below; an
 explicitly present <code>null</code> value is malformed, not legacy.</p>
-<p>For version <code>116</code>, top-level engine keys and context-state keys must exactly
+<p>For version <code>118</code>, top-level engine keys and context-state keys must exactly
 match the compatible target runtime. Missing or extra keys fail before
 mutation. Serialized scenario and reinforcement configurations use type-aware
 JSON equality, so booleans cannot masquerade as integers and integers cannot
 masquerade as floats.</p>
+<p>Every current JSON checkpoint capture rejects <code>NaN</code> and positive or negative
+infinity, including values nested in NumPy arrays. The shared decoder accepts
+only exact two-key NumPy markers with scalar or rectangular arrays and canonical
+boolean, signed-integer, unsigned-integer, or floating dtypes. Boolean leaves
+must be JSON booleans; integer leaves must be JSON integers excluding booleans
+and fit the declared dtype; floating leaves must be finite JSON numbers
+excluding booleans and fit the declared dtype. Marker coercion, strings,
+fractional integer leaves, and out-of-range values reject before any engine
+state is staged.</p>
 <h2 id="force-state">Force state<a class="headerlink" href="#force-state" title="Permanent link">&para;</a></h2>
 <p><code>SimulationContext.get_state()</code> serializes force sides in iteration order and
 units in processing order. Each unit state includes:</p>
@@ -6295,7 +6445,7 @@ but owns no current unit state.</p>
 <p>Current context state contains exactly one <code>morale_runtime</code> key. Its value is a
 strict envelope with exact <code>active_records</code> and <code>suspended_archives</code> keys, or
 <code>null</code> only for a deliberately minimal context whose roster, active routes, and
-aggregation topology are all empty. Current format 116 contains no separate
+aggregation topology are all empty. Current format 118 contains no separate
 <code>morale_states</code> or <code>morale_machine</code> current-state copy.</p>
 <p>Each active record preserves typed current state, optional finite non-negative
 last-transition and last-admitted-check times, and a strict non-negative
@@ -6380,7 +6530,7 @@ movement, consume RNG, or write positions. Versionless state may omit this
 owner only at tick zero before either the checkpoint or target diagnostics has
 observations.</p>
 <h2 id="tactical-targeting-and-fog-of-war-state">Tactical-targeting and fog-of-war state<a class="headerlink" href="#tactical-targeting-and-fog-of-war-state" title="Permanent link">&para;</a></h2>
-<p>Format 116 contains one strict <code>tactical_targeting</code> envelope owned by the exact
+<p>Format 118 contains one strict <code>tactical_targeting</code> envelope owned by the exact
 <code>TacticalTargetingRuntime</code> bound to the context, engine, and battle manager. It
 persists the default-on enablement value, default visibility bound, registered
 unit/side topology, current interval tick and elapsed time, published battle
@@ -6416,15 +6566,26 @@ This guard runs before clock advancement, RNG consumption, position changes,
 or recorder/event mutation.</p>
 <p>With FOW disabled, fresh restore and continuation preserve exact decisions,
 positions, movement diagnostics, revalidation, ammunition, events, and full
-checkpoint bytes. With FOW enabled, format 116 preserves a current decision's
+checkpoint bytes. With FOW enabled, format 118 preserves a current decision's
 exact consumability only when the separately staged fog owner proves its
-reporting-side contact, fusion track, observer-local witness, interval epoch,
-and loadout/sensor provenance. A missing or inconsistent association rejects;
-restore does not rewrite a current decision as historical or infer witness
-evidence from a side-wide contact.</p>
-<p>The <code>fog_of_war</code> envelope contains exactly <code>world_views</code>,
-<code>current_detection_witnesses</code>, <code>rng_state</code>, and <code>intel_fusion</code>. It restores the
-complete roster-backed ordinary-contact map with replacement semantics,
+reporting-side contact, fusion track, and either an observer-local current
+witness or one bounded observer-track support, together with the interval
+epoch, cadence, and loadout/sensor provenance. A support must retain the exact
+attachment/target identity, one of the seven allowed radar fire-control roles,
+the same live fusion generation, its observation and next-native-deadline
+chronology, and a finite positive-semidefinite projected covariance. A missing
+or inconsistent association rejects; restore does not rewrite a current
+decision as historical or infer witness/support evidence from a side-wide
+contact.</p>
+<p>This support topology remains authoritative for immutable format-118 evidence
+and the dormant scan-deferral algorithm, but current supported production
+cannot create a non-null observer-track support: scan scheduling and LOD
+activation are rejected after the terminal semantic <code>FAIL</code>. REM-054 / Phase
+141 owns restoring a supported production-reachable emission path.</p>
+<p>The format-118 <code>fog_of_war</code> envelope contains exactly <code>world_views</code>,
+<code>current_detection_witnesses</code>, <code>observer_track_supports</code>, <code>rng_state</code>,
+<code>intel_fusion</code>, <code>scan_counts</code>, and <code>cadence</code>. It restores the complete roster-
+backed ordinary-contact map with replacement semantics,
 including explicit empty views and removal of target-runtime-only state. Every
 live <code>ContactRecord.track</code> is rebound to the exact staged fusion-owned <code>Track</code>
 object after the duplicate serialized track representation agrees exactly;
@@ -6438,21 +6599,76 @@ silently skip or reuse the next ID.</p>
 equipment index, sensor/model role/type, interval time, detection result,
 probability, SNR, range, and bearing needed by a consumable current targeting
 decision. The next normal update replaces this cache; it is not an unbounded
-history. FOW, fusion, detection, estimators, identification, deception, and the
-context must share the authoritative <code>RNGManager</code> DETECTION generator and all
-serialized mirrors must agree before mutation.</p>
+history. The separate bounded support map retains only a successful radar
+attachment measurement and its deterministic estimator projection while that
+attachment is cadence-deferred. Support clears on loss, track replacement,
+invalid attachment/roster topology, or the next native deadline; reinforcement
+and reappearance may create only a newly valid record bound to the current
+fusion generation. Checkpoint continuation preserves the exact remaining
+deadline and projection, never extends it. FOW, fusion, detection, estimators,
+identification, deception, and the context must share the authoritative
+<code>RNGManager</code> DETECTION generator and all serialized mirrors must agree before
+mutation.</p>
 <p>Staging produces an exact-owner-bound plan with independent content and raw
 type/shape/alias fingerprints. Commit rejects a subclassed, foreign, or
-mutated plan, deep-copies the four staged graphs as one alias-preserving
-publication, and verifies both fingerprints again before publishing fusion,
-aliased contacts, RNG state, and witnesses. Disabled FOW permits explicit empty
-views and non-FOW Space tracks but rejects contacts, witnesses, FOW IDs, or FOW
-counters. A dynamic roster change may leave durable FOW state while targeting
-is intentionally between intervals; the next step refreshes both owners.
+mutated plan, deep-copies the complete staged owner graph as one alias-
+preserving publication, and verifies both fingerprints again before publishing
+fusion, aliased contacts, RNG state, witnesses, supports, scan counts, and
+cadence. Disabled FOW permits explicit empty views and non-FOW Space tracks but
+rejects contacts, witnesses, supports, FOW IDs, or FOW counters. A dynamic
+roster change may leave durable FOW state while targeting is intentionally
+between intervals; the next step refreshes both owners.
 Capture and restore reject non-pristine active/inactive deception state under
 REM-046 and custom/populated COP/data-link state under REM-036 because format
-116 does not serialize those owners. Versionless state cannot retain even
+118 does not serialize those owners. Versionless state cannot retain even
 LOST-only FOW track/counter history.</p>
+<h2 id="performance-receipts-cadence-and-indexed-fow-randomness">Performance receipts, cadence, and indexed FOW randomness<a class="headerlink" href="#performance-receipts-cadence-and-indexed-fow-randomness" title="Permanent link">&para;</a></h2>
+<p>Format 118 adds one strict <code>battle.performance_execution_receipt</code>, one
+<code>fog_of_war.cadence</code> envelope, exact detection <code>scan_counts</code>, canonical
+<code>fow_observer_unit_ids</code>, and one <code>context.rng.indexed_fow</code> owner. Together they
+preserve the effective values of the five governed flags, completed tactical
+intervals and duration, sensing admissions/deferrals, culling/SoA selection,
+sequential or parallel dispatch, LOD sensing tiers, indexed decision counts,
+and a digest-bearing canonical transcript.</p>
+<p>Detection culling, SoA selection, and parallel detection are the three
+<code>supported_exact_validated</code> flags. Scan scheduling and LOD remain
+model-fidelity approximations with
+<code>unsupported_failed_semantic_validation</code>. Current checkpoint capture and
+restore reject either retired flag enabled and reject nondefault
+<code>lod_nearby_interval</code>, <code>lod_distant_interval</code>, or <code>lod_hysteresis_ticks</code>
+before mutation. Historical <code>EffectivePerformanceFlags.from_state</code> decoding
+remains permissive enough to preserve recorded true values; decoding those
+values does not authorize a current runtime. The raw v6
+terminal <code>ERROR</code>, v7 terminal <code>FAIL</code>, frozen plan, typed retirement handoff,
+and their one-off validation tooling are intentionally off main. Their durable
+locators are
+<code>branch=evidence/full; path=docs/evidence/phase-118/v6-terminal/</code>,
+<code>branch=evidence/full; path=docs/evidence/phase-118/v7-terminal/</code>,
+<code>branch=evidence/full; path=data/validation/performance_semantics/phase118.yaml</code>,
+and
+<code>branch=evidence/full; path=docs/evidence/phase-118/runtime-manifest-handoff.json</code>.
+Archived decoding and verification preserve those results but do not authorize
+a current runtime or reinterpret either study.</p>
+<p>The indexed owner derives decisions from the master seed plus strict semantic
+observer/target/sensor/interval identities. Worker completion order cannot
+select a different value or publication order. A complete interval stages its
+cadence, side updates, receipt delta, and indexed transcript record before the
+outer battle transaction publishes any of them. Checkpoint capture rejects an
+active allocation, poisoned transaction, partial side set, mismatched
+completeness flag, interval/entry count disagreement, effective-flag drift, or
+cadence mismatch rather than serializing a prefix.</p>
+<p>Restore validates the receipt, cadence, observer topology, scan counts, indexed
+state, contacts/fusion generations, observer supports, targeting evidence, and
+effective calibration together before mutation. Authored scenario
+configuration, typed calibration, flattened hot-path calibration, and the
+committed execution receipt are cross-bound before capture, restore, work, or
+receipt exposure. A
+versionless payload cannot contain any Phase 118 evidence owner. Its bounded
+default-flag migration starts zero receipt/cadence/indexed owners marked
+<code>complete_from_tick_zero: false</code>; that incompleteness is monotonic in all
+descendant format-118 checkpoints and cannot be promoted. A started
+versionless runtime with scan scheduling or LOD enabled rejects because the
+omitted cadence history cannot be reconstructed.</p>
 <h2 id="runtime-loadout-topology">Runtime loadout topology<a class="headerlink" href="#runtime-loadout-topology" title="Permanent link">&para;</a></h2>
 <p>The Phase 109 <code>RuntimeLoadoutBuilder</code> is the only owner of production weapon
 and sensor attachment construction for initial units, reinforcements, and fresh
@@ -6512,7 +6728,7 @@ delivery or restore leaves the queue, receipt ledger, associations, tracks,
 clock, and RNG unchanged so the same operation can be retried.</p>
 <p>This typed Space ISR contract does not directly inject reports into ordinary
 fog-of-war contacts. Phase 112 proved its queue/receipt/association lifecycle
-with an explicitly empty ordinary-contact topology; format 116 independently
+with an explicitly empty ordinary-contact topology; format 118 independently
 restores nonempty roster-backed <code>SideWorldView.contacts</code> and their fusion
 aliases without relabeling Space ISR as a direct FOW-injection path.</p>
 <p>The detailed ASAT production/action contract is
@@ -6551,9 +6767,9 @@ counters reject before context mutation.</p>
 <a href="../time-on-target-execution/">Time-on-Target Execution</a>.</p>
 <h2 id="compatibility">Compatibility<a class="headerlink" href="#compatibility" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Current engine checkpoints contain <code>checkpoint_version: 116</code>; an unknown,
+<li>Current engine checkpoints contain <code>checkpoint_version: 118</code>; an unknown,
   malformed, boolean, older explicit, or newer explicit version is rejected.
-  Explicit version <code>115</code> and all earlier formats do not migrate into the
+  Explicit version <code>116</code> and all earlier formats do not migrate into the
   current runtime.</li>
 <li>Current reinforcement wave ordinals and morale-record enum/generation values
   use non-boolean integers. Current wave side, configured arrival time, and full
@@ -6593,7 +6809,7 @@ counters reject before context mutation.</p>
   additionally requires <code>units_by_side</code> for its campaign/roster preflight and
   exactly one <code>era_runtime_contract</code>, one <code>morale_runtime</code>, one
   <code>tactical_targeting</code>, one context-owned detection owner, and one strict
-  <code>fog_of_war</code> envelope for version 116.</li>
+  <code>fog_of_war</code> envelope for version 118.</li>
 <li>Older unit snapshots without <code>unit_class</code> infer the class from its unique
   subclass field. A snapshot with no subclass field restores as <code>Unit</code>.</li>
 <li>Unknown explicit discriminators fail; they never silently downgrade to
@@ -6647,17 +6863,26 @@ counters reject before context mutation.</p>
 <li>one-runtime transition, rally, melee, cascade, dynamic-registration,
     aggregation, API/campaign exposure, and exact current/legacy morale
     continuation controls;</li>
-<li>exact current format-116 era-contract topology, resolution/clock agreement,
+<li>exact current format-118 era-contract topology, resolution/clock agreement,
     bounded override-free versionless handling, active treatment/repair
     continuation, and atomic rejection of captured source, horizon, consumer,
     or contract drift;</li>
 <li>exact tactical-targeting owner/topology, no-FOW fresh continuation,
     movement-diagnostic agreement, and atomic clock/battle/roster/loadout/range
     corruption controls;</li>
-<li>exact nonempty ordinary-contact, fusion-object alias, bounded witness,
-    current-decision consumability, DETECTION RNG, fresh/in-place lifecycle,
-    exposure, event, and whole-checkpoint continuation, including atomic
-    corruption/retry and explicit REM-036/REM-046 rejection controls; and</li>
+<li>exact nonempty ordinary-contact, fusion-object alias, bounded witness and
+    radar observer-support lifecycles, current-decision consumability,
+    DETECTION RNG, fresh/in-place loss/redetection/reappearance continuation,
+    privileged/side-safe exposure, event, and whole-checkpoint continuation,
+    including atomic corruption/retry and explicit REM-036/REM-046 rejection
+    controls; and</li>
+<li>exact format-118 performance receipt, sensing cadence, observer topology,
+    detection scan counts, indexed FOW transcript, support native deadlines and
+    fusion generations, enabled-flag, sequential/parallel dispatch, fresh/in-
+    place continuation, and atomic cross-owner corruption controls;</li>
+<li>bounded versionless default-flag migration with monotonic incomplete
+    receipt/cadence/indexed history, plus rejection of mixed Phase 118 evidence
+    and unreconstructable started scan-scheduling/LOD cadence; and</li>
 <li>relevant existing checkpoint, scenario, engine, entity, morale, logistics,
     space, commander, movement, and indirect-fire regression suites.</li>
 </ol>
@@ -6672,10 +6897,10 @@ restoration. Its current base-unit reconstruction gap is tracked separately and
 must be closed before checkpoint equivalence is claimed across an aggregation
 boundary.</p>
 <p>Typed Space ISR queue/receipt/association equivalence must not be generalized
-into direct ordinary-contact injection. Format 116 restores roster-backed
+into direct ordinary-contact injection. Format 118 restores roster-backed
 ordinary contacts separately; active deception remains REM-046 and custom or
 populated COP/data-link topology remains REM-036.</p>
-<p>Legacy Phase 101 <code>_fired_scripted_events</code> state is not part of format 116 and
+<p>Legacy Phase 101 <code>_fired_scripted_events</code> state is not part of format 118 and
 must not be inferred from elapsed time after restore. Typed schedule identity,
 effect receipts, fail-closed retry/commit policy, and exact-once continuation
 for the four existing scripted-action families remain REM-045 / Phase 132.</p>
