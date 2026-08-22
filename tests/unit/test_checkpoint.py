@@ -1,15 +1,17 @@
 """Tests for core/checkpoint.py — state serialization."""
 
 import json
+import math
 import pickle  # legacy checkpoint tests only
 from datetime import datetime, timedelta, timezone
 
 import numpy as np
+import pytest
 
 from stochastic_warfare.core.checkpoint import (
     CheckpointManager,
     NumpyEncoder,
-    _numpy_object_hook,
+    decode_checkpoint_json,
 )
 from stochastic_warfare.core.clock import SimulationClock
 from stochastic_warfare.core.rng import RNGManager
@@ -123,10 +125,10 @@ class TestJsonRoundTrip:
         assert parsed["version"] == 2
 
     def test_numpy_array_round_trip(self) -> None:
-        """ndarray survives JSON encode/decode via NumpyEncoder + object_hook."""
+        """ndarray survives JSON encode and the production strict decoder."""
         arr = np.array([1.0, 2.0, 3.0], dtype=np.float64)
-        encoded = json.dumps({"data": arr}, cls=NumpyEncoder)
-        decoded = json.loads(encoded, object_hook=_numpy_object_hook)
+        encoded = json.dumps({"data": arr}, cls=NumpyEncoder).encode("utf-8")
+        decoded = decode_checkpoint_json(encoded)
         np.testing.assert_array_equal(decoded["data"], arr)
         assert decoded["data"].dtype == arr.dtype
 
@@ -167,6 +169,27 @@ class TestJsonRoundTrip:
         )
         assert mod_state["count"] == 5
         assert mod_state["active"] is True
+
+    @pytest.mark.parametrize(
+        "nonfinite",
+        (
+            math.nan,
+            math.inf,
+            np.array([1.0, math.nan], dtype=np.float64),
+        ),
+        ids=("nan-scalar", "infinity-scalar", "nan-array"),
+    )
+    def test_checkpoint_capture_rejects_nonfinite_state(
+        self,
+        nonfinite: object,
+    ) -> None:
+        clock = _make_clock()
+        rng = RNGManager(42)
+        mgr = CheckpointManager()
+        mgr.register(ModuleId.ENTITIES, lambda: {"invalid": nonfinite})
+
+        with pytest.raises(ValueError, match="Out of range float values"):
+            mgr.create_checkpoint(clock, rng)
 
     def test_full_round_trip_with_prng_restore(self) -> None:
         """Full checkpoint→restore cycle preserves PRNG continuity via JSON."""

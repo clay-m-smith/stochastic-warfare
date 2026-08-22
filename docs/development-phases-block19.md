@@ -8,8 +8,10 @@ and has not started
 Block 19 owns the package-bound accepted-evidence attestation deficit surfaced
 by Phase 117's no-`.git` Docker review. Phase 117 locally proves that the
 packaged loader with zero accepted claims loads the strict ledger and exposes
-the catalog conservatively; its hosted no-`.git` image smoke is configured and
-pending the phase push. Neither result proves that a future
+the catalog conservatively. The Phase 117 push prerequisite is satisfied at
+`84cf4c4`, but no successful hosted no-`.git` image result is recorded in the
+repository; that smoke remains unverified pending a successful workflow run.
+Neither result proves that a future
 `production_validated` claim can survive packaging: repository acceptance
 currently depends on Git ancestry, committed ledger content, the study plan,
 and an artifact retained beneath `docs/`, while the image intentionally ships

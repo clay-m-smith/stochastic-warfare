@@ -16,20 +16,29 @@ import math
 import threading
 from collections.abc import Iterator, Sequence
 from dataclasses import dataclass, field
+from decimal import Decimal
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
+from stochastic_warfare.core.indexed_rng import (
+    FOWDecisionIdentity,
+    encode_fow_decision,
+)
 from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.types import Position
-from stochastic_warfare.detection.detection import DetectionResult
+from stochastic_warfare.detection.detection import (
+    DetectionDecisionStage,
+    DetectionResult,
+)
 from stochastic_warfare.detection.estimation import (
     StateEstimator,
     Track,
     TrackStatus,
 )
 from stochastic_warfare.detection.identification import ContactInfo, ContactLevel
+from stochastic_warfare.detection.sensors import SensorType
 
 if TYPE_CHECKING:
     from stochastic_warfare.space.isr import SpaceISRReport
@@ -70,6 +79,47 @@ class IntelReport:
     target_type: str | None = None
     classification_confidence: float = 0.0
     source_unit_id: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class SensorFusionCandidate:
+    """One successful indexed FOW detection awaiting positional fusion."""
+
+    identity: FOWDecisionIdentity
+    detection: DetectionResult
+    contact_info: ContactInfo
+    observer_position: Position
+    observation_time_s: float
+
+
+@dataclass(frozen=True, slots=True)
+class FusionSubmissionOutcome:
+    """Outcome and committed work for one ordinary fusion submission."""
+
+    track_id: str | None
+    prediction_microseconds: int = 0
+    creations: int = 0
+    updates: int = 0
+    replacements: int = 0
+    position_measurement_candidates: int = 0
+    position_measurement_groups: int = 0
+    correlated_candidates_elided: int = 0
+
+    @property
+    def predictions(self) -> int:
+        """Return one only when a positive elapsed prediction executed."""
+        return int(self.prediction_microseconds > 0)
+
+
+@dataclass(frozen=True, slots=True)
+class _PreparedSensorFusionCandidate:
+    """Fully validated candidate material safe to submit under the lock."""
+
+    identity: FOWDecisionIdentity
+    encoded_identity: bytes
+    report: IntelReport
+    effective_variance_m2: float
+    group_key: tuple[int, str, int, str, float]
 
 
 class SatellitePass(BaseModel):
@@ -658,7 +708,7 @@ class IntelFusionEngine:
                 report,
                 contact_id,
                 allocate_fow_track=allocate_fow_track,
-            )
+            ).track_id
 
     def _submit_report_locked(
         self,
@@ -667,12 +717,12 @@ class IntelFusionEngine:
         contact_id: str | None,
         *,
         allocate_fow_track: bool,
-    ) -> str | None:
+    ) -> FusionSubmissionOutcome:
         """Submit one report while holding the fusion track lock."""
         if type(allocate_fow_track) is not bool:
             raise TypeError("allocate_fow_track must be a boolean")
         if report.target_position is None:
-            return None
+            return FusionSubmissionOutcome(track_id=None)
 
         tracks = self._get_side_tracks(side)
 
@@ -719,16 +769,48 @@ class IntelFusionEngine:
         # is replaced under this same lock; retain its identity until the
         # replacement has been constructed and installed successfully.
         replaced_fow_track_id: str | None = None
+        prediction_microseconds = 0
         if contact_id and contact_id in tracks:
             track = tracks[contact_id]
+            staged_track = copy.deepcopy(track)
+            prediction_dt = _strict_number(
+                report.timestamp - track.state.last_update_time,
+                "intel report elapsed prediction",
+                non_negative=True,
+            )
+            if prediction_dt > 0.0:
+                prediction_microseconds_decimal = (
+                    Decimal(str(report.timestamp)) - Decimal(str(track.state.last_update_time))
+                ) * Decimal(1_000_000)
+                if prediction_microseconds_decimal != (prediction_microseconds_decimal.to_integral_value()):
+                    raise ValueError(
+                        "intel report elapsed prediction must resolve to whole microseconds",
+                    )
+                prediction_microseconds = int(
+                    prediction_microseconds_decimal,
+                )
+                self._estimator.predict(staged_track, prediction_dt)
             accepted = self._estimator.update(
-                track,
+                staged_track,
                 meas,
                 R,
                 report.timestamp,
             )
-            if accepted or not allocate_fow_track:
-                return contact_id
+            if accepted:
+                # Preserve aliases held by ordinary world-view contacts and
+                # other fusion consumers while publishing the fully staged
+                # predict/update result atomically.
+                track.set_state(staged_track.get_state())
+                return FusionSubmissionOutcome(
+                    track_id=contact_id,
+                    prediction_microseconds=prediction_microseconds,
+                    updates=1,
+                )
+            if not allocate_fow_track:
+                return FusionSubmissionOutcome(
+                    track_id=contact_id,
+                    prediction_microseconds=prediction_microseconds,
+                )
             replaced_fow_track_id = contact_id
             # A gated FOW measurement is a distinct observation rather than
             # permission to leave a current contact bound to a stale estimate.
@@ -760,7 +842,12 @@ class IntelFusionEngine:
             self._fow_track_counters[side] = next_fow_ordinal
         if replaced_fow_track_id is not None:
             del tracks[replaced_fow_track_id]
-        return tid
+        return FusionSubmissionOutcome(
+            track_id=tid,
+            prediction_microseconds=prediction_microseconds,
+            creations=int(replaced_fow_track_id is None),
+            replacements=int(replaced_fow_track_id is not None),
+        )
 
     def _imint_status(
         self,
@@ -1103,6 +1190,240 @@ class IntelFusionEngine:
     # Sensor detection submission
     # ------------------------------------------------------------------
 
+    @staticmethod
+    def _prepare_sensor_fusion_candidate(
+        candidate: SensorFusionCandidate,
+        *,
+        index: int,
+    ) -> _PreparedSensorFusionCandidate:
+        """Validate and materialize one candidate without touching engine state."""
+        if type(candidate) is not SensorFusionCandidate:
+            raise TypeError(
+                f"candidates[{index}] must be an exact SensorFusionCandidate",
+            )
+        encoded_identity = encode_fow_decision(candidate.identity)
+        detection = candidate.detection
+        if type(detection) is not DetectionResult:
+            raise TypeError(
+                f"candidates[{index}].detection must be an exact DetectionResult",
+            )
+        if type(detection.detected) is not bool or not detection.detected:
+            raise ValueError(
+                f"candidates[{index}] must carry a successful detection",
+            )
+        if detection.decision_stage is not DetectionDecisionStage.STOCHASTIC:
+            raise ValueError(
+                f"candidates[{index}] must carry an indexed stochastic detection",
+            )
+        probability = _strict_number(
+            detection.probability,
+            f"candidates[{index}].detection.probability",
+            non_negative=True,
+        )
+        if probability > 1.0:
+            raise ValueError(
+                f"candidates[{index}].detection.probability must not exceed 1.0",
+            )
+        _strict_number(
+            detection.snr_db,
+            f"candidates[{index}].detection.snr_db",
+        )
+        range_m = _strict_number(
+            detection.range_m,
+            f"candidates[{index}].detection.range_m",
+            non_negative=True,
+        )
+        if type(detection.sensor_type) is not SensorType:
+            raise TypeError(
+                f"candidates[{index}].detection.sensor_type must be an exact SensorType",
+            )
+        bearing_deg = _strict_number(
+            detection.bearing_deg,
+            f"candidates[{index}].detection.bearing_deg",
+        )
+
+        contact_info = candidate.contact_info
+        if type(contact_info) is not ContactInfo:
+            raise TypeError(
+                f"candidates[{index}].contact_info must be an exact ContactInfo",
+            )
+        if type(contact_info.level) is not ContactLevel:
+            raise TypeError(
+                f"candidates[{index}].contact_info.level must be an exact ContactLevel",
+            )
+        for field_name in (
+            "domain_estimate",
+            "type_estimate",
+            "specific_estimate",
+        ):
+            value = getattr(contact_info, field_name)
+            if value is not None:
+                _strict_identifier(
+                    value,
+                    f"candidates[{index}].contact_info.{field_name}",
+                )
+        confidence = _strict_number(
+            contact_info.confidence,
+            f"candidates[{index}].contact_info.confidence",
+            non_negative=True,
+        )
+        if confidence > 1.0:
+            raise ValueError(
+                f"candidates[{index}].contact_info.confidence must not exceed 1.0",
+            )
+
+        observer = candidate.observer_position
+        if type(observer) is not Position:
+            raise TypeError(
+                f"candidates[{index}].observer_position must be an exact Position",
+            )
+        observer_easting = _strict_number(
+            observer.easting,
+            f"candidates[{index}].observer_position.easting",
+        )
+        observer_northing = _strict_number(
+            observer.northing,
+            f"candidates[{index}].observer_position.northing",
+        )
+        _strict_number(
+            observer.altitude,
+            f"candidates[{index}].observer_position.altitude",
+        )
+        if detection.horizontal_range_m is None:
+            raise ValueError(
+                f"candidates[{index}].detection must carry detector-emitted "
+                "horizontal_range_m",
+            )
+        horizontal_range_m = _strict_number(
+            detection.horizontal_range_m,
+            f"candidates[{index}].detection.horizontal_range_m",
+            non_negative=True,
+        )
+        if horizontal_range_m > range_m:
+            raise ValueError(
+                f"candidates[{index}].detection.horizontal_range_m must not "
+                "exceed range_m",
+            )
+        observation_time_s = _strict_number(
+            candidate.observation_time_s,
+            f"candidates[{index}].observation_time_s",
+            non_negative=True,
+        )
+
+        bearing_rad = math.radians(bearing_deg)
+        target_easting = _strict_number(
+            observer_easting + horizontal_range_m * math.sin(bearing_rad),
+            f"candidates[{index}] reconstructed target easting",
+        )
+        target_northing = _strict_number(
+            observer_northing + horizontal_range_m * math.cos(bearing_rad),
+            f"candidates[{index}] reconstructed target northing",
+        )
+        position_uncertainty_m = max(
+            range_m * 0.05,
+            _MIN_POSITION_UNCERTAINTY_M,
+        )
+        effective_uncertainty_m = position_uncertainty_m / max(
+            probability,
+            0.01,
+        )
+        effective_variance_m2 = _strict_number(
+            effective_uncertainty_m * effective_uncertainty_m,
+            f"candidates[{index}] effective position variance",
+            positive=True,
+        )
+        report = IntelReport(
+            source=IntelSource.SENSOR,
+            timestamp=observation_time_s,
+            reliability=probability,
+            target_position=Position(target_easting, target_northing, 0.0),
+            position_uncertainty_m=position_uncertainty_m,
+            target_type=None,
+            classification_confidence=confidence,
+            source_unit_id=None,
+        )
+        identity = candidate.identity
+        return _PreparedSensorFusionCandidate(
+            identity=identity,
+            encoded_identity=encoded_identity,
+            report=report,
+            effective_variance_m2=effective_variance_m2,
+            group_key=(
+                identity.engine_tick,
+                identity.reporting_side,
+                identity.target_kind.value,
+                identity.target_id,
+                observation_time_s,
+            ),
+        )
+
+    @classmethod
+    def _prepare_sensor_fusion_batch(
+        cls,
+        candidates: Sequence[SensorFusionCandidate],
+    ) -> tuple[_PreparedSensorFusionCandidate, ...]:
+        """Validate one complete exact fusion group before any mutation."""
+        if isinstance(candidates, (str, bytes, bytearray)) or not isinstance(
+            candidates,
+            Sequence,
+        ):
+            raise TypeError("candidates must be an ordered sequence")
+        materialized = tuple(candidates)
+        if not materialized:
+            raise ValueError("candidates must contain one complete fusion group")
+
+        prepared = tuple(
+            cls._prepare_sensor_fusion_candidate(candidate, index=index)
+            for index, candidate in enumerate(materialized)
+        )
+        group_key = prepared[0].group_key
+        if any(candidate.group_key != group_key for candidate in prepared[1:]):
+            raise ValueError(
+                "candidates must share one exact engine-tick, side, target-kind, "
+                "target-ID, and observation-time group",
+            )
+        encoded_identities = tuple(
+            candidate.encoded_identity for candidate in prepared
+        )
+        if len(set(encoded_identities)) != len(encoded_identities):
+            raise ValueError("candidates contain a duplicate decision identity")
+        return prepared
+
+    def submit_sensor_detection_batch_with_outcome(
+        self,
+        candidates: Sequence[SensorFusionCandidate],
+        contact_id: str | None = None,
+    ) -> FusionSubmissionOutcome:
+        """Fuse one exact same-epoch FOW group through one estimator update."""
+        if contact_id is not None:
+            validate_fow_track_id(contact_id, "contact_id")
+        prepared = self._prepare_sensor_fusion_batch(candidates)
+        representative = min(
+            prepared,
+            key=lambda candidate: (
+                candidate.effective_variance_m2,
+                candidate.encoded_identity,
+            ),
+        )
+        with self._track_lock:
+            outcome = self._submit_report_locked(
+                representative.identity.reporting_side,
+                representative.report,
+                contact_id,
+                allocate_fow_track=True,
+            )
+        candidate_count = len(prepared)
+        return FusionSubmissionOutcome(
+            track_id=outcome.track_id,
+            prediction_microseconds=outcome.prediction_microseconds,
+            creations=outcome.creations,
+            updates=outcome.updates,
+            replacements=outcome.replacements,
+            position_measurement_candidates=candidate_count,
+            position_measurement_groups=1,
+            correlated_candidates_elided=candidate_count - 1,
+        )
+
     def submit_sensor_detection(
         self,
         side: str,
@@ -1115,13 +1436,74 @@ class IntelFusionEngine:
         observation_time_s: float = 0.0,
     ) -> str | None:
         """Create an IntelReport from a sensor detection and submit it."""
-        if not detection.detected:
-            return None
+        return self.submit_sensor_detection_with_outcome(
+            side,
+            detection,
+            contact_info,
+            observer_pos,
+            contact_id,
+            allocate_fow_track=allocate_fow_track,
+            observation_time_s=observation_time_s,
+        ).track_id
 
-        # Estimate target position from observer + bearing + range
-        bearing_rad = math.radians(detection.bearing_deg)
-        tgt_e = observer_pos.easting + detection.range_m * math.sin(bearing_rad)
-        tgt_n = observer_pos.northing + detection.range_m * math.cos(bearing_rad)
+    def submit_sensor_detection_with_outcome(
+        self,
+        side: str,
+        detection: DetectionResult,
+        contact_info: ContactInfo,
+        observer_pos: Position,
+        contact_id: str | None = None,
+        *,
+        allocate_fow_track: bool = False,
+        observation_time_s: float = 0.0,
+    ) -> FusionSubmissionOutcome:
+        """Submit one detection and expose committed estimator work."""
+        if not detection.detected:
+            return FusionSubmissionOutcome(track_id=None)
+
+        if detection.horizontal_range_m is None:
+            raise ValueError(
+                "successful sensor detection must carry detector-emitted "
+                "horizontal_range_m",
+            )
+        slant_range_m = _strict_number(
+            detection.range_m,
+            "sensor detection range_m",
+            non_negative=True,
+        )
+        horizontal_range_m = _strict_number(
+            detection.horizontal_range_m,
+            "sensor detection horizontal_range_m",
+            non_negative=True,
+        )
+        if horizontal_range_m > slant_range_m:
+            raise ValueError(
+                "sensor detection horizontal_range_m must not exceed range_m",
+            )
+        bearing_deg = _strict_number(
+            detection.bearing_deg,
+            "sensor detection bearing_deg",
+        )
+        if type(observer_pos) is not Position:
+            raise TypeError("observer_pos must be an exact Position")
+        observer_easting = _strict_number(
+            observer_pos.easting,
+            "observer_pos.easting",
+        )
+        observer_northing = _strict_number(
+            observer_pos.northing,
+            "observer_pos.northing",
+        )
+        _strict_number(
+            observer_pos.altitude,
+            "observer_pos.altitude",
+        )
+
+        # Detection range remains 3-D slant for uncertainty.  Horizontal
+        # position uses the detector-emitted horizontal component and bearing.
+        bearing_rad = math.radians(bearing_deg)
+        tgt_e = observer_easting + horizontal_range_m * math.sin(bearing_rad)
+        tgt_n = observer_northing + horizontal_range_m * math.cos(bearing_rad)
 
         report = IntelReport(
             source=IntelSource.SENSOR,
@@ -1133,19 +1515,20 @@ class IntelFusionEngine:
             reliability=min(1.0, detection.probability),
             target_position=Position(tgt_e, tgt_n, 0.0),
             position_uncertainty_m=max(
-                detection.range_m * 0.05,
+                slant_range_m * 0.05,
                 _MIN_POSITION_UNCERTAINTY_M,
             ),
             target_type=None,
             classification_confidence=contact_info.confidence,
             source_unit_id=None,
         )
-        return self.submit_report(
-            side,
-            report,
-            contact_id,
-            allocate_fow_track=allocate_fow_track,
-        )
+        with self._track_lock:
+            return self._submit_report_locked(
+                side,
+                report,
+                contact_id,
+                allocate_fow_track=allocate_fow_track,
+            )
 
     # ------------------------------------------------------------------
     # Satellite coverage
@@ -1899,24 +2282,51 @@ class IntelFusionEngine:
 
     def commit_state(self, staged_state: dict[str, Any]) -> None:
         """Commit a non-throwing staged fusion snapshot."""
-        self._track_counter = staged_state["track_counter"]
-        self._fow_track_counters = dict(staged_state["fow_track_counters"])
-        self._rng.bit_generator.state = staged_state["rng_state"]
-        self._tracks = {
-            side: dict(side_tracks)
-            for side, side_tracks in staged_state["tracks"].items()
+        prepared = self._prepare_commit_state(staged_state)
+        self._commit_prevalidated_state(prepared)
+
+    @staticmethod
+    def _prepare_commit_state(
+        staged_state: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Materialize every container needed by a non-throwing commit."""
+        return {
+            "track_counter": staged_state["track_counter"],
+            "fow_track_counters": dict(staged_state["fow_track_counters"]),
+            "rng_state": staged_state["rng_state"],
+            "tracks": {side: dict(side_tracks) for side, side_tracks in staged_state["tracks"].items()},
+            "satellite_passes": {side: list(passes) for side, passes in staged_state["satellite_passes"].items()},
+            "delivery_receipt_ledger": staged_state["delivery_receipt_ledger"],
+            "delivery_receipts": list(staged_state["delivery_receipts"]),
+            "imint_target_tracks": {
+                side: dict(associations) for side, associations in staged_state["imint_target_tracks"].items()
+            },
         }
-        self._satellite_passes = {
-            side: list(passes)
-            for side, passes in staged_state["satellite_passes"].items()
-        }
-        self._delivery_receipts = staged_state["delivery_receipt_ledger"]
-        self._imint_target_tracks = {
-            side: dict(associations)
-            for side, associations in staged_state[
-                "imint_target_tracks"
-            ].items()
-        }
+
+    def _commit_prevalidated_state(
+        self,
+        prepared_state: dict[str, Any],
+    ) -> None:
+        """Publish a fully materialized fusion snapshot by assignment."""
+        self._track_counter = prepared_state["track_counter"]
+        self._fow_track_counters = prepared_state["fow_track_counters"]
+        self._rng.bit_generator.state = prepared_state["rng_state"]
+        self._tracks = prepared_state["tracks"]
+        self._satellite_passes = prepared_state["satellite_passes"]
+        self._delivery_receipts = prepared_state["delivery_receipt_ledger"]
+        self._imint_target_tracks = prepared_state["imint_target_tracks"]
+
+    def _commit_prevalidated_fow_state(
+        self,
+        prepared_state: dict[str, Any],
+    ) -> None:
+        """Publish FOW-owned fusion containers without resetting shared RNG."""
+        self._track_counter = prepared_state["track_counter"]
+        self._fow_track_counters = prepared_state["fow_track_counters"]
+        self._tracks = prepared_state["tracks"]
+        self._satellite_passes = prepared_state["satellite_passes"]
+        self._delivery_receipts = prepared_state["delivery_receipt_ledger"]
+        self._imint_target_tracks = prepared_state["imint_target_tracks"]
 
     def set_state(self, state: dict[str, Any]) -> None:
         """Validate and atomically restore standalone fusion state."""

@@ -78,6 +78,7 @@ class IdentificationEngine:
         target_unit: Any = None,
         threshold_db: float = 0.0,
         rng: np.random.Generator | None = None,
+        classification_uniform: float | None = None,
     ) -> ContactInfo:
         """Derive contact info from a single detection result.
 
@@ -94,10 +95,26 @@ class IdentificationEngine:
             Optional caller-owned stream. Parallel FOW dispatch supplies its
             side-local stream so classification cannot race on shared state;
             ordinary callers retain this engine's checkpointed stream.
+        classification_uniform:
+            Optional caller-owned binary64 uniform.  Production fog-of-war
+            supplies indexed Philox lane one.  Supplying both stochastic
+            sources is an error.
         """
         if rng is not None and not isinstance(rng, np.random.Generator):
             raise TypeError("identification rng must be a numpy Generator")
-        draw_rng = self._rng if rng is None else rng
+        if rng is not None and classification_uniform is not None:
+            raise ValueError(
+                "identification accepts either rng or classification_uniform, not both",
+            )
+        if classification_uniform is not None and (
+            isinstance(classification_uniform, bool)
+            or not isinstance(classification_uniform, (int, float))
+            or not math.isfinite(float(classification_uniform))
+            or not 0.0 <= float(classification_uniform) < 1.0
+        ):
+            raise ValueError(
+                "classification_uniform must be finite in [0, 1)",
+            )
         snr = detection.snr_db
         excess = snr - threshold_db
 
@@ -126,7 +143,12 @@ class IdentificationEngine:
 
         # Apply misclassification at lower levels
         misclass_p = self.misclassification_probability(snr, threshold_db)
-        if draw_rng.random() < misclass_p:
+        roll = (
+            float(classification_uniform)
+            if classification_uniform is not None
+            else float((self._rng if rng is None else rng).random())
+        )
+        if roll < misclass_p:
             # Misclassified — degrade one level and null out specifics
             if level == ContactLevel.IDENTIFIED:
                 level = ContactLevel.CLASSIFIED

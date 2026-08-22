@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import numpy as np
-import pytest
 
 from stochastic_warfare.core.types import Position
 
@@ -112,21 +111,3 @@ class TestVectorizedRangeCheck:
         tgt_pos = np.empty((0, 2), dtype=np.float64)
         result = _vectorized_range_filter(obs, tgt_pos, 1000.0)
         assert result == []
-
-
-class TestFOWUnitArraysParam:
-    """Verify FOW update accepts unit_arrays parameter."""
-
-    def test_update_signature_accepts_unit_arrays(self):
-        """FOW.update() must accept unit_arrays kwarg."""
-        import inspect
-        from stochastic_warfare.detection.fog_of_war import FogOfWarManager
-        sig = inspect.signature(FogOfWarManager.update)
-        assert "unit_arrays" in sig.parameters
-
-    def test_battle_passes_unit_arrays_to_fow(self):
-        """battle.py FOW update call includes unit_arrays."""
-        import inspect
-        from stochastic_warfare.simulation.battle import BattleManager
-        src = inspect.getsource(BattleManager.execute_tick)
-        assert "unit_arrays=_unit_arrays" in src

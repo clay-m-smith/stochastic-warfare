@@ -53,27 +53,75 @@ jobs:
   marker-partition:
     name: ${{ matrix.partition }} shard ${{ matrix.shard_index }}
     runs-on: ubuntu-latest
-    timeout-minutes: 100
+    # The per-shard pytest execution limit remains the tighter fail-closed
+    # boundary; this job limit leaves 30 minutes beyond that 14,400-second
+    # execution limit for checkout, dependency installation, collection,
+    # and artifact publication.
+    timeout-minutes: 270
     strategy:
       fail-fast: false
       matrix:
         include:
           - partition: slow-only
             shard_index: 0
-            shard_count: 4
-            timeout_seconds: 4200
+            shard_count: 15
+            timeout_seconds: 14400
           - partition: slow-only
             shard_index: 1
-            shard_count: 4
-            timeout_seconds: 4200
+            shard_count: 15
+            timeout_seconds: 14400
           - partition: slow-only
             shard_index: 2
-            shard_count: 4
-            timeout_seconds: 4200
+            shard_count: 15
+            timeout_seconds: 14400
           - partition: slow-only
             shard_index: 3
-            shard_count: 4
-            timeout_seconds: 4200
+            shard_count: 15
+            timeout_seconds: 14400
+          - partition: slow-only
+            shard_index: 4
+            shard_count: 15
+            timeout_seconds: 14400
+          - partition: slow-only
+            shard_index: 5
+            shard_count: 15
+            timeout_seconds: 14400
+          - partition: slow-only
+            shard_index: 6
+            shard_count: 15
+            timeout_seconds: 14400
+          - partition: slow-only
+            shard_index: 7
+            shard_count: 15
+            timeout_seconds: 14400
+          - partition: slow-only
+            shard_index: 8
+            shard_count: 15
+            timeout_seconds: 14400
+          - partition: slow-only
+            shard_index: 9
+            shard_count: 15
+            timeout_seconds: 14400
+          - partition: slow-only
+            shard_index: 10
+            shard_count: 15
+            timeout_seconds: 14400
+          - partition: slow-only
+            shard_index: 11
+            shard_count: 15
+            timeout_seconds: 14400
+          - partition: slow-only
+            shard_index: 12
+            shard_count: 15
+            timeout_seconds: 14400
+          - partition: slow-only
+            shard_index: 13
+            shard_count: 15
+            timeout_seconds: 14400
+          - partition: slow-only
+            shard_index: 14
+            shard_count: 15
+            timeout_seconds: 14400
           - partition: benchmark-only
             shard_index: 0
             shard_count: 3
@@ -92,6 +140,10 @@ jobs:
             timeout_seconds: 4200
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Slow benchmark policy compares against pinned historical commits.
+          # A shallow checkout cannot resolve those immutable baselines.
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:

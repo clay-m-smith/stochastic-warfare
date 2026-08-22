@@ -182,9 +182,7 @@ class WeaponDefinition(BaseModel):
         if self.target_domains:
             return set(self.target_domains)
         try:
-            return _CATEGORY_DEFAULT_DOMAINS.get(
-                self.parsed_category(), {"GROUND", "NAVAL"}
-            )
+            return _CATEGORY_DEFAULT_DOMAINS.get(self.parsed_category(), {"GROUND", "NAVAL"})
         except (KeyError, ValueError):
             return {"GROUND", "NAVAL"}
 
@@ -405,10 +403,7 @@ class AmmoState:
 
     def ready_missile_count(self, ammo_id: str | None = None) -> int:
         """Count of missiles in ready state, optionally filtered by ammo_id."""
-        return sum(
-            1 for m in self.missiles
-            if m.status == "ready" and (ammo_id is None or m.ammo_id == ammo_id)
-        )
+        return sum(1 for m in self.missiles if m.status == "ready" and (ammo_id is None or m.ammo_id == ammo_id))
 
     def get_state(self) -> dict[str, Any]:
         return {
@@ -477,9 +472,7 @@ class WeaponInstance:
         """Weapon condition 0.0–1.0 incorporating barrel wear."""
         base = self.equipment.condition if self.equipment else 1.0
         if self.definition.barrel_life_rounds > 0:
-            wear = 1.0 - (
-                self._rounds_since_maintenance / self.definition.barrel_life_rounds
-            )
+            wear = 1.0 - (self._rounds_since_maintenance / self.definition.barrel_life_rounds)
             wear = max(0.0, wear)
             return base * wear
         return base
@@ -523,9 +516,7 @@ class WeaponInstance:
             )
         if self._cooldown_s <= 0:
             return True
-        return (
-            current_time_s - self._last_fire_time_s
-        ) >= self._cooldown_s * cooldown_multiplier
+        return (current_time_s - self._last_fire_time_s) >= self._cooldown_s * cooldown_multiplier
 
     def record_fire(self, current_time_s: float) -> None:
         """Record the time of a successful fire for cooldown tracking."""
@@ -545,23 +536,55 @@ class WeaponInstance:
         self.ammo_state.add(ammo_id, count)
 
     def get_state(self) -> dict[str, Any]:
+        if self._last_fire_time_s == float("-inf"):
+            last_fire_time_s: float | None = None
+        elif not math.isfinite(self._last_fire_time_s):
+            raise ValueError("Weapon last-fire time must be finite or never-fired")
+        else:
+            last_fire_time_s = float(self._last_fire_time_s)
         return {
             "weapon_id": self.definition.weapon_id,
             "ammo_state": self.ammo_state.get_state(),
             "rounds_since_maintenance": self._rounds_since_maintenance,
-            "equipment_condition": (
-                self.equipment.condition if self.equipment else 1.0
-            ),
-            "equipment_operational": (
-                self.equipment.operational if self.equipment else True
-            ),
-            "last_fire_time_s": self._last_fire_time_s,
+            "equipment_condition": (self.equipment.condition if self.equipment else 1.0),
+            "equipment_operational": (self.equipment.operational if self.equipment else True),
+            "last_fire_time_s": last_fire_time_s,
         }
 
     def set_state(self, state: dict[str, Any]) -> None:
-        self.ammo_state.set_state(state["ammo_state"])
-        self._rounds_since_maintenance = state["rounds_since_maintenance"]
+        if "last_fire_time_s" not in state:
+            raise ValueError(
+                "Weapon state is missing required last_fire_time_s",
+            )
+        raw_last_fire = state["last_fire_time_s"]
+        if raw_last_fire is None:
+            last_fire_time_s = float("-inf")
+        elif (
+            isinstance(raw_last_fire, bool)
+            or not isinstance(raw_last_fire, (int, float))
+            or not math.isfinite(float(raw_last_fire))
+            or float(raw_last_fire) < 0.0
+        ):
+            raise ValueError(
+                "Weapon last_fire_time_s must be null or a finite non-negative number",
+            )
+        else:
+            last_fire_time_s = float(raw_last_fire)
+
+        # Stage every potentially-throwing read and nested reconstruction
+        # before publishing any part of the weapon snapshot.
+        staged_ammo = AmmoState()
+        staged_ammo.set_state(state["ammo_state"])
+        rounds_since_maintenance = state["rounds_since_maintenance"]
         if self.equipment is not None:
-            self.equipment.condition = state["equipment_condition"]
-            self.equipment.operational = state["equipment_operational"]
-        self._last_fire_time_s = state.get("last_fire_time_s", float("-inf"))
+            equipment_condition = state["equipment_condition"]
+            equipment_operational = state["equipment_operational"]
+
+        self.ammo_state.rounds_by_type = staged_ammo.rounds_by_type
+        self.ammo_state.missiles = staged_ammo.missiles
+        self.ammo_state.total_rounds_fired = staged_ammo.total_rounds_fired
+        self._rounds_since_maintenance = rounds_since_maintenance
+        if self.equipment is not None:
+            self.equipment.condition = equipment_condition
+            self.equipment.operational = equipment_operational
+        self._last_fire_time_s = last_fire_time_s

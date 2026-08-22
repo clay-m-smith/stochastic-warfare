@@ -47,9 +47,11 @@ aliases, and byte-identical Claude mirrors.
 
 ### /validate-conventions
 - Reviews code against project-specific rules:
-  - No bare `random` module imports or calls (all RNG through seeded numpy Generators)
+  - No bare `random` module imports or calls (all RNG through
+    `RNGManager`-owned conventional generators or typed indexed decisions)
   - Deterministic iteration order (no `set()` or unordered dict driving sim logic)
-  - PRNG stream discipline (subsystems use their own forked streams)
+  - PRNG authority discipline (subsystems use their assigned conventional
+    streams or manager-issued identity-addressed transactions)
   - Proper coordinate system usage (ENU/UTM internally, geodetic only at boundaries)
   - Logging framework usage (no bare `print()` in sim core)
   - Type hints on public API functions
@@ -91,6 +93,11 @@ aliases, and byte-identical Claude mirrors.
 - Treats a completed `PASS`, completed `FAIL`, and execution/evidence `ERROR`
   distinctly: `ERROR` has no historical verdict, and `PASS` alone does not make
   a repository claim `production_validated`
+- Writes generated artifacts beneath ignored `artifacts/evidence/`; raw result
+  vectors and terminal publications do not enter `main`. A retained publication
+  reports its verdict, qualifications, digest, and plain locator in the form
+  `branch=evidence/full; path=<repo-relative path>`, including whether that
+  branch is unpublished or externally backed
 - Never widens an envelope, lowers a threshold, changes seeds or metrics, or
   redefines the event/population after observing a miss; preserves the `FAIL`
   and records the specific remediation instead
@@ -105,7 +112,9 @@ aliases, and byte-identical Claude mirrors.
 
 ### /audit-determinism
 - Deep verification of PRNG discipline in a module
-- Traces all stochastic paths to verify: seeded generators used, no cross-stream contamination, deterministic iteration, no timing-dependent behavior
+- Traces all stochastic paths to verify: seeded manager authority, conventional
+  stream or indexed-decision lifecycle, no cross-authority contamination,
+  deterministic iteration, and no timing-dependent behavior
 - Reports any path that could break replay fidelity
 - More thorough than /validate-conventions — this is structural analysis, not pattern matching
 
@@ -245,7 +254,8 @@ aliases, and byte-identical Claude mirrors.
 - **Checks**:
   - No bare Python `random`, legacy global `numpy.random`, or direct
     `default_rng()` construction outside the central RNG owner; production
-    draws use injected `RNGManager.get_stream(ModuleId.<SUBSYSTEM>)` generators
+    decisions use injected `RNGManager.get_stream(ModuleId.<SUBSYSTEM>)`
+    generators or a typed indexed transaction issued by that manager
   - No `set()` iteration or unordered dict iteration driving simulation logic
   - No bare `print()` (use logging framework)
   - No wall-clock time in simulation logic

@@ -326,7 +326,7 @@ def test_cli_invalid_plan_rejects_before_publishing_an_artifact(
     repository = tmp_path / "repository"
     plan_path = repository / "data/validation/historical_studies/invalid.yaml"
     ledger_path = repository / "data/validation/historical_claims.yaml"
-    output_path = repository / "docs/evidence/phase-117/invalid.json"
+    output_path = repository / "artifacts/evidence/phase-117/invalid.json"
     plan_path.parent.mkdir(parents=True)
     ledger_path.parent.mkdir(parents=True, exist_ok=True)
     plan_path.write_text(
@@ -362,6 +362,49 @@ def test_cli_invalid_plan_rejects_before_publishing_an_artifact(
     assert not output_path.parent.exists()
 
 
+def test_cli_default_output_uses_ignored_phase117_evidence_tree() -> None:
+    assert backtest_cli.DEFAULT_OUTPUT == (
+        ROOT / "artifacts/evidence/phase-117/73-easting-phase117.json"
+    )
+
+
+def test_cli_artifact_output_accepts_only_the_phase117_evidence_tree(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    repository = tmp_path / "repository"
+    repository.mkdir()
+    output = repository / "artifacts/evidence/phase-117/result.json"
+    monkeypatch.setattr(backtest_cli, "ROOT", repository)
+
+    assert backtest_cli._artifact_output(output) == output.resolve()
+
+
+@pytest.mark.parametrize(
+    "relative_output",
+    (
+        "docs/evidence/phase-117/result.json",
+        "artifacts/evidence/phase-118/result.json",
+        "artifacts/evidence/phase-117/result.txt",
+        "artifacts/evidence/result.json",
+    ),
+)
+def test_cli_artifact_output_rejects_other_repository_paths(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    relative_output: str,
+) -> None:
+    repository = tmp_path / "repository"
+    repository.mkdir()
+    monkeypatch.setattr(backtest_cli, "ROOT", repository)
+
+    with pytest.raises(
+        ValueError,
+        match="below artifacts/evidence/phase-117",
+    ):
+        backtest_cli._artifact_output(repository / relative_output)
+
+
 @pytest.mark.parametrize("alias_kind", ("ledger", "plan", "output", "output-parent"))
 def test_cli_rejects_symlinked_path_aliases_before_loading(
     tmp_path: Path,
@@ -371,7 +414,7 @@ def test_cli_rejects_symlinked_path_aliases_before_loading(
     repository = tmp_path / "repository"
     ledger = repository / "data/validation/historical_claims.yaml"
     plan = repository / "data/validation/historical_studies/study.yaml"
-    output = repository / "docs/evidence/phase-117/result.json"
+    output = repository / "artifacts/evidence/phase-117/result.json"
     ledger.parent.mkdir(parents=True)
     plan.parent.mkdir(parents=True)
     output.parent.mkdir(parents=True)
@@ -389,7 +432,7 @@ def test_cli_rejects_symlinked_path_aliases_before_loading(
         alias.symlink_to(output)
         arguments["output"] = alias
     else:
-        alias_parent = repository / "docs/evidence-alias"
+        alias_parent = repository / "artifacts/evidence-alias"
         alias_parent.symlink_to(output.parent, target_is_directory=True)
         arguments["output"] = alias_parent / "result.json"
 
@@ -838,7 +881,7 @@ def test_cli_converts_evidence_construction_failure_to_durable_error(
             "--plan",
             str(ERA_CONTROL_PLAN),
             "--output",
-            str(ROOT / "docs/evidence/phase-117/injected-error.json"),
+            str(ROOT / "artifacts/evidence/phase-117/injected-error.json"),
         ],
     )
 

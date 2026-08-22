@@ -224,12 +224,22 @@ These are the mathematical tools available for modeling. Each is annotated with 
 - Each checkpoint = full state snapshot + PRNG state at that point
 - To inspect any moment: replay forward from nearest prior checkpoint (fast, small window)
 - **PRNG discipline requirements**:
-  - All randomness through seeded `numpy.random.Generator`, never `random.random()` or system entropy
-  - **Dedicated PRNG streams per subsystem** (combat, movement, intel, morale) forked from master seed — prevents cross-subsystem sequence contamination
+  - All randomness through `RNGManager`, never `random.random()`, global
+    `numpy.random`, or system entropy. The manager issues conventional seeded
+    `numpy.random.Generator` streams or typed identity-addressed indexed
+    decisions.
+  - **Dedicated conventional streams per subsystem** (combat, movement, intel,
+    morale) forked from the master seed prevent cross-subsystem sequence
+    contamination; indexed decisions bind the complete semantic identity and
+    canonical transcript instead of worker completion order.
   - Deterministic iteration order — no unordered sets/dicts driving sim logic
-  - Single-threaded simulation core (parallelism only for independent sub-sims with own PRNG forks)
+  - Parallel production work must use immutable inputs, manager-issued indexed
+    decisions, complete joins, and canonical commit ordering; conventional
+    stateful streams remain single-owner.
   - No timing-dependent behavior in the deterministic path
-- **Serialization**: `numpy.random.Generator.bit_generator.state` captures exact PRNG state as a dict. `pickle`/`msgpack` for fast state serialization; `h5py`/`zarr` if state grows large.
+- **Serialization**: checkpoints preserve conventional generator state plus
+  indexed-allocation/transcript lifecycle through typed JSON-compatible owner
+  state.
 - **User input log**: all external decisions (orders, setting changes) timestamped and stored alongside checkpoints for full replay fidelity
 
 ### 4. Multi-scale Interaction — FULL TACTICAL RESOLUTION ALWAYS

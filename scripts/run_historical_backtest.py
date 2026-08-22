@@ -28,7 +28,8 @@ from stochastic_warfare.validation.historical_backtest.common import (
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_LEDGER = ROOT / "data/validation/historical_claims.yaml"
 DEFAULT_PLAN = ROOT / "data/validation/historical_studies/73_easting_phase117.yaml"
-DEFAULT_OUTPUT = ROOT / "docs/evidence/phase-117/73-easting-phase117.json"
+EVIDENCE_OUTPUT_ROOT = ROOT / "artifacts/evidence/phase-117"
+DEFAULT_OUTPUT = EVIDENCE_OUTPUT_ROOT / "73-easting-phase117.json"
 
 
 def _within_repository(path: Path, *, field_name: str) -> Path:
@@ -41,9 +42,11 @@ def _within_repository(path: Path, *, field_name: str) -> Path:
 
 def _artifact_output(path: Path) -> Path:
     resolved = _within_repository(path, field_name="output")
-    evidence_root = (ROOT / "docs/evidence").resolve()
+    evidence_root = (ROOT / "artifacts/evidence/phase-117").resolve()
     if not resolved.is_relative_to(evidence_root) or resolved.suffix != ".json":
-        raise ValueError("output must be a JSON file below docs/evidence")
+        raise ValueError(
+            "output must be a JSON file below artifacts/evidence/phase-117",
+        )
     return resolved
 
 

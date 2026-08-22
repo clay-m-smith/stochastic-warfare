@@ -181,13 +181,13 @@ def test_strict_claim_ledger_audits_the_exact_repository_inventory() -> None:
         LEDGER_PATH,
     )
 
-    assert len(ledger.claims) == 243
+    assert len(ledger.claims) == 233
     assert audit.scenario_collections == 31
     assert audit.scenario_metrics == 83
     assert audit.python_test_surfaces == 25
     assert audit.frontend_test_surfaces == 1
-    assert audit.documentation_claims == 164
-    assert audit.documentation_claim_paths == 67
+    assert audit.documentation_claims == 154
+    assert audit.documentation_claim_paths == 66
     assert audit.api_python_candidate_paths == 2
     assert audit.frontend_public_candidate_paths == 3
     assert audit.frontend_test_candidate_paths == 4
@@ -195,8 +195,8 @@ def test_strict_claim_ledger_audits_the_exact_repository_inventory() -> None:
     assert audit.public_document_candidate_paths == 103
     assert audit.scenario_yaml_candidate_paths == 34
     assert audit.workflow_document_candidate_paths == 12
-    assert audit.claim_bound_source_reviews == 135
-    assert audit.reviewed_nonclaim_source_reviews == 61
+    assert audit.claim_bound_source_reviews == 134
+    assert audit.reviewed_nonclaim_source_reviews == 62
     assert audit.production_validated_claims == 0
     assert audit.uninventoried_scenario_collections == ()
     assert audit.missing_scenario_collections == ()

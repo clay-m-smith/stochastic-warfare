@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
+import pytest
 
 from stochastic_warfare.c2.orders.propagation import PropagationResult
 from stochastic_warfare.combat.suppression import UnitSuppressionState
@@ -101,16 +102,18 @@ class TestSetStateRestore:
 
     def test_restore_ticks_stationary(self):
         bm = _make_battle_manager()
-        bm.set_state({"ticks_stationary": {"u1": 10}})
+        state = bm.get_state()
+        state["ticks_stationary"] = {"u1": 10}
+        bm.set_state(state)
         assert bm._ticks_stationary == {"u1": 10}
 
     def test_restore_suppression_states(self):
         bm = _make_battle_manager()
-        bm.set_state({
-            "suppression_states": {
-                "u1": {"value": 0.5, "source_direction": 3.14}
-            }
-        })
+        state = bm.get_state()
+        state["suppression_states"] = {
+            "u1": {"value": 0.5, "source_direction": 3.14},
+        }
+        bm.set_state(state)
         assert "u1" in bm._suppression_states
         assert isinstance(bm._suppression_states["u1"], UnitSuppressionState)
         assert bm._suppression_states["u1"].value == 0.5
@@ -118,40 +121,48 @@ class TestSetStateRestore:
 
     def test_restore_cumulative_casualties(self):
         bm = _make_battle_manager()
-        bm.set_state({"cumulative_casualties": {"u1": 5}})
+        state = bm.get_state()
+        state["cumulative_casualties"] = {"u1": 5}
+        bm.set_state(state)
         assert bm._cumulative_casualties == {"u1": 5}
 
     def test_restore_undigging(self):
         bm = _make_battle_manager()
-        bm.set_state({"undigging": {"u1": True}})
+        state = bm.get_state()
+        state["undigging"] = {"u1": True}
+        bm.set_state(state)
         assert bm._undigging == {"u1": True}
 
     def test_restore_concealment_scores(self):
         bm = _make_battle_manager()
-        bm.set_state({"concealment_scores": {"u1": 0.9}})
+        state = bm.get_state()
+        state["concealment_scores"] = {"u1": 0.9}
+        bm.set_state(state)
         assert bm._concealment_scores == {"u1": 0.9}
         assert isinstance(bm._concealment_scores["u1"], float)
 
     def test_restore_env_casualty_accum(self):
         bm = _make_battle_manager()
-        bm.set_state({"env_casualty_accum": {"u1": 0.7}})
+        state = bm.get_state()
+        state["env_casualty_accum"] = {"u1": 0.7}
+        bm.set_state(state)
         assert bm._env_casualty_accum == {"u1": 0.7}
         assert isinstance(bm._env_casualty_accum["u1"], float)
 
     def test_restore_misinterpreted_orders(self):
         bm = _make_battle_manager()
-        bm.set_state({
-            "misinterpreted_orders": {
-                "u1": {
-                    "success": True,
-                    "total_delay_s": 30.0,
-                    "was_misinterpreted": True,
-                    "misinterpretation_type": "position",
-                    "comms_quality": 0.7,
-                    "degraded": True,
-                },
+        state = bm.get_state()
+        state["misinterpreted_orders"] = {
+            "u1": {
+                "success": True,
+                "total_delay_s": 30.0,
+                "was_misinterpreted": True,
+                "misinterpretation_type": "position",
+                "comms_quality": 0.7,
+                "degraded": True,
             },
-        })
+        }
+        bm.set_state(state)
         assert bm._misinterpreted_orders == {"u1": _misinterpreted_order()}
 
     def test_misinterpreted_orders_cross_json_checkpoint_boundary(self):
@@ -201,15 +212,13 @@ class TestRoundTrip:
         assert state2["env_casualty_accum"] == state1["env_casualty_accum"]
         assert state2["misinterpreted_orders"] == state1["misinterpreted_orders"]
 
-    def test_backward_compat_empty_state(self):
-        """Old checkpoints missing new keys → defaults to empty."""
+    def test_incomplete_state_rejects_without_mutation(self):
+        """Only the engine's explicit versionless route may migrate old state."""
         bm = _make_battle_manager()
-        # Simulate old checkpoint format (no Phase 72b keys)
-        bm.set_state({})
-        assert bm._ticks_stationary == {}
-        assert bm._suppression_states == {}
-        assert bm._cumulative_casualties == {}
-        assert bm._undigging == {}
-        assert bm._concealment_scores == {}
-        assert bm._env_casualty_accum == {}
-        assert bm._misinterpreted_orders == {}
+        bm._ticks_stationary = {"u1": 5}
+        before = bm.get_state()
+
+        with pytest.raises(ValueError, match="key topology"):
+            bm.set_state({})
+
+        assert bm.get_state() == before

@@ -521,9 +521,7 @@ def test_never_fired_sentinel_round_trip_is_exact() -> None:
     _advance(source, 1)
     state = source.get_state()
     for battery_id in BATTERY_IDS:
-        assert _weapon_state(state, battery_id)["last_fire_time_s"] == float(
-            "-inf",
-        )
+        assert _weapon_state(state, battery_id)["last_fire_time_s"] is None
         assert _resource_record(
             state,
             battery_id,
@@ -554,23 +552,23 @@ def test_never_fired_sentinel_round_trip_is_exact() -> None:
         ),
         (
             "weapon",
-            None,
-            "Weapon last_fire_time_s must be the never-fired sentinel",
+            float("-inf"),
+            "Weapon last_fire_time_s must be null",
         ),
         (
             "weapon",
             float("nan"),
-            "Weapon last_fire_time_s must be the never-fired sentinel",
+            "Weapon last_fire_time_s must be null",
         ),
         (
             "weapon",
             float("inf"),
-            "Weapon last_fire_time_s must be the never-fired sentinel",
+            "Weapon last_fire_time_s must be null",
         ),
         (
             "weapon",
             -1.0,
-            "Weapon last_fire_time_s must be the never-fired sentinel",
+            "Weapon last_fire_time_s must be null",
         ),
     ),
 )
@@ -999,12 +997,12 @@ def test_corrupt_tot_authorities_are_rejected_atomically(
     (113, 117, True, None),
     ids=("version-113", "future", "boolean", "null"),
 )
-def test_checkpoint_version_116_is_exact_and_atomic(
+def test_checkpoint_version_118_is_exact_and_atomic(
     invalid_version: int | bool | None,
 ) -> None:
     source, _ = _engine(seed=42)
     invalid = copy.deepcopy(source.get_state())
-    assert invalid["checkpoint_version"] == 116
+    assert invalid["checkpoint_version"] == 118
     invalid["checkpoint_version"] = invalid_version
 
     _assert_atomic_rejection(

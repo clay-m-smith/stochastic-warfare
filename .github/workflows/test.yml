@@ -28,6 +28,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Reject tracked generated evidence
+        shell: bash
+        run: |
+          tracked_evidence="$(git ls-files -- artifacts docs/evidence)"
+          if [[ -n "${tracked_evidence}" ]]; then
+            printf 'generated evidence must remain off main:\n%s\n' \
+              "${tracked_evidence}" >&2
+            exit 1
+          fi
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -163,19 +173,19 @@ jobs:
       - name: Run clean-revision held-out study
         run: >-
           uv run --no-sync python scripts/run_historical_backtest.py
-          --output docs/evidence/phase-117/hosted-73-easting-phase117.json
+          --output artifacts/evidence/phase-117/hosted-73-easting-phase117.json
 
       - name: Verify expected clean completed failure
         run: >-
           uv run --no-sync python -c
-          "from pathlib import Path; from stochastic_warfare.validation.historical_backtest import load_historical_artifact; a = load_historical_artifact(Path('docs/evidence/phase-117/hosted-73-easting-phase117.json')); assert a.status == 'FAIL'; assert len(a.execution.runs) == 20; assert a.evaluation.joint_successes == 0; assert a.execution.code_revision.dirty is False; assert a.eligibility.reason_codes == ('study_failed', 'validation_source_reused', 'plan_not_immutably_predeclared')"
+          "from pathlib import Path; from stochastic_warfare.validation.historical_backtest import load_historical_artifact; a = load_historical_artifact(Path('artifacts/evidence/phase-117/hosted-73-easting-phase117.json')); assert a.status == 'FAIL'; assert len(a.execution.runs) == 20; assert a.evaluation.joint_successes == 0; assert a.execution.code_revision.dirty is False; assert a.eligibility.reason_codes == ('study_failed', 'validation_source_reused', 'plan_not_immutably_predeclared')"
 
       - name: Upload historical backtest evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: phase117-historical-backtest-${{ github.run_id }}
-          path: docs/evidence/phase-117/hosted-73-easting-phase117.json
+          path: artifacts/evidence/phase-117/hosted-73-easting-phase117.json
           if-no-files-found: error
 
   frontend:

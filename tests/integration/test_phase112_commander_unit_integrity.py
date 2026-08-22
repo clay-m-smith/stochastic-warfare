@@ -1012,7 +1012,7 @@ def test_commander_checkpoint_restore_and_continuation_are_exact_and_atomic() ->
     source.step()
     valid_checkpoint = source.checkpoint()
     valid_state = json.loads(valid_checkpoint.decode("utf-8"))
-    assert valid_state["checkpoint_version"] == 116
+    assert valid_state["checkpoint_version"] == 118
 
     _, target_context, target = _reinforcement_runtime()
     before_rejection = target.checkpoint()

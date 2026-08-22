@@ -52,7 +52,7 @@ Audit baseline: 2026-07-28 at `68acd4b`
 | REM-028 | P1 | 115 | Sensing/combat | Tactical movement can hold at catalog weapon range beyond usable sensing range | **Closed** | Yes | Yes | Yes | Yes | Yes | Yes | Yes | [Phase 115](devlog/phase-115.md#postmortem) |
 | REM-029 | P1 | 116 | Fog-of-war state | At the Phase 116 baseline, ordinary contacts serialized but were discarded by `FogOfWarManager.set_state()` | **Closed** | Yes | Yes | Yes | Yes | Yes | Yes | Yes | [Phase 116](devlog/phase-116.md#postmortem) |
 | REM-030 | P1 | 117 | Historical validation | At the Phase 112 baseline, catalog winner tables, legacy comparisons, and public docs claimed historical validation without a production, provenance-bearing, held-out outcome-envelope contract; fresh Debecka production exposed incompatible casualty units and a duration miss | **Closed** | Yes | Yes | Yes | N/A | Yes | Yes | Yes | [Phase 117](devlog/phase-117.md#postmortem) |
-| REM-031 | P1 | 118 | Performance semantics | At the Phase 112 baseline, Block 9 claimed five performance flags preserve scenario outcomes, but its regression executed only authored configurations, excluded the only two all-flag scenarios, and had no same-input disabled controls | Queued | Yes | Yes | Yes | - | - | - | - | Per-flag semantic classification and common-seed production off/on evidence with persisted provenance |
+| REM-031 | P1 | 118 | Performance semantics | At the Phase 112 baseline, Block 9 claimed five performance flags preserve scenario outcomes, but its regression executed only authored configurations, excluded the only two all-flag scenarios, and had no same-input disabled controls | **Closed** | Yes | Yes | Yes | Yes | Yes | Yes | Yes | [Phase 118 postmortem](devlog/phase-118.md#postmortem) |
 | REM-032 | P1 | 119 | Guerrilla concealment | Populated-area blend probability was mapped to morale-owned `ROUTING`, while the production context exposes no matching population query or concealed-unit owner | Queued | Yes | Yes | - | - | - | - | - | Typed non-morale concealment changes targetability and persists/exposes its lifecycle |
 | REM-033 | P1 | 120 | Surrender/POW state | A public rout helper emitted `SurrenderEvent` and a synthetic POW count without changing authoritative morale/status; no production captor or prisoner lifecycle consumes it | Queued | Yes | Yes | - | N/A | - | - | - | Typed runtime surrender creates captor-owned prisoners and persists/exposes the complete lifecycle |
 | REM-034 | P1 | 121 | Event time | Aggregate combat and auto-resolve publish exposed events with `datetime.min` instead of authoritative simulation time | Queued | Yes | Yes | - | N/A | - | - | Yes | Production aggregate/auto-resolve events use exact logical clock time and persist/replay |
@@ -65,13 +65,18 @@ Audit baseline: 2026-07-28 at `68acd4b`
 | REM-041 | P1 | 128 | API authorization | Stored frame targeting supports a side-safe projection, but the route has no caller authorization and defaults to privileged evidence | Queued | Yes | Yes | Yes | - | Yes | Yes | Yes | Authenticated caller-derived scope/side with player-safe defaults and cross-side denial |
 | REM-042 | P1 | 129 | Equipment topology | Role-compatible sensors can direct any compatible weapon on the same unit because authored mount/director associations do not exist | Queued | - | - | - | N/A | Yes | Yes | - | Authored exact mount/director bindings across initial, reinforcement, and checkpoint loadouts |
 | REM-043 | P2 | 130 | Target selection | Threat ranking does not have an explicit availability-aware selection contract across current weapon/sensor/fire-control solutions | Queued | Yes | Yes | Yes | N/A | Yes | Yes | Yes | Multi-target production comparison with deterministic serviceable-threat selection |
-| REM-044 | P1 | 131 | Detection estimation | FOW fusion uses generic isotropic range uncertainty and updates tracks without an elapsed-time predictive transaction | Queued | Yes | - | Yes | N/A | Yes | Yes | - | Sourced sensor covariance plus atomic predict/update/replacement continuation |
+| REM-044 | P1 | 131 | Detection estimation | FOW fusion still uses unsourced generic isotropic range uncertainty despite Phase 118's detached prediction and correlation-safe transaction | Queued | Yes | - | Yes | N/A | Yes | Yes | Yes | Sourced per-sensor range/bearing/correlation covariance and provenance integrated into the existing transaction |
 | REM-045 | P1 | 132 | Scripted scenario actions | Phase 101 scripted events use an untyped parameter bag, silently consume failed/no-op actions, bypass position/casualty lifecycle owners, and do not checkpoint or expose exact-once state | Queued | Yes | Yes | Yes | N/A | - | - | - | Typed due-action owner with fail-closed effects, exact-once continuation, and public lifecycle evidence |
 | REM-046 | P1 | 133 | Deception state | Active/inactive decoys and their complete signature/degradation/ID topology are not safely checkpointed | Queued | Yes | Yes | Yes | - | Yes | Yes | - | Exact production decoy lifecycle continuation with one DETECTION RNG authority |
 | REM-047 | P1 | 134 | Historical engagement fidelity | The frozen 73 Easting production study records zero scoped Iraqi armored losses and no natural terminal in all 20 source-synchronous runs | Queued | Yes | Yes | Yes | N/A | Yes | Yes | Yes | Locate and correct the first production causal divergence without changing the frozen loss/duration envelope or tuning physical parameters to force a pass |
 | REM-048 | P1 | 135 | Packaged historical evidence | The local packaged-loader boundary and configured no-`.git` image smoke cover the current zero-accepted ledger, but hosted image evidence is pending and a future accepted artifact cannot be verified because repository acceptance requires Git while the canonical artifact is excluded from the image | Queued | Yes | Yes | Yes | N/A | - | Yes | - | Build-time repository attestation plus tamper-evident no-`.git` receipt and a real nonempty accepted-claim API smoke |
 | REM-049 | P1 | 136 | Web UI semantic integrity | Replay/export/editor/analysis surfaces retain incomplete or misleading boundaries after Phase 117 corrected status decoding, canonical scenario fields, and invalid one-click defaults | Queued | Yes | Yes | - | N/A | Yes | Yes | - | Complete export and causal replay/query projection plus explicit catalog-backed editor and analysis inputs |
 | REM-050 | P1 | 137 | Optional-suite configuration | Production discards authored escalation tuning, DEW enable-like keys are ignored while presence enables defaults, and no scenario combines a DEW config with a DEW-capable unit | Queued | - | Yes | - | - | Yes | - | - | Strict consumed Escalation/DEW configuration plus enabled/disabled production behavior and a real catalog DEW engagement |
+| REM-051 | P1 | 138 | Detection scan lifecycle | Resolving one battle reaches through the context to reset the shared detection engine's scan history globally, so an unrelated concurrent battle can lose integration-gain state | Queued | Yes | Yes | Yes | N/A | Yes | Yes | - | Typed battle-scoped scan-history lifecycle with multi-battle and checkpoint-continuation proof |
+| REM-052 | P2 | 139 | FOW update ownership | The public legacy `FogOfWarManager.update()` path duplicates the transactional detection, culling, cadence, indexed-RNG, and fusion algorithm owned by `update_with_receipt()` | Queued | Yes | Yes | - | N/A | Yes | Yes | - | One typed production update implementation or an explicit unsupported legacy boundary with parity/failure proof |
+| REM-053 | P2 | 140 | Checkpoint capture | Checkpoint validation repeatedly serializes and restages FOW, detection, and RNG state before the final capture, multiplying work and consistency surfaces | Queued | Yes | Yes | Yes | N/A | Yes | Yes | - | One immutable preflight snapshot graph with exact bytes, atomic failure, continuation, and separately measured profile evidence |
+| REM-054 | P1 | 141 | Performance approximation | Frozen v7 scan scheduling failed 13/16 pairs and Suwalki LOD failed 4/16, so current production rejects both controls rather than accepting unbounded fidelity loss | Queued | Yes | Yes | Yes | N/A | Yes | Yes | Yes | Sourced redesign, current rejection red, fresh disjoint paired evidence, and accepted independently verified re-enablement artifact |
+| REM-055 | P1 | 142 | FOW runtime cost | Phase 118's atomic FOW transaction preserves semantics but increased the matched ten-tick production median from 47.035449 s to 59.220597 s (+25.906%) | Queued | Yes | Yes | Yes | N/A | Yes | Yes | - | Preserve every integrity invariant while recovering the measured gross regression with persistent matched profile evidence |
 
 ## REM-001 - Exact checkpoint restoration
 
@@ -1377,16 +1382,16 @@ Phase 117 replaces that unowned claim surface with one strict repository
 ledger and factory-owned backtest boundary. Scanner version 2 enumerates 196
 candidate files across API Python, public and test frontend source, Python
 tests, public Markdown, scenario YAML, and repository workflow skills. The
-ledger binds 135 of those files to exact claim IDs and records 61 explicit
+ledger binds 134 of those files to exact claim IDs and records 62 explicit
 reviewed nonclaims. Reviews are whole-file/digest based rather than
 occurrence-level, so semantic locators and a manual cross-document audit remain
 mandatory.
 
-The current inventory contains 243 claims: 224 unsupported, 19
+The current inventory contains 233 claims: 214 unsupported, 19
 current-engine-regression-only, and zero production-validated. It covers all
 31 shipped `documented_outcomes` collections / 83 metrics, three scenario
 prose claims, 25 Python claim-test surfaces, one frontend claim-test surface,
-164 documentation claims across 67 paths, 11 frontend claim surfaces, four API
+154 documentation claims across 66 paths, 11 frontend claim surfaces, four API
 claim surfaces, three duplicated regression tables, and the canonical
 46-scenario snapshot. Full source/data validation reports no uninventoried or
 missing collections, unreviewed candidates, stale reviews, source/rule/binding
@@ -1471,7 +1476,8 @@ The ordinary seed-42 evaluator snapshot is bounded current-engine regression,
 not flag evidence. These truthful labels and bounded fixtures make the suite
 operable without claiming that any of the five controls preserves semantics.
 No common-seed disabled/enabled production pair, isolated flag effect, or
-persisted semantic verdict was added; REM-031 therefore remains open.
+persisted semantic verdict was added in Phase 112; REM-031 therefore remained
+open at that baseline.
 
 Phase 118 must classify each flag before testing it as either a
 semantics-preserving execution optimization or an explicit model-fidelity
@@ -1508,9 +1514,71 @@ approximation. It must then:
   No evidence cell is `N/A`: controls, realistic exercise, observable verdict,
   and persisted provenance are all required for this integrity claim.
 
-**Status:** Queued for Phase 118. Phase 112 removed the false current labels,
-but no documentation may describe the Block 9 flags as historically validated
-or semantically equivalent until the required controlled evidence exists.
+### Phase 118 qualified-negative closure evidence
+
+Phase 118 replaced the blanket Block 9 promise with a typed five-entry
+classification and support registry, production-owned execution receipts, and
+strict paired artifacts. Detection culling, SoA selection, and parallel
+per-side detection are `supported_exact_validated`. Native scan scheduling and
+sensing-only LOD remain model-fidelity approximations, but their production
+support disposition is `unsupported_failed_semantic_validation`.
+
+The retained v6 study reached 96 pairs / 396 attempts under explicit external
+contention and ended terminal `ERROR`. After the owner approved Option A, the
+schema-2 `phase118-performance-semantics-v7` plan froze 16 fresh seeds
+disjoint from every diagnostic exclusion, 96 pairs / 396 attempts, and plan
+SHA-256
+`5ffb74205281d8913b618fc607f47bf4cdccc0f2741bd812cc82989761c1b41d`.
+The one authoritative execution completed and independently reloaded as an
+eligible `EXTERNALLY_CONTENDED` `FAIL` at manifest artifact SHA-256
+`bf9e00ce4a7774af29b5657c49bbbe4481b407a966d9922e48970022f5c6ad86`.
+Culling, SoA, and parallel detection passed 16/16. Scan scheduling passed 3/16
+and failed 13/16. Calibration LOD passed 16/16; Suwalki LOD passed 12/16 and
+failed 4/16; its three accepted complete-case recovery checks passed with
+candidate totals 74, 37, and 185. Both v6 and v7 archives are immutable
+negative evidence. The raw study, frozen plan, one-off executor/verifiers, and
+terminal bytes are intentionally off main at
+`branch=evidence/full; path=docs/evidence/phase-118/v6-terminal/`,
+`branch=evidence/full; path=docs/evidence/phase-118/v7-terminal/`,
+`branch=evidence/full; path=data/validation/performance_semantics/phase118.yaml`,
+and
+`branch=evidence/full; path=docs/evidence/phase-118/runtime-manifest-handoff.json`.
+
+The typed handoff binds the immutable 1,408-entry execution snapshot to the
+reviewed 1,408-entry retirement snapshot through exactly fifteen old/new
+runtime-path identities.
+Their manifest SHA-256 values are respectively
+`2f10ab7c7a2b409067c90f92616609e921750fa7641c4d3165f90b53fa21e9a8`
+and `0a6b32a48fd7ea764d6522eb7ebccdc32c803663aed295c916ba47240668bf07`;
+the handoff self-digest is
+`b505edc418f87ffdf659bed52b502cef043df472c8a04696d0fda8d99d4e746d`.
+The archived verifier can reproduce the exact v7 `FAIL` and handoff; it cannot
+execute the observed inputs or make a speed claim.
+
+On 2026-08-22 the owner approved qualified-negative closure. Production now
+rejects `enable_scan_scheduling=true`, `enable_lod=true`, and every non-default
+LOD interval/hysteresis value through the shared scenario, API, analysis,
+runtime, manual-context/manager, receipt, and checkpoint boundary. The two
+measurement-only benchmark scenarios explicitly keep those fields false.
+Historical receipt/artifact decoding remains permissive so the terminal bytes
+stay verifiable. `GET /api/meta/performance-flags` exposes the canonical
+classification, support disposition, evidence identity, and per-flag verdict.
+The `E` matrix cell means enabled/disabled production proof for the three
+supported flags plus explicit fail-closed positive-input proof for the two
+retired controls; it does not award positive enablement to a failed feature.
+
+The causal diagnosis and any future redesign are assigned to REM-054 / Phase
+141. REM-044 remains the source-backed sensor-covariance prerequisite, and the
+tentative-track initiation/aging deficit must be specified rather than tuned
+from observed seeds. No budget, source, pair, combat/catalog/scenario input, or
+v7 verdict was changed to obtain closure.
+
+**Status:** **Closed** by the accepted Phase 118 postmortem. Detection culling,
+SoA selection, and parallel detection retain exact support; scan scheduling and
+LOD remain explicit unsupported terminal failures. The matched profile's
+measured runtime regression is separately queued as REM-055 / Phase 142. No
+documentation may describe the flags as historically calibrated, universally
+equivalent, or faster on the basis of this phase.
 
 ## REM-020 - March and combat logistics demand is not applied
 
@@ -2316,6 +2384,17 @@ sensor circle can still disclose hidden activity.
 entries describe the paired projection machinery only. They do not prove the
 missing caller authorization or a safe default.
 
+### Phase 118 exposure hardening
+
+Phase 118 adds exact nullable observer-track support to the privileged stored
+decision and cross-binds it through one atomic decoder to the root roster,
+complete side-view set, and target-to-opaque-track associations before either
+API scope or replay returns. `SIDE_FOW` retains only the distinct support
+contact source and opaque track; it omits target/attachment identity,
+chronology, covariance, and the nested support record. This closes a stored-
+evidence integrity gap, but does not authenticate the caller, change the
+privileged default, or make the frontend player-safe.
+
 ### Required proof
 
 - Define caller identities, player-to-side grants, and an explicit privileged
@@ -2333,8 +2412,8 @@ missing caller authorization or a safe default.
   legacy-data behavior, and persistence boundaries. A response filter or UI
   toggle alone is insufficient.
 
-**Status:** Queued for Phase 128 in Block 14. Phase 115 proves the projection's
-structure, not caller authorization.
+**Status:** Queued for Phase 128 in Block 14. Phases 115 and 118 prove the
+projection and stored-decoder structure, not caller authorization.
 
 ## REM-042 - Compatible roles do not encode physical mount/director topology
 
@@ -2401,9 +2480,9 @@ availability-aware contract remains open.
 **Status:** Queued for Phase 130 in Block 14. Phase 115 closes blind catalog-
 range standoff without absorbing this selection-policy follow-up.
 
-## REM-044 - Sensor fusion lacks sourced covariance and predictive tracking
+## REM-044 - Sensor fusion lacks sourced covariance provenance
 
-### Phase 115 finding and nonclaim
+### Phase 115 finding and Phase 118 narrowing
 
 Stable side-local FOW track reuse exposed two pre-existing estimator
 assumptions. `submit_sensor_detection()` derives one isotropic position
@@ -2415,18 +2494,29 @@ one-metre numerical minimum. It also bounds a gated replacement to one current
 fusion track and preserves a monotonic, never-reused public ordinal.
 
 That repair does not turn the generic minimum into historical sensor accuracy.
-Nor does it claim predictive tracking: the existing fusion submission calls
-the measurement update without first propagating the track through elapsed
-logical time. Adding prediction in place would mutate the predecessor before
-gating and could violate atomic replacement; it needs one detached
-predict/update plan and explicit process-noise/timestamp semantics.
+Phase 118 now reconstructs horizontal ENU position from detector-emitted
+horizontal range and bearing while retaining slant range as the generic
+uncertainty input. It predicts existing tracks on detached state, validates a
+complete same-side/same-target/same-epoch report group, selects one canonical
+best-variance representative so correlated duplicates are not treated as
+independent measurements, and atomically commits the accepted update or
+replacement. Its bounded seven-role radar support preserves the resulting
+fusion generation through cadence deferral and exposes exact projection/
+covariance evidence to privileged consumers.
 
-**Matrix:** `D=Yes, L=-, W=Yes, E=N/A, X=Yes, O=Yes, P=-`. Existing report,
-track, covariance, and gating types support `D/W`; the Phase 115 production
-zero-range and moving/gated controls support `X/O`. `E` is N/A because correct
-measurement covariance is mandatory data/model provenance, not a fidelity
-toggle. Sensor-specific covariance is not loaded and predictive transaction
-provenance is not persisted/exposed.
+The remaining deficit is narrower and still material: uncertainty remains an
+unsourced isotropic five-percent-of-slant-range model with a numerical floor.
+The catalogs do not provide per-sensor range/bearing error, correlation,
+operating envelope, or source provenance. Phase 118 therefore makes no claim
+of historical sensor accuracy.
+
+**Matrix:** `D=Yes, L=-, W=Yes, E=N/A, X=Yes, O=Yes, P=Yes`. Existing report,
+track, covariance, detached prediction/grouping, support, and gating types
+support `D/W`; Phase 115 zero-range controls and Phase 118 non-coplanar,
+same-epoch, loss/redetection, targeting, checkpoint, and exposure controls
+support `X/O/P`. `E` is N/A because correct measurement covariance is mandatory
+data/model provenance, not a fidelity toggle. Sensor-specific covariance and
+its source provenance are still not loaded.
 
 ### Required proof
 
@@ -2437,18 +2527,19 @@ provenance is not persisted/exposed.
 - Convert range/bearing errors and current geometry into a finite positive
   semidefinite position covariance, with a declared treatment for genuinely
   exact/noise-free observations rather than a hidden matrix fudge.
-- Stage elapsed-time prediction and measurement update on detached state,
-  enforce logical timestamp monotonicity, and atomically commit either the
-  accepted update or a bounded replacement without orphan tracks.
+- Integrate the sourced covariance into the existing detached prediction,
+  complete-group validation, canonical representative selection, and atomic
+  update/replacement transaction without weakening timestamp, alias, or
+  rollback invariants.
 - Prove stationary, crossing, accelerating, zero/short-range, gated, stale,
   reordered, parallel, and checkpoint-resume behavior through the production
   FOW path with exact RNG/process-noise ownership.
 - Persist and expose the required covariance/prediction provenance in
   privileged evidence and a non-leaking side-safe projection.
 
-**Status:** Queued for Phase 131 in Block 15. Phase 115 prevents singular and
-orphaned production state without claiming sensor-specific estimation
-fidelity.
+**Status:** Queued for Phase 131 in Block 15. Phase 118 closes the generic
+detached prediction, correlation-safe grouping, and support/persistence
+boundaries without claiming sensor-specific estimation fidelity.
 
 ## REM-045 - Scripted scenario actions lack a typed exact-once runtime owner
 
@@ -2647,8 +2738,10 @@ The Phase 117 local packaged-loader control remains truthful and useful: the
 current ledger has zero `production_validated` claims, so the packaged loader
 audits every scenario claim it can publish and exposes 73 Easting as
 unsupported with current-engine regression evidence. A hosted no-`.git` image
-smoke is configured but remains pending the phase push. Neither the local
-control nor that zero-accepted smoke exercises or establishes packaged
+smoke is configured. The Phase 117 push prerequisite is satisfied at
+`84cf4c4`, but no successful hosted result is recorded in the repository, so
+that smoke remains unverified pending a successful workflow run. Neither the
+local control nor that zero-accepted smoke exercises or establishes packaged
 accepted-evidence support. Silently bypassing Git verification,
 copying an artifact without an attestation, or treating the build's source
 revision string as the entire proof would weaken the repository contract.
@@ -2802,3 +2895,210 @@ behavioral configuration evidence.
 **Status:** Queued for Phase 137 in Block 19. REM-049 owns editor/catalog UX;
 REM-050 owns the production runtime and scenario-data authority those controls
 must eventually target.
+
+## REM-051 - Battle resolution resets unrelated detection scan history
+
+### Phase 118 finding
+
+`SimulationEngine` currently resolves a completed battle and then reaches
+through `SimulationContext.fog_of_war` to the shared detection engine's private
+scan-count reset. That reset is global rather than scoped to the resolved
+battle, reporting side, observer, sensor, or target identity. In a context with
+multiple concurrent battles, resolving one battle can therefore erase the
+integration-gain history still owned by another battle. Phase 118 does not
+paper over that lifecycle defect while replacing the FOW update transaction.
+
+**Matrix:** `D=Yes, L=Yes, W=Yes, E=N/A, X=Yes, O=Yes, P=-`. Scan history and
+the reset path exist and are reached by production battle resolution; a scoped
+persisted lifecycle owner and multi-battle continuation proof are absent.
+
+### Required proof
+
+- Define one typed owner for scan-history creation, update, expiration, and
+  removal, keyed by the complete semantic detection identity.
+- Route battle resolution through an explicit scoped lifecycle operation; do
+  not reach through FOW to a private global reset.
+- Prove resolving one of two concurrent battles cannot alter the other
+  battle's integration gain, detections, RNG transcript, or event outcome.
+- Preserve the exact scoped history through fresh and in-place checkpoint
+  continuation, battle split/merge/termination, and absent/stale identities.
+
+**Status:** Queued for Phase 138 in Block 20.
+
+## REM-052 - Fog-of-war update algorithms have duplicate owners
+
+### Phase 118 finding
+
+The receipt-bearing production route stages each side through
+`FogOfWarManager.update_with_receipt()`, but the older public `update()` method
+still contains a second implementation of detection selection, scan cadence,
+randomness, track fusion, and world-view publication. Keeping both algorithms
+invites semantic drift and permits future callers to bypass the transactional
+receipt/indexed-RNG boundary. Phase 118 validates the new production route but
+does not claim that duplicated legacy behavior is a second supported owner.
+
+**Matrix:** `D=Yes, L=Yes, W=-, E=N/A, X=Yes, O=Yes, P=-`. Both entry points
+are declared and the legacy path is directly exercisable; one canonical
+implementation or an explicit unsupported adapter contract is absent.
+
+### Required proof
+
+- Choose one typed implementation owner for detection, cadence, culling,
+  indexed randomness, fusion, mutation, and receipts.
+- Make every supported caller use that owner, or make the legacy boundary fail
+  explicitly with migration guidance; do not preserve a silent proxy path.
+- Prove supported-call parity, failure atomicity, deterministic ordering, RNG
+  authority, and checkpoint continuation with realistic side/contact state.
+- Remove tests that award behavioral credit to the duplicate algorithm after
+  the canonical boundary is established.
+
+**Status:** Queued for Phase 139 in Block 20.
+
+## REM-053 - Checkpoint capture repeatedly restages mutable FOW state
+
+### Phase 118 finding
+
+The format-118 checkpoint boundary validates active/poisoned FOW and indexed
+RNG state strictly, but its preflight and final capture paths repeatedly call
+serialization/restaging for the same mutable owners. Repeated capture expands
+the consistency surface and adds avoidable work before the authoritative
+snapshot is emitted. It is not a semantic failure in the accepted format-118
+bytes, so Phase 118 records it separately instead of weakening the checkpoint
+gate or calling an unmeasured refactor a speed improvement.
+
+**Matrix:** `D=Yes, L=Yes, W=Yes, E=N/A, X=Yes, O=Yes, P=-`. The repeated
+production captures and resulting bytes are observable; a single immutable
+snapshot graph and dedicated profile evidence are absent.
+
+### Required proof
+
+- Capture FOW, detection, conventional/indexed RNG, and dependent receipt state
+  once into an immutable typed snapshot used by validation and encoding.
+- Reject active, poisoned, incomplete, or mutually inconsistent owners before
+  publishing any bytes, without recapturing a changed live state.
+- Prove byte-stable fresh/in-place continuation and exact failure atomicity
+  across ordinary contacts, active allocations, legacy completeness, and
+  receipt/transcript topology.
+- Measure the production checkpoint path separately before and after; keep
+  timing evidence distinct from correctness evidence.
+
+**Status:** Queued for Phase 140 in Block 20.
+
+## REM-054 - Performance approximations failed frozen semantic validation
+
+### Phase 118 finding and current boundary
+
+The complete schema-2 v7 study is valid negative evidence. Native scan
+scheduling passed only 3/16 paired cases and failed 13/16, including one
+deterministic winner reversal. The Suwalki sensing-only LOD case passed 12/16
+and failed 4/16 on its predeclared covariance limit even though all three
+complete-case recovery-work checks passed. Exact repeats, resumed attempts,
+checkpoint projections, indexed detection decisions, branch receipts, shard
+topology, and independent manifest reload rule out missing evidence or an
+execution-order artifact.
+
+The scan result primarily reflects first-acquisition latency, fewer temporal
+measurements, valid current-witness/deferred-support asymmetry, sequential
+combat-RNG amplification after a real cadence delta, and a position-sensitive
+ordered-event metric. The four LOD misses share one causal pattern: unarmed
+EA-18G ESM observers make only the first period-five observation and are
+destroyed before the next due scan, leaving a high-covariance tentative
+contact. Those effects are not authority to widen a budget or tune a sensor.
+Phase 118 therefore preserves both flags as model-fidelity approximations but
+sets their production support disposition to
+`unsupported_failed_semantic_validation` and rejects positive activation and
+non-default LOD tuning explicitly.
+
+**Matrix:** `D=Yes, L=Yes, W=Yes, E=N/A, X=Yes, O=Yes, P=Yes`. The failed
+controls, causal deltas, strict production rejection, immutable archive, and
+public status are declared, loaded, wired, exercised, observable, and
+persisted/exposed. Positive enablement is intentionally N/A until this
+remediation succeeds.
+
+### Required proof
+
+- Begin from the current production red: scenario YAML, API run/analysis,
+  runtime factory, manual context/manager, receipt, and checkpoint boundaries
+  must continue to reject each unsupported positive or non-default input.
+- Specify and source a revised model before implementation. Resolve or bound
+  tentative-track initiation/aging, native-ready miss versus deferred support,
+  sensing-aware witness promotion, event alignment, and REM-044's sourced
+  sensor-specific range/bearing/correlation covariance and provenance.
+- Freeze a new plan/schema identity and fresh input set disjoint from every
+  burned v3--v7 seed before execution. Preserve exact source, branch, attempt,
+  deadline, pair-union, checkpoint, RNG, and publication obligations.
+- Prove every supported input boundary, disabled control, branch exercise,
+  outcome effect, deterministic repeat, fresh-runtime continuation, API status,
+  and artifact reload through production owners. A mock, constructor call,
+  source search, receipt-only delta, or no-crash run is insufficient.
+- Do not widen a threshold, delete a failed pair, change combat/catalog/scenario
+  inputs, reinterpret the terminal v7 result, or calibrate physical values to
+  force acceptance. Re-enablement requires an accepted new artifact and the
+  full numbered-phase documentation/postmortem/commit sequence.
+
+**Status:** Queued for Phase 141 in Block 21. Creating this follow-up does not
+start Phase 141 or weaken Phase 118's explicit-unsupported current boundary.
+
+## REM-055 - Transactional FOW integrity adds material production runtime cost
+
+### Phase 118 finding and current boundary
+
+The required `$profile` route compared the Phase 118 start revision
+`84cf4c4461a7d4a9f17c2578ea323a0a21d5bbe8` with the final simulation tree on
+the same production `SimulationRuntimeFactory` workload: `benchmark_battalion`,
+seed 42, ten ticks, strict mode, event recording, detection culling/SoA/parallel
+detection enabled, and scan scheduling/LOD disabled. After one discarded
+warm-up per revision, the phase-start median was 47.035449 seconds across
+46.974269--47.341247 seconds; the Phase 118 median was 59.220597 seconds across
+58.758202--59.259692 seconds. The ratio is 1.259063 (+12.185148 seconds,
++25.906%), while both revisions produced the identical ten-tick, 50-second,
+blue `max_ticks` result.
+
+One matched cProfile run recorded 436,345,008 calls and 116.744514 seconds in
+the phase-start `SimulationEngine.run()` versus 497,301,086 calls and
+138.727831 seconds in the Phase 118 tree. The enclosing
+`BattleManager._update_interval_fog_of_war()` cumulative cost grew from
+5.794983 to 23.733829 seconds: 17.938846 seconds, or 81.60% of the instrumented
+run delta. Its overlapping descendants include repeated deep copies, canonical
+plan/cadence/scan-count serialization and hashing, scan-count restaging,
+atomic fusion preparation, indexed-RNG issuance, observer-support lookup,
+spatial queries, and per-interval worker lifecycle. Cumulative descendants
+overlap and are hypotheses for isolation, not additive savings estimates.
+
+These costs protect real Phase 118 guarantees: all-side failure atomicity,
+schedule-independent stochastic identity, content-bound tamper detection,
+correlation-safe fusion, exact receipts, and checkpoint continuation. Removing
+those checks to recover time would reopen REM-031. The frozen Phase 118
+contract declared no speed threshold, every semantic deadline completed, and
+the profile supports no universal throughput or speed claim. The regression is
+therefore tracked separately rather than hidden or used to relabel the valid
+semantic evidence.
+
+**Matrix:** `D=Yes, L=Yes, W=Yes, E=N/A, X=Yes, O=Yes, P=-`. The production
+cost is declared, loaded, wired, exercised, and outcome-measured. Enable/disable
+behavior is not applicable to a runtime-cost defect. A persistent accepted
+before/after optimization receipt does not yet exist.
+
+### Required proof
+
+- Freeze the production target, source identities, environment, warm-up and
+  repetition policy, semantic projection, peak-memory measurement, and an
+  owner-approved performance threshold before changing the hot path.
+- Isolate deep-copy, fingerprint/serialization, scan-state staging,
+  correlation-safe fusion, indexed RNG, spatial-query, and worker-lifecycle
+  costs. Do not add cumulative profile descendants or infer savings from code
+  shape.
+- Remove only redundant work. Preserve atomic publication, mutation/tamper
+  rejection, indexed transcript identity, canonical ordering, observer-support
+  semantics, exact receipts, and checkpoint continuation.
+- Prove identical ordered events, final state, exposed receipts, stochastic
+  authority, and fresh-runtime continuation on the matched workload, then run
+  the applicable scenario, determinism, slow, benchmark, data, convention,
+  simplify, documentation, and postmortem gates.
+- Persist reproducible before/after timing distributions, call profiles,
+  memory results, source/environment identities, exclusions, and residual
+  uncertainty. Do not call a shared-host or single-workload result a universal
+  speedup.
+
+**Status:** Queued for Phase 142 in Block 21. Phase 142 has not started, and
+this follow-up does not weaken Phase 118's qualified-negative semantic closure.

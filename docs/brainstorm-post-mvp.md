@@ -106,7 +106,10 @@ Phase 10 profiling established baselines. Key observations:
 **Tier 3: Parallelism (Phase 13c)** — Architecture changes:
 - **ProcessPoolExecutor for Monte Carlo**: Already implemented (Phase 7). Extend to campaign MC.
 - **Thread-pool for independent side computations**: Detection, morale, logistics for each side are independent within a tick. Could parallelize.
-- Constraint: PRNG determinism requires careful stream partitioning. Each thread gets its own `Generator` from `RNGManager`.
+- Constraint: PRNG determinism requires manager-owned allocation. Phase 118's
+  production FOW path gives workers immutable inputs and identity-addressed
+  indexed decisions, joins every task, then commits in canonical side order;
+  worker-local conventional generators are not an alternative RNG authority.
 - Decision: NOT pursuing GPU/CUDA — simulation logic is too branchy for SIMD. Numba + multiprocessing is the right level.
 
 ### Performance Targets

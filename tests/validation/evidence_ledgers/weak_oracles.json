@@ -1101,12 +1101,6 @@
     },
     {
       "classification": "structural_only",
-      "node_id": "tests/unit/test_phase85_integration.py::TestLodEngagementIntegration::test_lod_allows_targeting_distant_unit",
-      "rationale": "Manual review found no stronger behavioral postcondition beyond this exact heuristic signal; the node remains a structural diagnostic and cannot support capability or closure claims.",
-      "strongest_oracle": "shape/non-null-only assertion set"
-    },
-    {
-      "classification": "structural_only",
       "node_id": "tests/unit/test_phase88_integration.py::TestStructural::test_unit_arrays_imported_in_battle",
       "rationale": "Manual review found no stronger behavioral postcondition beyond this exact heuristic signal; the node remains a structural diagnostic and cannot support capability or closure claims.",
       "strongest_oracle": "shape/non-null-only assertion set"
@@ -2493,18 +2487,6 @@
     },
     {
       "classification": "structural_only",
-      "node_id": "tests/unit/test_phase53_c2_ai.py::TestFogOfWarWiring::test_fow_per_side_views",
-      "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
-      "strongest_oracle": "mock call/await state: call_args_list, call_count"
-    },
-    {
-      "classification": "structural_only",
-      "node_id": "tests/unit/test_phase53_c2_ai.py::TestFogOfWarWiring::test_fow_update_called_when_enabled",
-      "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
-      "strongest_oracle": "mock call/await state: called"
-    },
-    {
-      "classification": "structural_only",
       "node_id": "tests/unit/test_phase54_era_wiring.py::TestAncientEngineWiring::test_formation_not_called_modern",
       "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
       "strongest_oracle": "mock-call oracle: assert_not_called"
@@ -2835,21 +2817,9 @@
     },
     {
       "classification": "structural_only",
-      "node_id": "tests/unit/test_phase85_integration.py::TestLodBackwardCompat::test_movement_continues_for_all_tiers",
-      "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
-      "strongest_oracle": "source/signature/import call: signature"
-    },
-    {
-      "classification": "structural_only",
-      "node_id": "tests/unit/test_phase88_detection_soa.py::TestFOWUnitArraysParam::test_battle_passes_unit_arrays_to_fow",
-      "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
-      "strongest_oracle": "source/signature/import call: getsource"
-    },
-    {
-      "classification": "structural_only",
-      "node_id": "tests/unit/test_phase88_detection_soa.py::TestFOWUnitArraysParam::test_update_signature_accepts_unit_arrays",
-      "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
-      "strongest_oracle": "source/signature/import call: signature"
+      "node_id": "tests/unit/test_phase85_integration.py::TestLodBackwardCompat::test_non_sensing_owners_expose_no_lod_skip_control",
+      "rationale": "Manual review found only an explicit structural interface diagnostic: the exact pytest structural marker and signature inspection prove that three non-sensing owners do not expose the retired LOD skip parameter, but cannot prove production execution or outcome effects.",
+      "strongest_oracle": "three runtime-owner method signatures omit the retired _lod_full_update control"
     },
     {
       "classification": "structural_only",
@@ -2866,30 +2836,6 @@
     {
       "classification": "structural_only",
       "node_id": "tests/unit/test_phase88_unit_arrays.py::TestBackwardCompat::test_build_enemy_data_in_battle_source",
-      "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
-      "strongest_oracle": "source/signature/import call: getsource"
-    },
-    {
-      "classification": "structural_only",
-      "node_id": "tests/unit/test_phase89_parallel_detection.py::TestStructural::test_parallel_detection_consumed_in_battle",
-      "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
-      "strongest_oracle": "source/signature/import call: getsource"
-    },
-    {
-      "classification": "structural_only",
-      "node_id": "tests/unit/test_phase89_parallel_detection.py::TestStructural::test_rng_param_in_check_detection",
-      "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
-      "strongest_oracle": "source/signature/import call: getsource"
-    },
-    {
-      "classification": "structural_only",
-      "node_id": "tests/unit/test_phase89_parallel_detection.py::TestStructural::test_rng_param_in_fow_update",
-      "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
-      "strongest_oracle": "source/signature/import call: getsource"
-    },
-    {
-      "classification": "structural_only",
-      "node_id": "tests/unit/test_phase89_parallel_detection.py::TestStructural::test_thread_pool_in_battle",
       "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
       "strongest_oracle": "source/signature/import call: getsource"
     },
@@ -3567,78 +3513,6 @@
     },
     {
       "classification": "structural_only",
-      "node_id": "tests/unit/test_phase_63_structural.py::TestPhase63Structural::test_comms_engine_in_get_state",
-      "rationale": "The node resolves the exact sentinel owner through the runtime checkpoint registry and verifies capture delegates to that registry, but it remains a structural registration diagnostic and cannot support a behavioral capability claim.",
-      "strongest_oracle": "runtime-owned checkpoint registry membership and capture delegation"
-    },
-    {
-      "classification": "structural_only",
-      "node_id": "tests/unit/test_phase_63_structural.py::TestPhase63Structural::test_detection_engine_in_get_state",
-      "rationale": "The node resolves the exact sentinel owner through the runtime checkpoint registry and verifies capture delegates to that registry, but it remains a structural registration diagnostic and cannot support a behavioral capability claim.",
-      "strongest_oracle": "runtime-owned checkpoint registry membership and capture delegation"
-    },
-    {
-      "classification": "structural_only",
-      "node_id": "tests/unit/test_phase_63_structural.py::TestPhase63Structural::test_enable_c2_friction_in_battle",
-      "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
-      "strongest_oracle": "declared structural cluster"
-    },
-    {
-      "classification": "structural_only",
-      "node_id": "tests/unit/test_phase_63_structural.py::TestPhase63Structural::test_enable_c2_friction_in_calibration",
-      "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
-      "strongest_oracle": "declared structural cluster"
-    },
-    {
-      "classification": "structural_only",
-      "node_id": "tests/unit/test_phase_63_structural.py::TestPhase63Structural::test_enable_event_feedback_in_calibration",
-      "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
-      "strongest_oracle": "declared structural cluster"
-    },
-    {
-      "classification": "structural_only",
-      "node_id": "tests/unit/test_phase_63_structural.py::TestPhase63Structural::test_enable_missile_routing_in_calibration",
-      "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
-      "strongest_oracle": "declared structural cluster"
-    },
-    {
-      "classification": "structural_only",
-      "node_id": "tests/unit/test_phase_63_structural.py::TestPhase63Structural::test_equipment_breakdown_subscription_in_engine",
-      "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
-      "strongest_oracle": "declared structural cluster"
-    },
-    {
-      "classification": "structural_only",
-      "node_id": "tests/unit/test_phase_63_structural.py::TestPhase63Structural::test_maintenance_completed_subscription_in_engine",
-      "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
-      "strongest_oracle": "declared structural cluster"
-    },
-    {
-      "classification": "structural_only",
-      "node_id": "tests/unit/test_phase_63_structural.py::TestPhase63Structural::test_missile_engine_instantiation_in_scenario",
-      "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
-      "strongest_oracle": "declared structural cluster"
-    },
-    {
-      "classification": "structural_only",
-      "node_id": "tests/unit/test_phase_63_structural.py::TestPhase63Structural::test_missile_type_handling_in_engagement",
-      "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
-      "strongest_oracle": "declared structural cluster"
-    },
-    {
-      "classification": "structural_only",
-      "node_id": "tests/unit/test_phase_63_structural.py::TestPhase63Structural::test_rtd_event_subscription_in_engine",
-      "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
-      "strongest_oracle": "declared structural cluster"
-    },
-    {
-      "classification": "structural_only",
-      "node_id": "tests/unit/test_phase_63_structural.py::TestPhase63Structural::test_sensors_not_hardcoded_empty_in_battle_fow",
-      "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
-      "strongest_oracle": "declared structural cluster"
-    },
-    {
-      "classification": "structural_only",
       "node_id": "tests/unit/test_phase_64_structural.py::TestPhase64Structural::test_battle_activate_stratagem",
       "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
       "strongest_oracle": "declared structural cluster"
@@ -3910,42 +3784,6 @@
     {
       "classification": "structural_only",
       "node_id": "tests/unit/test_phase_71d_carrier_ops.py::TestCarrierOpsBattleLoop::test_update_cap_stations_called",
-      "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
-      "strongest_oracle": "source/signature/import call: getsource"
-    },
-    {
-      "classification": "structural_only",
-      "node_id": "tests/unit/test_phase_72c_engine_checkpoint.py::TestLastAtoDayState::test_last_ato_day_in_get_state_source",
-      "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
-      "strongest_oracle": "source/signature/import call: getsource"
-    },
-    {
-      "classification": "structural_only",
-      "node_id": "tests/unit/test_phase_72c_engine_checkpoint.py::TestLastAtoDayState::test_last_ato_day_in_set_state_source",
-      "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
-      "strongest_oracle": "source/signature/import call: getsource"
-    },
-    {
-      "classification": "structural_only",
-      "node_id": "tests/unit/test_phase_72c_engine_checkpoint.py::TestLastAtoDayState::test_last_ato_day_init",
-      "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
-      "strongest_oracle": "source/signature/import call: getsource"
-    },
-    {
-      "classification": "structural_only",
-      "node_id": "tests/unit/test_phase_72c_engine_checkpoint.py::TestLastAtoDayState::test_no_hasattr_pattern",
-      "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
-      "strongest_oracle": "source/signature/import call: getsource"
-    },
-    {
-      "classification": "structural_only",
-      "node_id": "tests/unit/test_phase_72c_engine_checkpoint.py::TestNumpyEncoderUsage::test_checkpoint_source_uses_numpy_encoder",
-      "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
-      "strongest_oracle": "source/signature/import call: getsource"
-    },
-    {
-      "classification": "structural_only",
-      "node_id": "tests/unit/test_phase_72c_engine_checkpoint.py::TestNumpyEncoderUsage::test_restore_source_uses_object_hook",
       "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
       "strongest_oracle": "source/signature/import call: getsource"
     },
@@ -4557,7 +4395,7 @@
     },
     {
       "classification": "structural_only",
-      "node_id": "tests/validation/test_phase_67_structural.py::TestCrossDocAudit::test_phase_count_consistent",
+      "node_id": "tests/validation/test_phase_67_structural.py::TestCrossDocAudit::test_readme_is_durable_run_guide",
       "rationale": "The strongest current oracle is structural; this node cannot support a behavioral capability claim.",
       "strongest_oracle": "declared structural cluster; source/signature/import call: read_text"
     },
@@ -4690,18 +4528,6 @@
     {
       "classification": "structural_only",
       "node_id": "tests/unit/test_phase53_c2_ai.py::TestEscalationSubEngines::test_missing_political_engine_does_not_raise_structural_diagnostic",
-      "rationale": "The exact @pytest.mark.structural marker and absence of a direct assertion identify this as a reviewed compatibility diagnostic; it cannot support a behavioral capability or closure claim.",
-      "strongest_oracle": "explicit structural marker with successful completion but no direct assertion"
-    },
-    {
-      "classification": "structural_only",
-      "node_id": "tests/unit/test_phase53_c2_ai.py::TestFogOfWarWiring::test_fow_exception_emits_structural_diagnostic",
-      "rationale": "The explicit structural marker is intentional. Mock invocation and captured-log assertions diagnose exception containment only; they do not prove production wiring, state transitions, or outcome effects.",
-      "strongest_oracle": "mocked failure-path invocation and exact captured structural diagnostic"
-    },
-    {
-      "classification": "structural_only",
-      "node_id": "tests/unit/test_phase53_c2_ai.py::TestFogOfWarWiring::test_missing_fow_does_not_raise_structural_diagnostic",
       "rationale": "The exact @pytest.mark.structural marker and absence of a direct assertion identify this as a reviewed compatibility diagnostic; it cannot support a behavioral capability or closure claim.",
       "strongest_oracle": "explicit structural marker with successful completion but no direct assertion"
     },

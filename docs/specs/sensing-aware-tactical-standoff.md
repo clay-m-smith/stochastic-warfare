@@ -6,10 +6,17 @@
 
 > **Superseded checkpoint boundary:** This document records Phase 115's
 > accepted format-115 behavior and its then-open REM-029 exclusion. The Phase
-> 116 implementation advances the current engine to format 116 and restores
+> 116 implementation advanced the engine to format 116 and restored
 > exact roster-backed contacts and bounded current witnesses; Phase 116 passed
-> postmortem and closed REM-029. The Phase 115 statements below remain
-> historical evidence, not current-format limitations.
+> postmortem and closed REM-029. Phase 118's current format 118 preserves that
+> topology while adding bounded seven-role radar observer-track support,
+> correlation-safe detached fusion prediction, performance receipts, cadence
+> state, observer topology, and indexed FOW randomness. The observer-support
+> shape remains necessary for strict v7 archive and stored-exposure decoding,
+> but new current runtimes reject the scan-scheduling and LOD activation that
+> could create a deferred-support decision. It is not a presently activatable
+> capability. The Phase 115 statements below remain historical evidence, not
+> current-format limitations.
 
 ## Purpose and scope
 
@@ -221,8 +228,11 @@ retains the subsystem's existing one-metre generic numerical minimum. That
 minimum is not a claim about any catalog sensor's historical accuracy. The
 missing sensor-specific range/bearing error covariance and provenance is a
 separate fidelity deficit; Phase 115 does not tune the minimum to produce a
-preferred detection, movement, or engagement outcome. REM-044 / Phase 131 owns
-that sourced covariance plus detached predictive-update transaction.
+preferred detection, movement, or engagement outcome. Phase 118 subsequently
+added detached elapsed prediction and atomic update/replacement with
+correlation-safe same-epoch selection. REM-044 / Phase 131 now owns the sourced
+per-sensor range/bearing/correlation model and provenance integrated into that
+transaction.
 
 Sensor roles are classified explicitly as observation/search only or capable
 of supplying a local fire-control solution. Weapon roles are classified as
@@ -413,6 +423,15 @@ after movement.
   and fire control may use the same attachment; if they differ, both must be
   shooter-local and the explicit compatibility table must accept the fire-
   control attachment. The targeting resolver performs no second draw.
+- Format 118 may retain one bounded `ObserverTrackSupportEvidence` when an
+  exact successful radar fire-control attachment is cadence-deferred. Only the
+  closed seven-role radar set qualifies. The record binds its observer,
+  attachment, target, fusion generation, observation/native deadline,
+  projected state, and covariance. Targeting revalidates live reach, LOS/FOV,
+  chronology, uncertainty, contact, and attachment topology without another
+  draw; support clears at native readiness, contact/track loss or replacement,
+  or topology invalidation. It cannot authorize a different shooter or survive
+  a new fusion-track generation.
 - FOW time is scenario-logical elapsed seconds from
   `ctx.clock.elapsed.total_seconds()`, never wall/epoch time. World-view update,
   contact, witness, targeting decision, and checkpoint validation compare that
@@ -541,14 +560,18 @@ tactical observation. The evaluator consumes that recorded decision and must
 not recompute legacy catalog standoff. Public evaluator/API/replay output
 exposes at least target ID, disposition, contact source/time, weapon physical
 and effective range, sensing and fire-control source/range, authorized
-standoff, and enablement. No exposed target may be absent from the hostile
-loaded roster.
+standoff, enablement, and privileged nullable observer-track support. The exact
+support includes attachment/target identity, fusion track, cadence chronology,
+projected state, and covariance. No exposed target may be absent from the
+hostile loaded roster.
 
 That exact-ID record is privileged engine/evaluator evidence. A FOW-limited or
 player-facing API receives the side's authorized contact identifier and public
 track fields only when its current world view contains that contact; it never
-receives the ground-truth roster entity ID, hidden attachment identity, or a
-decision for another side. Track identifiers are deterministic per-side
+receives the ground-truth roster entity ID, hidden attachment identity, nested
+observer support, covariance, or a decision for another side. A supported side
+decision retains only `FOW_OBSERVER_TRACK_SUPPORT` and its opaque track. Track
+identifiers are deterministic per-side
 ordinals allocated in canonical first-detection order and persisted by the
 side's intelligence-fusion track state. They are not hashes of enumerable
 observer, target, tick, or time inputs. Exposure schemas declare
@@ -741,8 +764,9 @@ two otherwise compatible attachments merely because their roles match.
 REM-043 must define availability-aware threat scoring rather than extending the
 Phase 115 targeting contract by implication. They are assigned to Phases 128,
 129, and 130 respectively. REM-044 / Phase 131 must replace the generic
-isotropic uncertainty floor with sourced sensor covariance and stage elapsed-
-time prediction plus measurement update as one atomic track transaction.
+isotropic uncertainty model with sourced per-sensor range/bearing/correlation
+models and provenance inside Phase 118's existing detached atomic fusion
+transaction.
 
 ## Acceptance criteria
 

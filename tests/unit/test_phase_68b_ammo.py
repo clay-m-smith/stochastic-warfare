@@ -7,10 +7,11 @@ weapons without capacity fire unlimited.
 
 from __future__ import annotations
 
+import pytest
 
+from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.simulation.battle import BattleManager
 from stochastic_warfare.simulation.calibration import CalibrationSchema
-from stochastic_warfare.core.events import EventBus
 
 
 class TestAmmoExpendedTracking:
@@ -78,13 +79,17 @@ class TestAmmoCheckpointState:
         mgr.set_state(state)
         assert mgr._ammo_expended == {"t1:gun": 3, "t2:missile": 1}
 
-    def test_set_state_backward_compat(self):
-        """Old states without ammo_expended default to empty."""
+    def test_incomplete_state_rejects_atomically(self):
+        """Strict restore rejects incomplete state without clearing ammo."""
         mgr = BattleManager(EventBus())
         mgr._ammo_expended["old"] = 99
+        before = mgr.get_state()
         state = {"next_battle_id": 0, "battles": {}}
-        mgr.set_state(state)
-        assert mgr._ammo_expended == {}
+
+        with pytest.raises(ValueError, match="key topology"):
+            mgr.set_state(state)
+
+        assert mgr.get_state() == before
 
 
 class TestCalibrationField:

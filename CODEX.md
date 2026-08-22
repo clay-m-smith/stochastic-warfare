@@ -37,8 +37,10 @@ simulator. A test that exercises it does not prove that the production
 ## Non-Negotiable Invariants
 
 - Python requires 3.12 or newer. Use `uv` and `uv run`; never use bare `pip`.
-- All stochastic behavior uses a seeded `numpy.random.Generator` obtained
-  through `RNGManager.get_stream(ModuleId)`.
+- All stochastic behavior uses `RNGManager`-owned seeded authority: either an
+  injected `numpy.random.Generator` from `get_stream(ModuleId)` or a typed,
+  identity-addressed indexed decision allocated and committed through
+  `RNGManager` when draw order must not depend on parallel scheduling.
 - Never use Python's `random` module or module-level `np.random` calls in
   simulation logic.
 - Iteration that affects simulation state or event order must be deterministic.
@@ -161,6 +163,24 @@ work. It is not authorization to include unrelated changes or to push.
 Do not weaken acceptance thresholds after a result misses them without explicit
 approval and a documented modeling rationale.
 
+## Evidence Storage
+
+Generated run evidence -- including raw result vectors, shard bundles, JUnit,
+traces, profiles, and archive manifests -- belongs under the ignored
+`artifacts/` tree and must not be committed to `main`. Main may retain
+reproducibility inputs, curated validation and test ledgers, behavioral
+fixtures, and compact verdict or provenance summaries.
+
+Full retained publications belong in evidence-only commits on `evidence/full`
+or in an explicitly documented external evidence store. The evidence branch
+absorbs `main`; `main` never absorbs archive commits. Do not rebase or
+force-push retained evidence history. Prefer a separate evidence remote or
+Git LFS for publication: an ordinary branch on the main remote is fetched by a
+normal full clone even when it is not checked out. Record the archive locator,
+immutable ref, path, digest, verdict, and qualifications in the applicable
+phase devlog. Main validation must not require the archive to be fetched, and
+an artifact's storage location never upgrades its eligibility or verdict.
+
 ## Checkpoint Verification
 
 A checkpoint test must do more than assert that keys exist:
@@ -232,7 +252,7 @@ uv run --no-sync python scripts/run_pytest_partition.py standard --manifest arti
 ```
 
 PR/main CI runs the audit plus `standard`, `api`, `e2e`, and the `terrain`
-dependency profile. Weekly/manual extended CI runs `slow-only` in four shards,
+dependency profile. Weekly/manual extended CI runs `slow-only` in 15 shards,
 `benchmark-only` in three shards, and `slow-benchmark` in one shard. Sharding
 is deterministic and module-affine. `terrain` (the four Phase 15 terrain
 files) and `benchmark-policy` are intentionally overlapping dependency/policy

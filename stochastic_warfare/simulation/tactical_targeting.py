@@ -16,6 +16,11 @@ from types import MappingProxyType
 from typing import Any, Protocol, TypeAlias, runtime_checkable
 
 from stochastic_warfare.core.types import Domain
+from stochastic_warfare.detection.observer_support import (
+    ObserverTrackSupportEvidence,
+    observer_track_support_evidence_from_state,
+    observer_track_support_evidence_to_state,
+)
 from stochastic_warfare.detection.sensors import SensorType
 from stochastic_warfare.simulation.loadouts import (
     SensorModeledRole,
@@ -86,6 +91,7 @@ class ContactSource(str, Enum):
     NONE = "NONE"
     NON_FOW_LOCAL_OBSERVATION = "NON_FOW_LOCAL_OBSERVATION"
     FOW_OBSERVER_WITNESS = "FOW_OBSERVER_WITNESS"
+    FOW_OBSERVER_TRACK_SUPPORT = "FOW_OBSERVER_TRACK_SUPPORT"
 
 
 class FireControlSource(str, Enum):
@@ -734,6 +740,7 @@ class TacticalTargetingDecision:
     sensing_aware_standoff_enabled: bool
     fog_of_war_enabled: bool
     consumable: bool = True
+    observer_track_support: ObserverTrackSupportEvidence | None = None
 
     def __post_init__(self) -> None:
         self._validate_identity_and_scalars()
@@ -878,6 +885,11 @@ class TacticalTargetingDecision:
         )
 
     def _validate_contact_and_sensing(self) -> None:
+        support = self.observer_track_support
+        if support is not None and type(support) is not ObserverTrackSupportEvidence:
+            raise ValueError(
+                "observer_track_support must be an ObserverTrackSupportEvidence",
+            )
         observer = _require_optional_identifier(
             self.observing_unit_id,
             label="observing_unit_id",
@@ -909,6 +921,7 @@ class TacticalTargetingDecision:
                 or contact_sensor_present
                 or self.contact_time_s is not None
                 or self.contact_range_m != 0.0
+                or support is not None
             ):
                 raise ValueError("a no-contact decision cannot carry contact evidence")
             if self.target_id is not None:
@@ -930,10 +943,51 @@ class TacticalTargetingDecision:
             if self.target_id is None:
                 raise ValueError("current contact requires a target")
             if self.contact_source is ContactSource.FOW_OBSERVER_WITNESS:
+                if support is not None:
+                    raise ValueError(
+                        "FOW witness cannot carry observer track support evidence",
+                    )
                 if self.contact_range_m != self.distance_m:
                     raise ValueError(
                         "FOW witness range must equal the exact target distance",
                     )
+            elif self.contact_source is ContactSource.FOW_OBSERVER_TRACK_SUPPORT:
+                if support is None:
+                    raise ValueError(
+                        "FOW observer track support requires typed support evidence",
+                    )
+                if not contact_sensor_present:
+                    raise ValueError(
+                        "FOW observer track support requires an exact attachment",
+                    )
+                attachment = support.identity.attachment_identity
+                if (
+                    attachment.reporting_side != self.shooter_side
+                    or attachment.observer_unit_id != observer
+                    or support.identity.target_id != self.target_id
+                    or attachment.source_equipment_index != contact_index
+                    or attachment.sensor_id != contact_sensor_id
+                    or attachment.modeled_role != self.contact_sensor_modeled_role.value
+                ):
+                    raise ValueError(
+                        "FOW observer track support identity must match the decision exactly",
+                    )
+                if support.projection_time_s != self.logical_time_s:
+                    raise ValueError(
+                        "FOW observer track support projection must match logical time",
+                    )
+                if support.observation_time_s >= support.projection_time_s:
+                    raise ValueError(
+                        "FOW observer track support observation must precede its projection",
+                    )
+                if self.contact_range_m < self.distance_m:
+                    raise ValueError(
+                        "supported local contact cannot be shorter than the target distance",
+                    )
+            elif support is not None:
+                raise ValueError(
+                    "observer track support evidence requires its distinct contact source",
+                )
             elif self.contact_range_m < self.distance_m:
                 raise ValueError(
                     "current local contact cannot be shorter than the target distance",
@@ -943,8 +997,11 @@ class TacticalTargetingDecision:
         if self.fog_of_war_enabled:
             if self.contact_source is ContactSource.NON_FOW_LOCAL_OBSERVATION:
                 raise ValueError("non-FOW contact cannot appear in a FOW decision")
-        elif self.contact_source is ContactSource.FOW_OBSERVER_WITNESS:
-            raise ValueError("FOW witness cannot appear when FOW is disabled")
+        elif self.contact_source in {
+            ContactSource.FOW_OBSERVER_WITNESS,
+            ContactSource.FOW_OBSERVER_TRACK_SUPPORT,
+        }:
+            raise ValueError("FOW contact cannot appear when FOW is disabled")
 
         sensing_index = _require_optional_index(
             self.sensing_sensor_source_equipment_index,
@@ -1026,6 +1083,25 @@ class TacticalTargetingDecision:
                 )
         elif not control_sensor_present:
             raise ValueError("sensor fire control requires exact attachment identity")
+        if self.contact_source is ContactSource.FOW_OBSERVER_TRACK_SUPPORT:
+            if self.fire_control_source is not FireControlSource.SENSOR_ATTACHMENT:
+                raise ValueError(
+                    "FOW observer track support requires sensor-attachment fire control",
+                )
+            contact_identity = (
+                self.contact_sensor_source_equipment_index,
+                self.contact_sensor_id,
+                self.contact_sensor_modeled_role,
+            )
+            control_identity = (
+                control_index,
+                control_sensor_id,
+                self.fire_control_sensor_modeled_role,
+            )
+            if control_identity != contact_identity:
+                raise ValueError(
+                    "FOW observer track support requires the same fire-control attachment",
+                )
 
     def _validate_outcome(self) -> None:
         valid_disposition = self.disposition in _VALID_ENGAGEMENT_DISPOSITIONS
@@ -1429,6 +1505,16 @@ class _TacticalTargetingSnapshot:
     ]
 
 
+@dataclass(frozen=True, slots=True)
+class TacticalTargetingPublicationPlan:
+    """Owner-bound, fully validated interval publication snapshot."""
+
+    pictures: tuple[TacticalTargetingPicture, ...]
+    _snapshot: _TacticalTargetingSnapshot
+    _prior_snapshot: _TacticalTargetingSnapshot
+    _owner_token: object
+
+
 class TacticalTargetingRuntime:
     """Simulation-owned publisher for bounded, same-interval decisions."""
 
@@ -1453,6 +1539,7 @@ class TacticalTargetingRuntime:
             sensing_aware_standoff_enabled,
             label="sensing_aware_standoff_enabled",
         )
+        self._publication_owner_token = object()
         self._snapshot = _TacticalTargetingSnapshot(
             registered_unit_sides=MappingProxyType(
                 _normalize_unit_sides(
@@ -1631,12 +1718,12 @@ class TacticalTargetingRuntime:
                         "decision target is outside exact battle topology",
                     )
 
-    def publish_interval(
+    def stage_publication(
         self,
         interval: TargetingInterval,
         pictures: tuple[TacticalTargetingPicture, ...],
-    ) -> tuple[TacticalTargetingPicture, ...]:
-        """Validate a complete picture set, then commit it in one swap."""
+    ) -> TacticalTargetingPublicationPlan:
+        """Validate a complete picture set without publishing it."""
         if not isinstance(interval, TargetingInterval):
             raise ValueError("interval must be a TargetingInterval")
         if not isinstance(pictures, tuple):
@@ -1676,18 +1763,62 @@ class TacticalTargetingRuntime:
                 expected_battle_id=expected_battle_id,
             )
 
-        staged_pictures = {
-            picture.battle_id: picture
-            for picture in pictures
-        }
-        self._snapshot = _TacticalTargetingSnapshot(
+        staged_pictures = {picture.battle_id: picture for picture in pictures}
+        snapshot = _TacticalTargetingSnapshot(
             registered_unit_sides=self._snapshot.registered_unit_sides,
             prepared_interval=interval,
             published_battle_ids=interval.battle_ids,
             latest_pictures=MappingProxyType(staged_pictures),
             latest_engagement_revalidations=MappingProxyType({}),
         )
-        return pictures
+        return TacticalTargetingPublicationPlan(
+            pictures=pictures,
+            _snapshot=snapshot,
+            _prior_snapshot=self._snapshot,
+            _owner_token=self._publication_owner_token,
+        )
+
+    def validate_publication_plan(
+        self,
+        plan: TacticalTargetingPublicationPlan,
+    ) -> None:
+        """Reject a foreign or stale plan before an outer commit begins."""
+        if type(plan) is not TacticalTargetingPublicationPlan:
+            raise ValueError(
+                "plan must be a TacticalTargetingPublicationPlan",
+            )
+        if plan._owner_token is not self._publication_owner_token:
+            raise ValueError(
+                "targeting publication plan belongs to another runtime",
+            )
+        if plan._prior_snapshot is not self._snapshot:
+            raise ValueError("targeting publication plan is stale")
+
+    def _commit_prevalidated_publication(
+        self,
+        plan: TacticalTargetingPublicationPlan,
+    ) -> tuple[TacticalTargetingPicture, ...]:
+        """Publish a prevalidated snapshot with one non-throwing assignment."""
+        self._snapshot = plan._snapshot
+        return plan.pictures
+
+    def commit_publication(
+        self,
+        plan: TacticalTargetingPublicationPlan,
+    ) -> tuple[TacticalTargetingPicture, ...]:
+        """Validate and commit a staged interval publication."""
+        self.validate_publication_plan(plan)
+        return self._commit_prevalidated_publication(plan)
+
+    def publish_interval(
+        self,
+        interval: TargetingInterval,
+        pictures: tuple[TacticalTargetingPicture, ...],
+    ) -> tuple[TacticalTargetingPicture, ...]:
+        """Compatibility boundary that stages and commits one interval."""
+        return self.commit_publication(
+            self.stage_publication(interval, pictures),
+        )
 
     def latest_picture(
         self,
@@ -1807,14 +1938,12 @@ class TacticalTargetingRuntime:
         return {
             "sensing_aware_standoff_enabled": (self._sensing_aware_standoff_enabled),
             "registered_unit_sides": [
-                {"unit_id": unit_id, "side": side}
-                for unit_id, side in snapshot.registered_unit_sides.items()
+                {"unit_id": unit_id, "side": side} for unit_id, side in snapshot.registered_unit_sides.items()
             ],
             "prepared_interval": _interval_to_state(snapshot.prepared_interval),
             "published_battle_ids": list(snapshot.published_battle_ids),
             "latest_pictures": [
-                _picture_to_state(snapshot.latest_pictures[battle_id])
-                for battle_id in sorted(snapshot.latest_pictures)
+                _picture_to_state(snapshot.latest_pictures[battle_id]) for battle_id in sorted(snapshot.latest_pictures)
             ],
             "latest_engagement_revalidations": [
                 _revalidation_outcome_to_state(
@@ -1947,9 +2076,7 @@ class TacticalTargetingRuntime:
             raise ValueError(
                 "published battle IDs must equal the complete interval",
             )
-        if tuple(picture.battle_id for picture in pictures) != (
-            interval.battle_ids
-        ):
+        if tuple(picture.battle_id for picture in pictures) != (interval.battle_ids):
             raise ValueError(
                 "targeting pictures must equal the complete interval",
             )
@@ -2028,17 +2155,9 @@ class TacticalTargetingRuntime:
             ),
             prepared_interval=plan.prepared_interval,
             published_battle_ids=plan.published_battle_ids,
-            latest_pictures=MappingProxyType(
-                {
-                    picture.battle_id: picture
-                    for picture in plan.latest_pictures
-                }
-            ),
+            latest_pictures=MappingProxyType({picture.battle_id: picture for picture in plan.latest_pictures}),
             latest_engagement_revalidations=MappingProxyType(
-                {
-                    outcome.key: outcome
-                    for outcome in plan.latest_engagement_revalidations
-                }
+                {outcome.key: outcome for outcome in plan.latest_engagement_revalidations}
             ),
         )
 
@@ -2325,6 +2444,7 @@ _DECISION_KEYS = frozenset(
         "sensing_aware_standoff_enabled",
         "fog_of_war_enabled",
         "consumable",
+        "observer_track_support",
     }
 )
 
@@ -2388,6 +2508,13 @@ def _decision_to_state(decision: TacticalTargetingDecision) -> dict[str, Any]:
         "sensing_aware_standoff_enabled": (decision.sensing_aware_standoff_enabled),
         "fog_of_war_enabled": decision.fog_of_war_enabled,
         "consumable": decision.consumable,
+        "observer_track_support": (
+            None
+            if decision.observer_track_support is None
+            else observer_track_support_evidence_to_state(
+                decision.observer_track_support,
+            )
+        ),
     }
 
 
@@ -2500,6 +2627,13 @@ def _decision_from_state(
         sensing_aware_standoff_enabled=(value["sensing_aware_standoff_enabled"]),
         fog_of_war_enabled=value["fog_of_war_enabled"],
         consumable=value["consumable"],
+        observer_track_support=(
+            None
+            if value["observer_track_support"] is None
+            else observer_track_support_evidence_from_state(
+                value["observer_track_support"],
+            )
+        ),
     )
 
 
@@ -2625,6 +2759,7 @@ __all__ = [
     "TacticalEngagementRevalidationOutcome",
     "TacticalTargetingDecision",
     "TacticalTargetingPicture",
+    "TacticalTargetingPublicationPlan",
     "TacticalTargetingRestorePlan",
     "TacticalTargetingRuntime",
     "TargetingDisposition",

@@ -1,6 +1,6 @@
 # Project Structure & Module Decomposition
-**Status**: Living reference, current through the Phase 117 implementation.
-**Last Updated**: 2026-08-02
+**Status**: Living reference, current through completed Phase 118.
+**Last Updated**: 2026-08-22
 
 ---
 
@@ -25,7 +25,7 @@ stochastic-warfare/
 │   ├── runtime_errors.py              # Typed runtime-failure to HTTP-error translation
 │   ├── main.py                       # Settings-owned app factory, lifespan, CORS
 │   └── routers/                      # Route handlers
-│       ├── meta.py                   # Health, eras, doctrines, terrain types
+│       ├── meta.py                   # Health, eras, doctrines, terrain, and performance-flag support
 │       ├── scenarios.py              # Scenario listing/detail + claim-ledger projection
 │       ├── units.py                  # Unit listing/detail
 │       ├── runs.py                   # Run lifecycle, events, narrative, WebSocket, batch
@@ -169,8 +169,6 @@ stochastic-warfare/
 │   │   ├── api.md                    # API class reference
 │   │   ├── eras.md                   # Era framework & mechanics
 │   │   └── units.md                  # Units & equipment catalog
-│   ├── evidence/
-│   │   └── phase-117/                # Stable digest-bearing historical study evidence
 │   └── specs/                        # Per-module specifications
 │       └── project-structure.md      # (this document)
 ├── data/
@@ -229,55 +227,55 @@ stochastic-warfare/
 │   ├── maritime/                     # Maritime-specific data: port facilities, sea lanes, chokepoints, bathymetry reference
 │   ├── eras/                         # Era-specific data packages [Phase 20+]
 │   │   ├── ww2/                     # WW2 era data [Phases 20, 29]
-│   │   │   ├── units/               # 25 unit defs (5 armor, 3 infantry, 5 air, 8 naval, 4 artillery)
+│   │   │   ├── units/               # Armor, infantry, air, naval, and artillery definitions
 │   │   │   │   ├── armor/           # Tiger I, Panther, Sherman, Panzer IV, T-34/85
 │   │   │   │   ├── infantry/        # US/Soviet/Wehrmacht rifle squads
 │   │   │   │   ├── air/             # B-17G, Bf 109G, P-51D, Spitfire IX, A6M Zero [P29]
 │   │   │   │   ├── naval/           # Iowa BB, Fletcher DD, Type VIIC, Essex CV, Shokaku CV, Type IXC, Flower, LST [P29]
 │   │   │   │   └── artillery/       # M1 105mm, sFH 18, PaK 40, 6-pdr AT [P29]
-│   │   │   ├── weapons/             # 14 weapon defs (guns, naval, torpedoes) [P29: +6]
-│   │   │   ├── ammunition/          # 19 ammo defs (tank/small_arms/naval/torpedoes/aircraft/depth_charges) [P29: +6]
-│   │   │   ├── sensors/             # 4 sensor definitions (eyeball, radar, naval radar, hydrophone)
-│   │   │   ├── signatures/          # 25 signature profiles [P29: +10]
-│   │   │   ├── doctrine/            # 4 doctrine templates
-│   │   │   ├── commanders/          # 3 commander profiles
-│   │   │   ├── comms/               # 2 comm definitions (field telephone, SCR-300 radio) [P29]
-│   │   │   └── scenarios/           # 4 catalog collections (Kursk, Midway, Normandy Bocage, Stalingrad)
+│   │   │   ├── weapons/             # Ground, naval, torpedo, and aircraft weapon definitions
+│   │   │   ├── ammunition/          # Ground, naval, torpedo, aircraft, and depth-charge ammunition
+│   │   │   ├── sensors/             # Visual, radar, naval-radar, and hydrophone definitions
+│   │   │   ├── signatures/          # Unit signature profiles
+│   │   │   ├── doctrine/            # Doctrine templates
+│   │   │   ├── commanders/          # Commander profiles
+│   │   │   ├── comms/               # Field telephone and radio definitions
+│   │   │   └── scenarios/           # Kursk, Midway, Normandy Bocage, and Stalingrad collections
 │   │   ├── ww1/                     # WW1 era data [Phases 21, 29]
-│   │   │   ├── units/               # 16 unit defs (3 infantry, 2 armor, 1 cavalry, 5 naval, 3 ground, 2 air) [P29: +10]
+│   │   │   ├── units/               # Infantry, armor, cavalry, naval, ground, and air definitions
 │   │   │   │   ├── naval/           # Iron Duke BB, Konig BB, Invincible BC, G-class DD, U-boat [P29]
 │   │   │   │   └── air/             # SPAD XIII, Fokker D.VII [P29]
-│   │   │   ├── weapons/             # 13 weapon defs (rifles, MGs, artillery, grenades, naval, aircraft guns) [P29: +5]
-│   │   │   ├── ammunition/          # 14 ammo defs (ball, AP, HE, shrapnel, gas, naval, aircraft) [P29: +4]
-│   │   │   ├── sensors/             # 5 sensor definitions
-│   │   │   ├── signatures/          # 16 signature profiles [P29: +10]
-│   │   │   ├── doctrine/            # 3 doctrine templates
-│   │   │   ├── commanders/          # 3 commander profiles
-│   │   │   ├── comms/               # 2 comm definitions (field telephone, runner messenger)
-│   │   │   └── scenarios/           # 3 catalog collections (Somme Day 1, Cambrai, Jutland)
+│   │   │   ├── weapons/             # Rifle, machine-gun, artillery, naval, and aircraft definitions
+│   │   │   ├── ammunition/          # Ball, AP, HE, shrapnel, gas, naval, and aircraft ammunition
+│   │   │   ├── sensors/             # Era sensor definitions
+│   │   │   ├── signatures/          # Unit signature profiles
+│   │   │   ├── doctrine/            # Doctrine templates
+│   │   │   ├── commanders/          # Commander profiles
+│   │   │   ├── comms/               # Field telephone and runner-messenger definitions
+│   │   │   └── scenarios/           # Somme Day 1, Cambrai, and Jutland collections
 │   │   ├── napoleonic/              # Napoleonic era data [Phases 22, 29]
-│   │   │   ├── units/               # 21 unit defs (infantry, cavalry, artillery, naval, engineer, supply) [P29: +11]
+│   │   │   ├── units/               # Infantry, cavalry, artillery, naval, engineer, and supply definitions
 │   │   │   │   └── naval/           # Ship of line 74, First Rate 100, Frigate 32, Corvette, Fire Ship [P29]
-│   │   │   ├── weapons/             # 13 weapon defs (muskets, cannons, naval, rockets) [P29: +4]
-│   │   │   ├── ammunition/          # 13 ammo defs (musket balls, roundshot, canister, naval, rockets) [P29: +4]
-│   │   │   ├── sensors/             # 3 sensor definitions
-│   │   │   ├── signatures/          # 21 signature profiles [P29: +11]
-│   │   │   ├── doctrine/            # 3 doctrine templates
-│   │   │   ├── commanders/          # 3 commander profiles
-│   │   │   ├── comms/               # 2 comm definitions (mounted courier, drum/bugle signals)
-│   │   │   └── scenarios/           # 3 catalog collections (Austerlitz, Waterloo, Trafalgar)
+│   │   │   ├── weapons/             # Musket, cannon, naval, and rocket definitions
+│   │   │   ├── ammunition/          # Musket ball, roundshot, canister, naval, and rocket ammunition
+│   │   │   ├── sensors/             # Era sensor definitions
+│   │   │   ├── signatures/          # Unit signature profiles
+│   │   │   ├── doctrine/            # Doctrine templates
+│   │   │   ├── commanders/          # Commander profiles
+│   │   │   ├── comms/               # Mounted courier and drum/bugle definitions
+│   │   │   └── scenarios/           # Austerlitz, Waterloo, and Trafalgar collections
 │   │   └── ancient_medieval/        # Ancient & Medieval era data [Phases 23, 29]
-│   │       ├── units/               # 17 unit defs (infantry, cavalry, mounted, naval, siege) [P29: +10]
+│   │       ├── units/               # Infantry, cavalry, mounted, naval, and siege definitions
 │   │       │   └── naval/           # Trireme, Quinquereme, Longship, Dromon, Cog, War Galley [P29]
-│   │       ├── weapons/             # 16 weapon defs (melee, ranged, siege, naval) [P29: +3]
-│   │       ├── ammunition/          # 10 ammo defs (arrows, bolts, javelins, stones, naval) [P29: +2]
-│   │       ├── sensors/             # 3 sensor definitions
-│   │       ├── signatures/          # 17 signature profiles [P29: +10]
-│   │       ├── doctrine/            # 3 doctrine templates
-│   │       ├── commanders/          # 4 commander profiles (Hannibal, Henry V, William Conqueror, Subotai) [P29: +1]
-│   │       ├── comms/               # 2 comm definitions (battle horn, banner signal)
-│   │       └── scenarios/           # 4 catalog collections (Cannae, Agincourt, Hastings, Salamis)
-│   ├── validation/                   # Historical claim ledger and typed study plans
+│   │       ├── weapons/             # Melee, ranged, siege, and naval definitions
+│   │       ├── ammunition/          # Arrow, bolt, javelin, stone, and naval ammunition
+│   │       ├── sensors/             # Era sensor definitions
+│   │       ├── signatures/          # Unit signature profiles
+│   │       ├── doctrine/            # Doctrine templates
+│   │       ├── commanders/          # Hannibal, Henry V, William the Conqueror, and Subotai profiles
+│   │       ├── comms/               # Battle-horn and banner-signal definitions
+│   │       └── scenarios/           # Cannae, Agincourt, Hastings, and Salamis collections
+│   ├── validation/                   # Historical claim ledger and retained study plans
 │   │   ├── historical_claims.yaml
 │   │   └── historical_studies/
 │   │       ├── 73_easting_phase117.yaml
@@ -334,7 +332,9 @@ stochastic-warfare/
     ├── scenario_names.py              # Canonical scenario-name normalization
     ├── core/                         # Foundational infrastructure
     │   ├── __init__.py
-    │   ├── rng.py                    # Central RNG manager, stream forking
+    │   ├── rng.py                    # Central conventional-stream and typed indexed-decision RNG authority
+    │   ├── indexed_rng.py            # Identity-addressed Philox transactions for parallel FOW decisions
+    │   ├── performance_receipts.py   # Typed per-flag branch/execution receipts
     │   ├── clock.py                  # Simulation clock, tick management, calendar-aware (real date/time, UTC)
     │   ├── events.py                 # Event system (MRO-based publish dispatch, within-tick event queue)
     │   ├── config.py                 # YAML config loading, pydantic base models
@@ -426,13 +426,16 @@ stochastic-warfare/
     │   ├── sensors.py                # Sensor models (visual, thermal, radar, acoustic, seismic); cached sensor_type
     │   ├── signatures.py             # Unit signature profiles: visual, thermal, radar cross-section, acoustic, EM emission
     │   ├── detection.py              # SNR-based detection probability engine (Pd, Pfa, ROC)
+    │   ├── cadence.py                # Typed sensor scan scheduling and sensing-only LOD cadence
+    │   ├── sensor_roles.py            # Closed modeled sensor-role enum shared below simulation loadouts
+    │   ├── observer_support.py        # Bounded seven-role radar track-support identity, projection, and strict codecs
     │   ├── identification.py         # Classification & ID confidence (detected → classified → identified)
     │   ├── estimation.py             # Kalman filter state estimation (pre-alloc H/I₄ matrices, belief state)
-    │   ├── intel_fusion.py           # Multi-source fusion, atomic side ordinals, IMINT receipts/associations
+    │   ├── intel_fusion.py           # Correlation-safe same-epoch fusion, detached prediction/update/replacement, atomic side ordinals
     │   ├── deception.py              # Decoys, feints, false signals, camouflage effectiveness
     │   ├── sonar.py                  # Sonar models: active/passive, towed array, hull-mounted, sonobuoy, dipping
     │   ├── underwater_detection.py   # Submarine detection: acoustic propagation through environment, MAD, wake detection, periscope detection
-    │   └── fog_of_war.py             # Per-side views, bounded witnesses, fusion aliases, strict format-116 staged restore
+    │   └── fog_of_war.py             # Per-side views, indexed decisions, receipts, fusion aliases, strict format-118 staged restore
     ├── combat/                       # Combat resolution
     │   ├── __init__.py
     │   ├── events.py                 # Combat events (engagement, hit, kill, fratricide, suppression)
@@ -640,11 +643,12 @@ stochastic-warfare/
         ├── battle.py                 # Tactical battle resolution manager
         ├── scenario.py               # Scenario loading, setup, initialization; SimulationContext includes stratagem_engine, iads_engine, ato_engine [Phase 53]
         ├── runtime.py                # Authoritative prepared-scenario/runtime-session boundary and provenance [Phase 112]
+        ├── performance_flags.py      # Five-flag registry, support dispositions, and live cross-bound guards [Phase 118]
         ├── era_runtime.py            # Frozen effective cadence/treatment/repair contract and executable-horizon sources [Phase 114]
         ├── force_builder.py          # Typed deterministic initial-force construction [Phase 112]
         ├── movement_diagnostics.py   # Ordered observational movement reasons and checkpoint state [Phase 112]
-        ├── tactical_targeting.py     # Typed interval/picture/decision/revalidation owner and checkpoint state [Phase 115]
-        ├── targeting_exposure.py     # Privileged and opaque side-FOW targeting projections [Phase 115]
+        ├── tactical_targeting.py     # Typed interval/picture/decision/revalidation/support owner and format-118 checkpoint state [Phases 115, 118]
+        ├── targeting_exposure.py     # Atomic stored-frame decoder plus privileged and opaque side-FOW projections [Phases 115, 118]
         ├── equipment_mappings.py     # Ordered typed equipment-name registry and reviewed data decisions [Phase 109]
         ├── loadouts.py               # RuntimeLoadoutBuilder, semantic preflight, topology/fingerprint [Phase 109]
         ├── time_on_target.py         # Initial-roster/runtime-loadout resolver for exact scheduled indirect-fire plans [Phase 111]
@@ -663,7 +667,10 @@ stochastic-warfare/
 
 ### core/
 **Owns**: Infrastructure that every other module depends on. No domain logic.
-- RNG manager is the single source of truth for all randomness
+- `RNGManager` is the single source of truth for all randomness. It owns both
+  conventional stateful streams and typed identity-addressed indexed decisions;
+  domain modules may consume either manager-issued form but may not construct an
+  independent RNG authority.
 - Clock is the single source of truth for simulation time
   - **Calendar-aware**: the clock tracks real calendar date and time, not just an abstract tick counter. Scenario start defines a specific date/time (e.g., "1991-02-24T04:00:00Z"). Every tick advances real calendar time. This is critical because seasons, astronomical positions, tidal states, weather patterns, and daylight hours are ALL date-dependent.
   - **UTC internally**: all simulation time in UTC. Time zone conversions for display only (via coordinates module — longitude determines local solar time).
@@ -676,8 +683,8 @@ stochastic-warfare/
   `EraConfig` registry, seven enforced capability gates, sensor allowlists, and
   strict sparse cadence/treatment/repair declarations. The simulation-layer
   `EraRuntimeContract` resolves effective values before RNG construction and
-  owns clock/domain configuration plus format-116 persistence [Phases 20, 107,
-  114--116]
+  owns clock/domain configuration plus format-118 persistence [Phases 20, 107,
+  114--118]
 
 **Depends on**: Nothing (leaf dependency)
 
@@ -1074,7 +1081,7 @@ the production scenario loop.
 - **Era runtime**: one frozen `EraRuntimeContract` materializes sparse
   strategic/operational/tactical cadence and medical/maintenance overrides
   before RNG, clock, or engine construction. Clock, engine intervals, medical,
-  maintenance, API cadence, fingerprints, and format-116 checkpoints consume
+  maintenance, API cadence, fingerprints, and format-118 checkpoints consume
   that same boundary; unsupported C2/nuclear metadata rejects [Phase 114].
 - **Initial force construction**: `RuntimeForceBuilder` validates exact typed
   unit groups, per-instance overrides, deterministic IDs/domains, cardinality,
@@ -1090,14 +1097,22 @@ the production scenario loop.
   identity to context, engine, and battle manager, owns the post-FOW interval
   and immutable `(tick, battle, shooter)` pictures. Movement and ordinary
   direct engagement consume the same exact attachment/contact/range decision
-  and post-movement revalidation. Format-116 checkpoints preserve that evidence
+  and post-movement revalidation. Format-118 checkpoints preserve that evidence
   together with exact roster-backed side contacts, bounded current observer
-  witnesses, fusion-owned track aliases, exact staged type/alias integrity, and
-  DETECTION RNG authority. Explicit empty views and dynamic between-interval
-  checkpoints remain valid, while disabled ordinary state rejects. Privileged
-  versus target-independent side-ordinal FOW projections remain viewer-bound in
-  API/replay readers. Active deception and custom/populated COP topology reject
-  explicitly under REM-046 and REM-036 [Phases 115--116].
+  witnesses, bounded radar observer-track supports, fusion-owned track aliases,
+  exact staged type/alias integrity, and indexed DETECTION RNG authority.
+  Explicit empty views and dynamic between-interval checkpoints remain valid,
+  while disabled ordinary state rejects. One atomic stored-frame decoder binds
+  privileged evidence, the complete root roster/side set, every side-safe view,
+  and target-to-track associations before API or replay exposure. Privileged
+  support identity/covariance remains root-only; the side projection retains
+  only its distinct source and opaque track. The support codecs and checkpoint
+  topology remain valid for archived/dormant format-118 evidence, but current
+  supported production cannot emit a non-null observer-track support because
+  scan scheduling and LOD activation reject. REM-054 / Phase 141 owns a future
+  supported production-reachable path. Active deception and custom/populated
+  COP topology reject explicitly under REM-046 and REM-036 [Phases 115--116,
+  118].
 - **Morale ownership**: one `MoraleRuntime` registers the initial and arriving
   roster, coordinates stochastic/melee/rally/cascade mutations and aggregate
   archives, exposes the stable read-only consumer mapping, and owns the sole
@@ -1123,6 +1138,36 @@ the production scenario loop.
   same `SimulationRuntimeFactory` boundary, retaining per-seed observation
   receipts and applying exact joint-coverage evaluation before publishing an
   atomic digest-bearing artifact [Phase 117].
+- **Performance-semantic ownership**: the immutable five-flag registry
+  classifies detection culling, SoA selection, and parallel detection as
+  semantics-preserving execution optimizations, while scan scheduling and LOD
+  are explicit model-fidelity approximations. The immutable schema-2
+  `phase118-performance-semantics-v7` study completed all 96 pairs / 396
+  attempts and independently reloaded as a terminal `FAIL` under
+  `EXTERNALLY_CONTENDED`, with manifest artifact SHA-256
+  `bf9e00ce4a7774af29b5657c49bbbe4481b407a966d9922e48970022f5c6ad86`.
+  The three exact optimizations retain `supported_exact_validated`; scan
+  scheduling and LOD are `unsupported_failed_semantic_validation`. Current
+  YAML, API, analysis, runtime, and checkpoint boundaries reject either retired
+  flag enabled and nondefault LOD tuning. Authored configuration, typed
+  calibration, flattened calibration, and committed receipt flags are
+  cross-bound before work and receipt exposure. `RuntimeSession` exposes the
+  typed receipt, while `GET /api/meta/performance-flags` exposes the registry
+  and retained evidence identity. The FOW owner uses manager-issued indexed
+  Philox decisions so canonical stochastic identities do not depend on thread
+  scheduling or selector order. Format-118 checkpoints preserve flags,
+  receipts, cadence state, and indexed RNG lifecycle. The raw v6 terminal
+  `ERROR`, v7 terminal `FAIL`, frozen plan, typed 1,408-entry
+  execution-to-retirement handoff, and one-off validation tooling are
+  intentionally off main. Their durable locators are
+  `branch=evidence/full; path=docs/evidence/phase-118/v6-terminal/`,
+  `branch=evidence/full; path=docs/evidence/phase-118/v7-terminal/`,
+  `branch=evidence/full; path=data/validation/performance_semantics/phase118.yaml`,
+  and
+  `branch=evidence/full; path=docs/evidence/phase-118/runtime-manifest-handoff.json`.
+  The accepted qualified-negative postmortem closed Phase 118 / REM-031; no
+  speed claim follows, and REM-055 / Phase 142 owns the measured
+  transactional-FOW runtime regression [Phase 118].
 - Does NOT contain domain logic — only sequencing and coordination
 
 **Depends on**: Everything (top of the dependency tree)
@@ -1162,7 +1207,9 @@ A module may only import from modules below it in this graph. No circular depend
 2. **Modules communicate through interfaces, not internals**: Each module exposes a clean public API in its `__init__.py`. Internal implementation details are private.
 3. **Domain logic lives in domain modules, not in simulation/**: The `simulation/` module orchestrates but never computes. If you're writing an `if` statement about combat in `simulation/engine.py`, it belongs in `combat/` instead.
 4. **Entities are data, modules are behavior**: `entities/` defines what a tank IS (stats, state). `movement/` defines how a tank MOVES. `combat/` defines how a tank FIGHTS. This separation allows the same entity to be acted on by multiple systems cleanly.
-5. **All stochastic behavior goes through core/rng.py**: No module creates its own RNG. All request a stream from the central manager.
+5. **All stochastic behavior goes through core/rng.py**: No module creates its
+   own RNG authority. Every decision consumes either a conventional stream or a
+   typed indexed transaction issued by the central manager.
 6. **All time goes through core/clock.py**: No module tracks its own time. All query the simulation clock.
 7. **All config goes through core/config.py patterns**: No ad-hoc config parsing. YAML → pydantic → validated config objects.
 8. **Terrain is mostly read-only during simulation**: Natural terrain (elevation, land cover) is loaded once at scenario start and does not change. Infrastructure (bridges, roads, buildings) CAN be modified by combat events via the event bus (e.g., `BridgeDestroyedEvent`), but only as discrete state changes — never continuous mutation. Population disposition may shift in response to events (bombardment → hostile shift).

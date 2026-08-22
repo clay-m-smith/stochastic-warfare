@@ -1,4 +1,8 @@
-"""Tests for Phase 86b: Observer modifier batching."""
+"""Tests for Phase 86b observer-modifier batching.
+
+The plain-dictionary helper cases preserve lower-level historical behavior;
+they do not bypass or claim production support for retired LOD activation.
+"""
 
 from __future__ import annotations
 

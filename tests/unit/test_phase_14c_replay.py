@@ -13,6 +13,25 @@ from stochastic_warfare.tools.replay import (
 )
 
 
+def _current_snapshot(
+    tick: int,
+    units: list[dict[str, object]],
+) -> dict[str, object]:
+    """Build one strict current privileged-only replay frame."""
+    return {
+        "tick": tick,
+        "units": units,
+        "targeting_exposure_schema_version": 118,
+        "fog_of_war_enabled": False,
+        "scope": "PRIVILEGED_ENGINE",
+        "targeting": [],
+        "targeting_outcomes": [],
+        "side_fow_available": False,
+        "side_fow": {},
+        "side_fow_associations": {},
+    }
+
+
 # ---------------------------------------------------------------------------
 # Frame extraction tests
 # ---------------------------------------------------------------------------
@@ -23,20 +42,20 @@ class TestExtractReplayFrames:
 
     def test_basic_extraction(self) -> None:
         snapshots = [
-            {
-                "tick": 0,
-                "units": [
+            _current_snapshot(
+                0,
+                [
                     {"unit_id": "b1", "side": "blue", "position": {"easting": 100, "northing": 200}, "active": True},
                     {"unit_id": "r1", "side": "red", "position": {"easting": 500, "northing": 500}, "active": True},
                 ],
-            },
-            {
-                "tick": 10,
-                "units": [
+            ),
+            _current_snapshot(
+                10,
+                [
                     {"unit_id": "b1", "side": "blue", "position": {"easting": 150, "northing": 250}, "active": True},
                     {"unit_id": "r1", "side": "red", "position": {"easting": 500, "northing": 500}, "active": False},
                 ],
-            },
+            ),
         ]
         frames = extract_replay_frames(snapshots)
         assert len(frames) == 2
@@ -46,17 +65,17 @@ class TestExtractReplayFrames:
 
     def test_positions_match(self) -> None:
         snapshots = [
-            {
-                "tick": 0,
-                "units": [{"unit_id": "b1", "side": "blue", "position": {"easting": 42.0, "northing": 99.0}, "active": True}],
-            },
+            _current_snapshot(
+                0,
+                [{"unit_id": "b1", "side": "blue", "position": {"easting": 42.0, "northing": 99.0}, "active": True}],
+            ),
         ]
         frames = extract_replay_frames(snapshots)
         assert frames[0].units[0].x == 42.0
         assert frames[0].units[0].y == 99.0
 
     def test_engagement_extraction(self) -> None:
-        snapshots = [{"tick": 5, "units": []}]
+        snapshots = [_current_snapshot(5, [])]
         events = [
             {"tick": 5, "attacker_x": 100, "attacker_y": 200, "target_x": 300, "target_y": 400, "result": "hit"},
         ]
@@ -69,15 +88,20 @@ class TestExtractReplayFrames:
         assert frames == []
 
     def test_empty_engagements(self) -> None:
-        snapshots = [{"tick": 0, "units": [{"unit_id": "b1", "side": "blue", "position": {"easting": 0, "northing": 0}, "active": True}]}]
+        snapshots = [
+            _current_snapshot(
+                0,
+                [{"unit_id": "b1", "side": "blue", "position": {"easting": 0, "northing": 0}, "active": True}],
+            ),
+        ]
         frames = extract_replay_frames(snapshots)
         assert len(frames[0].engagements) == 0
 
     def test_tick_ordering(self) -> None:
         snapshots = [
-            {"tick": 20, "units": []},
-            {"tick": 5, "units": []},
-            {"tick": 10, "units": []},
+            _current_snapshot(20, []),
+            _current_snapshot(5, []),
+            _current_snapshot(10, []),
         ]
         frames = extract_replay_frames(snapshots)
         assert [f.tick for f in frames] == [5, 10, 20]

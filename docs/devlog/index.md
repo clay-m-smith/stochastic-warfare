@@ -147,6 +147,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 115 | Sensing-Aware Tactical Standoff | **Complete** | [phase-115.md](phase-115.md) |
 | 116 | Fog-of-War Contact Continuation | **Complete** | [phase-116.md](phase-116.md) |
 | 117 | Historical Outcome-Envelope Integrity | **Complete** | [phase-117.md](phase-117.md) |
+| 118 | Performance-Flag Semantic Integrity | **Complete** | [phase-118.md](phase-118.md) |
 
 ## Post-MVP Refinement Index
 

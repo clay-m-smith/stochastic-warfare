@@ -8,10 +8,13 @@ complementary error function.
 
 from __future__ import annotations
 
+import copy
+import hashlib
 import json
 import math
 import threading
 from dataclasses import dataclass
+from enum import Enum
 from typing import Any, NamedTuple, TypeAlias
 
 import numpy as np
@@ -102,7 +105,7 @@ def _snr_radar_kernel(
     gt_linear = 10.0 ** (antenna_gain_dbi / 10.0)
 
     numerator = peak_power_w * gt_linear * gt_linear * wavelength * wavelength * effective_rcs
-    denominator = four_pi_cubed * range_m ** 4 * kTB
+    denominator = four_pi_cubed * range_m**4 * kTB
 
     if denominator <= 0.0:
         return -100.0
@@ -156,15 +159,68 @@ def _detection_probability_kernel(snr_db: float, threshold_db: float) -> float:
 # ---------------------------------------------------------------------------
 
 
+class DetectionDecisionStage(str, Enum):
+    """Exact terminal stage of one canonical detection API call."""
+
+    PRE_RNG_SENSOR_OFFLINE = "pre_rng_sensor_offline"
+    PRE_RNG_UNSUPPORTED_DOMAIN = "pre_rng_unsupported_domain"
+    PRE_RNG_ABOVE_MAX_RANGE = "pre_rng_above_max_range"
+    PRE_RNG_BELOW_MIN_RANGE = "pre_rng_below_min_range"
+    PRE_RNG_OUTSIDE_FOV = "pre_rng_outside_fov"
+    PRE_RNG_LOS = "pre_rng_los"
+    PRE_RNG_NO_EMISSION = "pre_rng_no_emission"
+    STOCHASTIC = "stochastic"
+
+
 class DetectionResult(NamedTuple):
-    """Outcome of a single sensor-vs-target detection check."""
+    """Outcome of a single sensor-vs-target detection check.
+
+    ``range_m`` is the detector's 3-D slant range and remains the uncertainty
+    input. ``horizontal_range_m`` is its horizontal ENU measurement component.
+    ``None`` exists only for legacy/manual construction; successful fusion
+    boundaries reject a result that lacks detector-emitted horizontal geometry.
+    """
 
     detected: bool
     probability: float  # Pd
     snr_db: float
-    range_m: float
+    range_m: float  # 3-D slant range
     sensor_type: SensorType
     bearing_deg: float
+    decision_stage: DetectionDecisionStage = DetectionDecisionStage.STOCHASTIC
+    horizontal_range_m: float | None = None  # Horizontal ENU measurement
+
+
+@dataclass(frozen=True, slots=True)
+class PreparedDetection:
+    """One detection check with complete detector-emitted measurement geometry."""
+
+    probability: float
+    snr_db: float
+    range_m: float  # 3-D slant range
+    horizontal_range_m: float  # Horizontal ENU measurement
+    sensor_type: SensorType
+    bearing_deg: float
+
+    def adjudicate(self, uniform: float) -> DetectionResult:
+        """Apply one caller-owned binary64 uniform to this prepared check."""
+        if (
+            isinstance(uniform, bool)
+            or not isinstance(uniform, (int, float))
+            or not math.isfinite(float(uniform))
+            or not 0.0 <= float(uniform) < 1.0
+        ):
+            raise ValueError("detection uniform must be finite in [0, 1)")
+        return DetectionResult(
+            detected=float(uniform) < self.probability,
+            probability=self.probability,
+            snr_db=self.snr_db,
+            range_m=self.range_m,
+            sensor_type=self.sensor_type,
+            bearing_deg=self.bearing_deg,
+            decision_stage=DetectionDecisionStage.STOCHASTIC,
+            horizontal_range_m=self.horizontal_range_m,
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -187,8 +243,7 @@ class DetectionScanIdentity:
         ):
             if not isinstance(value, str) or not value or value != value.strip():
                 raise ValueError(
-                    f"Detection scan identity {name} must be a non-empty "
-                    "trimmed string",
+                    f"Detection scan identity {name} must be a non-empty trimmed string",
                 )
         if (
             isinstance(self.source_equipment_index, bool)
@@ -196,8 +251,7 @@ class DetectionScanIdentity:
             or self.source_equipment_index < 0
         ):
             raise ValueError(
-                "Detection scan identity source_equipment_index must be a "
-                "non-negative integer",
+                "Detection scan identity source_equipment_index must be a non-negative integer",
             )
 
 
@@ -205,6 +259,64 @@ _LegacyScanCountKey: TypeAlias = tuple[str, str]
 _ObserverScanCountKey: TypeAlias = tuple[str, str, int, str, str]
 _ScanCountKey: TypeAlias = _LegacyScanCountKey | _ObserverScanCountKey
 _OBSERVER_SCAN_STATE_PREFIX = "observer-v1:"
+
+
+@dataclass(frozen=True, slots=True)
+class DetectionScanCountEntry:
+    """One immutable dwell counter with its exact production owner."""
+
+    scan_identity: DetectionScanIdentity | None
+    sensor_id: str
+    target_id: str
+    count: int
+
+    def __post_init__(self) -> None:
+        if self.scan_identity is not None and type(self.scan_identity) is not DetectionScanIdentity:
+            raise TypeError("scan_identity must be a DetectionScanIdentity or None")
+        for value, label in (
+            (self.sensor_id, "sensor_id"),
+            (self.target_id, "target_id"),
+        ):
+            if not isinstance(value, str) or not value or value != value.strip():
+                raise ValueError(
+                    f"Detection scan-count {label} must be non-empty trimmed text",
+                )
+        if isinstance(self.count, bool) or not isinstance(self.count, int) or self.count <= 0:
+            raise ValueError("Detection scan count must be a positive integer")
+
+    def sort_key(self) -> tuple[int, bytes, bytes, int, bytes, bytes]:
+        """Return one canonical bytewise key across legacy and FOW owners."""
+        if self.scan_identity is None:
+            return (
+                0,
+                b"",
+                b"",
+                0,
+                self.sensor_id.encode("utf-8"),
+                self.target_id.encode("utf-8"),
+            )
+        return (
+            1,
+            self.scan_identity.side.encode("utf-8"),
+            self.scan_identity.observer_unit_id.encode("utf-8"),
+            self.scan_identity.source_equipment_index,
+            self.sensor_id.encode("utf-8"),
+            self.target_id.encode("utf-8"),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class DetectionScanCountSnapshot:
+    """Owner-bound immutable scan-count snapshot without RNG state."""
+
+    _entries: tuple[DetectionScanCountEntry, ...]
+    _owner_token: object
+    _fingerprint: str
+
+    @property
+    def entries(self) -> tuple[DetectionScanCountEntry, ...]:
+        """Return the immutable canonical entry sequence."""
+        return self._entries
 
 
 # ---------------------------------------------------------------------------
@@ -243,6 +355,12 @@ def _range_m(obs: Position, tgt: Position) -> float:
     dy = tgt.northing - obs.northing
     dz = tgt.altitude - obs.altitude
     return math.sqrt(dx * dx + dy * dy + dz * dz)
+
+
+def _horizontal_range_m(obs: Position, tgt: Position) -> float:
+    dx = tgt.easting - obs.easting
+    dy = tgt.northing - obs.northing
+    return math.sqrt(dx * dx + dy * dy)
 
 
 def _bearing_deg(obs: Position, tgt: Position) -> float:
@@ -304,6 +422,7 @@ class DetectionEngine:
         # (side, observer_id, equipment_index, sensor_id, target_id) identity.
         self._scan_counts: dict[_ScanCountKey, int] = {}
         self._scan_count_lock = threading.Lock()
+        self._scan_count_snapshot_owner = object()
 
     def __getstate__(self) -> dict[str, Any]:
         """Exclude the process-local mutex from isolated checkpoint staging."""
@@ -379,8 +498,11 @@ class DetectionEngine:
         """
         tl_override = transmission_loss if transmission_loss is not None else -1.0
         return _snr_acoustic_kernel(
-            source_level_db, range_m, ambient_noise_db,
-            sensor.definition.directivity_index_db, tl_override,
+            source_level_db,
+            range_m,
+            ambient_noise_db,
+            sensor.definition.directivity_index_db,
+            tl_override,
         )
 
     # ------------------------------------------------------------------
@@ -413,7 +535,7 @@ class DetectionEngine:
         with self._scan_count_lock:
             self._scan_counts.clear()
 
-    def check_detection(
+    def prepare_detection(
         self,
         observer_pos: Position,
         target_pos: Position,
@@ -434,31 +556,39 @@ class DetectionEngine:
         target_id: str = "",
         scan_identity: DetectionScanIdentity | None = None,
         jam_snr_penalty_db: float = 0.0,
-        rng: np.random.Generator | None = None,
-    ) -> DetectionResult:
-        """Run a single sensor check against a target.
+    ) -> DetectionResult | PreparedDetection:
+        """Run deterministic gates and physics up to the stochastic draw.
 
-        Returns a :class:`DetectionResult` indicating whether detection
-        occurred and the computed Pd / SNR.
+        Pre-RNG rejection returns a terminal :class:`DetectionResult` with its
+        exact decision stage.  A stochastic opportunity returns a
+        :class:`PreparedDetection`; its caller then supplies exactly one
+        uniform through :meth:`PreparedDetection.adjudicate`.
         """
         rng_m = _range_m(observer_pos, target_pos)
+        horizontal_range_m = _horizontal_range_m(observer_pos, target_pos)
         bearing = _bearing_deg(observer_pos, target_pos)
         st = sensor.sensor_type
         signature_domain = signature_domain_for_sensor_type(st)
 
         # 1. Operational check
         if not sensor.operational:
-            return DetectionResult(False, 0.0, -100.0, rng_m, st, bearing)
+            return DetectionResult(
+                False,
+                0.0,
+                -100.0,
+                rng_m,
+                st,
+                bearing,
+                DetectionDecisionStage.PRE_RNG_SENSOR_OFFLINE,
+                horizontal_range_m,
+            )
 
         # 1b. Mapping-owned target-domain policy. Production fog-of-war scans
         # pass the concrete target unit, so an air-search radar cannot become
         # a surface-search capability merely because both consume RCS.
         if target_unit is not None:
             target_domain = getattr(target_unit, "domain", None)
-            if (
-                target_domain is not None
-                and not sensor.supports_target_domain(target_domain)
-            ):
+            if target_domain is not None and not sensor.supports_target_domain(target_domain):
                 return DetectionResult(
                     False,
                     0.0,
@@ -466,13 +596,33 @@ class DetectionEngine:
                     rng_m,
                     st,
                     bearing,
+                    DetectionDecisionStage.PRE_RNG_UNSUPPORTED_DOMAIN,
+                    horizontal_range_m,
                 )
 
         # 2. Range check
         if rng_m > sensor.effective_range:
-            return DetectionResult(False, 0.0, -100.0, rng_m, st, bearing)
+            return DetectionResult(
+                False,
+                0.0,
+                -100.0,
+                rng_m,
+                st,
+                bearing,
+                DetectionDecisionStage.PRE_RNG_ABOVE_MAX_RANGE,
+                horizontal_range_m,
+            )
         if rng_m < sensor.definition.min_range_m:
-            return DetectionResult(False, 0.0, -100.0, rng_m, st, bearing)
+            return DetectionResult(
+                False,
+                0.0,
+                -100.0,
+                rng_m,
+                st,
+                bearing,
+                DetectionDecisionStage.PRE_RNG_BELOW_MIN_RANGE,
+                horizontal_range_m,
+            )
 
         # 2b. FOV check
         fov = sensor.definition.fov_deg
@@ -484,13 +634,31 @@ class DetectionEngine:
             if relative_bearing > 180.0:
                 relative_bearing -= 360.0
             if abs(relative_bearing) > fov / 2.0:
-                return DetectionResult(False, 0.0, -100.0, rng_m, st, bearing)
+                return DetectionResult(
+                    False,
+                    0.0,
+                    -100.0,
+                    rng_m,
+                    st,
+                    bearing,
+                    DetectionDecisionStage.PRE_RNG_OUTSIDE_FOV,
+                    horizontal_range_m,
+                )
 
         # 3. LOS check (for sensors that require it)
         if sensor.definition.requires_los and self._los is not None:
             los_result = self._los(observer_pos, target_pos, observer_height, target_height)
             if not los_result.visible:
-                return DetectionResult(False, 0.0, -100.0, rng_m, st, bearing)
+                return DetectionResult(
+                    False,
+                    0.0,
+                    -100.0,
+                    rng_m,
+                    st,
+                    bearing,
+                    DetectionDecisionStage.PRE_RNG_LOS,
+                    horizontal_range_m,
+                )
 
         # 4. Compute SNR
         threshold = sensor.definition.detection_threshold
@@ -524,13 +692,19 @@ class DetectionEngine:
                     f"SensorType {st.name} lacks an acoustic SNR implementation",
                 )
             snr = self.compute_snr_acoustic(sensor, sl, rng_m, ambient_noise_db, transmission_loss)
-        elif (
-            signature_domain is SignatureDomain.ELECTROMAGNETIC
-            and st is SensorType.ESM
-        ):
+        elif signature_domain is SignatureDomain.ELECTROMAGNETIC and st is SensorType.ESM:
             em_power = SignatureResolver.effective_em(target_sig, target_unit)
             if em_power == float("-inf"):
-                return DetectionResult(False, 0.0, -100.0, rng_m, st, bearing)
+                return DetectionResult(
+                    False,
+                    0.0,
+                    -100.0,
+                    rng_m,
+                    st,
+                    bearing,
+                    DetectionDecisionStage.PRE_RNG_NO_EMISSION,
+                    horizontal_range_m,
+                )
             snr = em_power - 20.0 * math.log10(max(rng_m, 1.0))
         else:
             raise ValueError(
@@ -573,12 +747,72 @@ class DetectionEngine:
         # 6. Compute Pd
         pd = self.detection_probability(snr, threshold)
 
-        # 7. Stochastic roll
-        _rng = rng or self._rng
-        roll = float(_rng.random())
-        detected = roll < pd
+        return PreparedDetection(
+            probability=pd,
+            snr_db=snr,
+            range_m=rng_m,
+            horizontal_range_m=horizontal_range_m,
+            sensor_type=st,
+            bearing_deg=bearing,
+        )
 
-        return DetectionResult(detected, pd, snr, rng_m, st, bearing)
+    def check_detection(
+        self,
+        observer_pos: Position,
+        target_pos: Position,
+        sensor: SensorInstance,
+        target_sig: SignatureProfile,
+        target_unit: Any = None,
+        observer_height: float = 1.8,
+        target_height: float = 0.0,
+        concealment: float = 0.0,
+        posture: int = 0,
+        illumination_lux: float = 100.0,
+        visibility_m: float = 10000.0,
+        thermal_contrast: float = 1.0,
+        ambient_noise_db: float = 70.0,
+        atmospheric_atten_db_per_km: float = 0.01,
+        transmission_loss: float | None = None,
+        observer_heading_deg: float = 0.0,
+        target_id: str = "",
+        scan_identity: DetectionScanIdentity | None = None,
+        jam_snr_penalty_db: float = 0.0,
+        rng: np.random.Generator | None = None,
+    ) -> DetectionResult:
+        """Run one complete compatibility detection check.
+
+        Production fog-of-war uses :meth:`prepare_detection` and supplies an
+        indexed Philox lane only after every pre-RNG gate passes.  Direct
+        subsystem callers retain the injected DETECTION stream or may supply
+        one explicit compatible generator.
+        """
+        prepared = self.prepare_detection(
+            observer_pos,
+            target_pos,
+            sensor,
+            target_sig,
+            target_unit=target_unit,
+            observer_height=observer_height,
+            target_height=target_height,
+            concealment=concealment,
+            posture=posture,
+            illumination_lux=illumination_lux,
+            visibility_m=visibility_m,
+            thermal_contrast=thermal_contrast,
+            ambient_noise_db=ambient_noise_db,
+            atmospheric_atten_db_per_km=atmospheric_atten_db_per_km,
+            transmission_loss=transmission_loss,
+            observer_heading_deg=observer_heading_deg,
+            target_id=target_id,
+            scan_identity=scan_identity,
+            jam_snr_penalty_db=jam_snr_penalty_db,
+        )
+        if isinstance(prepared, DetectionResult):
+            return prepared
+        draw_rng = self._rng if rng is None else rng
+        if not isinstance(draw_rng, np.random.Generator):
+            raise TypeError("detection rng must be a numpy Generator")
+        return prepared.adjudicate(float(draw_rng.random()))
 
     def scan_all_targets(
         self,
@@ -604,8 +838,12 @@ class DetectionEngine:
                 continue
             for target_pos, target_sig, target_unit in targets:
                 result = self.check_detection(
-                    observer_pos, target_pos, sensor, target_sig,
-                    target_unit=target_unit, **kwargs,
+                    observer_pos,
+                    target_pos,
+                    sensor,
+                    target_sig,
+                    target_unit=target_unit,
+                    **kwargs,
                 )
                 results.append(result)
         return results
@@ -669,35 +907,199 @@ class DetectionEngine:
             )
         return (sensor_id, target_id)
 
-    def get_state(self) -> dict[str, Any]:
+    @staticmethod
+    def _scan_count_entry(key: _ScanCountKey, count: int) -> DetectionScanCountEntry:
+        if len(key) == 2:
+            return DetectionScanCountEntry(
+                scan_identity=None,
+                sensor_id=key[0],
+                target_id=key[1],
+                count=count,
+            )
+        return DetectionScanCountEntry(
+            scan_identity=DetectionScanIdentity(
+                side=key[0],
+                observer_unit_id=key[1],
+                source_equipment_index=key[2],
+            ),
+            sensor_id=key[3],
+            target_id=key[4],
+            count=count,
+        )
+
+    @staticmethod
+    def _scan_count_key(entry: DetectionScanCountEntry) -> _ScanCountKey:
+        identity = entry.scan_identity
+        if identity is None:
+            return (entry.sensor_id, entry.target_id)
+        return (
+            identity.side,
+            identity.observer_unit_id,
+            identity.source_equipment_index,
+            entry.sensor_id,
+            entry.target_id,
+        )
+
+    @staticmethod
+    def _scan_count_fingerprint(entries: tuple[DetectionScanCountEntry, ...]) -> str:
+        payload = [
+            {
+                "scan_identity": (
+                    None
+                    if entry.scan_identity is None
+                    else {
+                        "side": entry.scan_identity.side,
+                        "observer_unit_id": entry.scan_identity.observer_unit_id,
+                        "source_equipment_index": entry.scan_identity.source_equipment_index,
+                    }
+                ),
+                "sensor_id": entry.sensor_id,
+                "target_id": entry.target_id,
+                "count": entry.count,
+            }
+            for entry in entries
+        ]
+        encoded = json.dumps(
+            payload,
+            ensure_ascii=False,
+            allow_nan=False,
+            separators=(",", ":"),
+        ).encode("utf-8")
+        return hashlib.sha256(encoded).hexdigest()
+
+    def stage_scan_counts(
+        self,
+        entries: tuple[DetectionScanCountEntry, ...],
+    ) -> DetectionScanCountSnapshot:
+        """Validate canonical entries and return an owner-bound snapshot."""
+        if type(entries) is not tuple:
+            raise TypeError("Detection scan-count entries must be an immutable tuple")
+        if any(type(entry) is not DetectionScanCountEntry for entry in entries):
+            raise TypeError("Detection scan-count entries contain an invalid value")
+        if entries != tuple(sorted(entries, key=DetectionScanCountEntry.sort_key)):
+            raise ValueError("Detection scan-count entries are not canonically ordered")
+        keys = tuple(self._scan_count_key(entry) for entry in entries)
+        if len(keys) != len(set(keys)):
+            raise ValueError("Duplicate detection scan-count identity")
+        return DetectionScanCountSnapshot(
+            _entries=entries,
+            _owner_token=self._scan_count_snapshot_owner,
+            _fingerprint=self._scan_count_fingerprint(entries),
+        )
+
+    def _validated_scan_counts(
+        self,
+        snapshot: DetectionScanCountSnapshot,
+    ) -> dict[_ScanCountKey, int]:
+        if type(snapshot) is not DetectionScanCountSnapshot:
+            raise TypeError("snapshot must be a DetectionScanCountSnapshot")
+        if snapshot._owner_token is not self._scan_count_snapshot_owner:
+            raise ValueError("Detection scan-count snapshot belongs to another engine")
+        restaged = self.stage_scan_counts(snapshot._entries)
+        if snapshot._fingerprint != restaged._fingerprint:
+            raise ValueError("Detection scan-count snapshot was mutated")
+        return {self._scan_count_key(entry): entry.count for entry in snapshot._entries}
+
+    def snapshot_scan_counts(self) -> DetectionScanCountSnapshot:
+        """Capture only dwell counters; never capture or advance RNG state."""
         with self._scan_count_lock:
-            serialized_counts = {
+            entries = tuple(
+                sorted(
+                    (self._scan_count_entry(key, count) for key, count in self._scan_counts.items()),
+                    key=DetectionScanCountEntry.sort_key,
+                )
+            )
+        return self.stage_scan_counts(entries)
+
+    def fork_scan_counts(
+        self,
+        snapshot: DetectionScanCountSnapshot,
+        *,
+        rng: np.random.Generator,
+    ) -> DetectionEngine:
+        """Build an isolated engine at one staged dwell state."""
+        if not isinstance(rng, np.random.Generator):
+            raise TypeError("Detection staging RNG must be a numpy Generator")
+        staged_counts = self._validated_scan_counts(snapshot)
+        fork = DetectionEngine(
+            los_checker=self._los,
+            conditions_engine=self._conditions,
+            em_environment=self._em,
+            signature_loader=self._sig_loader,
+            sensor_loader=self._sensor_loader,
+            rng=rng,
+            config=self._config.model_copy(deep=True),
+        )
+        with fork._scan_count_lock:
+            fork._scan_counts = staged_counts
+        return fork
+
+    def commit_scan_counts(self, snapshot: DetectionScanCountSnapshot) -> None:
+        """Publish one prevalidated dwell snapshot without touching RNG."""
+        staged_counts = self._validated_scan_counts(snapshot)
+        self._commit_prevalidated_scan_counts(staged_counts)
+
+    def _commit_prevalidated_scan_counts(
+        self,
+        staged_counts: dict[_ScanCountKey, int],
+    ) -> None:
+        """Publish already-validated dwell counts with one locked swap."""
+        with self._scan_count_lock:
+            self._scan_counts = staged_counts
+
+    def get_scan_count_state(self) -> dict[str, int]:
+        """Return the canonical public checkpoint map without RNG state."""
+        with self._scan_count_lock:
+            return {
                 state_key: count
                 for state_key, count in sorted(
-                    (
-                        (self._scan_count_state_key(key), count)
-                        for key, count in self._scan_counts.items()
-                    ),
+                    ((self._scan_count_state_key(key), count) for key, count in self._scan_counts.items()),
                 )
             }
+
+    def stage_scan_count_state(
+        self,
+        state: object,
+    ) -> DetectionScanCountSnapshot:
+        """Strictly stage the canonical public scan-count map."""
+        if type(state) is not dict:
+            raise ValueError("Detection scan-count state must be a mapping")
+        if tuple(state) != tuple(sorted(state)):
+            raise ValueError("Detection scan-count state is not canonically ordered")
+        entries: list[DetectionScanCountEntry] = []
+        staged_keys: set[_ScanCountKey] = set()
+        for key_str, count in state.items():
+            if type(key_str) is not str or not key_str:
+                raise ValueError("Detection scan-count state key must be non-empty text")
+            key = self._scan_count_key_from_state(key_str)
+            if key_str != self._scan_count_state_key(key):
+                raise ValueError(
+                    "Detection scan-count state key is not canonically encoded",
+                )
+            if key in staged_keys:
+                raise ValueError("Duplicate detection scan-count identity")
+            staged_keys.add(key)
+            if isinstance(count, bool) or not isinstance(count, int) or count <= 0:
+                raise ValueError("Detection scan count must be a positive integer")
+            entries.append(self._scan_count_entry(key, count))
+        return self.stage_scan_counts(
+            tuple(sorted(entries, key=DetectionScanCountEntry.sort_key)),
+        )
+
+    def get_state(self) -> dict[str, Any]:
         return {
-            "rng_state": self._rng.bit_generator.state,
-            "scan_counts": serialized_counts,
+            "rng_state": copy.deepcopy(self._rng.bit_generator.state),
+            "scan_counts": self.get_scan_count_state(),
         }
 
     def set_state(self, state: dict[str, Any]) -> None:
-        self._rng.bit_generator.state = state["rng_state"]
-        staged_counts: dict[_ScanCountKey, int] = {}
-        for key_str, count in state.get("scan_counts", {}).items():
-            key = self._scan_count_key_from_state(key_str)
-            if (
-                isinstance(count, bool)
-                or not isinstance(count, int)
-                or count <= 0
-            ):
-                raise ValueError("Detection scan count must be a positive integer")
-            if key in staged_counts:
-                raise ValueError("Duplicate detection scan-count identity")
-            staged_counts[key] = count
-        with self._scan_count_lock:
-            self._scan_counts = staged_counts
+        if type(state) is not dict or set(state) != {"rng_state", "scan_counts"}:
+            raise ValueError("Detection state has invalid key topology")
+        scan_counts = self.stage_scan_count_state(state["scan_counts"])
+        try:
+            staged_rng = copy.deepcopy(self._rng)
+            staged_rng.bit_generator.state = state["rng_state"]
+        except (TypeError, ValueError) as exc:
+            raise ValueError("Detection RNG state is invalid") from exc
+        self.commit_scan_counts(scan_counts)
+        self._rng.bit_generator.state = staged_rng.bit_generator.state

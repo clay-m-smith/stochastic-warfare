@@ -22,15 +22,12 @@ from stochastic_warfare.simulation.tactical_targeting import (
     TacticalTargetingDecision,
 )
 from stochastic_warfare.simulation.targeting_exposure import (
-    PrivilegedEngagementRevalidationExposure,
-    PrivilegedTargetingExposure,
+    DecodedStoredTargetingExposure,
     PublicTrackExposure,
     SideFowEngagementRevalidationExposure,
     SideFowTargetingDecisionExposure,
-    TargetingExposureBundle,
     TargetingExposureScope,
-    decode_stored_side_fow_targeting_exposure,
-    validate_privileged_targeting_roster,
+    decode_stored_targeting_exposure,
 )
 
 logger = get_logger(__name__)
@@ -153,11 +150,25 @@ def extract_replay_frames(
             tick = ev.get("tick", 0)
             event_by_tick.setdefault(tick, []).append(ev)
 
-    frames: list[ReplayFrame] = []
-    for snap in sorted(snapshots, key=lambda s: s.get("tick", 0)):
+    decoded_snapshots: list[
+        tuple[int, dict[str, Any], DecodedStoredTargetingExposure]
+    ] = []
+    for snap in snapshots:
+        if not isinstance(snap, dict):
+            raise ValueError("stored replay snapshot must be a mapping")
         tick = snap.get("tick", 0)
+        decoded = decode_stored_targeting_exposure(
+            engine_tick=tick,
+            stored_frame=snap,
+        )
+        decoded_snapshots.append((tick, snap, decoded))
 
-        raw_units = snap.get("units", [])
+    frames: list[ReplayFrame] = []
+    for tick, snap, decoded in sorted(
+        decoded_snapshots,
+        key=lambda item: item[0],
+    ):
+        raw_units = decoded.root_unit_frames
         targeting: tuple[
             TacticalTargetingDecision | SideFowTargetingDecisionExposure,
             ...,
@@ -169,42 +180,14 @@ def extract_replay_frames(
         ] = ()
         tracks: tuple[PublicTrackExposure, ...] = ()
         if scope is TargetingExposureScope.PRIVILEGED_ENGINE:
-            stored_scope = snap.get(
-                "scope",
-                TargetingExposureScope.PRIVILEGED_ENGINE.value,
+            targeting = decoded.bundle.privileged.decisions
+            targeting_outcomes = (
+                decoded.bundle.privileged_engagement_revalidations.outcomes
             )
-            if stored_scope != TargetingExposureScope.PRIVILEGED_ENGINE.value:
-                raise ValueError("snapshot has an unknown exposure scope")
-            raw_targeting = snap.get("targeting", [])
-            privileged = PrivilegedTargetingExposure.from_wire(
-                engine_tick=tick,
-                value=raw_targeting,
-            )
-            targeting = privileged.decisions
-            raw_outcomes = snap.get("targeting_outcomes", [])
-            outcomes = PrivilegedEngagementRevalidationExposure.from_wire(
-                engine_tick=tick,
-                value=raw_outcomes,
-            )
-            bundle = TargetingExposureBundle(
-                privileged=privileged,
-                privileged_engagement_revalidations=outcomes,
-                side_fow_available=False,
-                sides=(),
-            )
-            validate_privileged_targeting_roster(
-                exposure=bundle,
-                authoritative_unit_frames=raw_units,
-            )
-            targeting_outcomes = outcomes.outcomes
         else:
-            decoded = decode_stored_side_fow_targeting_exposure(
-                engine_tick=tick,
-                viewer_side=viewer_side,
-                stored_frame=snap,
-            )
-            public = decoded.exposure
-            raw_units = decoded.unit_frames
+            selected = decoded.for_side(viewer_side)
+            public = selected.exposure
+            raw_units = selected.unit_frames
             targeting = public.decisions
             targeting_outcomes = public.engagement_revalidations
             tracks = public.tracks

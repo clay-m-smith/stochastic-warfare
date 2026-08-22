@@ -99,6 +99,8 @@ nav:
     - Block 17 (133): development-phases-block17.md
     - Block 18 (134): development-phases-block18.md
     - Block 19 (135-137): development-phases-block19.md
+    - Block 20 (138-140): development-phases-block20.md
+    - Block 21 (141-142): development-phases-block21.md
     - Remediation Backlog: remediation-backlog.md
   - Devlog:
     - Overview: devlog/index.md
@@ -221,6 +223,7 @@ nav:
     - Phase 115 - Sensing-Aware Tactical Standoff: devlog/phase-115.md
     - Phase 116 - Fog-of-War Contact Continuation: devlog/phase-116.md
     - Phase 117 - Historical Outcome-Envelope Integrity: devlog/phase-117.md
+    - Phase 118 - Performance-Flag Semantic Integrity: devlog/phase-118.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Checkpoint State Contract: specs/checkpoint-state.md
@@ -230,6 +233,7 @@ nav:
     - Validation and Documentation Trust: specs/validation-and-documentation-trust.md
     - Fog-of-War Contact Continuation: specs/fog-of-war-contact-continuation.md
     - Historical Outcome-Envelope Integrity: specs/historical-outcome-envelope-integrity.md
+    - Performance-Flag Semantic Integrity: specs/performance-flag-semantic-integrity.md
     - Morale State Ownership: specs/morale-state-ownership.md
     - Era Override Execution: specs/era-override-execution.md
     - Sensing-Aware Tactical Standoff: specs/sensing-aware-tactical-standoff.md

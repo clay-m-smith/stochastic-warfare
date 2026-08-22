@@ -199,6 +199,50 @@ def test_factory_runtime_uses_effective_cadence_on_natural_resolution_paths(
     session.step()
 
     assert session.context.clock.elapsed.total_seconds() == expected_elapsed_s
+    if resolution is TickResolution.TACTICAL:
+        receipt = session.performance_execution_receipt()
+        assert receipt.tactical_interval_microseconds == 3_000_000
+        assert receipt.tactical_intervals == 1
+        assert receipt.tactical_duration_microseconds == 3_000_000
+
+
+def test_factory_runtime_receipt_preserves_microsecond_tactical_cadence() -> None:
+    era_id = "phase114-cadence-one-microsecond"
+    register_era_config(
+        era_id,
+        EraConfig(tick_resolution_overrides={"tactical_s": 1e-6}),
+    )
+    variant_id = "cadence-one-microsecond"
+    prepared = _prepare(
+        _scenario_config(
+            era_id,
+            distance_m=_TACTICAL_DISTANCE_M,
+            tactical_s=103.0,
+        ),
+        variant_id,
+    )
+    session = _build(prepared, variant_id)
+    restored = _build(prepared, variant_id)
+
+    assert session.engine.resolution is TickResolution.TACTICAL
+    assert session.step() is False
+
+    receipt = session.performance_execution_receipt()
+    assert session.context.clock.elapsed.total_seconds() == 1e-6
+    assert receipt.tactical_interval_microseconds == 1
+    assert receipt.tactical_intervals == 1
+    assert receipt.tactical_duration_microseconds == 1
+
+    checkpoint = session.engine.checkpoint()
+    restored.engine.restore(checkpoint)
+    assert restored.engine.checkpoint() == checkpoint
+
+    assert session.step() is False
+    assert restored.step() is False
+    assert restored.engine.checkpoint() == session.engine.checkpoint()
+    continued = restored.performance_execution_receipt()
+    assert continued.tactical_intervals == 2
+    assert continued.tactical_duration_microseconds == 2
 
 
 def _admit_casualties(session: RuntimeSession) -> dict[int, CasualtyRecord]:
@@ -281,10 +325,7 @@ def test_factory_medical_overrides_change_all_severity_completion_endpoints() ->
 
     assert declared_endpoints == {1: 2.0, 2: 3.0, 3: 4.0}
     assert omitted_endpoints == {1: 3.0, 2: 9.0, 3: 25.0}
-    assert all(
-        declared_endpoints[severity] < omitted_endpoints[severity]
-        for severity in (1, 2, 3)
-    )
+    assert all(declared_endpoints[severity] < omitted_endpoints[severity] for severity in (1, 2, 3))
 
 
 def _register_equipment_and_reach_breakdown(
@@ -610,11 +651,10 @@ def test_factory_alias_uses_captured_era_for_catalog_and_runtime_updates() -> No
 
     assert first.context.era_runtime_contract.selected_registry_id == era_id
     assert first.context.era_runtime_contract.era is Era.WW2
-    assert {
-        unit.unit_type
-        for side_units in first.context.units_by_side.values()
-        for unit in side_units
-    } == {"soviet_rifle_squad", "wehrmacht_rifle_squad"}
+    assert {unit.unit_type for side_units in first.context.units_by_side.values() for unit in side_units} == {
+        "soviet_rifle_squad",
+        "wehrmacht_rifle_squad",
+    }
     assert first.context.convoy_engine is not None
     assert second.context.convoy_engine is not None
     assert first.recorder is not None
@@ -633,10 +673,7 @@ def test_factory_alias_uses_captured_era_for_catalog_and_runtime_updates() -> No
         ship_ids,
         [],
     )
-    equipment_ids = [
-        f"phase114-alias-equipment-{index:03d}"
-        for index in range(64)
-    ]
+    equipment_ids = [f"phase114-alias-equipment-{index:03d}" for index in range(64)]
     for session in (first, second):
         unit_id = session.context.units_by_side["blue"][0].entity_id
         session.context.maintenance_engine.register_equipment(
@@ -658,8 +695,6 @@ def test_factory_alias_uses_captured_era_for_catalog_and_runtime_updates() -> No
             timestamp=session.context.clock.current_time,
         )
     assert first.recorder.events
-    assert "MaintenanceStartedEvent" in {
-        event.event_type for event in first.recorder.events
-    }
+    assert "MaintenanceStartedEvent" in {event.event_type for event in first.recorder.events}
     assert first.recorder.get_state() == second.recorder.get_state()
     assert first.engine.checkpoint() == second.engine.checkpoint()

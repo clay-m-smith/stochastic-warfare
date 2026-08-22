@@ -100,7 +100,7 @@ but cannot promote a claim.
 3. Verify the run reaches the modeled behavior rather than timing out before
    contact.
 4. Run the complete predeclared held-out sample and atomically publish a
-   reload-validated artifact.
+   reload-validated artifact beneath the ignored `artifacts/evidence/` tree.
 5. Compare distributions and historical uncertainty without calling a
    non-significant result proof of equivalence.
 6. Attribute divergence to historical uncertainty, scenario mapping, model
@@ -120,6 +120,11 @@ Interpret artifact status exactly:
 
 Reload the persisted artifact through `load_historical_artifact`; the in-memory
 result, command exit without a crash, or JSON presence alone is not evidence.
+Generated raw vectors and terminal publications do not enter `main`. If the
+owner retains a full publication, place it in an evidence-only commit and
+report its verdict, qualifications, digest, and plain locator as
+`branch=evidence/full; path=<repo-relative path>`. State explicitly whether the
+evidence branch is unpublished or backed by a separate remote or Git LFS.
 
 ## Promote Deliberately
 
@@ -135,8 +140,9 @@ or relevant post-execution drift prevents promotion.
 
 ## Report
 
-Report sources, frozen envelope, exact configuration, seeds, commands, raw or
-retained result location, statistics, pass/fail by metric, sensitivity to
+Report sources, frozen envelope, exact configuration, seeds, commands, raw
+output location or retained publication locator, statistics, pass/fail by
+metric, sensitivity to
 assumptions, production-path evidence, artifact status and digest, promotion
 eligibility/reasons, ledger disposition, and limitations. Never tune and
 validate on the same sample while describing it as independent historical

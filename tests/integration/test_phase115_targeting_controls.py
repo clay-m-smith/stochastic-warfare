@@ -1023,6 +1023,34 @@ def _downstream_commit_state(session: RuntimeSession) -> dict[str, Any]:
     }
 
 
+def _observation_commit_state(session: RuntimeSession) -> dict[str, Any]:
+    """Return readable committed observation owners, even while staging."""
+    context = session.context
+    fog = context.fog_of_war
+    battle = session.engine.battle_manager
+    return {
+        "world_views": {
+            side: view.get_state()
+            for side in sorted(context.units_by_side)
+            if (view := fog.peek_world_view(side)) is not None
+        },
+        "witnesses": fog.get_current_detection_witnesses(),
+        "fusion": fog.intel_fusion.get_state(),
+        "scan_counts": fog._detection.get_scan_count_state(),
+        "cadence_ordinal": fog.cadence.committed_ordinal,
+        "cadence_states": fog.cadence.attachment_states,
+        "indexed_digest": (context.rng_manager.indexed_fow_transcript_digest_hex),
+        "indexed_latest": (context.rng_manager.latest_fow_detection_interval_record),
+        "conventional_rng": _detection_rng_fingerprint(session),
+        "targeting": context.tactical_targeting.get_state(),
+        "signature_cache": dict(battle._signature_cache),
+        "concealment": dict(battle._concealment_scores),
+        "lod_tiers": dict(battle._lod_tiers),
+        "lod_pending_tiers": dict(battle._lod_pending_tiers),
+        "lod_pending_counts": dict(battle._lod_pending_counts),
+    }
+
+
 def test_enabled_em_owner_fault_aborts_before_fow_and_downstream_commit(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -1166,11 +1194,13 @@ def test_missing_enabled_em_owner_rejects_before_fow() -> None:
     assert context.tactical_targeting.get_state() == targeting_before
 
 
-def test_cbrn_owner_fault_preserves_post_fow_picture_boundary(
+@pytest.mark.parametrize("parallel_detection", [False, True])
+def test_cbrn_owner_fault_preserves_outer_observation_commit_boundary(
     monkeypatch: pytest.MonkeyPatch,
+    parallel_detection: bool,
 ) -> None:
-    """A CBRN fault surfaces after FOW without a targeting-side commit."""
-    variant_id = "phase115-cbrn-owner-picture-fault"
+    """A post-FOW CBRN fault publishes none of the observation owners."""
+    variant_id = f"phase115-cbrn-owner-picture-fault-{'parallel' if parallel_detection else 'sequential'}"
     session = _build(
         _prepare(
             _duel(
@@ -1178,6 +1208,9 @@ def test_cbrn_owner_fault_preserves_post_fow_picture_boundary(
                 "german_sturmtruppen",
                 fog_of_war=True,
                 cbrn=True,
+                calibration={
+                    "enable_parallel_detection": parallel_detection,
+                },
             ),
             variant_id=variant_id,
         ),
@@ -1202,17 +1235,11 @@ def test_cbrn_owner_fault_preserves_post_fow_picture_boundary(
     context.event_bus.subscribe(Event, events.append)
     rng_before = _detection_rng_fingerprint(session)
     downstream_before = _downstream_commit_state(session)
+    observation_before = _observation_commit_state(session)
     fault_baseline: dict[str, Any] = {}
 
     def _fail_mopp_effects(_unit_id: str):
-        fault_baseline.update(
-            {
-                "fow": context.fog_of_war.get_state(),
-                "witnesses": (context.fog_of_war.get_current_detection_witnesses()),
-                "rng": _detection_rng_fingerprint(session),
-                "targeting": context.tactical_targeting.get_state(),
-            }
-        )
+        fault_baseline.update(_observation_commit_state(session))
         raise ValueError("injected CBRN targeting owner failure")
 
     monkeypatch.setattr(cbrn, "get_mopp_effects", _fail_mopp_effects)
@@ -1227,11 +1254,12 @@ def test_cbrn_owner_fault_preserves_post_fow_picture_boundary(
         )
 
     assert fault_baseline
-    assert fault_baseline["rng"] != rng_before
-    assert context.fog_of_war.get_state() == fault_baseline["fow"]
-    assert context.fog_of_war.get_current_detection_witnesses() == fault_baseline["witnesses"]
-    assert _detection_rng_fingerprint(session) == fault_baseline["rng"]
-    assert context.tactical_targeting.get_state() == fault_baseline["targeting"]
+    assert fault_baseline == observation_before
+    assert _observation_commit_state(session) == observation_before
+    assert _detection_rng_fingerprint(session) == rng_before
+    assert context.fog_of_war.cadence.poisoned is True
+    with pytest.raises(RuntimeError, match="poisoned update transaction"):
+        context.fog_of_war.get_state()
     assert (
         context.tactical_targeting.latest_picture(
             battles[0].battle_id,
@@ -1240,6 +1268,50 @@ def test_cbrn_owner_fault_preserves_post_fow_picture_boundary(
     )
     assert _downstream_commit_state(session) == downstream_before
     assert events == []
+
+
+def test_cross_owner_precommit_fault_leaves_every_observation_owner_unpublished(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    variant_id = "phase115-cross-owner-precommit-fault"
+    session = _build(
+        _prepare(
+            _duel(
+                "mark_iv_tank",
+                "german_sturmtruppen",
+                fog_of_war=True,
+            ),
+            variant_id=variant_id,
+        ),
+        variant_id=variant_id,
+    )
+    context = session.context
+    battles = tuple(session.engine.battle_manager.active_battles)
+    observation_before = _observation_commit_state(session)
+    validate_indexed = context.rng_manager.validate_prepared_fow_detection_interval_commit
+
+    def _fail_after_indexed_validation(plan: object) -> None:
+        validate_indexed(plan)
+        raise RuntimeError("injected cross-owner precommit failure")
+
+    monkeypatch.setattr(
+        context.rng_manager,
+        "validate_prepared_fow_detection_interval_commit",
+        _fail_after_indexed_validation,
+    )
+    with pytest.raises(
+        RuntimeError,
+        match="injected cross-owner precommit failure",
+    ):
+        session.engine.battle_manager.prepare_tactical_interval(
+            context,
+            battles,
+            5.0,
+        )
+
+    assert _observation_commit_state(session) == observation_before
+    assert context.fog_of_war.cadence.poisoned is True
+    assert context.tactical_targeting.latest_pictures() == ()
 
 
 def test_multibattle_picture_fault_rejects_without_publishing_a_prefix(
@@ -1266,11 +1338,7 @@ def test_multibattle_picture_fault_rejects_without_publishing_a_prefix(
     shooter = _unit_of_type(session, "mark_iv_tank")
     targets = tuple(
         sorted(
-            (
-                unit
-                for unit in context.units_by_side["red"]
-                if unit.unit_type == "german_sturmtruppen"
-            ),
+            (unit for unit in context.units_by_side["red"] if unit.unit_type == "german_sturmtruppen"),
             key=lambda unit: unit.entity_id,
         )
     )
@@ -1300,6 +1368,7 @@ def test_multibattle_picture_fault_rejects_without_publishing_a_prefix(
         _fail_on_second_battle,
     )
     targeting_before = deepcopy(context.tactical_targeting.get_state())
+    observation_before = _observation_commit_state(session)
 
     with pytest.raises(
         RuntimeError,
@@ -1308,10 +1377,8 @@ def test_multibattle_picture_fault_rejects_without_publishing_a_prefix(
         manager.prepare_tactical_interval(context, battles, 5.0)
 
     assert context.tactical_targeting.get_state() == targeting_before
-    assert all(
-        context.tactical_targeting.latest_picture(battle.battle_id) is None
-        for battle in battles
-    )
+    assert _observation_commit_state(session) == observation_before
+    assert all(context.tactical_targeting.latest_picture(battle.battle_id) is None for battle in battles)
 
 
 @pytest.mark.parametrize(
@@ -1326,11 +1393,11 @@ def test_multibattle_picture_fault_rejects_without_publishing_a_prefix(
             },
         ),
         (
-            "phase115-fow-single-draw-parallel-scan-lod",
+            "phase115-fow-single-draw-parallel",
             {
                 "enable_parallel_detection": True,
-                "enable_scan_scheduling": True,
-                "enable_lod": True,
+                "enable_scan_scheduling": False,
+                "enable_lod": False,
             },
         ),
     ],
@@ -1379,13 +1446,18 @@ def test_overlapping_fow_pictures_consume_one_detection_draw(
     )
 
     before_prepare = _detection_rng_fingerprint(session)
+    indexed_before = context.rng_manager.latest_fow_detection_interval_record
     canonical = session.engine.battle_manager.prepare_tactical_interval(
         context,
         tuple(reversed(battles)),
         5.0,
     )
     after_prepare = _detection_rng_fingerprint(session)
-    assert after_prepare != before_prepare
+    indexed_after = context.rng_manager.latest_fow_detection_interval_record
+    assert after_prepare == before_prepare
+    assert indexed_after is not None
+    assert indexed_after is not indexed_before
+    assert indexed_after.engine_tick == 0
     assert tuple(battle.battle_id for battle in canonical) == (
         "battle-overlap-0",
         "battle-overlap-1",

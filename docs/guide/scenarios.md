@@ -63,7 +63,7 @@ there were unsourced.
 
 One resolved contract constructs the clock, engine interval cadence, medical
 and maintenance configs; participates in runtime/API fingerprints; and
-persists unchanged inside current checkpoint format 116. It does not automatically admit battle
+persists unchanged inside current checkpoint format 118. It does not automatically admit battle
 casualties, create facilities, register equipment for maintenance, initiate
 repairs/spares, construct communications equipment topology, or schedule a
 nuclear action. See the [era reference](../reference/eras.md) and
@@ -344,6 +344,63 @@ The Salamis regression demonstrates the existing authored naval target domain
 for ancient projectile/melee attachments; it does not widen those weapons to
 other domains.
 
+The five governed performance controls are also strict boolean calibration
+fields. They are behavior-bearing model controls, not interchangeable speed
+switches:
+
+```yaml
+calibration_overrides:
+  enable_detection_culling: true
+  enable_scan_scheduling: false
+  enable_lod: false
+  enable_soa: false
+  enable_parallel_detection: false
+  lod_nearby_interval: 5
+  lod_distant_interval: 20
+  lod_hysteresis_ticks: 3
+```
+
+Detection culling, SoA selection, and parallel detection are classified as
+semantics-preserving execution optimizations and are the three currently
+supported governed flags. Scan scheduling intentionally uses each sensor's
+authored scan interval, and LOD intentionally reduces only sensing cadence by
+ACTIVE/NEARBY/DISTANT tier; those two remain model-fidelity approximations, but
+their support disposition is now
+`unsupported_failed_semantic_validation`. LOD never reduces movement,
+engagement, morale, damage, or any other non-sensing integration rate.
+
+The immutable schema-2 `phase118-performance-semantics-v7` study completed all
+96 pairs / 396 attempts and independently reloaded as an eligible terminal
+`FAIL` under `EXTERNALLY_CONTENDED`; its manifest artifact SHA-256 is
+`bf9e00ce4a7774af29b5657c49bbbe4481b407a966d9922e48970022f5c6ad86`.
+Current scenario YAML, REST requests, comparisons/sweeps, live runtime drift,
+and current checkpoints reject `enable_scan_scheduling: true`,
+`enable_lod: true`, or a nondefault value for any of the three `lod_*` fields.
+The listed LOD values are compatibility defaults, not tunable supported
+settings. Authored configuration, typed calibration, flattened hot-path
+calibration, and the committed execution receipt must agree before work or
+receipt exposure. The canonical support table and retained evidence identity
+are available from `GET /api/meta/performance-flags`.
+
+The dormant scan-deferral algorithm, observer-support codecs, and archived
+format-118 state remain documented, but current supported production cannot
+emit a non-null observer-track support. REM-054 / Phase 141 owns restoring a
+supported production-reachable path. The
+terminal v6 `ERROR` is retained at
+`branch=evidence/full; path=docs/evidence/phase-118/v6-terminal/` (manifest
+artifact SHA-256
+`eb8e12f147c14ee4e83e7f5e80e4b1e50aa2bfe847d5e5e681b2462f7850051a`), and
+the terminal v7 `FAIL` is retained at
+`branch=evidence/full; path=docs/evidence/phase-118/v7-terminal/` (manifest
+artifact SHA-256
+`bf9e00ce4a7774af29b5657c49bbbe4481b407a966d9922e48970022f5c6ad86`).
+Those locators currently name a local, unpublished branch pending a separate
+evidence-remote or Git LFS decision. Ordinary `main` validation does not fetch
+or reinterpret either archive. Neither archive nor externally contended
+execution establishes a speedup or historical-calibration claim. The accepted
+qualified-negative postmortem closed Phase 118 / REM-031; REM-055 / Phase 142
+tracks the separately measured runtime regression.
+
 ### Optional Subsystems
 
 Optional EW, space, and CBRN suites require an explicit true enable flag:
@@ -422,12 +479,16 @@ documented_outcomes:
 
 The retained Phase 117 73 Easting artifact completed as `FAIL`: 0/20 runs met
 the full joint envelope, the one-sided lower confidence bound was 0.0, and the
-study was not promotion-eligible. It therefore leaves 73 Easting unsupported;
-see the [artifact](../evidence/phase-117/73-easting-phase117.json).
+study was not promotion-eligible. It therefore leaves 73 Easting unsupported.
+The retained artifact SHA-256 is
+`57bfe7d89575e721d9cee30c213505c760da3cede642624c7ed7532051e524f4`;
+its local, unpublished locator is
+`branch=evidence/full; path=docs/evidence/phase-117/73-easting-phase117.json`,
+pending a separate evidence-remote or Git LFS decision.
 
 ---
 
-## Modern Scenarios (37 total)
+## Modern Scenarios
 
 ### Engagement Scenarios
 
@@ -491,8 +552,8 @@ see the [artifact](../evidence/phase-117/73-easting-phase117.json).
 
 ### Internal Benchmark Fixtures
 
-These two catalog scenarios complete the 37-scenario modern total. They are
-large synthetic performance fixtures, not historical-validation evidence.
+These catalog scenarios are large synthetic performance fixtures, not
+historical-validation evidence.
 
 | Scenario | Purpose |
 |----------|---------|
@@ -501,7 +562,7 @@ large synthetic performance fixtures, not historical-validation evidence.
 
 ---
 
-## Historical Era Scenarios (15 total)
+## Historical Era Scenarios
 
 ### WW2
 
@@ -586,5 +647,6 @@ except Exception as e:
 - Unit types must match YAML filenames in `data/units/` (or `data/eras/{era}/units/`)
 - Terrain dimensions should be appropriate for the engagement scale
 - Victory conditions need at least one terminal condition to end the simulation
-- Calibration overrides can compensate for known modeling gaps
+- Calibration overrides must remain source-backed and may not conceal a known
+  engine or data-model gap
 - Optional subsystem configs can be omitted entirely to disable them

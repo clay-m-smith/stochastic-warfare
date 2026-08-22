@@ -16,7 +16,7 @@ claim_source_reviews:
   exclusion: null
 - repository_path: api/schemas.py
   source_kind: api_python
-  source_sha256: f2c4c97d2bf9203059c5573f43f6f150039313711919e06b1b736a3a811b12f7
+  source_sha256: d61a8273c2bc357e074024a1c71e04ff03828b30201f6a875a9695f9c9b89700
   matches:
   - rule_id: historical_outcome_cooccurrence
     occurrences: 4
@@ -120,10 +120,10 @@ claim_source_reviews:
     rationale: List-rendering fixtures verify status-driven grouping and labels; they are not historical outcome evidence.
 - repository_path: CLAUDE.md
   source_kind: public_document
-  source_sha256: 6b4e6a7d4b5ad3e8f169178ba5d49fbec3cc5ee8965a6a0b50c1fbabf2495042
+  source_sha256: 5990d3dae8580d41d95ed640c135dd8b1306a7cd054c57c4cb007c557b8eced6
   matches:
   - rule_id: historical_outcome_cooccurrence
-    occurrences: 8
+    occurrences: 9
   - rule_id: historical_status_vocabulary
     occurrences: 3
   - rule_id: outcome_envelope
@@ -134,32 +134,6 @@ claim_source_reviews:
   - docs.claude.backtest-status-scope
   - docs.claude.calibration-status-scope
   - docs.claude.historical-followup-boundaries
-  exclusion: null
-- repository_path: README.md
-  source_kind: public_document
-  source_sha256: 7ff5a084f21420dd6c8cf6367ed1ff5e4b8dd2ae41f4315865607b34a33d035f
-  matches:
-  - rule_id: historical_outcome_cooccurrence
-    occurrences: 12
-  - rule_id: historical_status_vocabulary
-    occurrences: 7
-  - rule_id: legacy_claim_api
-    occurrences: 2
-  - rule_id: outcome_envelope
-    occurrences: 5
-  - rule_id: scenario_status_alias
-    occurrences: 3
-  claim_ids:
-  - docs.readme.73-easting-failed-study
-  - docs.readme.api-historical-status-contract
-  - docs.readme.catalog-validation-status
-  - docs.readme.debecka-regression-status
-  - docs.readme.development-status-failed-study
-  - docs.readme.historical-followup-boundaries
-  - docs.readme.immutable-image-claim-audit
-  - docs.readme.monte-carlo-historical-study-role
-  - docs.readme.validation-data-role
-  - docs.readme.validation-package-role
   exclusion: null
 - repository_path: docs/brainstorm-block10.md
   source_kind: public_document
@@ -277,7 +251,7 @@ claim_source_reviews:
   exclusion: null
 - repository_path: docs/brainstorm-post-mvp.md
   source_kind: public_document
-  source_sha256: 723ec275ce1febc73f927cd893bf72f81f3d516ae359e4c7856a61f0854f867c
+  source_sha256: 8ec407b725a4e1aa3283de6f10ba22e70fd16fa9f1857e902d037ee0c1324905
   matches:
   - rule_id: historical_outcome_cooccurrence
     occurrences: 9
@@ -290,7 +264,7 @@ claim_source_reviews:
   exclusion: null
 - repository_path: docs/brainstorm.md
   source_kind: public_document
-  source_sha256: 02d8987a6c67764a7c51c9c470e5439747684c22257ebd0eac3dff9d7dd41efc
+  source_sha256: 5a791a4695d8ba86bbea3bbd1344583e7331b8bc0c097d599539fe7108b936a1
   matches:
   - rule_id: historical_outcome_cooccurrence
     occurrences: 1
@@ -300,7 +274,7 @@ claim_source_reviews:
     rationale: The matched wording is a future research or design question, not an implemented historical-outcome claim.
 - repository_path: docs/concepts/architecture.md
   source_kind: public_document
-  source_sha256: 33005269e78a86b705830cd6f764bd912c217240b88d5f9d2c8678cd573f2cd1
+  source_sha256: 1aa9b245a0d777a16755607c37ae589b42459b478660e5fce9c74dc27ff71e70
   matches:
   - rule_id: historical_outcome_cooccurrence
     occurrences: 10
@@ -386,7 +360,7 @@ claim_source_reviews:
     rationale: The matched wording assigns later remediation or states an absent capability; it does not claim validated outcomes.
 - repository_path: docs/development-phases-block13.md
   source_kind: public_document
-  source_sha256: dd666c16245c55a317b717d78be6adbf71c665ba5fa571195cb0de8dacd76b59
+  source_sha256: 13657a8ad15e604561442809b3c3f03b5bebadaf0cce3080db47c38a27459939
   matches:
   - rule_id: historical_outcome_cooccurrence
     occurrences: 6
@@ -426,7 +400,7 @@ claim_source_reviews:
   exclusion: null
 - repository_path: docs/development-phases-block19.md
   source_kind: public_document
-  source_sha256: 29b9a833ee20a744f59905aae8f6ba203d636175c1faeef77216105b58ae2bd6
+  source_sha256: 7fd88467b0bd7a44782015f0410062a6b24181e1fe44952fd22344908f7c3b24
   matches:
   - rule_id: historical_outcome_cooccurrence
     occurrences: 2
@@ -570,7 +544,7 @@ claim_source_reviews:
   exclusion: null
 - repository_path: docs/devlog/index.md
   source_kind: public_document
-  source_sha256: 14a8335a2a4f688bcbdbf5d83c0c2a506afab60a139eec32d7a4dc7f55732c56
+  source_sha256: 0a327394dcf440817058a17b0b258ea3b34d23611dfce435b5017c01bffdde14
   matches:
   - rule_id: historical_outcome_cooccurrence
     occurrences: 4
@@ -790,7 +764,7 @@ claim_source_reviews:
   exclusion: null
 - repository_path: docs/devlog/phase-117.md
   source_kind: public_document
-  source_sha256: 2c494765c827294b2a141f71b6bf3c49c665e8021fe1a53bf94b2515c1ee5a8a
+  source_sha256: e128f2221f1cf6ec6355ebe9e0a81fe91a324705a475a2475d67e4cf49c70d27
   matches:
   - rule_id: historical_outcome_cooccurrence
     occurrences: 20
@@ -808,6 +782,18 @@ claim_source_reviews:
   - docs.devlog-phase117.remaining-limitations
   - docs.devlog-phase117.source-and-statistical-foundation
   exclusion: null
+- repository_path: docs/devlog/phase-118.md
+  source_kind: public_document
+  source_sha256: d0943ceae6b6185ab96e73e318331323b0a3a4b9e2f66d492e796f3afb99eb87
+  matches:
+  - rule_id: historical_outcome_cooccurrence
+    occurrences: 4
+  - rule_id: historical_status_vocabulary
+    occurrences: 2
+  claim_ids: []
+  exclusion:
+    reason_code: future_plan_or_noncapability
+    rationale: The matched passages distinguish current-engine regression and performance-semantic workflow evidence from historical validation; they do not assert a validated historical outcome.
 - repository_path: docs/devlog/phase-14.md
   source_kind: public_document
   source_sha256: c024d7a5f3d9673b80d80559e22c3cab60a57a1ac7f2c7c45cd6a05e27a8b305
@@ -1178,10 +1164,10 @@ claim_source_reviews:
   exclusion: null
 - repository_path: docs/guide/getting-started.md
   source_kind: public_document
-  source_sha256: 6b3af86f615183975ebc5b6da07ffa20aa7e606eed11d4666d2a80bc45124222
+  source_sha256: 18956f9aff6f3d75db415d5c04d9ad4aeeec2383f8e2e17aad24c4207a2e0f3b
   matches:
   - rule_id: historical_outcome_cooccurrence
-    occurrences: 5
+    occurrences: 6
   - rule_id: historical_status_vocabulary
     occurrences: 4
   - rule_id: outcome_envelope
@@ -1195,10 +1181,10 @@ claim_source_reviews:
   exclusion: null
 - repository_path: docs/guide/scenarios.md
   source_kind: public_document
-  source_sha256: 7ae526bfad68c0784061b83a429ae5f86a6e5886cf5bd683d440f6b08bbc6147
+  source_sha256: 0db07cda0020a02e6a26cfe93ea2e7b0379a4e83fecb914f2d62436375aea772
   matches:
   - rule_id: historical_outcome_cooccurrence
-    occurrences: 7
+    occurrences: 9
   - rule_id: historical_status_vocabulary
     occurrences: 6
   - rule_id: legacy_claim_api
@@ -1238,7 +1224,7 @@ claim_source_reviews:
   exclusion: null
 - repository_path: docs/index.md
   source_kind: public_document
-  source_sha256: d046aed0d74eb120dcc10145b1c2f8dd8fb88f98880a08d82d0f82aad573bd9d
+  source_sha256: cac554576ca0c6699d5dc3aed7f07d1a2324a4f6e1b36b053b790aa48be5ab6b
   matches:
   - rule_id: historical_outcome_cooccurrence
     occurrences: 6
@@ -1258,10 +1244,10 @@ claim_source_reviews:
   exclusion: null
 - repository_path: docs/reference/api.md
   source_kind: public_document
-  source_sha256: acab431ce8b81d248a25b849700ff253fa3543b2b89ad27538207c952c9454f3
+  source_sha256: feb8a84455a3a1a66299229a8ed767f28c40f733b57e326ec628e6c350116cc4
   matches:
   - rule_id: historical_outcome_cooccurrence
-    occurrences: 20
+    occurrences: 22
   - rule_id: historical_status_vocabulary
     occurrences: 18
   - rule_id: legacy_claim_api
@@ -1286,7 +1272,7 @@ claim_source_reviews:
   exclusion: null
 - repository_path: docs/reference/eras.md
   source_kind: public_document
-  source_sha256: 3c317b04f88e3356e46b1f326a886fd7a50c6027d98bcacfc544d8aaacd3d6a4
+  source_sha256: 8d58d5a760b0743fcf70c85abe8c4d8310367e54f9cffcf4b1626fffb64d7e0e
   matches:
   - rule_id: historical_outcome_cooccurrence
     occurrences: 11
@@ -1310,10 +1296,10 @@ claim_source_reviews:
   exclusion: null
 - repository_path: docs/remediation-backlog.md
   source_kind: public_document
-  source_sha256: 6773b549368dfc3a1b9a0043dccff58cf63d90132c449dffb1366fb068daa673
+  source_sha256: cf985d6e7f3faa3ccc4bbf3f327539347e113008a59ccd9e1e5a219b81a37d5d
   matches:
   - rule_id: historical_outcome_cooccurrence
-    occurrences: 49
+    occurrences: 50
   - rule_id: historical_status_vocabulary
     occurrences: 25
   - rule_id: legacy_claim_api
@@ -1353,7 +1339,7 @@ claim_source_reviews:
     rationale: Golden is a scenario-template grouping label and the historical-dynamic text records gaps rather than a verdict.
 - repository_path: docs/skills-and-hooks.md
   source_kind: public_document
-  source_sha256: 1e2260f1bbbb1d63d917d7a1b5fc9c568410d86020fb2c995b3943486b00cf9d
+  source_sha256: 880780df792a90f371fd563dff8d6e56ef444bb52275c3f8f270f99c514189c8
   matches:
   - rule_id: historical_outcome_cooccurrence
     occurrences: 7
@@ -1376,7 +1362,7 @@ claim_source_reviews:
     rationale: History primarily names service and checkpoint state; the specification explicitly denies real-world ASAT evidence.
 - repository_path: docs/specs/checkpoint-state.md
   source_kind: public_document
-  source_sha256: 25fd8c6e3f9e3e21c1e511d2f562e1f99aec32696cc59bc46d5d98e10258a65f
+  source_sha256: 2cbc028552f54853b81cad747be85bcaa77aceca9b68b0ac9a26f3a2ccac9422
   matches:
   - rule_id: historical_outcome_cooccurrence
     occurrences: 1
@@ -1396,7 +1382,7 @@ claim_source_reviews:
     rationale: The matches concern era equipment identity and explicit no-outcome-fitting scope, not outcome validation.
 - repository_path: docs/specs/era-override-execution.md
   source_kind: public_document
-  source_sha256: 88f6d05e1dab73b36e916a2cb07bfe03ab61f89e3951a45abea900ee802d977a
+  source_sha256: de564e958b97c125d3ecddc1aef425f8c76efe4410d15e033318837d11a00298
   matches:
   - rule_id: historical_outcome_cooccurrence
     occurrences: 5
@@ -1407,7 +1393,7 @@ claim_source_reviews:
   exclusion: null
 - repository_path: docs/specs/fog-of-war-contact-continuation.md
   source_kind: public_document
-  source_sha256: 799d82215c53ef0e118da005f4d12c3c8dfe19e0c7628e5a9914aa949b7271ec
+  source_sha256: af50b7d1d206d5b4e4d2cc0a07bc30ac7703de1f335d55cab5a86bd929bc4a45
   matches:
   - rule_id: historical_outcome_cooccurrence
     occurrences: 1
@@ -1417,7 +1403,7 @@ claim_source_reviews:
     rationale: Historical refers to legacy contact and checkpoint state representations, not historical battle outcomes.
 - repository_path: docs/specs/historical-outcome-envelope-integrity.md
   source_kind: public_document
-  source_sha256: b6460d2902f8bf6d2294c52056b2a33b68506664b94c7ff079c441076bb18e66
+  source_sha256: 9fb321e706d0cd536a2ad03a117afecea435471334249dca148caba4fb9a22b5
   matches:
   - rule_id: historical_outcome_cooccurrence
     occurrences: 29
@@ -1440,7 +1426,7 @@ claim_source_reviews:
   exclusion: null
 - repository_path: docs/specs/morale-state-ownership.md
   source_kind: public_document
-  source_sha256: a942b7b0d56d617a4a702d7f16c01092678093671d0669e3eeac704fb334b320
+  source_sha256: 93b7ec5aff227f059ea8c9820bd985b15a9fb45281f64e6ca898edcb2ab27913
   matches:
   - rule_id: historical_outcome_cooccurrence
     occurrences: 2
@@ -1450,10 +1436,10 @@ claim_source_reviews:
     rationale: Historical refers to legacy morale checkpoint sentinels and checks, not a historical outcome claim.
 - repository_path: docs/specs/project-structure.md
   source_kind: public_document
-  source_sha256: 0abd769336a4900f2e24dc62b90522c3bc91125d8e39b1c27001a17e3a3e4b1c
+  source_sha256: 99f5934e050791007351dfb4c63d0c023aba4f9a840603877f60309bdbdaa85f
   matches:
   - rule_id: historical_outcome_cooccurrence
-    occurrences: 8
+    occurrences: 7
   claim_ids:
   - docs.project-structure.ancient-medieval-catalog-collections
   - docs.project-structure.api-router-claim-ledger-role
@@ -1474,7 +1460,7 @@ claim_source_reviews:
   exclusion: null
 - repository_path: docs/specs/sensing-aware-tactical-standoff.md
   source_kind: public_document
-  source_sha256: 92f7c5d01edc5b411344e995e1f6fc6ac080a90ed09061076bdd54e98901609e
+  source_sha256: 4ac8652aba02ddf2704b4e2b033ee98d15ef18b7cd7cc8cd6d225fb73cbeda3f
   matches:
   - rule_id: historical_outcome_cooccurrence
     occurrences: 7
@@ -1497,7 +1483,7 @@ claim_source_reviews:
     rationale: Historical refers to fire-time and lifecycle state histories, not historical engagement validation.
 - repository_path: docs/specs/validation-and-documentation-trust.md
   source_kind: public_document
-  source_sha256: 74167986e123b3d53af7b8a3ad2f24ed67f61e260a551012db340e61f64999db
+  source_sha256: 72f00be536ef5db3e1b2eb0c9393a29ab457b587c3823cdea673d3d8b4e81c60
   matches:
   - rule_id: historical_outcome_cooccurrence
     occurrences: 8
@@ -1529,7 +1515,7 @@ claim_source_reviews:
     rationale: The matched strings assert conservative API classification behavior and cannot themselves provide historical evidence.
 - repository_path: tests/benchmarks/benchmark_suite.py
   source_kind: python_test
-  source_sha256: 47b68ec69ca8533eae6c0834deb853aa6bfd794a46ec48a45a726ed168800d3f
+  source_sha256: 6598c6ee69abea6e41b9fbae3bdd7b4374ccf1f659bb110174b79cad0da95ffb
   matches:
   - rule_id: historical_outcome_cooccurrence
     occurrences: 1
@@ -1613,7 +1599,7 @@ claim_source_reviews:
     rationale: Synthetic artifact fixtures exercise schema and recomputation failures; they are not historical evidence.
 - repository_path: tests/unit/test_phase117_historical_integrity.py
   source_kind: python_test
-  source_sha256: 2b74133ebcd9831962fc478bb90ad79b07cf8c2a53fdf3fee62c37c41246b891
+  source_sha256: 239df43329fd49b3e66f0083f2fc787cb900ae16d838a641c2788beafdc9ffeb
   matches:
   - rule_id: historical_outcome_cooccurrence
     occurrences: 36
@@ -1639,6 +1625,16 @@ claim_source_reviews:
   exclusion:
     reason_code: integrity_test_fixture
     rationale: The matched vocabulary verifies API and frontend status-schema synchronization, not outcome validation.
+- repository_path: tests/unit/test_phase85_lod_tiering.py
+  source_kind: python_test
+  source_sha256: 1c8e1fa421bd88f2c0ae63030eaf6f00c2f21e2ce9a4b81f0ba306090cfa61a2
+  matches:
+  - rule_id: historical_outcome_cooccurrence
+    occurrences: 1
+  claim_ids: []
+  exclusion:
+    reason_code: integrity_test_fixture
+    rationale: Direct dormant LOD algorithm tests preserve regression coverage and explicitly deny production acceptance; they are not historical-outcome evidence.
 - repository_path: tests/unit/test_phase_111_time_on_target_schema.py
   source_kind: python_test
   source_sha256: c46d85a3523e48c28803b28629ce35aa966a44781c880252bb0c2ecfe83ae718
@@ -1701,7 +1697,7 @@ claim_source_reviews:
   exclusion: null
 - repository_path: tests/validation/test_block8_exit.py
   source_kind: python_test
-  source_sha256: 9336af333927b28ce60b9afa1c288357deb367b678f9ae3dcffa733b6674987b
+  source_sha256: ac0f54feac01939a1cb5bad4a04452debeb696074737727dab1897af8e219cbe
   matches:
   - rule_id: historical_outcome_cooccurrence
     occurrences: 1
@@ -1711,16 +1707,6 @@ claim_source_reviews:
   - regression.duplicate.block8-time-expired
   - regression.duplicate.block8-trafalgar
   exclusion: null
-- repository_path: tests/validation/test_block9_regression.py
-  source_kind: python_test
-  source_sha256: b155f5bf897710e75c0c6032ac92847cf31f9dda53a2e7c7f089ed02f602b233
-  matches:
-  - rule_id: historical_outcome_cooccurrence
-    occurrences: 1
-  claim_ids: []
-  exclusion:
-    reason_code: current_regression_import_control
-    rationale: The test imports and checks the frozen current-engine snapshot without asserting historical truth.
 - repository_path: tests/validation/test_campaign_data.py
   source_kind: python_test
   source_sha256: 84e2bdf07c3830971286e21e94dc27c163fc4c1903b1134a7826acc34789d045
@@ -1820,7 +1806,7 @@ claim_source_reviews:
   exclusion: null
 - repository_path: tests/validation/test_historical_accuracy.py
   source_kind: python_test
-  source_sha256: 1968b0bf0cc88442bd353d72e32efbae1e4a8d809de01cb7e4c62c27ba517721
+  source_sha256: 9543371548356b17672c79eb0f092f774b3c9451399ccdeddaff14ad66f5c104
   matches:
   - rule_id: historical_outcome_cooccurrence
     occurrences: 3
@@ -2253,10 +2239,10 @@ claim_source_reviews:
   exclusion: null
 - repository_path: .agents/skills/backtest/SKILL.md
   source_kind: workflow_document
-  source_sha256: 46df30916f49bdb8b676aaf9a11d7812521dc0f60200af4cf8ae23aeaf9e5de6
+  source_sha256: 4994a6e6964084d44edd93112224c65e342ab37f44a3f5804fb947f00fbafb4f
   matches:
   - rule_id: historical_outcome_cooccurrence
-    occurrences: 11
+    occurrences: 12
   - rule_id: historical_status_vocabulary
     occurrences: 3
   - rule_id: legacy_claim_api
@@ -2321,10 +2307,10 @@ claim_source_reviews:
     rationale: The workflow defines guarded sensitivity-analysis methods; it does not assert a historical outcome.
 - repository_path: .claude/skills/backtest/SKILL.md
   source_kind: workflow_document
-  source_sha256: 46df30916f49bdb8b676aaf9a11d7812521dc0f60200af4cf8ae23aeaf9e5de6
+  source_sha256: 4994a6e6964084d44edd93112224c65e342ab37f44a3f5804fb947f00fbafb4f
   matches:
   - rule_id: historical_outcome_cooccurrence
-    occurrences: 11
+    occurrences: 12
   - rule_id: historical_status_vocabulary
     occurrences: 3
   - rule_id: legacy_claim_api
@@ -2607,15 +2593,19 @@ claims:
 
       with regression evidence but no accepted claim IDs. Phase 117''s local
 
-      packaged-loader tests exercise the ledger boundary; the hosted image result is
+      packaged-loader tests exercise the ledger boundary. The Phase 117 push
 
-      pending until the phase is pushed and the workflow completes. REM-048 / Phase
+      prerequisite is satisfied at `84cf4c4`, but no successful hosted image result
+
+      is recorded in the repository; the smoke remains unverified pending a
+
+      successful workflow run. REM-048 / Phase
 
       135 owns the build-time attestation and package receipt needed before a future
 
       nonempty accepted claim can be verified without Git.'
     expected_occurrences: 1
-  content_sha256: 15b073dbba2b8a1e04ef58e3d4e7924100721903b0e8f7a9e6ad993a28d210b5
+  content_sha256: 87f22df0b128913c017bb730bc35bc1a0349b1dd7542d65ccfbfca666656d6d6
   disposition: unsupported
   metric_scope: []
   reason_codes:
@@ -3719,20 +3709,24 @@ claims:
     kind: required_text
     text: 'Phase 117 locally proves conservative packaged-loader exposure of the current
 
-      zero-accepted ledger. Its hosted no-`.git` image smoke is configured and
+      zero-accepted ledger. Its Phase 117 push prerequisite is satisfied at
 
-      remains pending the phase push. Package-bound attestation for a future
+      `84cf4c4`, but no successful hosted no-`.git` image result is recorded in the
 
-      nonempty accepted claim is separately assigned to REM-048 / Phase 135 and does
+      repository; that smoke remains unverified pending a successful workflow run.
 
-      not permit this phase to imply that unexercised capability.'
+      Package-bound attestation for a future nonempty accepted claim is separately
+
+      assigned to REM-048 / Phase 135 and does not permit this phase to imply that
+
+      unexercised capability.'
     expected_occurrences: 1
-  content_sha256: 873c80d9befd175b6628d472b2a03b844d79fdb94628ef5d7f205cc745a5e938
+  content_sha256: 7fa310d6f494fc678f82c2a0c445db65155377071a9e251719cc71dc9b8cc980
   disposition: unsupported
   metric_scope: []
   reason_codes:
   - package_attestation_not_implemented
-  limitation: Phase 117 proves only zero-accepted image exposure; REM-048 owns any future accepted-evidence attestation.
+  limitation: Phase 117 proves only local zero-accepted packaged-loader exposure; REM-048 owns hosted image verification and any future accepted-evidence attestation.
   current_engine_regression_evidence: false
   accepted_evidence: null
 - claim_id: docs.block13.phase113-regression-signals
@@ -4041,9 +4035,13 @@ claims:
 
       packaged loader with zero accepted claims loads the strict ledger and exposes
 
-      the catalog conservatively; its hosted no-`.git` image smoke is configured and
+      the catalog conservatively. The Phase 117 push prerequisite is satisfied at
 
-      pending the phase push. Neither result proves that a future
+      `84cf4c4`, but no successful hosted no-`.git` image result is recorded in the
+
+      repository; that smoke remains unverified pending a successful workflow run.
+
+      Neither result proves that a future
 
       `production_validated` claim can survive packaging: repository acceptance
 
@@ -4053,12 +4051,12 @@ claims:
 
       neither `.git` nor `docs/`.'
     expected_occurrences: 1
-  content_sha256: 4408945330ac1108eb2485ff764396b756aad7ec626164e6b2c202a65c901dd9
+  content_sha256: e846522942545880774fcf424f2741239e9ddf365e2ee3c2a413c7afd69ea7a1
   disposition: unsupported
   metric_scope: []
   reason_codes:
   - package_attestation_not_implemented
-  limitation: The current image proves only zero-accepted exposure and cannot carry a future accepted claim.
+  limitation: The local packaged loader proves only zero-accepted exposure; no successful hosted image result or future accepted-claim package proof exists.
   current_engine_regression_evidence: false
   accepted_evidence: null
 - claim_id: docs.block19.rem048-exit-contract
@@ -4174,11 +4172,15 @@ claims:
 
       current zero-accepted ledger; its hosted no-`.git` image smoke is configured
 
-      and pending the phase push. A future accepted claim requires a build-time
+      and its push prerequisite is satisfied at `84cf4c4`, but no successful hosted
+
+      result is recorded in the repository. The smoke remains unverified pending a
+
+      successful workflow run. A future accepted claim requires a build-time
 
       repository proof and tamper-evident runtime receipt.'
     expected_occurrences: 1
-  content_sha256: 71207217f08b1ba38805fe6f5106aca5e59b2fc497590fdcca31b46be83d5f27
+  content_sha256: db503e25d052822b1dca463926264f2b7b9e54a6ed077f5dda21550f619eef32
   disposition: unsupported
   metric_scope: []
   reason_codes:
@@ -4330,17 +4332,19 @@ claims:
   surface: documentation_claim
   locator:
     kind: required_text
-    text: 'The retained Phase 117 73 Easting artifact is `FAIL`, with 0/20 joint successes
-
+    text: |-
+      The retained Phase 117 73 Easting artifact is `FAIL`, with 0/20 joint successes
       and a one-sided lower confidence bound of 0.0. It is not promotion-eligible, so
-
-      73 Easting remains unsupported for historical validation. See the
-
-      [study contract](../specs/historical-outcome-envelope-integrity.md) and
-
-      [retained artifact](../evidence/phase-117/73-easting-phase117.json).'
+      73 Easting remains unsupported for historical validation. Its artifact
+      SHA-256 is
+      `57bfe7d89575e721d9cee30c213505c760da3cede642624c7ed7532051e524f4`,
+      and its off-main locator is
+      `branch=evidence/full; path=docs/evidence/phase-117/73-easting-phase117.json`.
+      That branch is currently local and unpublished pending a separate
+      evidence-remote or Git LFS decision. See the
+      [study contract](../specs/historical-outcome-envelope-integrity.md).
     expected_occurrences: 1
-  content_sha256: 34669f479c0b07f5895ade34e37b4b84408944783e4033cbe4b9b9cc88df4480
+  content_sha256: 0df5361e00efe0685dcc70d456a014ea9c45869e8c9b10d18d79d079e1a75f6c
   disposition: unsupported
   metric_scope: []
   reason_codes:
@@ -4414,15 +4418,17 @@ claims:
   surface: documentation_claim
   locator:
     kind: required_text
-    text: 'The retained Phase 117 73 Easting artifact completed as `FAIL`: 0/20 runs met
-
+    text: |-
+      The retained Phase 117 73 Easting artifact completed as `FAIL`: 0/20 runs met
       the full joint envelope, the one-sided lower confidence bound was 0.0, and the
-
-      study was not promotion-eligible. It therefore leaves 73 Easting unsupported;
-
-      see the [artifact](../evidence/phase-117/73-easting-phase117.json).'
+      study was not promotion-eligible. It therefore leaves 73 Easting unsupported.
+      The retained artifact SHA-256 is
+      `57bfe7d89575e721d9cee30c213505c760da3cede642624c7ed7532051e524f4`;
+      its local, unpublished locator is
+      `branch=evidence/full; path=docs/evidence/phase-117/73-easting-phase117.json`,
+      pending a separate evidence-remote or Git LFS decision.
     expected_occurrences: 1
-  content_sha256: 23c8d4f5878a9567fb2c96d8fa89539562da0ae056f214f9db1356a1949a041d
+  content_sha256: f0d96c287720f5abaf8f769def4bddb1293399c20c1eff74d6868763a072f2db
   disposition: unsupported
   metric_scope: []
   reason_codes:
@@ -4638,25 +4644,23 @@ claims:
   surface: documentation_claim
   locator:
     kind: required_text
-    text: 'Phase 117 completed the REM-030 claim inventory, typed study plan,
-
+    text: |-
+      Phase 117 completed the REM-030 claim inventory, typed study plan,
       `SimulationRuntimeFactory`-owned execution route, joint-coverage evaluator,
-
       digest-bearing artifact, accepted-evidence gate, and conservative API/UI
-
       status surface. The retained 73 Easting study is a completed `FAIL`: 0/20 runs
-
       jointly met its declared envelope, its one-sided lower confidence bound is
-
       0.0, and it is not promotion-eligible. The catalog therefore remains at zero
-
-      production-validated scenarios. See the
-
-      [contract](specs/historical-outcome-envelope-integrity.md) and
-
-      [artifact](evidence/phase-117/73-easting-phase117.json).'
+      production-validated scenarios. The retained artifact SHA-256 is
+      `57bfe7d89575e721d9cee30c213505c760da3cede642624c7ed7532051e524f4`,
+      with off-main locator
+      `branch=evidence/full; path=docs/evidence/phase-117/73-easting-phase117.json`.
+      The `evidence/full` branch is currently local and unpublished pending a
+      separate evidence-remote or Git LFS decision; the same qualification applies
+      to the Phase 118 locators below.
+      See the [contract](specs/historical-outcome-envelope-integrity.md).
     expected_occurrences: 1
-  content_sha256: 18c218315afb813446cdc366c6afcfa7e08782bf5a13c749f024143db646a5cd
+  content_sha256: ef03bbe6df4b10c3a8ebb2555cbd887cb241480b597dd88d76e0e00cf9be6110
   disposition: unsupported
   metric_scope: []
   reason_codes:
@@ -4728,16 +4732,20 @@ claims:
 
       attestation to Phase 135 in planned Block 19. Phase 117''s local evidence proves
 
-      only the packaged-loader boundary for the current zero-accepted catalog; the
+      only the packaged-loader boundary for the current zero-accepted catalog. The
 
-      hosted image smoke is configured and pending the phase push.'
+      Phase 117 push prerequisite is satisfied at `84cf4c4`, but no successful
+
+      hosted image result is recorded in the repository; the configured smoke
+
+      remains unverified pending a successful workflow run.'
     expected_occurrences: 1
-  content_sha256: a86aeaf76c70d5dc8c3adb2755b301761248cd11266d6d71590975f97eaf5027
+  content_sha256: 8d804a00c25b2d87b1dd6545d9364e69404b6e796ed4daa39c5cad92c84ab607
   disposition: unsupported
   metric_scope: []
   reason_codes:
   - package_attestation_not_implemented
-  limitation: The image evidence is limited to the zero-accepted catalog; future accepted evidence still lacks package-bound attestation.
+  limitation: Local packaged-loader evidence is limited to the zero-accepted catalog; hosted image verification and future accepted-evidence attestation remain absent.
   current_engine_regression_evidence: true
   accepted_evidence: null
 - claim_id: docs.index.phase117-no-promotion-status
@@ -4750,9 +4758,17 @@ claims:
 
       historical-validation boundary retains a truthful failed study and no claim
 
-      has been promoted. Phase 118 is next and has not started. Phase 115 also records REM-041 through'
+      has been promoted. Phase 118 / REM-031 retains a complete, independently
+
+      verified v7 `FAIL` and implements the accepted qualified-negative support
+
+      boundary; Phase 118 is complete and REM-031 is closed. Phase
+
+      115 also records
+
+      REM-041 through'
     expected_occurrences: 1
-  content_sha256: b81ad804940d48859ab38103bdc85c9a27235a0a3a755bea8876bd762db4a76f
+  content_sha256: 1c29d6b222fc82beea43f349ea2df10c4896f51c66b2e2773dc4751e6c1dea9f
   disposition: unsupported
   metric_scope: []
   reason_codes:
@@ -5000,9 +5016,9 @@ claims:
   surface: documentation_claim
   locator:
     kind: required_text
-    text: '│   │       └── scenarios/           # 4 catalog collections (Cannae, Agincourt, Hastings, Salamis)'
+    text: '│   │       └── scenarios/           # Cannae, Agincourt, Hastings, and Salamis collections'
     expected_occurrences: 1
-  content_sha256: 6d1f1f22fa158b815b82ac207d020a6a481927472dc52b4ac9b580111cdd8f54
+  content_sha256: a37d39fa7d932aae7e0ff8a972374ead3f80e3e1a924ea6c5edead6399321f46
   disposition: unsupported
   metric_scope: []
   reason_codes:
@@ -5048,11 +5064,18 @@ claims:
   surface: documentation_claim
   locator:
     kind: required_text
-    text: '│   ├── evidence/
-
-      │   │   └── phase-117/                # Stable digest-bearing historical study evidence'
+    text: |-
+      The raw v6 terminal
+        `ERROR`, v7 terminal `FAIL`, frozen plan, typed 1,408-entry
+        execution-to-retirement handoff, and one-off validation tooling are
+        intentionally off main. Their durable locators are
+        `branch=evidence/full; path=docs/evidence/phase-118/v6-terminal/`,
+        `branch=evidence/full; path=docs/evidence/phase-118/v7-terminal/`,
+        `branch=evidence/full; path=data/validation/performance_semantics/phase118.yaml`,
+        and
+        `branch=evidence/full; path=docs/evidence/phase-118/runtime-manifest-handoff.json`.
     expected_occurrences: 1
-  content_sha256: 9978ef1483f08bc09fd4401fc3738b324609b13e79d90c3225b39ca5070b333a
+  content_sha256: f7f28c15b0336eb86125a2478df19c78bac37eef55c11092ed2ccc3600df46eb
   disposition: unsupported
   metric_scope: []
   reason_codes:
@@ -5098,7 +5121,27 @@ claims:
   surface: documentation_claim
   locator:
     kind: required_text
-    text: "├── validation/                    # Legacy diagnostics + production historical studies\n    │   ├── __init__.py\n    │   ├── historical_data.py         # Legacy historical comparison models + YAML loader\n    │   ├── metrics.py                 # Engagement-level metric extraction from simulation results\n    │   ├── scenario_runner.py         # Legacy lightweight diagnostic orchestrator\n    │   ├── monte_carlo.py             # Legacy Monte Carlo comparison diagnostics\n    │   ├── campaign_data.py           # Campaign-level historical data models, AIExpectation, CampaignDataLoader\n    │   ├── campaign_runner.py         # Campaign runner through factory prepare_config + RuntimeSession\n    │   ├── campaign_metrics.py        # Campaign-level metric extraction (units destroyed, exchange ratio, etc.)\n    │   ├── ai_validation.py           # AI decision quality analysis from recorder events\n    │   ├── movement_diagnostics.py    # Typed semantic movement evaluator\n    │   ├── performance.py             # cProfile + tracemalloc campaign performance profiling\n    │   └── historical_backtest/       # Phase 117 production claim/evidence boundary\n    │       ├── __init__.py             # Public typed backtest API\n    │       ├── common.py               # Strict models, digests, and no-symlink guards\n    │       ├── claims.py               # Claim ledger, source audit, public dispositions\n    │       ├── studies.py              # Typed study plan, lineage, metrics, policy\n    │       ├── runner.py               # Factory-owned runs and observation receipts\n    │       ├── evaluator.py            # Exact joint Clopper--Pearson verdict\n    │       └── artifacts.py            # Digest-bearing atomic PASS/FAIL/ERROR artifacts"
+    text: |-
+      ├── validation/                    # Legacy diagnostics + production historical studies
+          │   ├── __init__.py
+          │   ├── historical_data.py         # Legacy historical comparison models + YAML loader
+          │   ├── metrics.py                 # Engagement-level metric extraction from simulation results
+          │   ├── scenario_runner.py         # Legacy lightweight diagnostic orchestrator
+          │   ├── monte_carlo.py             # Legacy Monte Carlo comparison diagnostics
+          │   ├── campaign_data.py           # Campaign-level historical data models, AIExpectation, CampaignDataLoader
+          │   ├── campaign_runner.py         # Campaign runner through factory prepare_config + RuntimeSession
+          │   ├── campaign_metrics.py        # Campaign-level metric extraction (units destroyed, exchange ratio, etc.)
+          │   ├── ai_validation.py           # AI decision quality analysis from recorder events
+          │   ├── movement_diagnostics.py    # Typed semantic movement evaluator
+          │   ├── performance.py             # cProfile + tracemalloc campaign performance profiling
+          │   └── historical_backtest/       # Phase 117 production claim/evidence boundary
+          │       ├── __init__.py             # Public typed backtest API
+          │       ├── common.py               # Strict models, digests, and no-symlink guards
+          │       ├── claims.py               # Claim ledger, source audit, public dispositions
+          │       ├── studies.py              # Typed study plan, lineage, metrics, policy
+          │       ├── runner.py               # Factory-owned runs and observation receipts
+          │       ├── evaluator.py            # Exact joint Clopper--Pearson verdict
+          │       └── artifacts.py            # Digest-bearing atomic PASS/FAIL/ERROR artifacts
     expected_occurrences: 1
   content_sha256: c0ef2f9597157d01991c84b62d3545a31288df899eb2e6c899b838815b77f09c
   disposition: unsupported
@@ -5168,9 +5211,9 @@ claims:
   surface: documentation_claim
   locator:
     kind: required_text
-    text: '│   │   │   └── scenarios/           # 3 catalog collections (Austerlitz, Waterloo, Trafalgar)'
+    text: '│   │   │   └── scenarios/           # Austerlitz, Waterloo, and Trafalgar collections'
     expected_occurrences: 1
-  content_sha256: 9b35aa3f1c04db453d6511301c41e6c576280c3bc5870095920bfb16e1afb51f
+  content_sha256: 41ca4766cca65b485aa6fe6d8a09aaebbd39f494425555376f52239846116c4a
   disposition: unsupported
   metric_scope: []
   reason_codes:
@@ -5216,17 +5259,14 @@ claims:
   surface: documentation_claim
   locator:
     kind: required_text
-    text: '│   ├── validation/                   # Historical claim ledger and typed study plans
-
+    text: |-
+      │   ├── validation/                   # Historical claim ledger and retained study plans
       │   │   ├── historical_claims.yaml
-
       │   │   └── historical_studies/
-
       │   │       ├── 73_easting_phase117.yaml
-
-      │   │       └── agincourt_era_control_phase117.yaml'
+      │   │       └── agincourt_era_control_phase117.yaml
     expected_occurrences: 1
-  content_sha256: 18ed1a15f3103e238366aec865928c4aec2543603e0c0af8ee0595053351c299
+  content_sha256: 4c182486632a082b31f3bdd3120760fa1c7361a51cd5bf0e83099215dd0ffc28
   disposition: unsupported
   metric_scope: []
   reason_codes:
@@ -5240,9 +5280,9 @@ claims:
   surface: documentation_claim
   locator:
     kind: required_text
-    text: '│   │   │   └── scenarios/           # 3 catalog collections (Somme Day 1, Cambrai, Jutland)'
+    text: '│   │   │   └── scenarios/           # Somme Day 1, Cambrai, and Jutland collections'
     expected_occurrences: 1
-  content_sha256: 8b09f908879ce23a7506d3cb388a2dbbae9ee32b993124b001850fc8b073922d
+  content_sha256: 9210242fe657312343898ab5ea216d11f538f4a9be56c455cc89d5b9cc65b17e
   disposition: unsupported
   metric_scope: []
   reason_codes:
@@ -5256,9 +5296,9 @@ claims:
   surface: documentation_claim
   locator:
     kind: required_text
-    text: '│   │   │   └── scenarios/           # 4 catalog collections (Kursk, Midway, Normandy Bocage, Stalingrad)'
+    text: '│   │   │   └── scenarios/           # Kursk, Midway, Normandy Bocage, and Stalingrad collections'
     expected_occurrences: 1
-  content_sha256: 58d4aa0adc23c2db018b0c79292e9273329fc2309c12071bd57d22de3eccfe9f
+  content_sha256: 8a5d380761c0fe1553af6584ae0c2b8936ee64cb5bf6e6f2609348ff1b529a08
   disposition: unsupported
   metric_scope: []
   reason_codes:
@@ -5266,265 +5306,24 @@ claims:
   limitation: Catalog presence and current-engine regression coverage do not establish a historical outcome verdict.
   current_engine_regression_evidence: true
   accepted_evidence: null
-- claim_id: docs.readme.73-easting-failed-study
-  repository_path: README.md
-  scenario_path: null
-  surface: documentation_claim
-  locator:
-    kind: required_text
-    text: 'Phase 117 completed the typed claim ledger, study plan, production runner,
-
-      joint-coverage evaluator, digest-bearing artifact, conservative API exposure,
-
-      and accepted-evidence gate for REM-030; the remediation is complete and
-
-      REM-030 is closed. Its 73 Easting study completed with a
-
-      `FAIL` verdict: 0/20 runs jointly satisfied the declared envelope and the
-
-      one-sided lower confidence bound was 0.0. The result is not promotion-eligible,
-
-      so the catalog still exposes zero production-validated scenarios. See the
-
-      [retained artifact](docs/evidence/phase-117/73-easting-phase117.json).'
-    expected_occurrences: 1
-  content_sha256: 9ee3810d23e674abc33c21a6e63b3c6a7fde605e0527b438147ab882a69a6035
-  disposition: unsupported
-  metric_scope: []
-  reason_codes:
-  - historical_study_failed
-  limitation: The retained failed study is integrity evidence and cannot promote the historical claim.
-  current_engine_regression_evidence: true
-  accepted_evidence: null
-- claim_id: docs.readme.api-historical-status-contract
-  repository_path: README.md
-  scenario_path: null
-  surface: documentation_claim
-  locator:
-    kind: required_text
-    text: 'Both scenario list and detail responses include a typed
-
-      `historical_validation` summary. Detail responses deliberately omit legacy
-
-      `documented_outcomes` and `sources` from `config`; the ledger-backed aggregate,
-
-      claim dispositions, limitations, exact scopes, reason codes, accepted-evidence
-
-      references, regression flag, and ledger digest are the authoritative public
-
-      status surface.'
-    expected_occurrences: 1
-  content_sha256: 20bb56f6ed95e0c952da4094e77574e8cb296c850f131341bddeeb612972b5bf
-  disposition: unsupported
-  metric_scope: []
-  reason_codes:
-  - public_classification_not_validation_evidence
-  limitation: A public status projection exposes classification and does not create historical evidence.
-  current_engine_regression_evidence: false
-  accepted_evidence: null
-- claim_id: docs.readme.catalog-validation-status
-  repository_path: README.md
-  scenario_path: null
-  surface: documentation_claim
-  locator:
-    kind: required_text
-    text: 'The simulator covers the modern era (Cold War to present) as its prototype
-
-      period and treats maritime warfare as a fully integrated domain alongside land
-
-      and air operations, not a deferred add-on. It includes source-backed historical
-
-      scenario data, current-engine regression tooling, and a typed historical-claim
-
-      ledger plus production backtest boundary. The current ledger exposes zero
-
-      production-validated scenarios; a historical name, citation, regression result,
-
-      or legacy `documented_outcomes` entry is not a verdict. See the
-
-      [historical outcome-envelope contract](docs/specs/historical-outcome-envelope-integrity.md).'
-    expected_occurrences: 1
-  content_sha256: 2a3ef8b05e1e715743598cbd968bfb247c46190437cd2e64281866d130b7dc6b
-  disposition: unsupported
-  metric_scope: []
-  reason_codes:
-  - truthful_unsupported_status
-  limitation: The statement conservatively identifies a claim that lacks accepted production historical evidence.
-  current_engine_regression_evidence: false
-  accepted_evidence: null
-- claim_id: docs.readme.debecka-regression-status
-  repository_path: README.md
-  scenario_path: null
-  surface: documentation_claim
-  locator:
-    kind: required_text
-    text: 'inconclusive; none is called a pass. Debecka''s 4/10 result remained a signal
-
-      rather than being tuned away; the Phase 117 claim ledger records that
-
-      current-engine regression evidence while keeping its historical claim
-
-      unsupported. Hosted CI is'
-    expected_occurrences: 1
-  content_sha256: 1441721d80a9e13dced2e3c960bb821c218c118b8386577513454089a58249ef
-  disposition: unsupported
-  metric_scope: []
-  reason_codes:
-  - historical_claim_unsupported_despite_regression_evidence
-  limitation: Current-engine regression evidence does not convert the historical claim into accepted validation.
-  current_engine_regression_evidence: true
-  accepted_evidence: null
-- claim_id: docs.readme.development-status-failed-study
-  repository_path: README.md
-  scenario_path: null
-  surface: documentation_claim
-  locator:
-    kind: required_text
-    text: 'owner-approved contention qualification above. Phase 117 completed the
-
-      REM-030 historical-claim inventory and fail-closed production study boundary.
-
-      The current 73 Easting artifact is a completed `FAIL`, not accepted evidence,
-
-      and the public catalog remains conservatively unsupported with zero
-
-      production-validated scenarios. See the'
-    expected_occurrences: 1
-  content_sha256: e1ce192bc4e14a579009939feb5b1d6fa3b205087f36fdd4209560395e24b2c4
-  disposition: unsupported
-  metric_scope: []
-  reason_codes:
-  - historical_study_failed
-  limitation: The retained failed study is integrity evidence and cannot promote the historical claim.
-  current_engine_regression_evidence: true
-  accepted_evidence: null
-- claim_id: docs.readme.historical-followup-boundaries
-  repository_path: README.md
-  scenario_path: null
-  surface: documentation_claim
-  locator:
-    kind: required_text
-    text: 'The separate 73 Easting source-synchronous engagement miss is REM-047 in
-
-      planned Block 18. Package-bound attestation for any future accepted historical
-
-      evidence is REM-048 in planned Block 19. Local Phase 117 evidence proves the
-
-      packaged-loader boundary only for the truthful zero-accepted ledger; the
-
-      hosted no-`.git` image smoke is configured and remains pending until the phase
-
-      commit is pushed.'
-    expected_occurrences: 1
-  content_sha256: 5aae4ecc1102f65b18d10853e6916b8f2b4e36af9e00c8fc6ab9d8e420e1de81
-  disposition: unsupported
-  metric_scope: []
-  reason_codes:
-  - historical_followup_not_implemented
-  limitation: The planned fidelity and package-attestation follow-ups do not create accepted historical evidence in Phase 117.
-  current_engine_regression_evidence: true
-  accepted_evidence: null
-- claim_id: docs.readme.immutable-image-claim-audit
-  repository_path: README.md
-  scenario_path: null
-  surface: documentation_claim
-  locator:
-    kind: required_text
-    text: 'Scenario and catalog files are verified separately by the
-
-      runtime data revision. The Docker workflow''s configured image smoke also loads
-
-      the historical-claim ledger through its scenario-catalog boundary, proves that
-
-      docs and tests are absent, and checks that 73 Easting remains unsupported with
-
-      only current-engine regression evidence and no accepted claim IDs. This is a
-
-      pending hosted control until the Phase 117 commit is pushed; the current local
-
-      proof is the packaged loader, not an executed no-`.git` image. The workflow
-
-      supplies `GITHUB_SHA`, builds on
-
-      pull requests to `main`, pushes to `main`, and manual dispatches, then asserts
-
-      that `.git` is absent and runs a production-runtime identity smoke inside the
-
-      image.'
-    expected_occurrences: 1
-  content_sha256: b604a1e14f25efe8d33599228f7951d6602bbe74ee63094026260410a172b03d
-  disposition: unsupported
-  metric_scope: []
-  reason_codes:
-  - historical_claim_unsupported_despite_regression_evidence
-  limitation: Current-engine regression evidence does not convert the historical claim into accepted validation.
-  current_engine_regression_evidence: true
-  accepted_evidence: null
-- claim_id: docs.readme.monte-carlo-historical-study-role
-  repository_path: README.md
-  scenario_path: null
-  surface: documentation_claim
-  locator:
-    kind: required_text
-    text: '| Monte Carlo | `tools/_run_helpers`, `validation/historical_backtest` | Production distributions and strict historical outcome-envelope studies |'
-    expected_occurrences: 1
-  content_sha256: ad0c0ac450749fbdf8e9cb1965e342582d70bdfc07566f6f3b59f0534a7244fc
-  disposition: unsupported
-  metric_scope: []
-  reason_codes:
-  - truthful_contract_description_not_evidence
-  limitation: Describing a strict historical-validation contract does not create accepted historical evidence.
-  current_engine_regression_evidence: false
-  accepted_evidence: null
-- claim_id: docs.readme.validation-data-role
-  repository_path: README.md
-  scenario_path: null
-  surface: documentation_claim
-  locator:
-    kind: required_text
-    text: 'validation/             # historical claim ledger and typed study plans'
-    expected_occurrences: 1
-  content_sha256: 9aebc4161c7cbc45a6966104807202b97c231f26f25b735457888dedfdaa0cfb
-  disposition: unsupported
-  metric_scope: []
-  reason_codes:
-  - structural_documentation_not_behavioral_evidence
-  limitation: A structural declaration is not behavioral historical-validation evidence.
-  current_engine_regression_evidence: false
-  accepted_evidence: null
-- claim_id: docs.readme.validation-package-role
-  repository_path: README.md
-  scenario_path: null
-  surface: documentation_claim
-  locator:
-    kind: required_text
-    text: 'validation/             # legacy diagnostics plus typed production historical backtests'
-    expected_occurrences: 1
-  content_sha256: 2d06cd4e4e6732c525d56a22b0e097ff292e445b930a43ecf25779d96afb1376
-  disposition: unsupported
-  metric_scope: []
-  reason_codes:
-  - structural_documentation_not_behavioral_evidence
-  limitation: A structural declaration is not behavioral historical-validation evidence.
-  current_engine_regression_evidence: false
-  accepted_evidence: null
 - claim_id: docs.reference-api.73-easting-failed-study
   repository_path: docs/reference/api.md
   scenario_path: null
   surface: documentation_claim
   locator:
     kind: required_text
-    text: 'The repository runner is `scripts/run_historical_backtest.py`. Its checked-in
-
-      73 Easting result is `FAIL` with 0/20 joint successes, lower confidence bound
-
-      0.0, and no promotion eligibility; see the
-
-      [contract](../specs/historical-outcome-envelope-integrity.md) and
-
-      [artifact](../evidence/phase-117/73-easting-phase117.json).'
+    text: |-
+      The repository runner is `scripts/run_historical_backtest.py`; generated output
+      belongs under ignored `artifacts/evidence/phase-117/`. The retained 73 Easting
+      result is `FAIL` with 0/20 joint successes, lower confidence bound 0.0, and no
+      promotion eligibility. Its artifact SHA-256 is
+      `57bfe7d89575e721d9cee30c213505c760da3cede642624c7ed7532051e524f4`,
+      and its local, unpublished locator is
+      `branch=evidence/full; path=docs/evidence/phase-117/73-easting-phase117.json`,
+      pending a separate evidence-remote or Git LFS decision. See the
+      [contract](../specs/historical-outcome-envelope-integrity.md).
     expected_occurrences: 1
-  content_sha256: bf26c2dbbd1b30c994a96abe453bbbd29729732a45ad807ddd6c9813fe607685
+  content_sha256: 5d580e967795a69924c1cd26e8e64db441544b567d0e0088bbdd89ea7e3caf2b
   disposition: unsupported
   metric_scope: []
   reason_codes:
@@ -5620,9 +5419,13 @@ claims:
 
       unsupported/current-engine-regression status for 73 Easting. Phase 117''s local
 
-      packaged-loader tests exercise the same ledger boundary, but the hosted image
+      packaged-loader tests exercise the same ledger boundary. The Phase 117 push
 
-      smoke remains pending until this phase is pushed and its workflow completes.
+      prerequisite is satisfied at `84cf4c4`, but no successful hosted image result
+
+      is recorded in the repository; the smoke remains unverified pending a
+
+      successful workflow run.
 
       The current ledger has zero accepted artifacts, so neither check proves future
 
@@ -5630,7 +5433,7 @@ claims:
 
       owns the build-time attestation and package receipt required for that case.'
     expected_occurrences: 1
-  content_sha256: a516f1e9cbc10cc03f6aedd56d4986bdc8a885198691cd032bfe14149dcf2c41
+  content_sha256: f5790b6220eb5dcb587a93ce5276b80952e52b7866b868895d0fdce2b8133684
   disposition: unsupported
   metric_scope: []
   reason_codes:
@@ -5844,9 +5647,9 @@ claims:
   surface: documentation_claim
   locator:
     kind: required_text
-    text: "A historical name, source citation, `documented_outcomes` field, successful\n    load, or current-engine regression result does not by itself validate a\n    scenario against history. Phase 117 replaces earlier blanket Phase 47\n    claims with a source-audited claim ledger, typed study plans, a\n    `SimulationRuntimeFactory`-owned runner, retained observations, joint\n    outcome-envelope evaluation, and digest-bearing artifacts. Only exact claim\n    scopes backed by an accepted, predeclared, independent, clean production\n    `PASS` may be marked `production_validated`; otherwise they remain\n    `current_engine_regression_only` or `unsupported`. The current ledger has\n    zero production-validated scenarios. The retained 73 Easting study is a\n    completed, non-promotable `FAIL`; see the\n    [contract](../specs/historical-outcome-envelope-integrity.md) and\n    [artifact](../evidence/phase-117/73-easting-phase117.json)."
+    text: "A historical name, source citation, `documented_outcomes` field, successful\n    load, or current-engine regression result does not by itself validate a\n    scenario against history. Phase 117 replaces earlier blanket Phase 47\n    claims with a source-audited claim ledger, typed study plans, a\n    `SimulationRuntimeFactory`-owned runner, retained observations, joint\n    outcome-envelope evaluation, and digest-bearing artifacts. Only exact claim\n    scopes backed by an accepted, predeclared, independent, clean production\n    `PASS` may be marked `production_validated`; otherwise they remain\n    `current_engine_regression_only` or `unsupported`. The current ledger has\n    zero production-validated scenarios. The retained 73 Easting study is a\n    completed, non-promotable `FAIL`; see the\n    [contract](../specs/historical-outcome-envelope-integrity.md). Its artifact\n    SHA-256 is\n    `57bfe7d89575e721d9cee30c213505c760da3cede642624c7ed7532051e524f4`;\n    the local, unpublished off-main locator is\n    `branch=evidence/full; path=docs/evidence/phase-117/73-easting-phase117.json`,\n    pending a separate evidence-remote or Git LFS decision."
     expected_occurrences: 1
-  content_sha256: 0a0f0d81d9fa2130b88b452cc6d80d35a21fd31e19bc641da60980adf4af7836
+  content_sha256: ecf07fdad33c816fb79f46e27366c1550dcd34d8024e2c334a8b6758e747efd3
   disposition: unsupported
   metric_scope: []
   reason_codes:
@@ -6041,14 +5844,14 @@ claims:
   surface: documentation_claim
   locator:
     kind: required_text
-    text: "## REM-048 - Packaged accepted evidence lacks a no-Git attestation boundary\n\n### Phase 117 finding and current safe behavior\n\nThe repository `HistoricalClaimLedgerLoader` verifies accepted evidence by\nchecking Git ancestry, reading the execution ledger at the artifact's commit,\nchecking code/dependency drift, reloading the committed plan, and freshly\npreparing the production scenario. The production Docker image intentionally\ncontains neither `.git` nor `docs/`; accepted artifacts are currently retained\nunder `docs/evidence/`. Therefore a future nonempty `accepted_evidence` entry\ncannot pass the same loader inside that image.\n\nThe Phase 117 local packaged-loader control remains truthful and useful: the\ncurrent ledger has zero `production_validated` claims, so the packaged loader\naudits every scenario claim it can publish and exposes 73 Easting as\nunsupported with current-engine regression evidence. A hosted no-`.git` image\nsmoke is configured but remains pending the phase push. Neither the local\ncontrol nor that zero-accepted smoke exercises or establishes packaged\naccepted-evidence support. Silently bypassing Git verification,\ncopying an artifact without an attestation, or treating the build's source\nrevision string as the entire proof would weaken the repository contract.\n\n**Matrix:** `D=Yes, L=Yes, W=Yes, E=N/A, X=-, O=Yes, P=-`. The accepted\nreference and verification schemas are declared, loaded, and reached by the\npackaged API, and the missing Git/evidence boundary fails closed observably.\nReal nonempty package execution and durable package-bound proof are absent.\n`E` is N/A because accepted evidence is a disposition, not a runtime feature\ntoggle.\n\n### Required proof\n\n- At image build time, run the complete repository/Git accepted-evidence\n  verification before `.git` is discarded. Produce a strict canonical receipt\n  that binds the accepted claims to the exact source revision and source\n  manifest, execution and current ledgers, plans, artifacts, source\n  references, metric bindings, and production-input identities.\n- Package every evidence input required for independent runtime verification\n  at one canonical non-documentation boundary. Reject aliases, symlinks,\n  missing or extra files, digest drift, wrong revisions, stale receipts, and a\n  receipt copied from another image.\n- Keep repository and packaged verification semantically equivalent. A\n  no-`.git` runtime may verify the build-time receipt, but may not skip ancestry\n  or committed-content proof unless that proof is explicitly represented and\n  bound by the receipt.\n- Prove fail-closed tamper controls for the source manifest/revision, ledger and\n  claim content, plan, artifact, source bindings, receipt, and API data-root\n  identity.\n- Exercise a genuine clean, independently predeclared, source-backed\n  production `PASS` through repository acceptance, image construction, and a\n  real no-`.git` API response with the identical claim-level disposition.\n  Synthetic fixtures remain useful negative controls but cannot alone close\n  the production capability claim.\n\n**Status:** Queued for Phase 135 in Block 19. It does not reopen REM-030:\nPhase 117's catalog has no accepted claims and its packaged zero-accepted path\nfails closed correctly."
+    text: "## REM-048 - Packaged accepted evidence lacks a no-Git attestation boundary\n\n### Phase 117 finding and current safe behavior\n\nThe repository `HistoricalClaimLedgerLoader` verifies accepted evidence by\nchecking Git ancestry, reading the execution ledger at the artifact's commit,\nchecking code/dependency drift, reloading the committed plan, and freshly\npreparing the production scenario. The production Docker image intentionally\ncontains neither `.git` nor `docs/`; accepted artifacts are currently retained\nunder `docs/evidence/`. Therefore a future nonempty `accepted_evidence` entry\ncannot pass the same loader inside that image.\n\nThe Phase 117 local packaged-loader control remains truthful and useful: the\ncurrent ledger has zero `production_validated` claims, so the packaged loader\naudits every scenario claim it can publish and exposes 73 Easting as\nunsupported with current-engine regression evidence. A hosted no-`.git` image\nsmoke is configured. The Phase 117 push prerequisite is satisfied at\n`84cf4c4`, but no successful hosted result is recorded in the repository, so\nthat smoke remains unverified pending a successful workflow run. Neither the\nlocal control nor that zero-accepted smoke exercises or establishes packaged\naccepted-evidence support. Silently bypassing Git verification,\ncopying an artifact without an attestation, or treating the build's source\nrevision string as the entire proof would weaken the repository contract.\n\n**Matrix:** `D=Yes, L=Yes, W=Yes, E=N/A, X=-, O=Yes, P=-`. The accepted\nreference and verification schemas are declared, loaded, and reached by the\npackaged API, and the missing Git/evidence boundary fails closed observably.\nReal nonempty package execution and durable package-bound proof are absent.\n`E` is N/A because accepted evidence is a disposition, not a runtime feature\ntoggle.\n\n### Required proof\n\n- At image build time, run the complete repository/Git accepted-evidence\n  verification before `.git` is discarded. Produce a strict canonical receipt\n  that binds the accepted claims to the exact source revision and source\n  manifest, execution and current ledgers, plans, artifacts, source\n  references, metric bindings, and production-input identities.\n- Package every evidence input required for independent runtime verification\n  at one canonical non-documentation boundary. Reject aliases, symlinks,\n  missing or extra files, digest drift, wrong revisions, stale receipts, and a\n  receipt copied from another image.\n- Keep repository and packaged verification semantically equivalent. A\n  no-`.git` runtime may verify the build-time receipt, but may not skip ancestry\n  or committed-content proof unless that proof is explicitly represented and\n  bound by the receipt.\n- Prove fail-closed tamper controls for the source manifest/revision, ledger and\n  claim content, plan, artifact, source bindings, receipt, and API data-root\n  identity.\n- Exercise a genuine clean, independently predeclared, source-backed\n  production `PASS` through repository acceptance, image construction, and a\n  real no-`.git` API response with the identical claim-level disposition.\n  Synthetic fixtures remain useful negative controls but cannot alone close\n  the production capability claim.\n\n**Status:** Queued for Phase 135 in Block 19. It does not reopen REM-030:\nPhase 117's catalog has no accepted claims and its packaged zero-accepted path\nfails closed correctly."
     expected_occurrences: 1
-  content_sha256: baf420708f787e917f683d03bfe1f9a3b42b011c7cd384f696ddaee1f35b9819
+  content_sha256: cd4b7cb07ae292369e5cf721d83635cf9a1101a09e86605762c0145dbefc6b3d
   disposition: unsupported
   metric_scope: []
   reason_codes:
   - package_attestation_not_implemented
-  limitation: The current package proves only a zero-accepted ledger; build-time attestation and a real nonempty accepted-claim image proof remain queued.
+  limitation: The local packaged loader proves only a zero-accepted ledger; hosted image verification, build-time attestation, and a real nonempty accepted-claim image proof remain queued.
   current_engine_regression_evidence: true
   accepted_evidence: null
 - claim_id: docs.remediation-backlog.rem048-summary
@@ -6163,30 +5966,27 @@ claims:
   surface: documentation_claim
   locator:
     kind: required_text
-    text: 'The Phase 117 real artifact is a verified `FAIL`: all 20 held-out runs recorded
-
+    text: |-
+      The Phase 117 real artifact is a verified `FAIL`: all 20 held-out runs recorded
       zero scoped Iraqi tanks, zero scoped Iraqi personnel carriers, and
-
       cutoff-censored duration, so joint coverage was 0/20 with lower bound 0.0. The
-
       American-loss gate was in range for all 20.
-
       This leaves 73 Easting `unsupported`; a clean hosted reproduction binds the
-
-      final phase commit without converting the failure into a pass.
-
+      final phase commit without converting the failure into a pass. The retained
+      artifact SHA-256 is
+      `57bfe7d89575e721d9cee30c213505c760da3cede642624c7ed7532051e524f4`,
+      with locator
+      `branch=evidence/full; path=docs/evidence/phase-117/73-easting-phase117.json`.
+      That evidence branch is currently local and unpublished pending a separate
+      evidence-remote or Git LFS decision.
 
       The real plan also declares that its Army outcome source informed the shipped
-
-      scenario''s legacy metadata. Even a hypothetical `PASS` would therefore remain
-
+      scenario's legacy metadata. Even a hypothetical `PASS` would therefore remain
       ineligible for `production_validated`; its value is a transparent same-event
-
       backtest of the new contract. The actual quantitative miss supplies the real
-
-      production red.'
+      production red.
     expected_occurrences: 1
-  content_sha256: 54eb22b787d0047da5342aa26ec793821b1b16ec10ba268574c579414ef8b4e4
+  content_sha256: 7a053abeb119566112573c2bbc6282c61d3901c25bfbbf14d524704f72b1073c
   disposition: unsupported
   metric_scope: []
   reason_codes:
@@ -6572,7 +6372,7 @@ claims:
   locator:
     kind: python_symbol
     symbol: CURRENT_ENGINE_TERMINAL_SNAPSHOT
-  content_sha256: 3f0809ad62c6f5710b56a6c64eaf9a36d6847388aa1f47319612f31c3fdffcc3
+  content_sha256: ff864fdabff6647287dbfbfeb17d8ba5bf8e59d1b11ef7546a769cdf3320b76a
   disposition: current_engine_regression_only
   metric_scope: []
   reason_codes:
@@ -7748,4 +7548,4 @@ claims:
   limitation: This workflow contract constrains how historical evidence is handled; it does not validate any historical outcome claim.
   current_engine_regression_evidence: false
   accepted_evidence: null
-ledger_sha256: 2bf74457caf4252554a22656c47a9a04381be3c1ca9197c4028462096b0efcd5
+ledger_sha256: c01a73721e367537a65b14d2c549d5f4b31196d3cace87ef52483eb7b8ff99bd

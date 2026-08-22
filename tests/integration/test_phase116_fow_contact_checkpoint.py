@@ -136,10 +136,7 @@ def _fow_binding_observation(session: RuntimeSession) -> dict[str, Any]:
         "context_detection": copy.deepcopy(
             context.detection_engine.get_state(),
         ),
-        "world_views": {
-            side: view.get_state()
-            for side, view in sorted(fog._world_views.items())
-        },
+        "world_views": {side: view.get_state() for side, view in sorted(fog._world_views.items())},
         "witnesses": fog.get_current_detection_witnesses(),
         "fusion": copy.deepcopy(fog.intel_fusion.get_state()),
         "deception": copy.deepcopy(fog._deception.get_state()),
@@ -154,14 +151,8 @@ def _fow_binding_observation(session: RuntimeSession) -> dict[str, Any]:
                 fog._intel_fusion._estimator._rng,
             ),
             "deception_rng": id(fog._deception._rng),
-            "identification": (
-                None if identification is None else id(identification)
-            ),
-            "identification_rng": (
-                None
-                if identification is None
-                else id(identification._rng)
-            ),
+            "identification": (None if identification is None else id(identification)),
+            "identification_rng": (None if identification is None else id(identification._rng)),
         },
     }
 
@@ -179,15 +170,11 @@ def _assert_disabled_targeting_interval(session: RuntimeSession) -> None:
     assert interval is not None
     assert interval.fog_of_war_enabled is False
     decisions = tuple(
-        decision
-        for picture in session.context.tactical_targeting.latest_pictures()
-        for decision in picture.decisions
+        decision for picture in session.context.tactical_targeting.latest_pictures() for decision in picture.decisions
     )
     assert decisions
     assert all(
-        decision.fog_of_war_enabled is False
-        and decision.contact_source
-        is ContactSource.NON_FOW_LOCAL_OBSERVATION
+        decision.fog_of_war_enabled is False and decision.contact_source is ContactSource.NON_FOW_LOCAL_OBSERVATION
         for decision in decisions
     )
 
@@ -335,12 +322,8 @@ def test_production_capture_rejects_state_equal_detached_contact_track() -> None
     assert target.engine.checkpoint() == source.engine.checkpoint()
 
     fog = target.context.fog_of_war
-    contact = fog.get_world_view("blue").contacts[
-        "red_iron_duke_bb_0000"
-    ]
-    fusion_track = fog.intel_fusion.get_tracks("blue")[
-        contact.track.track_id
-    ]
+    contact = fog.get_world_view("blue").contacts["red_iron_duke_bb_0000"]
+    fusion_track = fog.intel_fusion.get_tracks("blue")[contact.track.track_id]
     original_track = contact.track
     assert original_track is fusion_track
     detached_track = copy.deepcopy(original_track)
@@ -433,15 +416,16 @@ def test_factory_runtime_rejects_detached_fow_owner_and_rng_identity(
         authoritative_rng.bit_generator.state,
     )
     assert detached_rng is not authoritative_rng
-    assert (
-        detached_rng.bit_generator.state
-        == authoritative_rng.bit_generator.state
-    )
+    assert detached_rng.bit_generator.state == authoritative_rng.bit_generator.state
 
     repair: Callable[[], None]
     if owner_name == "detection_owner":
         original_owner = fog._detection
-        fog._detection = DetectionEngine(rng=authoritative_rng)
+        detached_owner = DetectionEngine(rng=authoritative_rng)
+        detached_owner.set_state(
+            copy.deepcopy(context.detection_engine.get_state()),
+        )
+        fog._detection = detached_owner
         repair = lambda: setattr(fog, "_detection", original_owner)
     elif owner_name == "context_detection_rng":
         original_rng = context.detection_engine._rng
@@ -605,10 +589,7 @@ def test_fow_contacts_survive_dynamic_registration_and_restore() -> None:
     )
     assert source.step() is False
     fog_before = source.context.fog_of_war.get_state()
-    assert any(
-        view["contacts"]
-        for view in fog_before["world_views"].values()
-    )
+    assert any(view["contacts"] for view in fog_before["world_views"].values())
     assert fog_before["current_detection_witnesses"]
     assert source.context.tactical_targeting.prepared_interval is not None
 
@@ -643,20 +624,12 @@ def test_fow_contacts_survive_dynamic_registration_and_restore() -> None:
     resumed.engine.restore(checkpoint)
 
     assert resumed.engine.checkpoint() == checkpoint
-    assert reinforcement.entity_id in {
-        unit.entity_id
-        for unit in resumed.context.units_by_side["british"]
-    }
+    assert reinforcement.entity_id in {unit.entity_id for unit in resumed.context.units_by_side["british"]}
     assert resumed.context.tactical_targeting.prepared_interval is None
     assert resumed.context.tactical_targeting.latest_pictures() == ()
     for side, view in resumed.context.fog_of_war._world_views.items():
-        fusion_tracks = resumed.context.fog_of_war._intel_fusion._tracks[
-            side
-        ]
-        assert all(
-            contact.track is fusion_tracks[contact.track.track_id]
-            for contact in view.contacts.values()
-        )
+        fusion_tracks = resumed.context.fog_of_war._intel_fusion._tracks[side]
+        assert all(contact.track is fusion_tracks[contact.track.track_id] for contact in view.contacts.values())
 
     assert source.step() is False
     assert resumed.step() is False
@@ -669,10 +642,7 @@ def test_fow_disabled_restore_rejects_injected_ordinary_state_atomically() -> No
     enabled, _ = _prime_checkpoint(enabled_prepared, seed=116_501)
     enabled_state = enabled.engine.get_state()
     enabled_fow = enabled_state["context"]["fog_of_war"]
-    assert any(
-        view["contacts"]
-        for view in enabled_fow["world_views"].values()
-    )
+    assert any(view["contacts"] for view in enabled_fow["world_views"].values())
     assert any(enabled_fow["current_detection_witnesses"].values())
 
     disabled_raw = _phase116_config().model_dump(mode="python")
@@ -692,6 +662,11 @@ def test_fow_disabled_restore_rejects_injected_ordinary_state_atomically() -> No
     injected["intel_fusion"]["rng_state"] = copy.deepcopy(
         target_fow["intel_fusion"]["rng_state"],
     )
+    # Keep the Phase 118 cadence/scan owners coherent with the disabled
+    # target. The deliberate corruption is ordinary FOW contact history,
+    # which must reach the disabled-feature semantic guard.
+    injected["scan_counts"] = copy.deepcopy(target_fow["scan_counts"])
+    injected["cadence"] = copy.deepcopy(target_fow["cadence"])
     invalid["context"]["fog_of_war"] = injected
     before = target.engine.checkpoint()
 
@@ -704,8 +679,8 @@ def test_fow_disabled_restore_rejects_injected_ordinary_state_atomically() -> No
     _assert_disabled_fow_state(target)
 
 
-def test_versionless_production_restore_rejects_nonempty_ordinary_contacts() -> None:
-    """The bounded legacy path reaches FOW and rejects ordinary contacts."""
+def test_versionless_production_restore_accepts_bounded_nonzero_ordinary_contacts() -> None:
+    """The bounded legacy path retains coherent contact/track history."""
     prepared = _prepare_targeting_scenario(
         fog_of_war=True,
         separation_m=800.0,
@@ -734,10 +709,10 @@ def test_versionless_production_restore_rejects_nonempty_ordinary_contacts() -> 
         active.engine.get_state()["context"]["fog_of_war"],
     )
     legacy_fow.pop("current_detection_witnesses")
-    assert any(
-        view["contacts"]
-        for view in legacy_fow["world_views"].values()
-    )
+    legacy_fow.pop("observer_track_supports")
+    legacy_fow.pop("scan_counts")
+    legacy_fow.pop("cadence")
+    assert any(view["contacts"] for view in legacy_fow["world_views"].values())
 
     # Keep the legacy tick-zero envelope internally coherent so the only
     # unsupported content is the ordinary-contact topology itself.
@@ -751,9 +726,7 @@ def test_versionless_production_restore_rejects_nonempty_ordinary_contacts() -> 
         for track in tracks.values():
             track["state"]["last_update_time"] = 0.0
     pristine_detection_rng = copy.deepcopy(
-        valid_versionless["context"]["rng"]["streams"][
-            ModuleId.DETECTION.value
-        ],
+        valid_versionless["context"]["rng"]["streams"][ModuleId.DETECTION.value],
     )
     legacy_fow["rng_state"] = copy.deepcopy(pristine_detection_rng)
     legacy_fow["intel_fusion"]["rng_state"] = copy.deepcopy(
@@ -770,16 +743,23 @@ def test_versionless_production_restore_rejects_nonempty_ordinary_contacts() -> 
         max_ticks=10,
         strict_mode=True,
     )
-    before = target.engine.checkpoint()
-    with pytest.raises(
-        ValueError,
-        match=(
-            "Versionless fog-of-war state cannot restore nonempty ordinary "
-            "contacts"
+    target.engine.set_state(invalid_versionless)
+    restored_fow = target.context.fog_of_war.get_state()
+    assert restored_fow["world_views"] == legacy_fow["world_views"]
+    assert restored_fow["intel_fusion"] == legacy_fow["intel_fusion"]
+    assert restored_fow["current_detection_witnesses"] == {}
+    assert restored_fow["scan_counts"] == {}
+    assert restored_fow["cadence"] == {
+        "schema_version": 2,
+        "committed_ordinal": 0,
+        "complete_from_tick_zero": False,
+        "attachments": [],
+        "native_phase_assignments": [],
+        "native_phase_assignments_sha256": (
+            "07e1061e806688ca185002ae49978fb2aafe1a5bc9971afc52b6ecb88949a4b2"
         ),
-    ):
-        target.engine.set_state(invalid_versionless)
-    assert target.engine.checkpoint() == before
+    }
+    _assert_fusion_aliases(target)
 
     lost_history = copy.deepcopy(legacy_fow)
     for view in lost_history["world_views"].values():
@@ -788,16 +768,39 @@ def test_versionless_production_restore_rejects_nonempty_ordinary_contacts() -> 
         for track in tracks.values():
             track["status"] = 4
     invalid_versionless["context"]["fog_of_war"] = lost_history
-    before_observation = _fow_binding_observation(target)
-    with pytest.raises(ValueError, match="Versionless.*FOW track history"):
-        target.engine.set_state(invalid_versionless)
-    assert _fow_binding_observation(target) == before_observation
+    target.engine.set_state(invalid_versionless)
+    restored_lost_history = target.context.fog_of_war.get_state()
+    assert all(not view["contacts"] for view in restored_lost_history["world_views"].values())
+    assert restored_lost_history["intel_fusion"] == lost_history["intel_fusion"]
+    assert restored_lost_history["scan_counts"] == {}
+    assert restored_lost_history["cadence"]["complete_from_tick_zero"] is False
 
-    target.engine.restore(pristine_checkpoint)
-    assert target.engine.checkpoint() == pristine_checkpoint
+    incomplete_checkpoint = target.engine.checkpoint()
+    with pytest.raises(ValueError, match="completeness cannot be promoted"):
+        target.engine.restore(pristine_checkpoint)
+    assert target.engine.checkpoint() == incomplete_checkpoint
 
-    target.engine.set_state(valid_versionless)
-    assert target.engine.checkpoint() == pristine_checkpoint
+    modern_target = prepared.build(
+        TARGETING_VARIANT_ID,
+        seed=116_120,
+        max_ticks=10,
+        strict_mode=True,
+    )
+    modern_target.engine.restore(pristine_checkpoint)
+    assert modern_target.engine.checkpoint() == pristine_checkpoint
+
+    pristine_legacy_target = prepared.build(
+        TARGETING_VARIANT_ID,
+        seed=116_121,
+        max_ticks=10,
+        strict_mode=True,
+    )
+    pristine_legacy_target.engine.set_state(valid_versionless)
+    migrated_pristine = pristine_legacy_target.engine.get_state()
+    assert migrated_pristine["checkpoint_version"] == 118
+    assert migrated_pristine["context"]["fog_of_war"]["cadence"]["complete_from_tick_zero"] is False
+    assert migrated_pristine["context"]["rng"]["indexed_fow"]["complete_from_tick_zero"] is False
+    assert migrated_pristine["battle"]["performance_execution_receipt"]["complete_from_tick_zero"] is False
 
 
 def _assert_fow_targeting_consumers(session: RuntimeSession) -> None:
@@ -818,17 +821,11 @@ def _assert_fow_targeting_consumers(session: RuntimeSession) -> None:
     assert revalidation is not None
     assert revalidation.target_id == decision.target_id
     assert revalidation.revalidation_passed
-    movement_state = session.context.movement_diagnostics.get_state()[
-        "units"
-    ][decision.shooter_id]
+    movement_state = session.context.movement_diagnostics.get_state()["units"][decision.shooter_id]
     observation = movement_state["recent_observations"][-1]
     assert observation["reason"] == "ENGINE_WEAPON_STANDOFF"
-    assert observation["targeting_decision"]["contact_source"] == (
-        "FOW_OBSERVER_WITNESS"
-    )
-    assert observation["targeting_decision"]["target_id"] == (
-        decision.target_id
-    )
+    assert observation["targeting_decision"]["contact_source"] == ("FOW_OBSERVER_WITNESS")
+    assert observation["targeting_decision"]["target_id"] == (decision.target_id)
 
 
 def test_restored_fow_decision_drives_movement_and_engagement_consumers() -> None:
@@ -923,10 +920,7 @@ def test_contacts_continue_through_coast_loss_redetection_and_events() -> None:
     # reporting-side attachment.
     coasting_state = control.engine.get_state()
     assert all(
-        not witnesses
-        for witnesses in coasting_state["context"]["fog_of_war"][
-            "current_detection_witnesses"
-        ].values()
+        not witnesses for witnesses in coasting_state["context"]["fog_of_war"]["current_detection_witnesses"].values()
     )
     coasting_checkpoint = control.engine.checkpoint()
     coasting_target = _build_probe(prepared, seed=316_325)
@@ -1106,14 +1100,10 @@ def test_stale_consumable_fow_interval_requires_its_retained_witness() -> None:
     assert decisions
     assert all(decision.consumable for decision in decisions)
     valid = source.engine.get_state()
-    assert valid["context"]["fog_of_war"][
-        "current_detection_witnesses"
-    ]
+    assert valid["context"]["fog_of_war"]["current_detection_witnesses"]
 
     invalid = copy.deepcopy(valid)
-    invalid["context"]["fog_of_war"][
-        "current_detection_witnesses"
-    ] = {}
+    invalid["context"]["fog_of_war"]["current_detection_witnesses"] = {}
     target = prepared.build(
         TARGETING_VARIANT_ID,
         seed=999,
@@ -1307,39 +1297,27 @@ def _blank_reporting_sensor(state: dict[str, Any]) -> None:
 
 def _unmapped_reporting_sensor(state: dict[str, Any]) -> None:
     _blue_contact(state)["reporting_sensors"] = ["missing-catalog-sensor"]
-    _fow_state(state)["current_detection_witnesses"]["blue"][0][
-        "sensor_id"
-    ] = "missing-catalog-sensor"
+    _fow_state(state)["current_detection_witnesses"]["blue"][0]["sensor_id"] = "missing-catalog-sensor"
 
 
 def _witness_wrong_side_observer(state: dict[str, Any]) -> None:
-    _fow_state(state)["current_detection_witnesses"]["blue"][0][
-        "observer_unit_id"
-    ] = "green_iron_duke_bb_0000"
+    _fow_state(state)["current_detection_witnesses"]["blue"][0]["observer_unit_id"] = "green_iron_duke_bb_0000"
 
 
 def _witness_source_index_mismatch(state: dict[str, Any]) -> None:
-    _fow_state(state)["current_detection_witnesses"]["blue"][0][
-        "source_equipment_index"
-    ] = 9_999
+    _fow_state(state)["current_detection_witnesses"]["blue"][0]["source_equipment_index"] = 9_999
 
 
 def _witness_modeled_role_mismatch(state: dict[str, Any]) -> None:
-    _fow_state(state)["current_detection_witnesses"]["blue"][0][
-        "modeled_role"
-    ] = "night_vision"
+    _fow_state(state)["current_detection_witnesses"]["blue"][0]["modeled_role"] = "night_vision"
 
 
 def _witness_sensor_type_mismatch(state: dict[str, Any]) -> None:
-    _fow_state(state)["current_detection_witnesses"]["blue"][0][
-        "sensor_type"
-    ] = "RADAR"
+    _fow_state(state)["current_detection_witnesses"]["blue"][0]["sensor_type"] = "RADAR"
 
 
 def _witness_targeting_range_mismatch(state: dict[str, Any]) -> None:
-    _fow_state(state)["current_detection_witnesses"]["blue"][0][
-        "range_m"
-    ] += 0.25
+    _fow_state(state)["current_detection_witnesses"]["blue"][0]["range_m"] += 0.25
 
 
 def _fow_rng_mismatch(state: dict[str, Any]) -> None:
@@ -1431,7 +1409,7 @@ _PRODUCTION_ERROR_MATCHES = {
     "unowned_live_fusion_track": "no ordinary contact owner",
     "ahead_fow_counter": "counter disagrees with issued tracks",
     "witness_contact_epoch_mismatch": "witness chronology",
-    "old_checkpoint_version": "expected 116",
+    "old_checkpoint_version": "expected 118",
 }
 
 
@@ -1443,9 +1421,7 @@ def test_current_context_rejects_missing_stateful_owner_atomically(
     prepared = _prepare(_phase116_config(), variant_id=VARIANT_ID)
     target = _build_probe(prepared, seed=616_116)
     if owner_name == "detection_engine":
-        target.context.detection_engine._scan_counts[
-            ("target-only-observer", "target-only-contact")
-        ] = 7
+        target.context.detection_engine._scan_counts[("target-only-observer", "target-only-contact")] = 7
         error_match = "missing DetectionEngine state"
     else:
         target.context.fog_of_war.get_world_view("blue")
@@ -1491,7 +1467,7 @@ def test_production_contact_corruptions_reject_atomically_with_valid_retry() -> 
     prepared = _prepare(_phase116_config(), variant_id=VARIANT_ID)
     source, checkpoint = _prime_checkpoint(prepared)
     valid_state = source.engine.get_state()
-    assert valid_state["checkpoint_version"] == 116
+    assert valid_state["checkpoint_version"] == 118
     target = _build_probe(prepared, seed=416_116)
 
     for corruption_name, corrupt in PRODUCTION_CORRUPTIONS:

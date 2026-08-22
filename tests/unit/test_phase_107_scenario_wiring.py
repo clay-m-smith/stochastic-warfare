@@ -774,7 +774,7 @@ def test_current_checkpoint_has_one_canonical_morale_owner() -> None:
     state = _json_checkpoint(engine)
     context_state = state["context"]
 
-    assert state["checkpoint_version"] == 116
+    assert state["checkpoint_version"] == 118
     assert "morale_states" not in context_state
     assert "morale_machine" not in context_state
     assert set(context_state["morale_runtime"]) == {
@@ -1202,7 +1202,10 @@ def test_versionless_current_morale_envelope_rejects_atomically() -> None:
     versionless_current.pop("checkpoint_version")
     before = _json_checkpoint(target)
 
-    with pytest.raises(ValueError, match="format-115 tactical_targeting state"):
+    with pytest.raises(
+        ValueError,
+        match="Versionless battle state cannot contain a Phase 118 performance receipt",
+    ):
         target.set_state(versionless_current)
 
     assert _json_checkpoint(target) == before

@@ -18,6 +18,13 @@ from pathlib import Path
 
 import yaml
 
+from stochastic_warfare.simulation.calibration import CalibrationSchema
+from stochastic_warfare.simulation.performance_flags import (
+    EffectivePerformanceFlags,
+    PERFORMANCE_FLAG_ORDER,
+    PERFORMANCE_FLAG_REGISTRY,
+)
+
 _ROOT = Path(__file__).resolve().parents[2]
 _SRC = _ROOT / "stochastic_warfare"
 _DATA = _ROOT / "data"
@@ -80,18 +87,26 @@ class TestCalibrationIntegrity:
         assert keys == {"advance_speed"}, f"_DEAD_KEYS changed: {keys}"
 
     def test_flag_keys_valid_in_scenarios(self):
-        """All enable_* keys in scenario YAMLs are valid CalibrationSchema fields."""
-        valid = set(_get_enable_flags())
-        invalid: list[str] = []
+        """Scenario flags pass the typed calibration and Phase 118 boundaries."""
+        assert tuple(PERFORMANCE_FLAG_REGISTRY) == PERFORMANCE_FLAG_ORDER
         for path in sorted(_DATA.rglob("scenario.yaml")):
             if "test_campaign" in path.parent.name:
                 continue
             with open(path) as f:
                 data = yaml.safe_load(f)
-            for key in (data.get("calibration_overrides") or {}):
-                if key.startswith("enable_") and key not in valid:
-                    invalid.append(f"{path.parent.name}: {key}")
-        assert not invalid, f"Invalid enable_* keys: {invalid}"
+            calibration = CalibrationSchema.model_validate(
+                data.get("calibration_overrides") or {},
+                strict=True,
+            )
+            effective = EffectivePerformanceFlags(
+                **{
+                    flag: getattr(calibration, flag)
+                    for flag in PERFORMANCE_FLAG_ORDER
+                },
+            )
+            assert tuple(name for name, _ in effective.canonical_items()) == (
+                PERFORMANCE_FLAG_ORDER
+            )
 
     def test_no_flags_on_pure_historical_eras(self):
         """Ancient/Medieval/Napoleonic/WW1 era scenarios have no enable_* flags."""
@@ -220,12 +235,27 @@ class TestBlockSevenTestQuality:
 class TestCrossDocAudit:
     """Phase 67c: cross-document consistency checks."""
 
-    def test_phase_count_consistent(self):
-        """'67 phases' appears in CLAUDE.md and README.md."""
-        claude_md = (_ROOT / "CLAUDE.md").read_text(encoding="utf-8")
+    def test_readme_is_durable_run_guide(self):
+        """README keeps durable run guidance and omits volatile phase status."""
         readme = (_ROOT / "README.md").read_text(encoding="utf-8")
-        assert "67" in claude_md, "Phase 67 not mentioned in CLAUDE.md"
-        assert "67" in readme, "Phase 67 not mentioned in README.md"
+        for required_text in (
+            "SimulationRuntimeFactory",
+            "uv run --no-sync",
+            "uvicorn api.main:app",
+            "npm --prefix frontend run dev",
+            "docker build",
+            "validate_test_partitions.py",
+            "mkdocs build --strict",
+        ):
+            assert required_text in readme
+        for volatile_text in (
+            "![Phase]",
+            "REM-",
+            "IN_PROGRESS",
+            "## Development Phases",
+            "## Current Status",
+        ):
+            assert volatile_text not in readme
 
     def test_block7_complete_in_roadmap(self):
         """Phase 67 marked Complete in development-phases-block7.md."""

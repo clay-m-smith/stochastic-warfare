@@ -17,6 +17,7 @@ from api.schemas import (
     HealthLiveResponse,
     HealthReadyResponse,
     HealthResponse,
+    PerformanceFlagSupportInfo,
     SchoolInfo,
     WeaponDetail,
     WeaponSummary,
@@ -111,6 +112,34 @@ async def list_terrain_types() -> list[str]:
     from stochastic_warfare.terrain.classification import LandCover
 
     return [member.name for member in LandCover]
+
+
+@router.get(
+    "/meta/performance-flags",
+    response_model=list[PerformanceFlagSupportInfo],
+)
+async def list_performance_flags() -> list[PerformanceFlagSupportInfo]:
+    """Return the canonical Phase 118 support disposition in registry order."""
+    from stochastic_warfare.simulation.performance_flags import (
+        PERFORMANCE_FLAG_REGISTRY,
+        PERFORMANCE_SEMANTIC_EVIDENCE_MANIFEST_SHA256,
+        PERFORMANCE_SEMANTIC_EVIDENCE_PLAN_ID,
+    )
+
+    return [
+        PerformanceFlagSupportInfo(
+            flag=definition.flag,
+            classification=definition.classification,
+            support_disposition=definition.support_disposition,
+            required_meaning=definition.required_meaning,
+            evidence_plan_id=PERFORMANCE_SEMANTIC_EVIDENCE_PLAN_ID,
+            evidence_manifest_artifact_sha256=(
+                PERFORMANCE_SEMANTIC_EVIDENCE_MANIFEST_SHA256
+            ),
+            retained_shard_status=definition.retained_v7_verdict,
+        )
+        for definition in PERFORMANCE_FLAG_REGISTRY.values()
+    ]
 
 
 # ---------------------------------------------------------------------------

@@ -181,7 +181,15 @@ class TestSubmitReport:
 class TestSubmitSensorDetection:
     def test_creates_track(self) -> None:
         engine = _engine()
-        det = DetectionResult(True, 0.9, 20.0, 5000.0, SensorType.RADAR, 45.0)
+        det = DetectionResult(
+            True,
+            0.9,
+            20.0,
+            5000.0,
+            SensorType.RADAR,
+            45.0,
+            horizontal_range_m=5000.0,
+        )
         ci = ContactInfo(ContactLevel.DETECTED, None, None, None, 0.5)
         tid = engine.submit_sensor_detection(
             "blue", det, ci, Position(0.0, 0.0, 0.0),
@@ -206,6 +214,7 @@ class TestSubmitSensorDetection:
             0.0,
             SensorType.VISUAL,
             0.0,
+            horizontal_range_m=0.0,
         )
         contact = ContactInfo(ContactLevel.DETECTED, None, None, None, 0.5)
         observer = Position(100.0, 200.0, 0.0)

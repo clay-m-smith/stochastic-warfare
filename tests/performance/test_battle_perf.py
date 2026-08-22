@@ -78,13 +78,25 @@ def _run_scenario(scenario_name: str, seed: int = 42) -> dict:
 # ---------------------------------------------------------------------------
 
 
+@pytest.fixture(scope="module")
+def golan_replay_pair() -> tuple[dict, dict]:
+    """Run the two independent samples needed for measurement and replay."""
+    return (
+        _run_scenario("golan_heights", seed=42),
+        _run_scenario("golan_heights", seed=42),
+    )
+
+
 @pytest.mark.slow
 class TestGolanMeasurement:
     """Golan production workload measurement and semantic replay."""
 
-    def test_golan_heights_measurement_only(self) -> None:
+    def test_golan_heights_measurement_only(
+        self,
+        golan_replay_pair: tuple[dict, dict],
+    ) -> None:
         """Expose one positive raw duration without a regression decision."""
-        result = _run_scenario("golan_heights")
+        result = golan_replay_pair[0]
         assert math.isfinite(result["elapsed_s"])
         assert result["elapsed_s"] > 0.0
         assert result["winner"] == "blue"
@@ -92,10 +104,12 @@ class TestGolanMeasurement:
         assert result["duration_s"] == 64_800.0
         assert result["ticks"] == 6480
 
-    def test_determinism_golan_heights(self) -> None:
+    def test_determinism_golan_heights(
+        self,
+        golan_replay_pair: tuple[dict, dict],
+    ) -> None:
         """Two identical-seed runs produce same winner + casualties."""
-        r1 = _run_scenario("golan_heights", seed=42)
-        r2 = _run_scenario("golan_heights", seed=42)
+        r1, r2 = golan_replay_pair
         assert _semantic_result(r1) == _semantic_result(r2)
 
 

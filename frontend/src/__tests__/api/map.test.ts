@@ -1,8 +1,12 @@
 import { describe, it, expect, expectTypeOf, vi, beforeEach } from 'vitest'
 import { fetchRunTerrain, fetchRunFrames } from '../../api/map'
 import type {
+  ContactSource,
+  PrivilegedObserverTrackSupportEvidence,
+  PrivilegedTargetingDecision,
   PrivilegedFramesData,
   RunFramesParams,
+  SideFowTargetingDecision,
   SideFowFramesData,
   TargetingDisposition,
 } from '../../types/map'
@@ -50,6 +54,47 @@ describe('fetchRunFrames', () => {
     const shooterInactive: TargetingDisposition = 'SHOOTER_INACTIVE'
 
     expect(shooterInactive).toBe('SHOOTER_INACTIVE')
+  })
+
+  it('types privileged observer support without widening the side-safe wire', () => {
+    const source: ContactSource = 'FOW_OBSERVER_TRACK_SUPPORT'
+    const support: PrivilegedObserverTrackSupportEvidence = {
+      identity: {
+        reporting_side: 'blue',
+        observer_unit_id: 'blue-1',
+        source_equipment_index: 3,
+        sensor_id: 'fire-control-radar',
+        modeled_role: 'fire_control_radar',
+        target_id: 'red-1',
+      },
+      fusion_track_id: 'fow-track-0042',
+      sensor_type: 'RADAR',
+      observation_ordinal: 1,
+      observation_time_s: 25,
+      native_period: 2,
+      native_phase_residue: 1,
+      native_due_ordinal: 3,
+      position_m: [0, 500],
+      velocity_mps: [0, 0],
+      covariance: [
+        [100, 0, 0, 0],
+        [0, 100, 0, 0],
+        [0, 0, 100, 0],
+        [0, 0, 0, 100],
+      ],
+      projection_ordinal: 2,
+      projection_time_s: 30,
+    }
+    type SideCarriesExactSupport =
+      'observer_track_support' extends keyof SideFowTargetingDecision
+        ? true
+        : false
+
+    expect(source).toBe('FOW_OBSERVER_TRACK_SUPPORT')
+    expect(support.identity.modeled_role).toBe('fire_control_radar')
+    expectTypeOf<PrivilegedTargetingDecision['observer_track_support']>()
+      .toEqualTypeOf<PrivilegedObserverTrackSupportEvidence | null>()
+    expectTypeOf<SideCarriesExactSupport>().toEqualTypeOf<false>()
   })
 
   it('fetches frames from /api/runs/:id/frames', async () => {

@@ -59,9 +59,7 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
             continue
         ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
         structural_node_ids.update(
-            entry["node_id"]
-            for entry in ledger["entries"]
-            if entry["classification"] == "structural_only"
+            entry["node_id"] for entry in ledger["entries"] if entry["classification"] == "structural_only"
         )
 
     for item in items:
@@ -167,11 +165,7 @@ def bind_test_era_runtime(
         source.model_dump_json(),
     )
     config = getattr(context, "config", None)
-    if (
-        config is not None
-        and hasattr(config, "date")
-        and hasattr(config, "duration_hours")
-    ):
+    if config is not None and hasattr(config, "date") and hasattr(config, "duration_hours"):
         object.__setattr__(
             context,
             "_era_execution_horizon_identity_json",
@@ -184,51 +178,50 @@ def bind_test_era_runtime(
     if not callable(
         getattr(type(context), "validate_era_runtime_bindings", None),
     ):
+
         def validate_era_runtime_bindings() -> None:
             current = context.era_runtime_contract
-            if (
-                not isinstance(current, EraRuntimeContract)
-                or current != contract
-            ):
+            if not isinstance(current, EraRuntimeContract) or current != contract:
                 raise RuntimeError("Test context era runtime binding changed")
 
-        context.validate_era_runtime_bindings = (
-            validate_era_runtime_bindings
-        )
+        context.validate_era_runtime_bindings = validate_era_runtime_bindings
     return context
 
 
 def make_versionless_legacy_morale_checkpoint(
     checkpoint: dict,
 ) -> dict:
-    """Convert format 116 into the bounded pre-113 morale envelope."""
+    """Convert format 118 into the bounded pre-113 morale envelope."""
     legacy = copy.deepcopy(checkpoint)
-    assert legacy.pop("checkpoint_version") == 116
+    assert legacy.pop("checkpoint_version") == 118
     context = legacy["context"]
+    context["rng"].pop("indexed_fow")
     context.pop("targeting_default_visibility_m")
     context.pop("tactical_targeting")
     context.pop("era_runtime_contract")
     fog_state = context.get("fog_of_war")
     if fog_state is not None:
         assert fog_state.pop("current_detection_witnesses") == {}
+        assert fog_state.pop("observer_track_supports") == []
+        assert fog_state.pop("scan_counts") == {}
+        fog_state.pop("cadence")
+    battle_state = legacy.get("battle")
+    if battle_state is not None:
+        battle_state.pop("performance_execution_receipt")
+        battle_state.pop("fow_observer_unit_ids")
     runtime_state = context.pop("morale_runtime")
     assert runtime_state["suspended_archives"] == {}
     active_records = runtime_state["active_records"]
     # Checkpoints serialize RNG stream identities by their stable schema value.
     morale_rng_state = copy.deepcopy(context["rng"]["streams"]["morale"])
-    context["morale_states"] = {
-        unit_id: record["current_state"]
-        for unit_id, record in active_records.items()
-    }
+    context["morale_states"] = {unit_id: record["current_state"] for unit_id, record in active_records.items()}
     context["morale_machine"] = {
         "unit_states": {
             unit_id: {
                 "current_state": record["current_state"],
                 "transition_cooldown_s": 0.0,
                 "last_transition_time": (
-                    -1e9
-                    if record["last_transition_time_s"] is None
-                    else record["last_transition_time_s"]
+                    -1e9 if record["last_transition_time_s"] is None else record["last_transition_time_s"]
                 ),
             }
             for unit_id, record in active_records.items()

@@ -9,6 +9,9 @@ import pytest
 from stochastic_warfare.simulation.targeting_exposure import (
     TargetingExposureScope,
 )
+from stochastic_warfare.simulation.tactical_targeting import (
+    targeting_decision_to_state,
+)
 from stochastic_warfare.tools.replay import extract_replay_frames
 
 
@@ -90,6 +93,7 @@ def _side_snapshot() -> dict[str, object]:
         "side_fow_available": True,
         "side_fow_associations": {
             "blue": {"red-1": "fow-track-0042"},
+            "red": {},
         },
         "side_fow": {
             "blue": {
@@ -150,6 +154,14 @@ def _side_snapshot() -> dict[str, object]:
                     }
                 ],
             },
+            "red": {
+                "scope": "SIDE_FOW",
+                "viewer_side": "red",
+                "units": [red],
+                "tracks": [],
+                "targeting": [],
+                "targeting_outcomes": [],
+            },
         },
     }
 
@@ -173,6 +185,18 @@ def test_replay_uses_precomputed_side_units_and_opaque_tracks() -> None:
     assert frame.engagements == []
 
 
+def test_privileged_replay_migrates_and_reemits_pre118_witness_shape() -> None:
+    frame = extract_replay_frames(
+        [_side_snapshot()],
+        scope=TargetingExposureScope.PRIVILEGED_ENGINE,
+    )[0]
+
+    assert frame.targeting[0].observer_track_support is None
+    assert targeting_decision_to_state(frame.targeting[0])[
+        "observer_track_support"
+    ] is None
+
+
 def test_side_replay_rejects_payload_viewer_mismatched_to_requested_key() -> None:
     snapshot = _side_snapshot()
     blue_view = snapshot["side_fow"]["blue"]
@@ -181,7 +205,6 @@ def test_side_replay_rejects_payload_viewer_mismatched_to_requested_key() -> Non
     blue_view["tracks"][0]["reporting_side"] = "red"
     blue_view["targeting"] = []
     blue_view["targeting_outcomes"] = []
-    snapshot["units"] = [snapshot["units"][0]]
 
     with pytest.raises(ValueError, match="viewer side disagrees with requested side"):
         extract_replay_frames(
@@ -212,7 +235,7 @@ def test_side_replay_rejects_same_side_track_rebinding() -> None:
         )
 
 
-def test_replay_marks_legacy_frames_privileged_and_refuses_side_derivation() -> None:
+def test_replay_rejects_ambiguous_empty_unversioned_frame() -> None:
     legacy = {
         "tick": 1,
         "units": [
@@ -231,14 +254,15 @@ def test_replay_marks_legacy_frames_privileged_and_refuses_side_derivation() -> 
         ],
     }
 
-    privileged = extract_replay_frames([legacy])
-    assert privileged[0].scope is TargetingExposureScope.PRIVILEGED_ENGINE
-    assert {unit.unit_id for unit in privileged[0].units} == {
-        "blue-1",
-        "red-1",
-    }
-
-    with pytest.raises(ValueError, match="explicitly privileged-only"):
+    with pytest.raises(
+        ValueError,
+        match="unversioned empty targeting exposure is unsupported",
+    ):
+        extract_replay_frames([legacy])
+    with pytest.raises(
+        ValueError,
+        match="unversioned empty targeting exposure is unsupported",
+    ):
         extract_replay_frames(
             [legacy],
             scope=TargetingExposureScope.SIDE_FOW,

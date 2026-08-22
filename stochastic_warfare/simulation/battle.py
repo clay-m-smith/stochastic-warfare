@@ -11,10 +11,11 @@ from __future__ import annotations
 import copy
 import math
 from collections.abc import Callable, Collection, Iterable, Mapping
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta
 from enum import IntEnum
+from types import MappingProxyType
 from typing import Any
 
 import numpy as np
@@ -36,13 +37,39 @@ from stochastic_warfare.combat.unconventional import (
     UnsupportedGuerrillaBlendError,
 )
 from stochastic_warfare.core.events import EventBus
+from stochastic_warfare.core.clock import normalize_clock_duration_seconds
+from stochastic_warfare.core.indexed_rng import (
+    FOWIndexedAllocation,
+    FOWIndexedCommitPlan,
+)
 from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.types import Domain, ModuleId, Position
 from stochastic_warfare.entities.base import Unit, UnitStatus
 from stochastic_warfare.entities.events import UnitDestroyedEvent, UnitDisabledEvent
 from stochastic_warfare.entities.unit_classes.ground import GroundUnitType
 from stochastic_warfare.detection.estimation import TrackStatus
+from stochastic_warfare.detection.cadence import (
+    TacticalAttachmentIdentity,
+    TacticalCadenceAttachment,
+    TacticalCadenceCommitPlan,
+    TacticalCadencePlan,
+    TacticalObserverIdentity,
+)
+from stochastic_warfare.detection.fog_of_war import (
+    FogOfWarCommitPlan,
+    FogOfWarCycleOutcome,
+    FogOfWarLodTier,
+    FogOfWarUpdateTransaction,
+    FogOfWarWitnessClearPlan,
+    ObserverDetectionWitness,
+    SideWorldView,
+)
 from stochastic_warfare.detection.identification import ContactLevel
+from stochastic_warfare.detection.observer_support import (
+    ObserverTrackSupportEvidence,
+    ObserverTrackSupportState,
+    observer_track_support_role_is_supported,
+)
 from stochastic_warfare.detection.sensors import SensorType
 from stochastic_warfare.morale.runtime import MoraleRuntime, MoraleTransitionCause
 from stochastic_warfare.morale.state import MoraleState, _MORALE_EFFECTS
@@ -76,6 +103,23 @@ from stochastic_warfare.simulation.movement_diagnostics import (
     MovementTargetingMembership,
     resolve_movement_diagnostics_owner,
 )
+from stochastic_warfare.simulation.performance_flags import (
+    DispatchReceipt,
+    EffectivePerformanceFlags,
+    FogOfWarCycleReceipt,
+    LODEngagementReceipt,
+    LODMoraleReceipt,
+    LODMovementReceipt,
+    LODReceipt,
+    PerformanceExecutionReceipt,
+    PerformanceReceiptAccumulator,
+    PerformanceReceiptDelta,
+    PerformanceReceiptRestorePlan,
+    PerformanceReceiptTransaction,
+    SoAReceipt,
+    resolve_cross_bound_runtime_performance_flags,
+    resolve_supported_runtime_performance_flags,
+)
 from stochastic_warfare.simulation.tactical_targeting import (
     ContactSource,
     DEFAULT_TARGETING_VISIBILITY_M,
@@ -86,6 +130,7 @@ from stochastic_warfare.simulation.tactical_targeting import (
     TacticalEngagementRevalidationOutcome,
     TacticalTargetingDecision,
     TacticalTargetingPicture,
+    TacticalTargetingPublicationPlan,
     TacticalTargetingRuntime,
     TargetingInterval,
     TargetingDisposition,
@@ -108,13 +153,13 @@ class _ObserverModifiers(NamedTuple):
     queries when an attacker engages multiple targets.
     """
 
-    mopp_detection: float = 1.0   # MOPP detection factor [0-1]
-    mopp_fov_mod: float = 1.0     # MOPP FOV reduction [0-1]
-    mopp_fatigue: float = 1.0     # MOPP fatigue divisor [1.0+]
+    mopp_detection: float = 1.0  # MOPP detection factor [0-1]
+    mopp_fov_mod: float = 1.0  # MOPP FOV reduction [0-1]
+    mopp_fatigue: float = 1.0  # MOPP fatigue divisor [1.0+]
     mopp_reload_mod: float = 1.0  # MOPP reload multiplier [1.0+]
-    mopp_level: int = 0           # MOPP level [0-4]
+    mopp_level: int = 0  # MOPP level [0-4]
     altitude_factor: float = 1.0  # Altitude sickness [0.5-1.0]
-    readiness: float = 1.0        # Equipment readiness [0-1]
+    readiness: float = 1.0  # Equipment readiness [0-1]
 
 
 _DEFAULT_OBS_MODS = _ObserverModifiers()
@@ -127,6 +172,7 @@ class _TargetingContact:
     source: ContactSource
     range_m: float
     sensor_attachment: SensorAttachment | None
+    observer_track_support: ObserverTrackSupportEvidence | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -192,6 +238,90 @@ _TargetingEnvironment = tuple[
 ]
 
 
+@dataclass(frozen=True, slots=True)
+class _TargetingObservationSnapshot:
+    """Exact not-yet-published observation evidence used by targeting."""
+
+    fog_of_war_enabled: bool
+    concealment_scores: Mapping[str, float]
+    world_views: Mapping[str, SideWorldView]
+    witnesses: Mapping[str, tuple[ObserverDetectionWitness, ...]]
+    observer_track_supports: Mapping[
+        str,
+        tuple[ObserverTrackSupportState, ...],
+    ]
+    cadence_ordinal: int | None
+    support_process_noise_std_mps2: float | None
+    support_max_position_uncertainty_m: float | None
+
+    def __post_init__(self) -> None:
+        if any(
+            type(supports) is not tuple or any(type(support) is not ObserverTrackSupportState for support in supports)
+            for supports in self.observer_track_supports.values()
+        ):
+            raise ValueError(
+                "targeting observer track supports must be immutable typed tuples",
+            )
+        if self.fog_of_war_enabled:
+            if (
+                type(self.cadence_ordinal) is not int
+                or self.cadence_ordinal < 0
+                or isinstance(self.support_process_noise_std_mps2, bool)
+                or not isinstance(
+                    self.support_process_noise_std_mps2,
+                    (int, float),
+                )
+                or not math.isfinite(
+                    float(self.support_process_noise_std_mps2),
+                )
+                or self.support_process_noise_std_mps2 < 0.0
+                or isinstance(
+                    self.support_max_position_uncertainty_m,
+                    bool,
+                )
+                or not isinstance(
+                    self.support_max_position_uncertainty_m,
+                    (int, float),
+                )
+                or not math.isfinite(
+                    float(self.support_max_position_uncertainty_m),
+                )
+                or self.support_max_position_uncertainty_m <= 0.0
+            ):
+                raise ValueError(
+                    "FOW targeting support policy must be finite and current",
+                )
+        elif (
+            self.observer_track_supports
+            or self.cadence_ordinal is not None
+            or self.support_process_noise_std_mps2 is not None
+            or self.support_max_position_uncertainty_m is not None
+        ):
+            raise ValueError(
+                "disabled FOW targeting cannot carry observer track support",
+            )
+        object.__setattr__(
+            self,
+            "concealment_scores",
+            MappingProxyType(dict(self.concealment_scores)),
+        )
+        object.__setattr__(
+            self,
+            "world_views",
+            MappingProxyType(dict(self.world_views)),
+        )
+        object.__setattr__(
+            self,
+            "witnesses",
+            MappingProxyType(dict(self.witnesses)),
+        )
+        object.__setattr__(
+            self,
+            "observer_track_supports",
+            MappingProxyType(dict(self.observer_track_supports)),
+        )
+
+
 @dataclass(slots=True)
 class _TargetingIntervalEvidenceCache:
     """Derived evidence shared by immutable pre-movement pictures.
@@ -213,8 +343,17 @@ class _TargetingIntervalEvidenceCache:
     observer_range_modifier_by_observer: dict[str, float] = field(
         default_factory=dict,
     )
+    observation: _TargetingObservationSnapshot | None = None
+
 
 logger = get_logger(__name__)
+
+
+def _clock_duration_microseconds(value: object, *, field_name: str) -> int:
+    """Return one validated simulation-clock duration as exact microseconds."""
+    normalized = normalize_clock_duration_seconds(value, field_name=field_name)
+    duration = timedelta(seconds=normalized)
+    return (duration.days * 86_400 + duration.seconds) * 1_000_000 + duration.microseconds
 
 
 def _resolve_cal_flat(ctx: Any) -> dict[str, Any]:
@@ -240,27 +379,118 @@ def _resolve_cal_flat(ctx: Any) -> dict[str, Any]:
 
 
 class UnitLodTier(IntEnum):
-    """Level-of-detail tier for per-unit update frequency (Phase 85)."""
+    """Level-of-detail tier for per-unit sensing cadence (Phase 85)."""
 
-    ACTIVE = 0    # Full processing every tick
-    NEARBY = 1    # Reduced: full update every N ticks
-    DISTANT = 2   # Minimal: full update every M ticks
+    ACTIVE = 0  # Native sensing cadence
+    NEARBY = 1  # Reduced sensing cadence
+    DISTANT = 2  # Minimal sensing cadence
+
+
+@dataclass(frozen=True, slots=True)
+class _LODClassificationPlan:
+    """Immutable Battle-owned LOD publication for one observation interval."""
+
+    lod_tiers: Mapping[str, int]
+    pending_tiers: Mapping[str, int]
+    pending_counts: Mapping[str, int]
+    receipt: LODReceipt
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "lod_tiers",
+            MappingProxyType(dict(self.lod_tiers)),
+        )
+        object.__setattr__(
+            self,
+            "pending_tiers",
+            MappingProxyType(dict(self.pending_tiers)),
+        )
+        object.__setattr__(
+            self,
+            "pending_counts",
+            MappingProxyType(dict(self.pending_counts)),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class _StagedFOWObservation:
+    """All owner-bound FOW plans retained until outer publication."""
+
+    reporting_sides: tuple[str, ...]
+    indexed_allocation: FOWIndexedAllocation
+    indexed_commit: FOWIndexedCommitPlan
+    cadence_plan: TacticalCadencePlan
+    cadence_commit: TacticalCadenceCommitPlan
+    transaction: FogOfWarUpdateTransaction
+    fow_commit: FogOfWarCommitPlan
+    outcomes: tuple[FogOfWarCycleOutcome, ...]
+    signature_cache: Mapping[str, Any]
+    observer_unit_ids: frozenset[str]
+    witness_promoted_unit_ids: frozenset[str]
+    expected_indexed_entries: int
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "signature_cache",
+            MappingProxyType(dict(self.signature_cache)),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class _BattleObservationPublication:
+    """Fully materialized Battle-owned state for one observation interval."""
+
+    signature_cache: dict[str, Any]
+    concealment_scores: dict[str, float]
+    lod_tiers: dict[str, int]
+    lod_pending_tiers: dict[str, int]
+    lod_pending_counts: dict[str, int]
+    lod_promoted: set[str]
+    fow_observer_unit_ids: frozenset[str]
+    _prior_signature_cache: dict[str, Any]
+    _prior_concealment_scores: dict[str, float]
+    _prior_lod_tiers: dict[str, int]
+    _prior_lod_pending_tiers: dict[str, int]
+    _prior_lod_pending_counts: dict[str, int]
+    _prior_lod_promoted: set[str]
+    _prior_fow_observer_unit_ids: frozenset[str]
+
+
+@dataclass(frozen=True, slots=True)
+class _TacticalObservationPlan:
+    """Single typed publication boundary spanning every observation owner."""
+
+    engine_tick: int
+    targeting_owner: TacticalTargetingRuntime
+    targeting_publication: TacticalTargetingPublicationPlan
+    battle_publication: _BattleObservationPublication
+    fow_owner: Any | None
+    rng_owner: Any | None
+    fow: _StagedFOWObservation | None
+    witness_clear: FogOfWarWitnessClearPlan | None
+    _owner_token: object
 
 
 # Sensor types that bypass visual weather degradation
-_WEATHER_BYPASS_TYPES: frozenset[SensorType] = frozenset({
-    SensorType.THERMAL,
-    SensorType.RADAR,
-    SensorType.ESM,
-})
+_WEATHER_BYPASS_TYPES: frozenset[SensorType] = frozenset(
+    {
+        SensorType.THERMAL,
+        SensorType.RADAR,
+        SensorType.ESM,
+    }
+)
 
-_FOW_DIRECT_VISUAL_ROLES: frozenset[SensorModeledRole] = frozenset({
-    SensorModeledRole.VISUAL_OBSERVATION,
-    SensorModeledRole.NIGHT_VISION,
-    SensorModeledRole.NAVAL_LOOKOUT,
-    SensorModeledRole.AIRBORNE_LOW_LIGHT_OBSERVATION,
-    SensorModeledRole.INDIVIDUAL_NIGHT_VISION,
-})
+_FOW_DIRECT_VISUAL_ROLES: frozenset[SensorModeledRole] = frozenset(
+    {
+        SensorModeledRole.VISUAL_OBSERVATION,
+        SensorModeledRole.NIGHT_VISION,
+        SensorModeledRole.NAVAL_LOOKOUT,
+        SensorModeledRole.AIRBORNE_LOW_LIGHT_OBSERVATION,
+        SensorModeledRole.INDIVIDUAL_NIGHT_VISION,
+    }
+)
 
 # Phase 44a: weather Pk modifier lookup (by WeatherState int value)
 _WEATHER_PK_TABLE: dict[int, float] = {
@@ -310,10 +540,7 @@ def _weapon_supports_domain(definition: Any, domain: Domain) -> bool:
         return domain.name in effective_domains()
     authored_domains = getattr(definition, "target_domains", None)
     if authored_domains:
-        return domain.name in {
-            str(authored_domain).upper()
-            for authored_domain in authored_domains
-        }
+        return domain.name in {str(authored_domain).upper() for authored_domain in authored_domains}
     return True
 
 
@@ -327,12 +554,9 @@ def _max_weapon_range_for_domain(
         weapon = getattr(attachment, "weapon", None)
         if weapon is None:
             weapon = attachment[0]
-        if (
-            target_domain is not None
-            and not _weapon_supports_domain(
-                weapon.definition,
-                target_domain,
-            )
+        if target_domain is not None and not _weapon_supports_domain(
+            weapon.definition,
+            target_domain,
         ):
             continue
         maximum = max(maximum, weapon.definition.max_range_m)
@@ -341,9 +565,12 @@ def _max_weapon_range_for_domain(
 
 # Phase 52b: cross-wind accuracy penalty
 def _compute_crosswind_penalty(
-    wind_e: float, wind_n: float,
-    att_e: float, att_n: float,
-    tgt_e: float, tgt_n: float,
+    wind_e: float,
+    wind_n: float,
+    att_e: float,
+    att_n: float,
+    tgt_e: float,
+    tgt_n: float,
     scale: float = 0.03,
 ) -> float:
     """Return crew skill multiplier due to crosswind [0.7–1.0].
@@ -376,12 +603,7 @@ def _compute_wind_chill(temperature_c: float, wind_speed_mps: float) -> float:
     v_kmh = wind_speed_mps * 3.6
     if temperature_c > 10.0 or v_kmh < 4.8:
         return temperature_c
-    return (
-        13.12
-        + 0.6215 * temperature_c
-        - 11.37 * (v_kmh ** 0.16)
-        + 0.3965 * temperature_c * (v_kmh ** 0.16)
-    )
+    return 13.12 + 0.6215 * temperature_c - 11.37 * (v_kmh**0.16) + 0.3965 * temperature_c * (v_kmh**0.16)
 
 
 # Phase 63a: unit signature lookup for FOW detection
@@ -405,7 +627,7 @@ def _compute_rain_detection_factor(precip_rate_mmhr: float, range_km: float) -> 
     """
     if precip_rate_mmhr <= 0 or range_km <= 0:
         return 1.0
-    specific_atten = 0.01 * (precip_rate_mmhr ** 1.28)
+    specific_atten = 0.01 * (precip_rate_mmhr**1.28)
     total_atten_db = specific_atten * range_km
     return max(0.1, 10.0 ** (-total_atten_db / 40.0))
 
@@ -436,18 +658,18 @@ _POSTURE_SPEED_MULT: dict[int, float] = {
 
 # Phase 51b: naval posture → movement speed multiplier
 _NAVAL_POSTURE_SPEED_MULT: dict[int, float] = {
-    0: 0.0,   # ANCHORED
-    1: 1.0,   # UNDERWAY
-    2: 1.2,   # TRANSIT
-    3: 0.9,   # BATTLE_STATIONS
+    0: 0.0,  # ANCHORED
+    1: 1.0,  # UNDERWAY
+    2: 1.2,  # TRANSIT
+    3: 0.9,  # BATTLE_STATIONS
 }
 
 # Phase 56e: naval posture → target detection range multiplier
 _NAVAL_POSTURE_DETECT_MULT: dict[int, float] = {
-    0: 1.2,   # ANCHORED — easier to detect (stationary, no wake)
-    1: 1.0,   # UNDERWAY — baseline
+    0: 1.2,  # ANCHORED — easier to detect (stationary, no wake)
+    1: 1.0,  # UNDERWAY — baseline
     2: 0.85,  # TRANSIT — reduced signature at speed
-    3: 1.3,   # BATTLE_STATIONS — active radar/emissions increase signature
+    3: 1.3,  # BATTLE_STATIONS — active radar/emissions increase signature
 }
 
 
@@ -476,23 +698,27 @@ def _validated_targeting_sensor_range_m(
         ) from exc
     if resolved > upper_bound + 1e-9:
         raise RuntimeError(
-            "Targeting sensor resolver exceeded the total environmental "
-            "range bound",
+            "Targeting sensor resolver exceeded the total environmental range bound",
         )
     return resolved
 
+
 # Phase 43b: weapon categories that route to indirect fire
 _INDIRECT_FIRE_CATEGORIES = frozenset({"HOWITZER", "MORTAR", "ARTILLERY"})
-_INDIRECT_FIRE_ROLES = frozenset({
-    WeaponModeledRole.FIELD_ARTILLERY,
-    WeaponModeledRole.MORTAR_FIRE,
-    WeaponModeledRole.ROCKET_ARTILLERY,
-})
+_INDIRECT_FIRE_ROLES = frozenset(
+    {
+        WeaponModeledRole.FIELD_ARTILLERY,
+        WeaponModeledRole.MORTAR_FIRE,
+        WeaponModeledRole.ROCKET_ARTILLERY,
+    }
+)
 _AIR_DELIVERY_ROLES = frozenset({WeaponModeledRole.BOMB_DELIVERY})
-_NAVAL_SUBSURFACE_ROLES = frozenset({
-    WeaponModeledRole.TORPEDO,
-    WeaponModeledRole.ANTI_SUBMARINE,
-})
+_NAVAL_SUBSURFACE_ROLES = frozenset(
+    {
+        WeaponModeledRole.TORPEDO,
+        WeaponModeledRole.ANTI_SUBMARINE,
+    }
+)
 
 
 # ---------------------------------------------------------------------------
@@ -586,37 +812,45 @@ def _apply_aggregate_casualties(
     if casualties <= 0:
         return
 
-    _wpn_id = getattr(
-        getattr(wpn_inst, "definition", None), "weapon_id", "aggregate",
-    ) if wpn_inst else "aggregate"
+    _wpn_id = (
+        getattr(
+            getattr(wpn_inst, "definition", None),
+            "weapon_id",
+            "aggregate",
+        )
+        if wpn_inst
+        else "aggregate"
+    )
 
     # Publish engagement + damage events for aggregate models
     if event_bus is not None and attacker is not None:
         from stochastic_warfare.combat.events import DamageEvent, EngagementEvent
 
-        event_bus.publish(EngagementEvent(
-            timestamp=datetime.min,
-            source=ModuleId.COMBAT,
-            attacker_id=attacker.entity_id,
-            target_id=target.entity_id,
-            weapon_id=_wpn_id,
-            ammo_type="aggregate",
-            result="hit",
-        ))
-        event_bus.publish(DamageEvent(
-            timestamp=datetime.min,
-            source=ModuleId.COMBAT,
-            target_id=target.entity_id,
-            damage_amount=float(casualties),
-            damage_type="aggregate_casualties",
-            location="personnel",
-        ))
+        event_bus.publish(
+            EngagementEvent(
+                timestamp=datetime.min,
+                source=ModuleId.COMBAT,
+                attacker_id=attacker.entity_id,
+                target_id=target.entity_id,
+                weapon_id=_wpn_id,
+                ammo_type="aggregate",
+                result="hit",
+            )
+        )
+        event_bus.publish(
+            DamageEvent(
+                timestamp=datetime.min,
+                source=ModuleId.COMBAT,
+                target_id=target.entity_id,
+                damage_amount=float(casualties),
+                damage_type="aggregate_casualties",
+                location="personnel",
+            )
+        )
 
     total = max(1, len(target.personnel))
     if cumulative_tracker is not None:
-        cumulative_tracker[target.entity_id] = (
-            cumulative_tracker.get(target.entity_id, 0) + casualties
-        )
+        cumulative_tracker[target.entity_id] = cumulative_tracker.get(target.entity_id, 0) + casualties
         fraction = cumulative_tracker[target.entity_id] / total
     else:
         fraction = casualties / total
@@ -643,37 +877,47 @@ def _apply_melee_result(
     """Convert melee result to damage entries for both sides."""
     if (mr.defender_routed or mr.attacker_routed) and morale_runtime is None:
         raise RuntimeError("Melee rout requires a morale runtime")
-    _wpn_id = getattr(
-        getattr(wpn_inst, "definition", None), "weapon_id", "melee",
-    ) if wpn_inst else "melee"
+    _wpn_id = (
+        getattr(
+            getattr(wpn_inst, "definition", None),
+            "weapon_id",
+            "melee",
+        )
+        if wpn_inst
+        else "melee"
+    )
 
     # Publish engagement event for melee
     if event_bus is not None and (mr.defender_casualties > 0 or mr.attacker_casualties > 0):
         from stochastic_warfare.combat.events import EngagementEvent
 
-        event_bus.publish(EngagementEvent(
-            timestamp=timestamp,
-            source=ModuleId.COMBAT,
-            attacker_id=attacker.entity_id,
-            target_id=defender.entity_id,
-            weapon_id=_wpn_id,
-            ammo_type="melee",
-            result="hit",
-        ))
+        event_bus.publish(
+            EngagementEvent(
+                timestamp=timestamp,
+                source=ModuleId.COMBAT,
+                attacker_id=attacker.entity_id,
+                target_id=defender.entity_id,
+                weapon_id=_wpn_id,
+                ammo_type="melee",
+                result="hit",
+            )
+        )
 
     # Defender casualties
     if mr.defender_casualties > 0:
         if event_bus is not None:
             from stochastic_warfare.combat.events import DamageEvent
 
-            event_bus.publish(DamageEvent(
-                timestamp=timestamp,
-                source=ModuleId.COMBAT,
-                target_id=defender.entity_id,
-                damage_amount=float(mr.defender_casualties),
-                damage_type="melee_casualties",
-                location="personnel",
-            ))
+            event_bus.publish(
+                DamageEvent(
+                    timestamp=timestamp,
+                    source=ModuleId.COMBAT,
+                    target_id=defender.entity_id,
+                    damage_amount=float(mr.defender_casualties),
+                    damage_type="melee_casualties",
+                    location="personnel",
+                )
+            )
         def_total = max(1, len(defender.personnel))
         frac = mr.defender_casualties / def_total
         if frac >= destruction_threshold:
@@ -685,14 +929,16 @@ def _apply_melee_result(
         if event_bus is not None:
             from stochastic_warfare.combat.events import DamageEvent
 
-            event_bus.publish(DamageEvent(
-                timestamp=timestamp,
-                source=ModuleId.COMBAT,
-                target_id=attacker.entity_id,
-                damage_amount=float(mr.attacker_casualties),
-                damage_type="melee_casualties",
-                location="personnel",
-            ))
+            event_bus.publish(
+                DamageEvent(
+                    timestamp=timestamp,
+                    source=ModuleId.COMBAT,
+                    target_id=attacker.entity_id,
+                    damage_amount=float(mr.attacker_casualties),
+                    damage_type="melee_casualties",
+                    location="personnel",
+                )
+            )
         att_total = max(1, len(attacker.personnel))
         frac = mr.attacker_casualties / att_total
         if frac >= destruction_threshold:
@@ -739,19 +985,13 @@ def _consume_routed_ammunition(
     selection always supplies the exact selected definition.
     """
     requested = max(1, int(quantity))
-    if (
-        not isinstance(ammo_def, AmmoDefinition)
-        or not isinstance(wpn_inst, WeaponInstance)
-    ):
+    if not isinstance(ammo_def, AmmoDefinition) or not isinstance(wpn_inst, WeaponInstance):
         return requested
 
     ammo_id = ammo_def.ammo_id
-    if (
-        current_time_s is not None
-        and not wpn_inst.can_fire_timed(
-            current_time_s,
-            cooldown_multiplier=cooldown_multiplier,
-        )
+    if current_time_s is not None and not wpn_inst.can_fire_timed(
+        current_time_s,
+        cooldown_multiplier=cooldown_multiplier,
     ):
         return 0
     available = wpn_inst.ammo_state.available(ammo_id)
@@ -765,13 +1005,15 @@ def _consume_routed_ammunition(
     if event_bus is not None and timestamp is not None:
         from stochastic_warfare.combat.events import AmmoExpendedEvent
 
-        event_bus.publish(AmmoExpendedEvent(
-            timestamp=timestamp,
-            source=ModuleId.COMBAT,
-            unit_id=attacker.entity_id,
-            ammo_type=ammo_id,
-            quantity=consumed,
-        ))
+        event_bus.publish(
+            AmmoExpendedEvent(
+                timestamp=timestamp,
+                source=ModuleId.COMBAT,
+                unit_id=attacker.entity_id,
+                ammo_type=ammo_id,
+                quantity=consumed,
+            )
+        )
     return consumed
 
 
@@ -785,10 +1027,7 @@ def _routed_shot_fired(
         # Preserve legacy direct fixtures that predate runtime attachments.
         # ScenarioLoader production contexts always use WeaponInstance.
         return True
-    return (
-        wpn_inst.ammo_state.available(ammo_id)
-        < ammunition_before
-    )
+    return wpn_inst.ammo_state.available(ammo_id) < ammunition_before
 
 
 def _routed_ammunition_ready(
@@ -797,18 +1036,9 @@ def _routed_ammunition_ready(
     current_time_s: float | None,
 ) -> bool:
     """Preflight a routed production round without mutating its magazine."""
-    if (
-        not isinstance(ammo_def, AmmoDefinition)
-        or not isinstance(wpn_inst, WeaponInstance)
-    ):
+    if not isinstance(ammo_def, AmmoDefinition) or not isinstance(wpn_inst, WeaponInstance):
         return True
-    return (
-        (
-            current_time_s is None
-            or wpn_inst.can_fire_timed(current_time_s)
-        )
-        and wpn_inst.can_fire(ammo_def.ammo_id)
-    )
+    return (current_time_s is None or wpn_inst.can_fire_timed(current_time_s)) and wpn_inst.can_fire(ammo_def.ammo_id)
 
 
 def _route_naval_engagement(
@@ -845,10 +1075,7 @@ def _route_naval_engagement(
     wpn_cat_str = wpn_inst.definition.category.upper()
 
     # Torpedo
-    if (
-        modeled_role is WeaponModeledRole.TORPEDO
-        or (modeled_role is None and wpn_cat_str == "TORPEDO_TUBE")
-    ):
+    if modeled_role is WeaponModeledRole.TORPEDO or (modeled_role is None and wpn_cat_str == "TORPEDO_TUBE"):
         engine = getattr(ctx, "naval_subsurface_engine", None)
         if engine is not None:
             torpedoes_fired = _consume_routed_ammunition(
@@ -889,24 +1116,16 @@ def _route_naval_engagement(
             if hits:
                 cumulative_damage = min(
                     1.0,
-                    sum(
-                        float(getattr(result, "damage_fraction", 0.0))
-                        for result in hits
-                    ),
+                    sum(float(getattr(result, "damage_fraction", 0.0)) for result in hits),
                 )
-                status = (
-                    UnitStatus.DESTROYED
-                    if cumulative_damage >= 0.6
-                    else UnitStatus.DISABLED
-                )
+                status = UnitStatus.DESTROYED if cumulative_damage >= 0.6 else UnitStatus.DISABLED
                 return True, status
             return True, None  # handled, miss
 
     # Phase 51a: depth charge routing
-    if (
-        modeled_role is WeaponModeledRole.ANTI_SUBMARINE
-        and wpn_cat_str == "DEPTH_CHARGE"
-    ) or (modeled_role is None and wpn_cat_str == "DEPTH_CHARGE"):
+    if (modeled_role is WeaponModeledRole.ANTI_SUBMARINE and wpn_cat_str == "DEPTH_CHARGE") or (
+        modeled_role is None and wpn_cat_str == "DEPTH_CHARGE"
+    ):
         engine = getattr(ctx, "naval_subsurface_engine", None)
         if engine is not None:
             charges_dropped = _consume_routed_ammunition(
@@ -939,11 +1158,7 @@ def _route_naval_engagement(
                 ammo_def,
             )
             if result.hits > 0:
-                status = (
-                    UnitStatus.DESTROYED
-                    if result.damage_fraction >= 0.6
-                    else UnitStatus.DISABLED
-                )
+                status = UnitStatus.DESTROYED if result.damage_fraction >= 0.6 else UnitStatus.DISABLED
                 return True, status
             return True, None  # handled, miss
 
@@ -958,15 +1173,18 @@ def _route_naval_engagement(
     ):
         subsurface = getattr(ctx, "naval_subsurface_engine", None)
         if subsurface is not None:
-            if _consume_routed_ammunition(
-                ctx,
-                attacker,
-                wpn_inst,
-                ammo_def,
-                quantity=1,
-                timestamp=timestamp,
-                current_time_s=current_time_s,
-            ) == 0:
+            if (
+                _consume_routed_ammunition(
+                    ctx,
+                    attacker,
+                    wpn_inst,
+                    ammo_def,
+                    quantity=1,
+                    timestamp=timestamp,
+                    current_time_s=current_time_s,
+                )
+                == 0
+            ):
                 return True, None
             result = subsurface.asroc_engagement(
                 ship_id=attacker.entity_id,
@@ -985,11 +1203,7 @@ def _route_naval_engagement(
                 ammo_def,
             )
             if result.torpedo_hit:
-                status = (
-                    UnitStatus.DESTROYED
-                    if result.damage_fraction >= 0.6
-                    else UnitStatus.DISABLED
-                )
+                status = UnitStatus.DESTROYED if result.damage_fraction >= 0.6 else UnitStatus.DISABLED
                 return True, status
             return True, None  # handled, miss
 
@@ -1011,11 +1225,7 @@ def _route_naval_engagement(
         if engine is not None:
             requested_missiles = aggregate_salvo_size
             if mag_cap > 0:
-                launched = (
-                    vls_launches.get(attacker.entity_id, 0)
-                    if vls_launches is not None
-                    else 0
-                )
+                launched = vls_launches.get(attacker.entity_id, 0) if vls_launches is not None else 0
                 requested_missiles = min(
                     requested_missiles,
                     max(0, mag_cap - launched),
@@ -1052,10 +1262,7 @@ def _route_naval_engagement(
                 ammo_def,
             )
             if salvo.hits > 0:
-                status = (
-                    UnitStatus.DESTROYED if salvo.hits >= 2
-                    else UnitStatus.DISABLED
-                )
+                status = UnitStatus.DESTROYED if salvo.hits >= 2 else UnitStatus.DISABLED
                 return True, status
             return True, None  # handled, all intercepted
 
@@ -1064,8 +1271,7 @@ def _route_naval_engagement(
         # Phase 100 gap 1 fix: shore bombardment (naval gun vs ground)
         # routes to naval_gunfire_support_engine when available; falls
         # through to ship-to-ship gunnery for naval targets.
-        if (target.domain == Domain.GROUND
-                and attacker.domain in (Domain.NAVAL, Domain.SUBMARINE)):
+        if target.domain == Domain.GROUND and attacker.domain in (Domain.NAVAL, Domain.SUBMARINE):
             ngse = getattr(ctx, "naval_gunfire_support_engine", None)
             if ngse is not None:
                 rounds_fired = _consume_routed_ammunition(
@@ -1170,9 +1376,11 @@ def _route_naval_engagement(
 
     # Shore bombardment for non-NAVAL_GUN platforms (e.g., CANNON
     # category battleship secondaries treated as NGFS).
-    if (wpn_cat_str == "CANNON"
-            and target.domain == Domain.GROUND
-            and attacker.domain in (Domain.NAVAL, Domain.SUBMARINE)):
+    if (
+        wpn_cat_str == "CANNON"
+        and target.domain == Domain.GROUND
+        and attacker.domain in (Domain.NAVAL, Domain.SUBMARINE)
+    ):
         ngse = getattr(ctx, "naval_gunfire_support_engine", None)
         if ngse is not None:
             rounds_fired = _consume_routed_ammunition(
@@ -1233,11 +1441,7 @@ def _publish_naval_engagement_event(
         return
     from stochastic_warfare.combat.events import EngagementEvent
 
-    ammo_type = (
-        ammo_def.ammo_id
-        if isinstance(ammo_def, AmmoDefinition)
-        else ""
-    )
+    ammo_type = ammo_def.ammo_id if isinstance(ammo_def, AmmoDefinition) else ""
     if not ammo_type:
         try:
             compat = getattr(wpn_inst.definition, "compatible_ammo", []) or []
@@ -1246,15 +1450,17 @@ def _publish_naval_engagement_event(
         except Exception:
             pass
 
-    event_bus.publish(EngagementEvent(
-        timestamp=timestamp or datetime.min,
-        source=ModuleId.COMBAT,
-        attacker_id=attacker.entity_id,
-        target_id=target.entity_id,
-        weapon_id=wpn_inst.definition.weapon_id,
-        ammo_type=ammo_type,
-        result="hit" if hit else "miss",
-    ))
+    event_bus.publish(
+        EngagementEvent(
+            timestamp=timestamp or datetime.min,
+            source=ModuleId.COMBAT,
+            attacker_id=attacker.entity_id,
+            target_id=target.entity_id,
+            weapon_id=wpn_inst.definition.weapon_id,
+            ammo_type=ammo_type,
+            result="hit" if hit else "miss",
+        )
+    )
 
 
 def _publish_air_engagement_event(
@@ -1286,11 +1492,8 @@ def _publish_air_engagement_event(
     if event_bus is None:
         return
     from stochastic_warfare.combat.events import EngagementEvent
-    ammo_type = (
-        ammo_def.ammo_id
-        if isinstance(ammo_def, AmmoDefinition)
-        else ""
-    )
+
+    ammo_type = ammo_def.ammo_id if isinstance(ammo_def, AmmoDefinition) else ""
     if not ammo_type:
         try:
             compat = getattr(wpn_inst.definition, "compatible_ammo", []) or []
@@ -1298,15 +1501,17 @@ def _publish_air_engagement_event(
                 ammo_type = str(compat[0])
         except Exception:
             pass
-    event_bus.publish(EngagementEvent(
-        timestamp=timestamp or datetime.min,
-        source=ModuleId.COMBAT,
-        attacker_id=attacker.entity_id,
-        target_id=target.entity_id,
-        weapon_id=wpn_inst.definition.weapon_id,
-        ammo_type=ammo_type,
-        result="hit" if hit else "miss",
-    ))
+    event_bus.publish(
+        EngagementEvent(
+            timestamp=timestamp or datetime.min,
+            source=ModuleId.COMBAT,
+            attacker_id=attacker.entity_id,
+            target_id=target.entity_id,
+            weapon_id=wpn_inst.definition.weapon_id,
+            ammo_type=ammo_type,
+            result="hit" if hit else "miss",
+        )
+    )
 
 
 def _route_air_engagement(
@@ -1370,7 +1575,7 @@ def _route_air_engagement(
                     _air_c = _cond.air()
                     _icing = getattr(_air_c, "icing_risk", 0.0)
                     if _icing > 0.5:
-                        missile_pk *= (1.0 - cal_flat.get("icing_maneuver_penalty", 0.15))
+                        missile_pk *= 1.0 - cal_flat.get("icing_maneuver_penalty", 0.15)
                 except Exception:
                     pass
 
@@ -1404,6 +1609,7 @@ def _route_air_engagement(
 
             # Altitude energy advantage
             from stochastic_warfare.combat.air_combat import EnergyState
+
             _atk_alt = getattr(attacker.position, "altitude", 0.0)
             _atk_spd = getattr(attacker, "speed", 250.0)
             _def_alt = getattr(target.position, "altitude", 0.0)
@@ -1411,15 +1617,18 @@ def _route_air_engagement(
             _atk_energy = EnergyState(altitude_m=_atk_alt, speed_mps=_atk_spd)
             _def_energy = EnergyState(altitude_m=_def_alt, speed_mps=_def_spd)
 
-        if _consume_routed_ammunition(
-            ctx,
-            attacker,
-            wpn_inst,
-            ammo_def,
-            quantity=1,
-            timestamp=timestamp,
-            current_time_s=current_time_s,
-        ) == 0:
+        if (
+            _consume_routed_ammunition(
+                ctx,
+                attacker,
+                wpn_inst,
+                ammo_def,
+                quantity=1,
+                timestamp=timestamp,
+                current_time_s=current_time_s,
+            )
+            == 0
+        ):
             return True, None
         result = engine.resolve_air_engagement(
             attacker_id=attacker.entity_id,
@@ -1446,15 +1655,13 @@ def _route_air_engagement(
         return True, None
 
     # Air-to-ground (CAS): route bombs and missiles through air-ground engine
-    if atk_air and not tgt_air and (
-        modeled_role is WeaponModeledRole.BOMB_DELIVERY
-        or (
-            modeled_role is None
-            and wpn_cat in ("BOMB", "GUIDED_BOMB", "MISSILE_LAUNCHER")
-        )
-        or (
-            modeled_role is not WeaponModeledRole.BOMB_DELIVERY
-            and wpn_cat == "MISSILE_LAUNCHER"
+    if (
+        atk_air
+        and not tgt_air
+        and (
+            modeled_role is WeaponModeledRole.BOMB_DELIVERY
+            or (modeled_role is None and wpn_cat in ("BOMB", "GUIDED_BOMB", "MISSILE_LAUNCHER"))
+            or (modeled_role is not WeaponModeledRole.BOMB_DELIVERY and wpn_cat == "MISSILE_LAUNCHER")
         )
     ):
         # Phase 62d: cloud ceiling gate — unguided weapons need visual delivery
@@ -1464,10 +1671,12 @@ def _route_air_engagement(
                 try:
                     _ceiling = getattr(_wx_cas.current, "cloud_ceiling", 10000.0)
                     _guidance = getattr(
-                        getattr(wpn_inst, "definition", None), "guidance_type",
+                        getattr(wpn_inst, "definition", None),
+                        "guidance_type",
                         getattr(
                             # check ammo guidance if weapon has no guidance_type
-                            getattr(wpn_inst, "current_ammo", None), "guidance_type",
+                            getattr(wpn_inst, "current_ammo", None),
+                            "guidance_type",
                             "none",
                         ),
                     )
@@ -1476,7 +1685,8 @@ def _route_air_engagement(
                     if _ceiling < cal_flat.get("cloud_ceiling_min_attack_m", 500.0) and not _is_pgm:
                         logger.debug(
                             "CAS aborted: cloud ceiling %.0fm < %.0fm (unguided)",
-                            _ceiling, cal_flat.get("cloud_ceiling_min_attack_m", 500.0),
+                            _ceiling,
+                            cal_flat.get("cloud_ceiling_min_attack_m", 500.0),
                         )
                         return True, None  # mission aborted
                 except Exception:
@@ -1501,7 +1711,7 @@ def _route_air_engagement(
                     _air_cas = _cond_cas.air()
                     _icing_cas = getattr(_air_cas, "icing_risk", 0.0)
                     if _icing_cas > 0.5:
-                        weapon_pk *= (1.0 - cal_flat.get("icing_power_penalty", 0.10))
+                        weapon_pk *= 1.0 - cal_flat.get("icing_power_penalty", 0.10)
                 except Exception:
                     pass
             _wx_cas2 = getattr(ctx, "weather_engine", None)
@@ -1523,15 +1733,18 @@ def _route_air_engagement(
         )
         if result.aborted:
             return True, None
-        if _consume_routed_ammunition(
-            ctx,
-            attacker,
-            wpn_inst,
-            ammo_def,
-            quantity=1,
-            timestamp=timestamp,
-            current_time_s=current_time_s,
-        ) == 0:
+        if (
+            _consume_routed_ammunition(
+                ctx,
+                attacker,
+                wpn_inst,
+                ammo_def,
+                quantity=1,
+                timestamp=timestamp,
+                current_time_s=current_time_s,
+            )
+            == 0
+        ):
             return True, None
         _publish_air_engagement_event(
             ctx,
@@ -1547,22 +1760,31 @@ def _route_air_engagement(
         return True, None
 
     # Ground/Naval-to-air (air defense): route SAM/missile weapons
-    if tgt_air and not atk_air and wpn_cat in (
-        "MISSILE_LAUNCHER", "SAM",
+    if (
+        tgt_air
+        and not atk_air
+        and wpn_cat
+        in (
+            "MISSILE_LAUNCHER",
+            "SAM",
+        )
     ):
         engine = getattr(ctx, "air_defense_engine", None)
         if engine is None:
             return False, None
         interceptor_pk = min(1.0, 0.4 * force_ratio_mod)
-        if _consume_routed_ammunition(
-            ctx,
-            attacker,
-            wpn_inst,
-            ammo_def,
-            quantity=1,
-            timestamp=timestamp,
-            current_time_s=current_time_s,
-        ) == 0:
+        if (
+            _consume_routed_ammunition(
+                ctx,
+                attacker,
+                wpn_inst,
+                ammo_def,
+                quantity=1,
+                timestamp=timestamp,
+                current_time_s=current_time_s,
+            )
+            == 0
+        ):
             return True, None
         result = engine.fire_interceptor(
             ad_id=attacker.entity_id,
@@ -1620,18 +1842,11 @@ def _apply_indirect_fire_result(
         )
         for impact in fm_result.impacts
     ]
-    prior_hits = (
-        cumulative_tracker.get(target.entity_id, 0)
-        if cumulative_tracker is not None
-        else 0
-    )
+    prior_hits = cumulative_tracker.get(target.entity_id, 0) if cumulative_tracker is not None else 0
     assessment = assess_indirect_fire_impacts(
         assessment_impacts,
         target.position,
-        {
-            impact.ammo_id: lethal_radius_m
-            for impact in assessment_impacts
-        },
+        {impact.ammo_id: lethal_radius_m for impact in assessment_impacts},
         prior_near_impact_count=prior_hits,
         terrain_modifier=terrain_modifier,
         casualty_per_impact=casualty_per_hit,
@@ -1641,15 +1856,15 @@ def _apply_indirect_fire_result(
     if assessment.near_impact_count <= 0:
         return
     if cumulative_tracker is not None:
-        cumulative_tracker[target.entity_id] = (
-            assessment.cumulative_near_impact_count
-        )
+        cumulative_tracker[target.entity_id] = assessment.cumulative_near_impact_count
     if assessment.resulting_status is not None:
-        pending_damage.append((
-            target,
-            assessment.resulting_status,
-            weapon_id,
-        ))
+        pending_damage.append(
+            (
+                target,
+                assessment.resulting_status,
+                weapon_id,
+            )
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -1734,6 +1949,7 @@ def _should_hold_position(unit: Unit) -> bool:
     # Air defense units are always emplaced
     try:
         from stochastic_warfare.entities.unit_classes.air_defense import AirDefenseUnit
+
         if isinstance(unit, AirDefenseUnit):
             return True
     except ImportError:
@@ -1845,12 +2061,9 @@ def usable_weapon_standoff_range(
     weapons = getattr(ctx, "unit_weapons", {}).get(unit.entity_id, [])
     best_range = 0.0
     for wpn_inst, ammo_defs in weapons:
-        if (
-            target_domain is not None
-            and not _weapon_supports_domain(
-                wpn_inst.definition,
-                target_domain,
-            )
+        if target_domain is not None and not _weapon_supports_domain(
+            wpn_inst.definition,
+            target_domain,
         ):
             continue
         r = wpn_inst.definition.max_range_m
@@ -2001,6 +2214,8 @@ class BattleStatePlan:
     lod_pending_tiers: dict[str, int]
     lod_pending_counts: dict[str, int]
     lod_promoted: set[str]
+    fow_observer_unit_ids: frozenset[str]
+    performance_execution_receipt: PerformanceReceiptRestorePlan
 
 
 # ---------------------------------------------------------------------------
@@ -2029,15 +2244,30 @@ class BattleManager:
         *,
         movement_diagnostics: MovementDiagnostics | None = None,
         movement_committer: MovementCommitter | None = None,
+        effective_performance_flags: EffectivePerformanceFlags | None = None,
+        tactical_interval_seconds: float = 5.0,
     ) -> None:
+        flags = resolve_supported_runtime_performance_flags(
+            effective_performance_flags
+            if effective_performance_flags is not None
+            else EffectivePerformanceFlags(
+                enable_detection_culling=True,
+                enable_scan_scheduling=False,
+                enable_lod=False,
+                enable_soa=False,
+                enable_parallel_detection=False,
+            ),
+        )
+        tactical_interval_microseconds = _clock_duration_microseconds(
+            tactical_interval_seconds,
+            field_name="tactical_interval_seconds",
+        )
         self._bus = event_bus
         self._config = config or BattleConfig()
         self._movement_diagnostics = movement_diagnostics
         # This callable cannot be selected by scenario data.  It exists only
         # to prove that diagnostics detect a broken final position commit.
-        self._movement_committer = (
-            movement_committer or _default_movement_committer
-        )
+        self._movement_committer = movement_committer or _default_movement_committer
         self._battles: dict[str, BattleContext] = {}
         self._next_battle_id = 0
         # OBSERVE output is consumed by a later DECIDE phase and therefore is
@@ -2072,8 +2302,143 @@ class BattleManager:
         self._lod_pending_tiers: dict[str, int] = {}
         self._lod_pending_counts: dict[str, int] = {}
         self._lod_promoted: set[str] = set()
-        self._targeting_lod_tick: int | None = None
-        self._targeting_lod_full_update: frozenset[str] = frozenset()
+        self._fow_observer_unit_ids: frozenset[str] = frozenset()
+        self._performance_receipts = PerformanceReceiptAccumulator(
+            owner=self,
+            effective_flags=flags,
+            tactical_interval_microseconds=tactical_interval_microseconds,
+        )
+        self._performance_transaction: PerformanceReceiptTransaction | None = None
+        self._tactical_observation_owner_token = object()
+        self._active_tactical_observation_plan: _TacticalObservationPlan | None = None
+
+    # ── Performance execution evidence ─────────────────────────────
+
+    def begin_performance_interval(
+        self,
+        *,
+        dt_seconds: float,
+    ) -> PerformanceReceiptTransaction:
+        """Begin the sole production receipt transaction for one interval."""
+        interval_microseconds = _clock_duration_microseconds(
+            dt_seconds,
+            field_name="dt_seconds",
+        )
+        if interval_microseconds != self._performance_receipts.tactical_interval_microseconds:
+            raise ValueError(
+                "Performance-governed tactical interval disagrees with the bound runtime cadence",
+            )
+        transaction = self._performance_receipts.begin(self)
+        self._performance_transaction = transaction
+        try:
+            self._performance_receipts.stage(
+                self,
+                transaction,
+                PerformanceReceiptDelta(
+                    tactical_intervals=1,
+                    tactical_duration_microseconds=interval_microseconds,
+                ),
+            )
+        except BaseException as exc:
+            try:
+                self._performance_receipts.poison(
+                    self,
+                    transaction,
+                    reason=(f"initial performance receipt staging failed: {type(exc).__name__}"),
+                )
+            except BaseException:
+                pass
+            self._performance_transaction = None
+            raise
+        return transaction
+
+    def _stage_performance_delta(
+        self,
+        contribution: PerformanceReceiptDelta,
+    ) -> None:
+        """Stage observational work for the active engine transaction."""
+        transaction = self._performance_transaction
+        if transaction is None:
+            return
+        self._performance_receipts.stage(
+            self,
+            transaction,
+            contribution,
+        )
+
+    def stage_fow_cycle_receipt(
+        self,
+        receipt: FogOfWarCycleReceipt,
+    ) -> None:
+        """Stage one validated FOW side-cycle receipt."""
+        transaction = self._performance_transaction
+        if transaction is None:
+            return
+        self._performance_receipts.stage_fow_cycle(
+            self,
+            transaction,
+            receipt,
+        )
+
+    def commit_performance_interval(
+        self,
+        transaction: PerformanceReceiptTransaction,
+    ) -> PerformanceExecutionReceipt:
+        """Commit a fully reconciled all-battle interval receipt."""
+        if transaction is not self._performance_transaction:
+            raise RuntimeError("Performance receipt transaction is not active")
+        try:
+            receipt = self._performance_receipts.commit(self, transaction)
+        finally:
+            self._performance_transaction = None
+        return receipt
+
+    def poison_performance_interval(
+        self,
+        transaction: PerformanceReceiptTransaction,
+        *,
+        reason: str,
+    ) -> None:
+        """Permanently reject evidence after a later interval failure."""
+        if transaction is not self._performance_transaction:
+            raise RuntimeError("Performance receipt transaction is not active")
+        self._performance_receipts.poison(
+            self,
+            transaction,
+            reason=reason,
+        )
+        self._performance_transaction = None
+
+    def performance_execution_receipt(self) -> PerformanceExecutionReceipt:
+        """Return the immutable committed production execution receipt."""
+        return self._performance_receipts.receipt(self)
+
+    def validate_performance_runtime(self, ctx: Any) -> None:
+        """Cross-bind live calibration owners to the committed receipt flags."""
+        runtime_config = getattr(ctx, "config", None)
+        configured_calibration = getattr(
+            runtime_config,
+            "calibration_overrides",
+            None,
+        )
+        calibration = getattr(ctx, "calibration", None)
+        flat_calibration = _resolve_cal_flat(ctx)
+        effective_flags = resolve_cross_bound_runtime_performance_flags(
+            authored_configuration=(
+                configured_calibration
+                if configured_calibration is not None
+                else calibration if calibration is not None else flat_calibration
+            ),
+            typed_calibration=(
+                calibration if calibration is not None else flat_calibration
+            ),
+            flat_calibration=flat_calibration,
+        )
+        if effective_flags != self._performance_receipts.effective_flags:
+            raise RuntimeError(
+                "Live performance calibration diverged from the committed "
+                "performance receipt flags",
+            )
 
     # ── Engagement detection ────────────────────────────────────────
 
@@ -2094,7 +2459,7 @@ class BattleManager:
         new_battles: list[BattleContext] = []
 
         for i, side_a in enumerate(sides):
-            for side_b in sides[i + 1:]:
+            for side_b in sides[i + 1 :]:
                 active_a = [u for u in units_by_side[side_a] if u.status == UnitStatus.ACTIVE]
                 active_b = [u for u in units_by_side[side_b] if u.status == UnitStatus.ACTIVE]
                 if not active_a or not active_b:
@@ -2106,8 +2471,7 @@ class BattleManager:
                     # Check if these sides already have an active battle
                     pair = frozenset({side_a, side_b})
                     already_active = any(
-                        frozenset(b.involved_sides) == pair and b.active
-                        for b in self._battles.values()
+                        frozenset(b.involved_sides) == pair and b.active for b in self._battles.values()
                     )
                     if not already_active:
                         battle = BattleContext(
@@ -2122,12 +2486,163 @@ class BattleManager:
                         new_battles.append(battle)
                         logger.info(
                             "New battle detected: %s (%s vs %s), min distance %.0fm",
-                            battle.battle_id, side_a, side_b, min_dist,
+                            battle.battle_id,
+                            side_a,
+                            side_b,
+                            min_dist,
                         )
 
         return new_battles
 
     # ── Tactical tick ───────────────────────────────────────────────
+
+    def _stage_battle_observation_publication(
+        self,
+        *,
+        lod_plan: _LODClassificationPlan,
+        witness_promoted_unit_ids: frozenset[str],
+        signature_cache: Mapping[str, Any],
+        concealment_scores: Mapping[str, float],
+        observer_unit_ids: frozenset[str],
+    ) -> _BattleObservationPublication:
+        """Materialize every Battle-owned observation container before commit."""
+        promoted = self._validate_lod_publication(
+            lod_plan,
+            witness_promoted_unit_ids=witness_promoted_unit_ids,
+        )
+        lod_tiers = dict(lod_plan.lod_tiers)
+        pending_tiers = dict(lod_plan.pending_tiers)
+        pending_counts = dict(lod_plan.pending_counts)
+        for unit_id in promoted:
+            lod_tiers[unit_id] = UnitLodTier.ACTIVE
+            pending_tiers.pop(unit_id, None)
+            pending_counts.pop(unit_id, None)
+        next_concealment = dict(self._concealment_scores)
+        next_concealment.update(concealment_scores)
+        return _BattleObservationPublication(
+            signature_cache=dict(signature_cache),
+            concealment_scores=next_concealment,
+            lod_tiers=lod_tiers,
+            lod_pending_tiers=pending_tiers,
+            lod_pending_counts=pending_counts,
+            lod_promoted=set(),
+            fow_observer_unit_ids=observer_unit_ids,
+            _prior_signature_cache=dict(self._signature_cache),
+            _prior_concealment_scores=dict(self._concealment_scores),
+            _prior_lod_tiers=dict(self._lod_tiers),
+            _prior_lod_pending_tiers=dict(self._lod_pending_tiers),
+            _prior_lod_pending_counts=dict(self._lod_pending_counts),
+            _prior_lod_promoted=set(self._lod_promoted),
+            _prior_fow_observer_unit_ids=self._fow_observer_unit_ids,
+        )
+
+    def _validate_tactical_observation_plan(
+        self,
+        plan: _TacticalObservationPlan,
+    ) -> None:
+        """Run all fallible cross-owner checks before the first state swap."""
+        if type(plan) is not _TacticalObservationPlan:
+            raise TypeError("plan must be a _TacticalObservationPlan")
+        if (
+            plan._owner_token is not self._tactical_observation_owner_token
+            or self._active_tactical_observation_plan is not plan
+        ):
+            raise ValueError("tactical observation plan is foreign or stale")
+        publication = plan.battle_publication
+        if (
+            self._signature_cache != publication._prior_signature_cache
+            or self._concealment_scores != publication._prior_concealment_scores
+            or self._lod_tiers != publication._prior_lod_tiers
+            or self._lod_pending_tiers != publication._prior_lod_pending_tiers
+            or self._lod_pending_counts != publication._prior_lod_pending_counts
+            or self._lod_promoted != publication._prior_lod_promoted
+            or self._fow_observer_unit_ids != publication._prior_fow_observer_unit_ids
+        ):
+            raise RuntimeError(
+                "Battle observation state changed during isolated staging",
+            )
+        plan.targeting_owner.validate_publication_plan(
+            plan.targeting_publication,
+        )
+        if plan.fow is not None:
+            if plan.fow_owner is None or plan.rng_owner is None:
+                raise RuntimeError("FOW observation plan is missing an owner")
+            staged = plan.fow
+            plan.rng_owner.validate_prepared_fow_detection_interval_commit(
+                staged.indexed_commit,
+            )
+            plan.fow_owner.cadence.validate_prepared_interval_commit(
+                staged.cadence_commit,
+            )
+            plan.fow_owner.validate_prepared_update_commit(
+                staged.fow_commit,
+            )
+            record = staged.indexed_commit.record
+            if (
+                record.engine_tick != plan.engine_tick
+                or record.reporting_sides != staged.reporting_sides
+                or len(record.entries) != staged.expected_indexed_entries
+            ):
+                raise RuntimeError(
+                    "Prepared indexed FOW record disagrees with staged side receipts",
+                )
+        elif plan.witness_clear is not None:
+            if plan.fow_owner is None:
+                raise RuntimeError("Witness-clear plan is missing its owner")
+            plan.fow_owner.validate_prepared_witness_clear(
+                plan.witness_clear,
+            )
+
+    def _commit_prevalidated_tactical_observation(
+        self,
+        plan: _TacticalObservationPlan,
+    ) -> None:
+        """Publish every prevalidated owner using only bounded state swaps."""
+        if plan.fow is not None:
+            staged = plan.fow
+            plan.rng_owner._commit_prevalidated_fow_detection_interval(
+                staged.indexed_commit,
+            )
+            plan.fow_owner.cadence._commit_prevalidated_interval(
+                staged.cadence_commit,
+            )
+            plan.fow_owner._commit_prevalidated_update(staged.fow_commit)
+        elif plan.witness_clear is not None:
+            plan.fow_owner._commit_prevalidated_witness_clear(
+                plan.witness_clear,
+            )
+
+        publication = plan.battle_publication
+        self._signature_cache = publication.signature_cache
+        self._concealment_scores = publication.concealment_scores
+        self._lod_tiers = publication.lod_tiers
+        self._lod_pending_tiers = publication.lod_pending_tiers
+        self._lod_pending_counts = publication.lod_pending_counts
+        self._lod_promoted = publication.lod_promoted
+        self._fow_observer_unit_ids = publication.fow_observer_unit_ids
+        plan.targeting_owner._commit_prevalidated_publication(
+            plan.targeting_publication,
+        )
+        self._active_tactical_observation_plan = None
+
+    @staticmethod
+    def _abort_staged_fow_observation(ctx: Any, staged: _StagedFOWObservation) -> None:
+        """Poison all incomplete FOW evidence owners without hiding failures."""
+        fog_of_war = ctx.fog_of_war
+        try:
+            fog_of_war.abort_update_transaction(staged.transaction)
+        except BaseException:
+            pass
+        try:
+            fog_of_war.cadence.abort_interval(staged.cadence_plan)
+        except BaseException:
+            pass
+        try:
+            ctx.rng_manager.abort_fow_detection_interval(
+                staged.indexed_allocation,
+            )
+        except BaseException:
+            pass
 
     def prepare_tactical_interval(
         self,
@@ -2140,15 +2655,18 @@ class BattleManager:
         Production contexts own one ``TacticalTargetingRuntime``.  This
         boundary advances target concealment once, performs the sole FOW
         update for the complete active roster, and only then publishes the
-        immutable interval topology to that runtime.  Direct unit-test
-        fixtures without the runtime retain the legacy per-battle path in
-        :meth:`execute_tick`.
+        immutable interval topology to that runtime.  A context without that
+        owner may continue only with fog of war disabled; :meth:`execute_tick`
+        rejects enabled FOW before mutating battle state.
         """
+        self.validate_performance_runtime(ctx)
         targeting = getattr(ctx, "tactical_targeting", None)
-        canonical_battles = tuple(sorted(
-            (battle for battle in battles if battle.active),
-            key=lambda battle: battle.battle_id,
-        ))
+        canonical_battles = tuple(
+            sorted(
+                (battle for battle in battles if battle.active),
+                key=lambda battle: battle.battle_id,
+            )
+        )
         if targeting is None or not canonical_battles:
             return canonical_battles
 
@@ -2156,6 +2674,21 @@ class BattleManager:
         logical_time_s = float(ctx.clock.elapsed.total_seconds())
         engine_tick = int(ctx.clock.tick_count)
         enable_fow = bool(cal_flat.get("enable_fog_of_war", False))
+        reporting_side_count = len(ctx.units_by_side) if enable_fow else 0
+        parallel_dispatch = bool(
+            enable_fow and cal_flat.get("enable_parallel_detection", False) and reporting_side_count >= 2
+        )
+        self._stage_performance_delta(
+            PerformanceReceiptDelta(
+                dispatch=DispatchReceipt(
+                    sequential_intervals=int(not parallel_dispatch),
+                    sequential_side_updates=(0 if parallel_dispatch else reporting_side_count),
+                    parallel_intervals=int(parallel_dispatch),
+                    parallel_tasks_submitted=(reporting_side_count if parallel_dispatch else 0),
+                    parallel_tasks_joined=(reporting_side_count if parallel_dispatch else 0),
+                ),
+            ),
+        )
         # Reject a duplicate/regressing coordinator call before it can decay
         # concealment or consume another DETECTION draw.  The runtime repeats
         # this guard at publication so the invariant has one authoritative
@@ -2168,26 +2701,18 @@ class BattleManager:
         active_enemies, enemy_pos_arrays = self._build_enemy_data(
             ctx.units_by_side,
         )
-        lod_full_update = self._classify_lod_tiers(
+        lod_plan = self._stage_lod_tiers(
             ctx,
             ctx.units_by_side,
             enemy_pos_arrays,
-            canonical_battles[0],
             active_enemies=active_enemies,
-            tick_override=engine_tick,
         )
-        self._targeting_lod_tick = engine_tick
-        self._targeting_lod_full_update = frozenset(lod_full_update)
-
         # Concealment is target-owned mutable state.  Resolve it once for the
         # complete roster so neither observer iteration nor overlapping battle
         # membership decays the same target repeatedly in one interval.
         seasonal_vegetation = 0.0
         seasons_engine = getattr(ctx, "seasons_engine", None)
-        if (
-            seasons_engine is not None
-            and cal_flat.get("enable_seasonal_effects", False)
-        ):
+        if seasons_engine is not None and cal_flat.get("enable_seasonal_effects", False):
             seasonal_vegetation = float(
                 seasons_engine.current.vegetation_density,
             )
@@ -2211,63 +2736,132 @@ class BattleManager:
             if unit.speed > 0.5:
                 current = terrain_concealment * 0.5
             staged_concealment[unit.entity_id] = max(0.0, current - decay)
-        self._concealment_scores.update(staged_concealment)
-
+        if self._active_tactical_observation_plan is not None:
+            raise RuntimeError("a tactical observation publication is already active")
         fog_of_war = getattr(ctx, "fog_of_war", None)
-        if enable_fow:
-            if fog_of_war is None:
-                raise RuntimeError(
-                    "Fog-of-war targeting is enabled without a FogOfWarManager",
+        staged_fow: _StagedFOWObservation | None = None
+        witness_clear: FogOfWarWitnessClearPlan | None = None
+        try:
+            if enable_fow:
+                if fog_of_war is None:
+                    raise RuntimeError(
+                        "Fog-of-war targeting is enabled without a FogOfWarManager",
+                    )
+                staged_fow = self._update_interval_fog_of_war(
+                    ctx,
+                    dt=dt,
+                    engine_tick=engine_tick,
+                    logical_time_s=logical_time_s,
+                    cal_flat=cal_flat,
+                    lod_plan=lod_plan,
+                    concealment_scores=staged_concealment,
                 )
-            self._update_interval_fog_of_war(
-                ctx,
-                dt=dt,
+                outcomes_by_side = dict(
+                    zip(
+                        staged_fow.reporting_sides,
+                        staged_fow.outcomes,
+                        strict=True,
+                    ),
+                )
+                world_views = {side: outcome.world_view for side, outcome in outcomes_by_side.items()}
+                witnesses = {side: outcome.witnesses for side, outcome in outcomes_by_side.items()}
+                observer_track_supports = {
+                    side: outcome.observer_track_supports for side, outcome in outcomes_by_side.items()
+                }
+                cadence_ordinal = staged_fow.cadence_plan.ordinal
+                support_process_noise_std_mps2 = fog_of_war.observer_track_support_process_noise_std_mps2
+                support_max_position_uncertainty_m = fog_of_war.observer_track_support_max_position_uncertainty_m
+                signature_cache = staged_fow.signature_cache
+                observer_unit_ids = staged_fow.observer_unit_ids
+                witness_promoted_unit_ids = staged_fow.witness_promoted_unit_ids
+            else:
+                self._validate_lod_publication(lod_plan)
+                self._stage_performance_delta(
+                    PerformanceReceiptDelta(lod=lod_plan.receipt),
+                )
+                if fog_of_war is not None and hasattr(
+                    fog_of_war,
+                    "prepare_witness_clear",
+                ):
+                    witness_clear = fog_of_war.prepare_witness_clear()
+                world_views = {}
+                witnesses = {}
+                observer_track_supports = {}
+                cadence_ordinal = None
+                support_process_noise_std_mps2 = None
+                support_max_position_uncertainty_m = None
+                signature_cache = self._signature_cache
+                observer_unit_ids = frozenset()
+                witness_promoted_unit_ids = frozenset()
+
+            battle_publication = self._stage_battle_observation_publication(
+                lod_plan=lod_plan,
+                witness_promoted_unit_ids=witness_promoted_unit_ids,
+                signature_cache=signature_cache,
+                concealment_scores=staged_concealment,
+                observer_unit_ids=observer_unit_ids,
+            )
+            observation = _TargetingObservationSnapshot(
+                fog_of_war_enabled=enable_fow,
+                concealment_scores=battle_publication.concealment_scores,
+                world_views=world_views,
+                witnesses=witnesses,
+                observer_track_supports=observer_track_supports,
+                cadence_ordinal=cadence_ordinal,
+                support_process_noise_std_mps2=(support_process_noise_std_mps2),
+                support_max_position_uncertainty_m=(support_max_position_uncertainty_m),
+            )
+            unit_sides = {unit.entity_id: side for side, units in sorted(ctx.units_by_side.items()) for unit in units}
+            interval = targeting.stage_interval(
                 engine_tick=engine_tick,
                 logical_time_s=logical_time_s,
-                cal_flat=cal_flat,
-                lod_full_update=lod_full_update,
+                fog_of_war_enabled=enable_fow,
+                unit_sides=unit_sides,
+                battle_memberships={battle.battle_id: tuple(sorted(battle.unit_ids)) for battle in canonical_battles},
             )
-            self._promote_lod_from_current_witnesses(
-                ctx,
-                lod_full_update=lod_full_update,
+            # Resolve every picture from the same staged post-observation,
+            # pre-movement snapshot without reading any newly committed owner.
+            evidence_cache = _TargetingIntervalEvidenceCache(
+                observation=observation,
             )
-        elif fog_of_war is not None and hasattr(
-            fog_of_war,
-            "clear_current_detection_witnesses",
-        ):
-            fog_of_war.clear_current_detection_witnesses()
-
-        unit_sides = {
-            unit.entity_id: side
-            for side, units in sorted(ctx.units_by_side.items())
-            for unit in units
-        }
-        interval = targeting.stage_interval(
-            engine_tick=engine_tick,
-            logical_time_s=logical_time_s,
-            fog_of_war_enabled=enable_fow,
-            unit_sides=unit_sides,
-            battle_memberships={
-                battle.battle_id: tuple(sorted(battle.unit_ids))
+            pictures = tuple(
+                self._resolve_targeting_picture(
+                    ctx,
+                    battle,
+                    interval=interval,
+                    evidence_cache=evidence_cache,
+                )
                 for battle in canonical_battles
-            },
-        )
-        # Resolve every battle picture from the same post-observation,
-        # pre-movement snapshot.  A unit may occur in more than one declared
-        # battle (REM-035 remains open); publishing lazily inside the battle
-        # loop would otherwise let an earlier battle's movement, ammunition,
-        # or damage mutate a later battle's same-interval targeting evidence.
-        evidence_cache = _TargetingIntervalEvidenceCache()
-        pictures = tuple(
-            self._resolve_targeting_picture(
-                ctx,
-                battle,
-                interval=interval,
-                evidence_cache=evidence_cache,
             )
-            for battle in canonical_battles
-        )
-        targeting.publish_interval(interval, pictures)
+            targeting_publication = targeting.stage_publication(
+                interval,
+                pictures,
+            )
+            outer_plan = _TacticalObservationPlan(
+                engine_tick=engine_tick,
+                targeting_owner=targeting,
+                targeting_publication=targeting_publication,
+                battle_publication=battle_publication,
+                fow_owner=fog_of_war,
+                rng_owner=(ctx.rng_manager if staged_fow is not None else None),
+                fow=staged_fow,
+                witness_clear=witness_clear,
+                _owner_token=self._tactical_observation_owner_token,
+            )
+            self._active_tactical_observation_plan = outer_plan
+            self._validate_tactical_observation_plan(outer_plan)
+        except BaseException:
+            self._active_tactical_observation_plan = None
+            if staged_fow is not None:
+                self._abort_staged_fow_observation(ctx, staged_fow)
+            if witness_clear is not None and fog_of_war is not None:
+                try:
+                    fog_of_war.abort_witness_clear(witness_clear)
+                except BaseException:
+                    pass
+            raise
+
+        self._commit_prevalidated_tactical_observation(outer_plan)
         return canonical_battles
 
     def _update_interval_fog_of_war(
@@ -2278,9 +2872,10 @@ class BattleManager:
         engine_tick: int,
         logical_time_s: float,
         cal_flat: Mapping[str, Any],
-        lod_full_update: Collection[str],
-    ) -> None:
-        """Perform the sole production FOW update for one tactical interval."""
+        lod_plan: _LODClassificationPlan,
+        concealment_scores: Mapping[str, float],
+    ) -> _StagedFOWObservation:
+        """Prepare every FOW owner while leaving committed state untouched."""
         fog_of_war = ctx.fog_of_war
         visibility_m = self._targeting_visibility_bound(
             ctx,
@@ -2321,10 +2916,7 @@ class BattleManager:
                 raise RuntimeError(
                     "EM propagation is enabled without a ConditionsEngine",
                 )
-            raw_attenuation = (
-                conditions.electromagnetic()
-                .atmospheric_attenuation_db_per_km
-            )
+            raw_attenuation = conditions.electromagnetic().atmospheric_attenuation_db_per_km
             if (
                 isinstance(raw_attenuation, bool)
                 or not isinstance(raw_attenuation, (int, float))
@@ -2336,65 +2928,134 @@ class BattleManager:
                 )
             atmospheric_attenuation = float(raw_attenuation)
 
-        unit_arrays: UnitArrays | None = None
-        if cal_flat.get("enable_soa", False):
-            unit_arrays = UnitArrays.from_units(
-                ctx.units_by_side,
-                morale_states=getattr(ctx, "morale_states", None),
-                unit_weapons=getattr(ctx, "unit_weapons", None),
-            )
-
         side_inputs: dict[
             str,
             tuple[list[dict[str, Any]], list[dict[str, Any]]],
         ] = {}
+        side_lod_tiers: dict[
+            str,
+            dict[TacticalObserverIdentity, FogOfWarLodTier],
+        ] = {}
+        cadence_roster: list[TacticalCadenceAttachment] = []
         sensor_attachments = getattr(ctx, "unit_sensor_attachments", {})
-        for side, side_units in sorted(ctx.units_by_side.items()):
-            own_data = [
-                {
-                    "unit_id": unit.entity_id,
-                    "position": unit.position,
-                    "sensors": ctx.unit_sensors.get(unit.entity_id, ()),
-                    "sensor_attachments": sensor_attachments.get(
-                        unit.entity_id,
-                        (),
-                    ),
-                    "observer_height": 1.8,
-                    "observer_heading_deg": (
-                        math.degrees(unit.heading) % 360.0
-                    ),
-                }
-                for unit in sorted(side_units, key=lambda item: item.entity_id)
-                if unit.status == UnitStatus.ACTIVE
-                and unit.entity_id in lod_full_update
-            ]
+        scan_scheduling = bool(
+            cal_flat.get("enable_scan_scheduling", False),
+        )
+        lod_enabled = bool(cal_flat.get("enable_lod", False))
+        nearby_period = int(cal_flat.get("lod_nearby_interval", 5))
+        distant_period = int(cal_flat.get("lod_distant_interval", 20))
+        staged_signatures = dict(self._signature_cache)
+        reporting_sides = tuple(
+            sorted(
+                ctx.units_by_side,
+                key=lambda value: value.encode("utf-8"),
+            )
+        )
+        observer_unit_ids: set[str] = set()
+        for side in reporting_sides:
+            side_units = ctx.units_by_side[side]
+            own_data: list[dict[str, Any]] = []
+            tier_map: dict[
+                TacticalObserverIdentity,
+                FogOfWarLodTier,
+            ] = {}
+            for unit in sorted(
+                side_units,
+                key=lambda item: item.entity_id.encode("utf-8"),
+            ):
+                if unit.status is not UnitStatus.ACTIVE:
+                    continue
+                unit_id = unit.entity_id
+                if unit_id in observer_unit_ids:
+                    raise ValueError(
+                        "Fog-of-war observer IDs must be globally unique",
+                    )
+                observer_unit_ids.add(unit_id)
+                identity = TacticalObserverIdentity(
+                    reporting_side=side,
+                    observer_unit_id=unit_id,
+                )
+                if lod_enabled:
+                    if unit_id not in lod_plan.lod_tiers:
+                        raise ValueError(
+                            "LOD plan does not cover an active FOW observer",
+                        )
+                    tier = UnitLodTier(lod_plan.lod_tiers[unit_id])
+                else:
+                    tier = UnitLodTier.ACTIVE
+                fow_tier = FogOfWarLodTier[tier.name]
+                tier_map[identity] = fow_tier
+                attachments = sensor_attachments.get(unit_id, ())
+                for attachment in attachments:
+                    if type(attachment) is not SensorAttachment:
+                        raise TypeError(
+                            "Production FOW requires typed SensorAttachment loadouts",
+                        )
+                    native_period = attachment.sensor.definition.scan_interval_ticks if scan_scheduling else 1
+                    lod_period = (
+                        1
+                        if not lod_enabled or tier is UnitLodTier.ACTIVE
+                        else nearby_period
+                        if tier is UnitLodTier.NEARBY
+                        else distant_period
+                    )
+                    cadence_roster.append(
+                        TacticalCadenceAttachment(
+                            identity=TacticalAttachmentIdentity(
+                                reporting_side=side,
+                                observer_unit_id=unit_id,
+                                source_equipment_index=(attachment.source_equipment_index),
+                                sensor_id=attachment.sensor.sensor_id,
+                                modeled_role=attachment.modeled_role.value,
+                            ),
+                            native_period=native_period,
+                            lod_period=lod_period,
+                            operational=attachment.sensor.operational,
+                        )
+                    )
+                own_data.append(
+                    {
+                        "unit_id": unit.entity_id,
+                        "position": unit.position,
+                        "sensors": ctx.unit_sensors.get(unit.entity_id, ()),
+                        "sensor_attachments": attachments,
+                        "observer_height": 1.8,
+                        "observer_heading_deg": (math.degrees(unit.heading) % 360.0),
+                    }
+                )
             enemy_data: list[dict[str, Any]] = []
-            for other_side, other_units in sorted(ctx.units_by_side.items()):
+            for other_side in reporting_sides:
                 if other_side == side:
                     continue
-                for enemy in sorted(other_units, key=lambda item: item.entity_id):
-                    if enemy.status != UnitStatus.ACTIVE:
+                for enemy in sorted(
+                    ctx.units_by_side[other_side],
+                    key=lambda item: item.entity_id.encode("utf-8"),
+                ):
+                    if enemy.status is not UnitStatus.ACTIVE:
                         continue
                     unit_type = getattr(enemy, "unit_type", "")
-                    if unit_type not in self._signature_cache:
-                        self._signature_cache[unit_type] = _get_unit_signature(
+                    if unit_type not in staged_signatures:
+                        staged_signatures[unit_type] = _get_unit_signature(
                             ctx,
                             enemy,
                         )
                     posture = getattr(enemy, "posture", 0)
-                    enemy_data.append({
-                        "unit_id": enemy.entity_id,
-                        "position": enemy.position,
-                        "signature": self._signature_cache[unit_type],
-                        "unit": enemy,
-                        "target_height": 0.0,
-                        "concealment": self._concealment_scores.get(
-                            enemy.entity_id,
-                            0.0,
-                        ),
-                        "posture": int(posture) if posture is not None else 0,
-                    })
+                    enemy_data.append(
+                        {
+                            "unit_id": enemy.entity_id,
+                            "position": enemy.position,
+                            "signature": staged_signatures[unit_type],
+                            "unit": enemy,
+                            "target_height": 0.0,
+                            "concealment": concealment_scores.get(
+                                enemy.entity_id,
+                                0.0,
+                            ),
+                            "posture": int(posture) if posture is not None else 0,
+                        }
+                    )
             side_inputs[side] = (own_data, enemy_data)
+            side_lod_tiers[side] = tier_map
 
         common_kwargs = {
             "dt": dt,
@@ -2402,92 +3063,197 @@ class BattleManager:
             "detection_culling": bool(
                 cal_flat.get("enable_detection_culling", True),
             ),
-            "scan_scheduling": bool(
-                cal_flat.get("enable_scan_scheduling", False),
-            ),
+            "soa_selection": bool(cal_flat.get("enable_soa", False)),
             "current_tick": engine_tick,
-            "unit_arrays": unit_arrays,
             "visibility_m": visibility_m,
             "illumination_lux": illumination_lux,
             "thermal_contrast": thermal_contrast,
             "ambient_noise_db": ambient_noise_db,
             "atmospheric_atten_db_per_km": atmospheric_attenuation,
         }
-        if (
-            cal_flat.get("enable_parallel_detection", False)
-            and len(side_inputs) >= 2
-        ):
-            side_names = tuple(sorted(side_inputs))
-            seeds = fog_of_war._rng.integers(0, 2**63, size=len(side_names))
-            side_rngs = {
-                side: np.random.Generator(np.random.PCG64(int(seed)))
-                for side, seed in zip(side_names, seeds)
-            }
-            with ThreadPoolExecutor(max_workers=min(len(side_names), 4)) as pool:
-                futures = [
-                    pool.submit(
-                        fog_of_war.update,
-                        side=side,
-                        own_units=side_inputs[side][0],
-                        enemy_units=side_inputs[side][1],
-                        rng=side_rngs[side],
-                        **common_kwargs,
-                    )
-                    for side in side_names
-                ]
-                for future in futures:
-                    future.result()
-        else:
-            for side in sorted(side_inputs):
+        cadence_plan = None
+        indexed_allocation = None
+        fow_transaction = None
+        try:
+            cadence_plan = fog_of_war.cadence.stage_interval(cadence_roster)
+            indexed_allocation = ctx.rng_manager.begin_fow_detection_interval(
+                engine_tick,
+                reporting_sides,
+            )
+            side_handles = {side: indexed_allocation.acquire_side(side) for side in reporting_sides}
+            fow_transaction = fog_of_war.begin_update_transaction(
+                reporting_sides,
+            )
+
+            side_plans: dict[str, Any] = {}
+
+            def stage_side(side: str) -> Any:
                 own_data, enemy_data = side_inputs[side]
-                fog_of_war.update(
+                return fog_of_war.update_with_receipt(
                     side=side,
                     own_units=own_data,
                     enemy_units=enemy_data,
+                    transaction=fow_transaction,
+                    cadence_plan=cadence_plan,
+                    indexed_rng=side_handles[side],
+                    lod_tiers=side_lod_tiers[side],
                     **common_kwargs,
                 )
 
-    def _promote_lod_from_current_witnesses(
+            if cal_flat.get("enable_parallel_detection", False) and len(reporting_sides) >= 2:
+                errors: dict[str, BaseException] = {}
+                with ThreadPoolExecutor(
+                    max_workers=min(len(reporting_sides), 4),
+                ) as pool:
+                    futures = {side: pool.submit(stage_side, side) for side in reporting_sides}
+                    # Await every submitted task even when one side fails, then
+                    # surface the canonical first-side failure.
+                    for side in reporting_sides:
+                        try:
+                            side_plans[side] = futures[side].result()
+                        except BaseException as exc:
+                            errors[side] = exc
+                if errors:
+                    raise errors[next(side for side in reporting_sides if side in errors)]
+            else:
+                for side in reporting_sides:
+                    side_plans[side] = stage_side(side)
+
+            publication = fog_of_war.prevalidate_update_transaction(
+                fow_transaction,
+                tuple(side_plans[side] for side in reporting_sides),
+            )
+            outcomes = publication.outcomes
+            witnesses = tuple(witness for outcome in outcomes for witness in outcome.witnesses)
+            promoted_observers = self._lod_witness_promotions(
+                ctx,
+                witnesses=witnesses,
+                lod_tiers=lod_plan.lod_tiers,
+            )
+            promoted_unit_ids = self._validate_lod_publication(
+                lod_plan,
+                witness_promoted_unit_ids={observer.observer_unit_id for observer in promoted_observers},
+            )
+            cadence_plan = fog_of_war.cadence.stage_witness_promotions(
+                cadence_plan,
+                promoted_observers,
+            )
+            fog_of_war.cadence.validate_interval_plan(cadence_plan)
+
+            expected_entries = 0
+            for expected_side, outcome in zip(
+                reporting_sides,
+                outcomes,
+                strict=True,
+            ):
+                receipt = outcome.receipt
+                if receipt.reporting_side != expected_side or receipt.engine_tick != engine_tick:
+                    raise RuntimeError(
+                        "Staged FOW receipt owner/tick topology disagrees with the production interval",
+                    )
+                expected_entries += receipt.indexed_rng.transcript_entries
+                self.stage_fow_cycle_receipt(receipt)
+            self._stage_performance_delta(
+                PerformanceReceiptDelta(lod=lod_plan.receipt),
+            )
+
+            indexed_commit = ctx.rng_manager.prepare_fow_detection_interval_commit(
+                indexed_allocation,
+            )
+            cadence_commit = fog_of_war.cadence.prepare_interval_commit(
+                cadence_plan,
+            )
+            fow_commit = fog_of_war.prepare_update_commit(publication)
+            outcomes = fow_commit.outcomes
+            indexed_record = indexed_commit.record
+            if (
+                indexed_record.engine_tick != engine_tick
+                or indexed_record.reporting_sides != reporting_sides
+                or len(indexed_record.entries) != expected_entries
+            ):
+                raise RuntimeError(
+                    "Prepared indexed FOW record disagrees with staged side receipts",
+                )
+            ctx.rng_manager.validate_prepared_fow_detection_interval_commit(
+                indexed_commit,
+            )
+            fog_of_war.cadence.validate_prepared_interval_commit(
+                cadence_commit,
+            )
+            fog_of_war.validate_prepared_update_commit(fow_commit)
+            return _StagedFOWObservation(
+                reporting_sides=reporting_sides,
+                indexed_allocation=indexed_allocation,
+                indexed_commit=indexed_commit,
+                cadence_plan=cadence_plan,
+                cadence_commit=cadence_commit,
+                transaction=fow_transaction,
+                fow_commit=fow_commit,
+                outcomes=outcomes,
+                signature_cache=staged_signatures,
+                observer_unit_ids=frozenset(observer_unit_ids),
+                witness_promoted_unit_ids=promoted_unit_ids,
+                expected_indexed_entries=expected_entries,
+            )
+        except BaseException:
+            # Incomplete evidence is intentionally fail-closed.  Cleanup is
+            # best-effort so the original production failure remains visible.
+            if fow_transaction is not None:
+                try:
+                    fog_of_war.abort_update_transaction(fow_transaction)
+                except BaseException:
+                    pass
+            if cadence_plan is not None:
+                try:
+                    fog_of_war.cadence.abort_interval(cadence_plan)
+                except BaseException:
+                    pass
+            if indexed_allocation is not None:
+                try:
+                    ctx.rng_manager.abort_fow_detection_interval(
+                        indexed_allocation,
+                    )
+                except BaseException:
+                    pass
+            raise
+
+    def _lod_witness_promotions(
         self,
         ctx: Any,
         *,
-        lod_full_update: Collection[str],
-    ) -> None:
-        """Promote exact observers from the one committed FOW interval."""
+        witnesses: Iterable[ObserverDetectionWitness],
+        lod_tiers: Mapping[str, int],
+    ) -> frozenset[TacticalObserverIdentity]:
+        """Return exact next-interval promotions from staged FOW witnesses."""
         if not _resolve_cal_flat(ctx).get("enable_lod", False):
-            return
-        unit_index = {
-            unit.entity_id: unit
-            for units in ctx.units_by_side.values()
-            for unit in units
-        }
-        for side in sorted(ctx.units_by_side):
-            witnesses = ctx.fog_of_war.get_current_detection_witnesses(side)
-            for witness in witnesses:
-                observer_id = witness.observer_unit_id
-                if (
-                    not witness.detected
-                    or observer_id not in lod_full_update
-                    or self._lod_tiers.get(
-                        observer_id,
-                        UnitLodTier.ACTIVE,
-                    )
-                    == UnitLodTier.ACTIVE
-                ):
-                    continue
-                observer = unit_index.get(observer_id)
-                target = unit_index.get(witness.target_id)
-                if observer is None or target is None:
-                    continue
-                max_weapon_range = _max_weapon_range_for_domain(
-                    ctx.unit_weapons.get(observer_id, ()),
-                    target.domain,
+            return frozenset()
+        promoted: set[TacticalObserverIdentity] = set()
+        unit_index = {unit.entity_id: unit for units in ctx.units_by_side.values() for unit in units}
+        unit_sides = {unit.entity_id: side for side, units in ctx.units_by_side.items() for unit in units}
+        for witness in witnesses:
+            observer_id = witness.observer_unit_id
+            if not witness.detected or lod_tiers.get(observer_id, UnitLodTier.ACTIVE) == UnitLodTier.ACTIVE:
+                continue
+            observer = unit_index.get(observer_id)
+            target = unit_index.get(witness.target_id)
+            if observer is None or target is None:
+                continue
+            if unit_sides.get(observer_id) != witness.side:
+                raise RuntimeError(
+                    "Detection witness reporting side disagrees with the production observer roster",
                 )
-                if (
-                    max_weapon_range > 0.0
-                    and float(witness.range_m) <= max_weapon_range * 2.0
-                ):
-                    self._lod_promoted.add(observer_id)
+            max_weapon_range = _max_weapon_range_for_domain(
+                ctx.unit_weapons.get(observer_id, ()),
+                target.domain,
+            )
+            if max_weapon_range > 0.0 and float(witness.range_m) <= max_weapon_range * 2.0:
+                promoted.add(
+                    TacticalObserverIdentity(
+                        reporting_side=witness.side,
+                        observer_unit_id=observer_id,
+                    )
+                )
+        return frozenset(promoted)
 
     @staticmethod
     def _targeting_distance(shooter: Unit, target: Unit) -> float:
@@ -2515,18 +3281,13 @@ class BattleManager:
             return True
 
         cache_key: LOSCacheKey | None = None
-        if (
-            evidence_cache is not None
-            and isinstance(los_engine, LOSEngine)
-        ):
+        if evidence_cache is not None and isinstance(los_engine, LOSEngine):
             observer_cell = evidence_cache.los_cell_by_unit.get(
                 shooter.entity_id,
             )
             if observer_cell is None:
                 observer_cell = los_engine.cache_cell(shooter.position)
-                evidence_cache.los_cell_by_unit[
-                    shooter.entity_id
-                ] = observer_cell
+                evidence_cache.los_cell_by_unit[shooter.entity_id] = observer_cell
             target_cell = evidence_cache.los_cell_by_unit.get(
                 target.entity_id,
             )
@@ -2569,8 +3330,7 @@ class BattleManager:
         dy = target.position.northing - shooter.position.northing
         target_bearing = math.degrees(math.atan2(dx, dy)) % 360.0
         sensor_boresight = (
-            math.degrees(float(getattr(shooter, "heading", 0.0) or 0.0))
-            + float(definition.boresight_offset_deg)
+            math.degrees(float(getattr(shooter, "heading", 0.0) or 0.0)) + float(definition.boresight_offset_deg)
         ) % 360.0
         difference = abs(target_bearing - sensor_boresight)
         difference = min(difference, 360.0 - difference)
@@ -2585,17 +3345,9 @@ class BattleManager:
         """Resolve the shared production visibility from exact live owners."""
         weather = getattr(ctx, "weather_engine", None)
         return targeting_visibility_bound_m(
-            calibration=(
-                _resolve_cal_flat(ctx)
-                if calibration is None
-                else calibration
-            ),
+            calibration=(_resolve_cal_flat(ctx) if calibration is None else calibration),
             default_visibility_m=self._config.default_visibility_m,
-            weather_visibility_m=(
-                weather.current.visibility
-                if weather is not None
-                else None
-            ),
+            weather_visibility_m=(weather.current.visibility if weather is not None else None),
         )
 
     def _targeting_environment(
@@ -2633,10 +3385,7 @@ class BattleManager:
                 float(cal_flat.get("night_thermal_floor", 0.8)),
             )
             nvg_visual = night_visual
-            if (
-                cal_flat.get("enable_nvg_detection", False)
-                and night_visual < 1.0
-            ):
+            if cal_flat.get("enable_nvg_detection", False) and night_visual < 1.0:
                 nvg_effectiveness = float(
                     time_of_day.nvg_effectiveness(latitude, longitude),
                 )
@@ -2654,10 +3403,7 @@ class BattleManager:
                     ),
                     max(0.0, float(cal_flat.get("thermal_contrast", 1.0))),
                 )
-                if (
-                    thermal_modifier < 0.5
-                    and float(getattr(target, "speed", 0.0)) > 1.0
-                ):
+                if thermal_modifier < 0.5 and float(getattr(target, "speed", 0.0)) > 1.0:
                     thermal_modifier = max(thermal_modifier, 0.5)
             else:
                 thermal_modifier = night_thermal
@@ -2666,10 +3412,7 @@ class BattleManager:
         opacity_thermal = 0.0
         opacity_radar = 0.0
         obscurants = getattr(ctx, "obscurants_engine", None)
-        if (
-            obscurants is not None
-            and cal_flat.get("enable_obscurants", False)
-        ):
+        if obscurants is not None and cal_flat.get("enable_obscurants", False):
             opacity = obscurants.opacity_at(target.position)
             opacity_visual = float(opacity.visual)
             opacity_thermal = float(opacity.thermal)
@@ -2695,14 +3438,8 @@ class BattleManager:
         evidence_cache: _TargetingIntervalEvidenceCache | None = None,
     ) -> float:
         """Return the shared observer-side MOPP and altitude range factor."""
-        if (
-            evidence_cache is not None
-            and shooter.entity_id
-            in evidence_cache.observer_range_modifier_by_observer
-        ):
-            return evidence_cache.observer_range_modifier_by_observer[
-                shooter.entity_id
-            ]
+        if evidence_cache is not None and shooter.entity_id in evidence_cache.observer_range_modifier_by_observer:
+            return evidence_cache.observer_range_modifier_by_observer[shooter.entity_id]
         cal_flat = _resolve_cal_flat(ctx)
         modifier = 1.0
         altitude_factor = targeting_altitude_range_factor(
@@ -2731,11 +3468,7 @@ class BattleManager:
                 raise RuntimeError(
                     "CBRNEngine returned an invalid detection modifier",
                 )
-            if (
-                isinstance(mopp_level, bool)
-                or not isinstance(mopp_level, int)
-                or not 0 <= mopp_level <= 4
-            ):
+            if isinstance(mopp_level, bool) or not isinstance(mopp_level, int) or not 0 <= mopp_level <= 4:
                 raise RuntimeError("CBRNEngine returned an invalid MOPP level")
             modifier = saturating_range_product(
                 modifier,
@@ -2756,9 +3489,7 @@ class BattleManager:
                 )
         modifier = saturating_range_product(modifier, altitude_factor)
         if evidence_cache is not None:
-            evidence_cache.observer_range_modifier_by_observer[
-                shooter.entity_id
-            ] = modifier
+            evidence_cache.observer_range_modifier_by_observer[shooter.entity_id] = modifier
         return modifier
 
     @staticmethod
@@ -2791,9 +3522,7 @@ class BattleManager:
                 "Targeting observer has invalid environmental range evidence",
             ) from exc
         if evidence_cache is not None:
-            evidence_cache.range_policy_by_observer[
-                shooter.entity_id
-            ] = policy
+            evidence_cache.range_policy_by_observer[shooter.entity_id] = policy
         return policy
 
     def _targeting_sensor_range(
@@ -2816,8 +3545,7 @@ class BattleManager:
                 attachment.modeled_role,
             )
             or not sensor.supports_target_domain(target.domain)
-            or target.domain
-            not in required_domains_for_sensor_role(attachment.modeled_role)
+            or target.domain not in required_domains_for_sensor_role(attachment.modeled_role)
             or not self._targeting_sensor_in_fov(shooter, target, attachment)
             or not self._targeting_los_visible(
                 ctx,
@@ -2913,10 +3641,7 @@ class BattleManager:
                 horizon_m += conditions.radar_horizon(
                     max(0.0, target.position.altitude),
                 )
-                if (
-                    self._targeting_distance(shooter, target) > horizon_m
-                    and target.position.altitude < 500.0
-                ):
+                if self._targeting_distance(shooter, target) > horizon_m and target.position.altitude < 500.0:
                     return 0.0
                 from stochastic_warfare.environment.electromagnetic import (
                     FrequencyBand,
@@ -2926,29 +3651,24 @@ class BattleManager:
                     FrequencyBand.SHF,
                     self._targeting_distance(shooter, target) / 1_000.0,
                 )
-                if (
-                    propagation.ducting_possible
-                    and shooter.domain in (Domain.NAVAL, Domain.SUBMARINE)
-                ):
+                if propagation.ducting_possible and shooter.domain in (Domain.NAVAL, Domain.SUBMARINE):
                     sensor_range = saturating_range_product(
                         sensor_range,
                         min(
                             2.0,
-                            conditions.effective_earth_radius_factor()
-                            / (4.0 / 3.0),
+                            conditions.effective_earth_radius_factor() / (4.0 / 3.0),
                         ),
                     )
             conditions_facade = getattr(ctx, "conditions_facade", None)
-            if (
-                conditions_facade is not None
-                and cal_flat.get("enable_air_combat_environment", False)
-            ):
-                icing_risk = float(conditions_facade.air(
-                    shooter.position,
-                    float(shooter.position.altitude or 0.0),
-                    float(getattr(ctx.config, "latitude", 0.0)),
-                    float(getattr(ctx.config, "longitude", 0.0)),
-                ).icing_risk)
+            if conditions_facade is not None and cal_flat.get("enable_air_combat_environment", False):
+                icing_risk = float(
+                    conditions_facade.air(
+                        shooter.position,
+                        float(shooter.position.altitude or 0.0),
+                        float(getattr(ctx.config, "latitude", 0.0)),
+                        float(getattr(ctx.config, "longitude", 0.0)),
+                    ).icing_risk
+                )
                 if icing_risk > 0.5:
                     icing_penalty_db = float(
                         cal_flat.get("icing_radar_penalty_db", 3.0),
@@ -2981,17 +3701,13 @@ class BattleManager:
                 ):
                     sensor_range = saturating_range_product(sensor_range, 0.1)
                 if conditions.surface_duct_depth:
-                    if (
-                        observer_depth < conditions.surface_duct_depth
-                        and target_depth < conditions.surface_duct_depth
-                    ):
+                    if observer_depth < conditions.surface_duct_depth and target_depth < conditions.surface_duct_depth:
                         sensor_range = saturating_range_product(
                             sensor_range,
                             3.0,
                         )
                     elif (
-                        observer_depth < conditions.surface_duct_depth
-                        and target_depth > conditions.surface_duct_depth
+                        observer_depth < conditions.surface_duct_depth and target_depth > conditions.surface_duct_depth
                     ):
                         sensor_range = saturating_range_product(
                             sensor_range,
@@ -3001,15 +3717,8 @@ class BattleManager:
                 convergence_zones = acoustics.convergence_zone_ranges(
                     observer_depth,
                 )
-                in_zone = any(
-                    abs(distance_m - zone_range) < 5_000.0
-                    for zone_range in convergence_zones
-                )
-                if (
-                    convergence_zones
-                    and distance_m > 30_000.0
-                    and not in_zone
-                ):
+                in_zone = any(abs(distance_m - zone_range) < 5_000.0 for zone_range in convergence_zones)
+                if convergence_zones and distance_m > 30_000.0 and not in_zone:
                     sensor_range = saturating_range_product(sensor_range, 0.05)
                 elif in_zone:
                     sensor_range = saturating_range_product(sensor_range, 2.0)
@@ -3058,11 +3767,7 @@ class BattleManager:
         therefore safe to reject a farther non-FOW target before querying
         target-local obscurants or terrain LOS.
         """
-        upper_bound_m = (
-            visibility_bound_m
-            if target.domain is not Domain.SUBMARINE
-            else 0.0
-        )
+        upper_bound_m = visibility_bound_m if target.domain is not Domain.SUBMARINE else 0.0
         for attachment in getattr(
             ctx,
             "unit_sensor_attachments",
@@ -3098,8 +3803,7 @@ class BattleManager:
                 )
             except ValueError as exc:
                 raise RuntimeError(
-                    "Targeting sensor has invalid condition-adjusted range "
-                    "evidence",
+                    "Targeting sensor has invalid condition-adjusted range evidence",
                 ) from exc
             upper_bound_m = max(upper_bound_m, sensor_bound_m)
         return upper_bound_m
@@ -3123,7 +3827,9 @@ class BattleManager:
         ):
             return 0.0
         visibility_m, night_visual, _, _, opacity_visual, _, _ = environment
-        concealment = self._concealment_scores.get(target.entity_id, 0.0)
+        observation = None if evidence_cache is None else evidence_cache.observation
+        concealment_scores = self._concealment_scores if observation is None else observation.concealment_scores
+        concealment = concealment_scores.get(target.entity_id, 0.0)
         reach = saturating_range_product(
             visibility_m,
             max(0.0, 1.0 - concealment),
@@ -3160,6 +3866,7 @@ class BattleManager:
         visibility_bound_m: float,
         direct_visual_range_m: float,
         sensor_ranges: Mapping[int, float],
+        evidence_cache: _TargetingIntervalEvidenceCache | None = None,
     ) -> tuple[_TargetingContact, ...]:
         """Return every exact current local contact in canonical order."""
         cal_flat = _resolve_cal_flat(ctx)
@@ -3171,60 +3878,70 @@ class BattleManager:
         if not cal_flat.get("enable_fog_of_war", False):
             candidates: list[_TargetingContact] = []
             if direct_visual_range_m > 0.0 and distance_m <= direct_visual_range_m:
-                candidates.append(_TargetingContact(
-                    source=ContactSource.NON_FOW_LOCAL_OBSERVATION,
-                    range_m=direct_visual_range_m,
-                    sensor_attachment=None,
-                ))
+                candidates.append(
+                    _TargetingContact(
+                        source=ContactSource.NON_FOW_LOCAL_OBSERVATION,
+                        range_m=direct_visual_range_m,
+                        sensor_attachment=None,
+                    )
+                )
             for attachment in attachments:
                 reach = sensor_ranges.get(
                     attachment.source_equipment_index,
                     0.0,
                 )
                 if reach > 0.0 and distance_m <= reach:
-                    candidates.append(_TargetingContact(
-                        source=ContactSource.NON_FOW_LOCAL_OBSERVATION,
-                        range_m=reach,
-                        sensor_attachment=attachment,
-                    ))
+                    candidates.append(
+                        _TargetingContact(
+                            source=ContactSource.NON_FOW_LOCAL_OBSERVATION,
+                            range_m=reach,
+                            sensor_attachment=attachment,
+                        )
+                    )
             if not candidates:
                 return ()
-            return tuple(sorted(
-                candidates,
-                key=lambda candidate: (
-                    -candidate.range_m,
-                    candidate.sensor_attachment is None,
-                    (
-                        candidate.sensor_attachment.source_equipment_index
-                        if candidate.sensor_attachment is not None
-                        else -1
+            return tuple(
+                sorted(
+                    candidates,
+                    key=lambda candidate: (
+                        -candidate.range_m,
+                        candidate.sensor_attachment is None,
+                        (
+                            candidate.sensor_attachment.source_equipment_index
+                            if candidate.sensor_attachment is not None
+                            else -1
+                        ),
+                        (candidate.sensor_attachment.sensor_id if candidate.sensor_attachment is not None else ""),
                     ),
-                    (
-                        candidate.sensor_attachment.sensor_id
-                        if candidate.sensor_attachment is not None
-                        else ""
-                    ),
-                ),
-            ))
+                )
+            )
 
+        observation = None if evidence_cache is None else evidence_cache.observation
         fog_of_war = getattr(ctx, "fog_of_war", None)
-        if fog_of_war is None:
+        if observation is not None:
+            world_view = observation.world_views.get(shooter.side)
+        elif fog_of_war is not None:
+            world_view = fog_of_war.get_world_view(shooter.side)
+        else:
+            world_view = None
+        if world_view is None:
             return ()
-        world_view = fog_of_war.get_world_view(shooter.side)
         contact_record = world_view.contacts.get(target.entity_id)
         if (
             contact_record is None
             or world_view.last_update_time != logical_time_s
-            or contact_record.last_sensor_contact_time != logical_time_s
             or contact_record.contact_info.level < ContactLevel.DETECTED
             or contact_record.track.status in {TrackStatus.STALE, TrackStatus.LOST}
         ):
             return ()
         attachment_by_identity = {
-            (attachment.source_equipment_index, attachment.sensor_id): attachment
-            for attachment in attachments
+            (attachment.source_equipment_index, attachment.sensor_id): attachment for attachment in attachments
         }
-        witnesses = fog_of_war.get_current_detection_witnesses(shooter.side)
+        witnesses = (
+            observation.witnesses.get(shooter.side, ())
+            if observation is not None
+            else fog_of_war.get_current_detection_witnesses(shooter.side)
+        )
         candidates = []
         for witness in witnesses:
             if (
@@ -3232,12 +3949,15 @@ class BattleManager:
                 or witness.target_id != target.entity_id
                 or witness.logical_time_s != logical_time_s
                 or witness.side != shooter.side
+                or contact_record.last_sensor_contact_time != logical_time_s
             ):
                 continue
-            attachment = attachment_by_identity.get((
-                witness.source_equipment_index,
-                witness.sensor_id,
-            ))
+            attachment = attachment_by_identity.get(
+                (
+                    witness.source_equipment_index,
+                    witness.sensor_id,
+                )
+            )
             if (
                 attachment is None
                 or attachment.modeled_role.value != witness.modeled_role
@@ -3251,33 +3971,154 @@ class BattleManager:
                 )
             ):
                 continue
-            if (
-                attachment.sensor.sensor_type
-                in {SensorType.VISUAL, SensorType.NVG}
-                and distance_m > visibility_bound_m
-            ):
+            if attachment.sensor.sensor_type in {SensorType.VISUAL, SensorType.NVG} and distance_m > visibility_bound_m:
                 # DetectionEngine owns the stochastic observation draw, but
                 # optical targeting authority is still hard-bounded by the
                 # exact interval visibility committed with the decision.
                 continue
-            candidates.append(_TargetingContact(
-                source=ContactSource.FOW_OBSERVER_WITNESS,
-                # The witness check above proves the same observer-local
-                # measurement.  Canonicalize the immutable decision to the
-                # production distance so its duplicated contact/sensing
-                # evidence is exact, including a valid co-located 0 m target.
-                range_m=distance_m,
-                sensor_attachment=attachment,
-            ))
-        if not candidates:
+            candidates.append(
+                _TargetingContact(
+                    source=ContactSource.FOW_OBSERVER_WITNESS,
+                    # The witness check above proves the same observer-local
+                    # measurement.  Canonicalize the immutable decision to the
+                    # production distance so its duplicated contact/sensing
+                    # evidence is exact, including a valid co-located 0 m target.
+                    range_m=distance_m,
+                    sensor_attachment=attachment,
+                )
+            )
+        if candidates:
+            return tuple(
+                sorted(
+                    candidates,
+                    key=lambda candidate: (
+                        candidate.sensor_attachment.source_equipment_index,
+                        candidate.sensor_attachment.sensor_id,
+                    ),
+                )
+            )
+
+        if observation is not None:
+            retained_supports = observation.observer_track_supports.get(
+                shooter.side,
+                (),
+            )
+            cadence_ordinal = observation.cadence_ordinal
+            process_noise_std_mps2 = observation.support_process_noise_std_mps2
+            max_position_uncertainty_m = observation.support_max_position_uncertainty_m
+        elif fog_of_war is not None:
+            retained_supports = fog_of_war.get_observer_track_supports(
+                shooter.side,
+            )
+            committed_ordinal = fog_of_war.cadence.committed_ordinal
+            cadence_ordinal = committed_ordinal - 1 if committed_ordinal > 0 else None
+            process_noise_std_mps2 = fog_of_war.observer_track_support_process_noise_std_mps2
+            max_position_uncertainty_m = fog_of_war.observer_track_support_max_position_uncertainty_m
+        else:
             return ()
-        return tuple(sorted(
-            candidates,
-            key=lambda candidate: (
-                candidate.sensor_attachment.source_equipment_index,
-                candidate.sensor_attachment.sensor_id,
-            ),
-        ))
+        if cadence_ordinal is None or process_noise_std_mps2 is None or max_position_uncertainty_m is None:
+            return ()
+
+        full_attachment_identity = {
+            (
+                attachment.source_equipment_index,
+                attachment.sensor_id,
+                attachment.modeled_role.value,
+            ): attachment
+            for attachment in attachments
+        }
+        support_candidates: list[_TargetingContact] = []
+        for retained in retained_supports:
+            identity = retained.identity
+            attachment_identity = identity.attachment_identity
+            if (
+                attachment_identity.reporting_side != shooter.side
+                or attachment_identity.observer_unit_id != shooter.entity_id
+                or identity.target_id != target.entity_id
+                or retained.fusion_track_id != contact_record.track.track_id
+                or retained.observation_time_s >= logical_time_s
+                or attachment_identity.sensor_id not in contact_record.reporting_sensors
+            ):
+                continue
+            attachment = full_attachment_identity.get(
+                (
+                    attachment_identity.source_equipment_index,
+                    attachment_identity.sensor_id,
+                    attachment_identity.modeled_role,
+                )
+            )
+            if (
+                attachment is None
+                or not attachment.sensor.operational
+                or attachment.sensor.sensor_type is not retained.sensor_type
+                or not observer_track_support_role_is_supported(
+                    sensor_type=attachment.sensor.sensor_type,
+                    modeled_role=attachment.modeled_role,
+                )
+                or shooter.domain
+                not in allowed_shooter_domains_for_sensor_role(
+                    attachment.modeled_role,
+                )
+                or target.domain
+                not in required_domains_for_sensor_role(
+                    attachment.modeled_role,
+                )
+                or not attachment.sensor.supports_target_domain(target.domain)
+                or not self._targeting_los_visible(
+                    ctx,
+                    shooter,
+                    target,
+                    required=bool(attachment.sensor.definition.requires_los),
+                    evidence_cache=evidence_cache,
+                )
+                or not self._targeting_sensor_in_fov(
+                    shooter,
+                    target,
+                    attachment,
+                )
+            ):
+                continue
+            reach_m = sensor_ranges.get(
+                attachment.source_equipment_index,
+                0.0,
+            )
+            if reach_m <= 0.0 or distance_m > reach_m:
+                continue
+            try:
+                evidence = retained.project(
+                    projection_ordinal=cadence_ordinal,
+                    projection_time_s=logical_time_s,
+                    process_noise_std_mps2=process_noise_std_mps2,
+                )
+                within_limits = evidence.is_within_limits(
+                    observer_easting_m=float(shooter.position.easting),
+                    observer_northing_m=float(shooter.position.northing),
+                    reach_m=reach_m,
+                    max_position_uncertainty_m=(max_position_uncertainty_m),
+                )
+            except ValueError as exc:
+                raise RuntimeError(
+                    "FOW owner exposed unusable observer track support",
+                ) from exc
+            if not within_limits:
+                continue
+            support_candidates.append(
+                _TargetingContact(
+                    source=ContactSource.FOW_OBSERVER_TRACK_SUPPORT,
+                    range_m=reach_m,
+                    sensor_attachment=attachment,
+                    observer_track_support=evidence,
+                )
+            )
+        return tuple(
+            sorted(
+                support_candidates,
+                key=lambda candidate: (
+                    candidate.sensor_attachment.source_equipment_index,
+                    candidate.sensor_attachment.sensor_id,
+                ),
+            )
+        )
 
     def _targeting_fire_control(
         self,
@@ -3297,14 +4138,10 @@ class BattleManager:
         fow_enabled = bool(
             _resolve_cal_flat(ctx).get("enable_fog_of_war", False),
         )
-        direct_visual_permitted = (
-            standoff_class is WeaponStandoffClass.ORGANIC_DIRECT_AIM
-            or weapon.modeled_role
-            in {
-                type(weapon.modeled_role).HAND_GRENADE,
-                type(weapon.modeled_role).MELEE,
-            }
-        )
+        direct_visual_permitted = standoff_class is WeaponStandoffClass.ORGANIC_DIRECT_AIM or weapon.modeled_role in {
+            type(weapon.modeled_role).HAND_GRENADE,
+            type(weapon.modeled_role).MELEE,
+        }
         if fow_enabled:
             contact_sensor = contact.sensor_attachment
             direct_visual_permitted = (
@@ -3316,18 +4153,20 @@ class BattleManager:
                 direct_visual_range_m,
                 contact.range_m,
             )
+        if contact.source is ContactSource.FOW_OBSERVER_TRACK_SUPPORT:
+            # Retained support belongs to one exact local fire-control radar.
+            # It cannot authorize direct visual or a different live director.
+            direct_visual_permitted = False
         candidates: list[_TargetingFireControl] = []
         rejections: list[tuple[int, int, str, TargetingDisposition]] = []
-        if (
-            direct_visual_permitted
-            and direct_visual_range_m > 0.0
-            and distance_m <= direct_visual_range_m
-        ):
-            candidates.append(_TargetingFireControl(
-                source=FireControlSource.DIRECT_VISUAL,
-                range_m=direct_visual_range_m,
-                sensor_attachment=None,
-            ))
+        if direct_visual_permitted and direct_visual_range_m > 0.0 and distance_m <= direct_visual_range_m:
+            candidates.append(
+                _TargetingFireControl(
+                    source=FireControlSource.DIRECT_VISUAL,
+                    range_m=direct_visual_range_m,
+                    sensor_attachment=None,
+                )
+            )
         elif direct_visual_permitted:
             direct_los = self._targeting_los_visible(
                 ctx,
@@ -3336,16 +4175,18 @@ class BattleManager:
                 required=True,
                 evidence_cache=evidence_cache,
             )
-            rejections.append((
-                3 if not direct_los else 6,
-                -1,
-                "",
+            rejections.append(
                 (
-                    TargetingDisposition.LINE_OF_SIGHT_BLOCKED
-                    if not direct_los
-                    else TargetingDisposition.VISIBILITY_LIMITED
-                ),
-            ))
+                    3 if not direct_los else 6,
+                    -1,
+                    "",
+                    (
+                        TargetingDisposition.LINE_OF_SIGHT_BLOCKED
+                        if not direct_los
+                        else TargetingDisposition.VISIBILITY_LIMITED
+                    ),
+                )
+            )
 
         globally_compatible = compatible_sensor_roles_for_weapon_role(
             weapon.modeled_role,
@@ -3356,11 +4197,14 @@ class BattleManager:
             {},
         ).get(shooter.entity_id, ()):
             if (
-                sensor_targeting_class(attachment.modeled_role)
-                is not SensorTargetingClass.LOCAL_FIRE_CONTROL
+                contact.source is ContactSource.FOW_OBSERVER_TRACK_SUPPORT
+                and attachment is not contact.sensor_attachment
+            ):
+                continue
+            if (
+                sensor_targeting_class(attachment.modeled_role) is not SensorTargetingClass.LOCAL_FIRE_CONTROL
                 or attachment.modeled_role not in globally_compatible
-                or weapon.source_equipment_index
-                not in attachment.compatible_weapon_source_indexes
+                or weapon.source_equipment_index not in attachment.compatible_weapon_source_indexes
             ):
                 continue
             rejection_identity = (
@@ -3368,37 +4212,37 @@ class BattleManager:
                 attachment.sensor_id,
             )
             if not attachment.sensor.operational:
-                rejections.append((
-                    0,
-                    *rejection_identity,
-                    TargetingDisposition.FIRE_CONTROL_SENSOR_OFFLINE,
-                ))
+                rejections.append(
+                    (
+                        0,
+                        *rejection_identity,
+                        TargetingDisposition.FIRE_CONTROL_SENSOR_OFFLINE,
+                    )
+                )
                 continue
             if shooter.domain not in allowed_shooter_domains_for_sensor_role(
                 attachment.modeled_role,
             ):
-                rejections.append((
-                    1,
-                    *rejection_identity,
-                    TargetingDisposition
-                    .FIRE_CONTROL_SHOOTER_DOMAIN_UNSUPPORTED,
-                ))
+                rejections.append(
+                    (
+                        1,
+                        *rejection_identity,
+                        TargetingDisposition.FIRE_CONTROL_SHOOTER_DOMAIN_UNSUPPORTED,
+                    )
+                )
                 continue
-            if (
-                target.domain
-                not in required_domains_for_sensor_role(
-                    attachment.modeled_role,
-                )
-                or not attachment.sensor.supports_target_domain(
-                    target.domain,
-                )
+            if target.domain not in required_domains_for_sensor_role(
+                attachment.modeled_role,
+            ) or not attachment.sensor.supports_target_domain(
+                target.domain,
             ):
-                rejections.append((
-                    2,
-                    *rejection_identity,
-                    TargetingDisposition
-                    .FIRE_CONTROL_TARGET_DOMAIN_UNSUPPORTED,
-                ))
+                rejections.append(
+                    (
+                        2,
+                        *rejection_identity,
+                        TargetingDisposition.FIRE_CONTROL_TARGET_DOMAIN_UNSUPPORTED,
+                    )
+                )
                 continue
             if not self._targeting_los_visible(
                 ctx,
@@ -3407,39 +4251,47 @@ class BattleManager:
                 required=bool(attachment.sensor.definition.requires_los),
                 evidence_cache=evidence_cache,
             ):
-                rejections.append((
-                    3,
-                    *rejection_identity,
-                    TargetingDisposition.LINE_OF_SIGHT_BLOCKED,
-                ))
+                rejections.append(
+                    (
+                        3,
+                        *rejection_identity,
+                        TargetingDisposition.LINE_OF_SIGHT_BLOCKED,
+                    )
+                )
                 continue
             if not self._targeting_sensor_in_fov(
                 shooter,
                 target,
                 attachment,
             ):
-                rejections.append((
-                    4,
-                    *rejection_identity,
-                    TargetingDisposition.OUTSIDE_SENSOR_FIELD_OF_VIEW,
-                ))
+                rejections.append(
+                    (
+                        4,
+                        *rejection_identity,
+                        TargetingDisposition.OUTSIDE_SENSOR_FIELD_OF_VIEW,
+                    )
+                )
                 continue
             reach = sensor_ranges.get(
                 attachment.source_equipment_index,
                 0.0,
             )
             if reach > 0.0 and distance_m <= reach:
-                candidates.append(_TargetingFireControl(
-                    source=FireControlSource.SENSOR_ATTACHMENT,
-                    range_m=reach,
-                    sensor_attachment=attachment,
-                ))
+                candidates.append(
+                    _TargetingFireControl(
+                        source=FireControlSource.SENSOR_ATTACHMENT,
+                        range_m=reach,
+                        sensor_attachment=attachment,
+                    )
+                )
             else:
-                rejections.append((
-                    5,
-                    *rejection_identity,
-                    TargetingDisposition.FIRE_CONTROL_RANGE_EXCEEDED,
-                ))
+                rejections.append(
+                    (
+                        5,
+                        *rejection_identity,
+                        TargetingDisposition.FIRE_CONTROL_RANGE_EXCEEDED,
+                    )
+                )
         if not candidates:
             if rejections:
                 return None, min(rejections)[3]
@@ -3449,16 +4301,8 @@ class BattleManager:
             key=lambda candidate: (
                 -candidate.range_m,
                 candidate.source is FireControlSource.DIRECT_VISUAL,
-                (
-                    candidate.sensor_attachment.source_equipment_index
-                    if candidate.sensor_attachment is not None
-                    else -1
-                ),
-                (
-                    candidate.sensor_attachment.sensor_id
-                    if candidate.sensor_attachment is not None
-                    else ""
-                ),
+                (candidate.sensor_attachment.source_equipment_index if candidate.sensor_attachment is not None else -1),
+                (candidate.sensor_attachment.sensor_id if candidate.sensor_attachment is not None else ""),
             ),
         ), TargetingDisposition.VALID_ENGAGEMENT_SOLUTION
 
@@ -3475,10 +4319,7 @@ class BattleManager:
                 getattr(attachment.weapon.definition, "magazine_capacity", 0),
             )
             if magazine_capacity > 0:
-                legacy_key = (
-                    f"{shooter.entity_id}:"
-                    f"{attachment.weapon.definition.weapon_id}"
-                )
+                legacy_key = f"{shooter.entity_id}:{attachment.weapon.definition.weapon_id}"
                 for ammunition in attachment.ammunition:
                     ammo_key = f"{legacy_key}:{ammunition.ammo_id}"
                     rounds_fired = self._ammo_expended.get(
@@ -3518,11 +4359,7 @@ class BattleManager:
             calibration=cal_flat,
         )
         contact_sensor = contact.sensor_attachment
-        fire_control_sensor = (
-            fire_control.sensor_attachment
-            if fire_control is not None
-            else None
-        )
+        fire_control_sensor = fire_control.sensor_attachment if fire_control is not None else None
         range_evidence = (
             EffectiveRangeEvidence.from_catalog(
                 physical_max_range_m=float(
@@ -3535,16 +4372,8 @@ class BattleManager:
             if weapon is not None
             else None
         )
-        shooter_side = (
-            shooter.side
-            if isinstance(shooter.side, str)
-            else shooter.side.value
-        )
-        target_side = (
-            target.side
-            if isinstance(target.side, str)
-            else target.side.value
-        )
+        shooter_side = shooter.side if isinstance(shooter.side, str) else shooter.side.value
+        target_side = target.side if isinstance(target.side, str) else target.side.value
         return TacticalTargetingDecision(
             engine_tick=int(ctx.clock.tick_count),
             logical_time_s=logical_time_s,
@@ -3558,98 +4387,42 @@ class BattleManager:
             target_domain=target.domain,
             distance_m=distance_m,
             weapon_id=(weapon.weapon.weapon_id if weapon is not None else None),
-            weapon_source_equipment_index=(
-                weapon.source_equipment_index
-                if weapon is not None
-                else None
-            ),
-            weapon_modeled_role=(
-                weapon.modeled_role if weapon is not None else None
-            ),
-            ammunition_id=(
-                ammunition.ammo_id if ammunition is not None else None
-            ),
-            physical_max_range_m=(
-                range_evidence.physical_max_range_m
-                if range_evidence is not None
-                else 0.0
-            ),
+            weapon_source_equipment_index=(weapon.source_equipment_index if weapon is not None else None),
+            weapon_modeled_role=(weapon.modeled_role if weapon is not None else None),
+            ammunition_id=(ammunition.ammo_id if ammunition is not None else None),
+            physical_max_range_m=(range_evidence.physical_max_range_m if range_evidence is not None else 0.0),
             predictive_effective_range_m=(
-                range_evidence.predictive_effective_range_m
-                if range_evidence is not None
-                else 0.0
+                range_evidence.predictive_effective_range_m if range_evidence is not None else 0.0
             ),
-            effective_range_basis=(
-                range_evidence.basis
-                if range_evidence is not None
-                else None
-            ),
+            effective_range_basis=(range_evidence.basis if range_evidence is not None else None),
             legacy_derived_reference_range_m=(
-                range_evidence.legacy_derived_reference_range_m
-                if range_evidence is not None
-                else 0.0
+                range_evidence.legacy_derived_reference_range_m if range_evidence is not None else 0.0
             ),
             contact_source=contact.source,
             observing_unit_id=shooter.entity_id,
             contact_sensor_source_equipment_index=(
-                contact_sensor.source_equipment_index
-                if contact_sensor is not None
-                else None
+                contact_sensor.source_equipment_index if contact_sensor is not None else None
             ),
-            contact_sensor_id=(
-                contact_sensor.sensor_id
-                if contact_sensor is not None
-                else None
-            ),
-            contact_sensor_modeled_role=(
-                contact_sensor.modeled_role
-                if contact_sensor is not None
-                else None
-            ),
+            contact_sensor_id=(contact_sensor.sensor_id if contact_sensor is not None else None),
+            contact_sensor_modeled_role=(contact_sensor.modeled_role if contact_sensor is not None else None),
             contact_time_s=logical_time_s,
             contact_range_m=contact.range_m,
             visibility_bound_m=visibility_bound_m,
             sensing_sensor_source_equipment_index=(
-                contact_sensor.source_equipment_index
-                if contact_sensor is not None
-                else None
+                contact_sensor.source_equipment_index if contact_sensor is not None else None
             ),
-            sensing_sensor_id=(
-                contact_sensor.sensor_id
-                if contact_sensor is not None
-                else None
-            ),
-            sensing_sensor_modeled_role=(
-                contact_sensor.modeled_role
-                if contact_sensor is not None
-                else None
-            ),
+            sensing_sensor_id=(contact_sensor.sensor_id if contact_sensor is not None else None),
+            sensing_sensor_modeled_role=(contact_sensor.modeled_role if contact_sensor is not None else None),
             sensing_range_m=contact.range_m,
-            fire_control_source=(
-                fire_control.source
-                if fire_control is not None
-                else FireControlSource.NONE
-            ),
+            fire_control_source=(fire_control.source if fire_control is not None else FireControlSource.NONE),
             fire_control_sensor_source_equipment_index=(
-                fire_control_sensor.source_equipment_index
-                if fire_control_sensor is not None
-                else None
+                fire_control_sensor.source_equipment_index if fire_control_sensor is not None else None
             ),
-            fire_control_sensor_id=(
-                fire_control_sensor.sensor_id
-                if fire_control_sensor is not None
-                else None
-            ),
+            fire_control_sensor_id=(fire_control_sensor.sensor_id if fire_control_sensor is not None else None),
             fire_control_sensor_modeled_role=(
-                fire_control_sensor.modeled_role
-                if fire_control_sensor is not None
-                else None
+                fire_control_sensor.modeled_role if fire_control_sensor is not None else None
             ),
-            fire_control_range_m=(
-                fire_control.range_m
-                if fire_control is not None
-                else 0.0
-            ),
+            fire_control_range_m=(fire_control.range_m if fire_control is not None else 0.0),
             disposition=disposition,
             authorized_standoff_m=authorized_standoff_m,
             hold_authorized=hold_authorized,
@@ -3660,6 +4433,7 @@ class BattleManager:
             fog_of_war_enabled=bool(
                 cal_flat.get("enable_fog_of_war", False),
             ),
+            observer_track_support=contact.observer_track_support,
         )
 
     def _targeting_candidate_for_contact(
@@ -3735,43 +4509,48 @@ class BattleManager:
                 attachment,
             )
             if not attachment.weapon.operational:
-                rejected.append((
-                    0,
-                    attachment,
-                    ammunition,
-                    TargetingDisposition.WEAPON_INOPERABLE,
-                ))
-                continue
-            if (
-                indirect_fire is not None
-                and indirect_fire.is_attachment_reserved(
-                    shooter.entity_id,
-                    attachment.source_equipment_index,
-                    attachment.weapon.weapon_id,
+                rejected.append(
+                    (
+                        0,
+                        attachment,
+                        ammunition,
+                        TargetingDisposition.WEAPON_INOPERABLE,
+                    )
                 )
+                continue
+            if indirect_fire is not None and indirect_fire.is_attachment_reserved(
+                shooter.entity_id,
+                attachment.source_equipment_index,
+                attachment.weapon.weapon_id,
             ):
-                rejected.append((
-                    1,
-                    attachment,
-                    ammunition,
-                    TargetingDisposition.WEAPON_RESERVED,
-                ))
+                rejected.append(
+                    (
+                        1,
+                        attachment,
+                        ammunition,
+                        TargetingDisposition.WEAPON_RESERVED,
+                    )
+                )
                 continue
             if ammunition is None:
-                rejected.append((
-                    2,
-                    attachment,
-                    None,
-                    TargetingDisposition.NO_FIREABLE_AMMUNITION,
-                ))
+                rejected.append(
+                    (
+                        2,
+                        attachment,
+                        None,
+                        TargetingDisposition.NO_FIREABLE_AMMUNITION,
+                    )
+                )
                 continue
             if not _weapon_supports_domain(definition, target.domain):
-                rejected.append((
-                    3,
-                    attachment,
-                    ammunition,
-                    TargetingDisposition.TARGET_DOMAIN_UNSUPPORTED,
-                ))
+                rejected.append(
+                    (
+                        3,
+                        attachment,
+                        ammunition,
+                        TargetingDisposition.TARGET_DOMAIN_UNSUPPORTED,
+                    )
+                )
                 continue
             fit_score = min(
                 float(definition.max_range_m) / max(distance_m, 1.0),
@@ -3818,18 +4597,16 @@ class BattleManager:
 
         resolved: list[tuple[float, _TargetingResolution]] = []
         for fit_score, weapon, ammunition in usable:
-            fire_control, fire_control_rejection = (
-                self._targeting_fire_control(
-                    ctx=ctx,
-                    shooter=shooter,
-                    target=target,
-                    weapon=weapon,
-                    contact=contact,
-                    distance_m=distance_m,
-                    direct_visual_range_m=direct_visual_range_m,
-                    sensor_ranges=sensor_ranges,
-                    evidence_cache=evidence_cache,
-                )
+            fire_control, fire_control_rejection = self._targeting_fire_control(
+                ctx=ctx,
+                shooter=shooter,
+                target=target,
+                weapon=weapon,
+                contact=contact,
+                distance_m=distance_m,
+                direct_visual_range_m=direct_visual_range_m,
+                sensor_ranges=sensor_ranges,
+                evidence_cache=evidence_cache,
             )
             range_evidence = EffectiveRangeEvidence.from_catalog(
                 physical_max_range_m=float(
@@ -3846,8 +4623,7 @@ class BattleManager:
                 hold_authorized = False
             elif (
                 range_evidence.basis is EffectiveRangeBasis.AUTHORED
-                and distance_m
-                > range_evidence.predictive_effective_range_m
+                and distance_m > range_evidence.predictive_effective_range_m
             ):
                 disposition = TargetingDisposition.OUTSIDE_EFFECTIVE_RANGE
                 valid = False
@@ -3867,10 +4643,7 @@ class BattleManager:
                     ),
                 )
                 standoff_class = weapon_standoff_class(weapon.modeled_role)
-                if (
-                    range_evidence.basis
-                    is not EffectiveRangeBasis.AUTHORED
-                ):
+                if range_evidence.basis is not EffectiveRangeBasis.AUTHORED:
                     disposition = TargetingDisposition.EFFECTIVE_RANGE_UNKNOWN
                     authorized_standoff_m = 0.0
                     hold_authorized = False
@@ -3879,9 +4652,7 @@ class BattleManager:
                     authorized_standoff_m = 0.0
                     hold_authorized = False
                 elif standoff_class is WeaponStandoffClass.UNSUPPORTED:
-                    disposition = (
-                        TargetingDisposition.STANDOFF_NOT_SUPPORTED_FOR_ROLE
-                    )
+                    disposition = TargetingDisposition.STANDOFF_NOT_SUPPORTED_FOR_ROLE
                     authorized_standoff_m = 0.0
                     hold_authorized = False
                 else:
@@ -3891,33 +4662,29 @@ class BattleManager:
                         contact.range_m,
                         fire_control.range_m,
                     )
-                    hold_authorized = (
-                        authorized_standoff_m > 0.0
-                        and distance_m <= authorized_standoff_m
-                    )
+                    hold_authorized = authorized_standoff_m > 0.0 and distance_m <= authorized_standoff_m
                     disposition = (
                         TargetingDisposition.VALID_STANDOFF_HOLD
                         if hold_authorized
                         else TargetingDisposition.VALID_ENGAGEMENT_SOLUTION
                     )
-            resolved.append((
-                fit_score,
-                _TargetingResolution(
-                    contact=contact,
-                    weapon=weapon,
-                    ammunition=ammunition,
-                    fire_control=fire_control,
-                    disposition=disposition,
-                    authorized_standoff_m=authorized_standoff_m,
-                    hold_authorized=hold_authorized,
-                    engagement_solution_valid=valid,
-                ),
-            ))
+            resolved.append(
+                (
+                    fit_score,
+                    _TargetingResolution(
+                        contact=contact,
+                        weapon=weapon,
+                        ammunition=ammunition,
+                        fire_control=fire_control,
+                        disposition=disposition,
+                        authorized_standoff_m=authorized_standoff_m,
+                        hold_authorized=hold_authorized,
+                        engagement_solution_valid=valid,
+                    ),
+                )
+            )
 
-        valid_resolved = [
-            item for item in resolved
-            if item[1].engagement_solution_valid
-        ]
+        valid_resolved = [item for item in resolved if item[1].engagement_solution_valid]
         _, resolution = min(
             valid_resolved or resolved,
             key=lambda item: (
@@ -3947,22 +4714,13 @@ class BattleManager:
         evidence_cache: _TargetingIntervalEvidenceCache | None = None,
     ) -> TacticalTargetingDecision:
         """Resolve one shooter decision from exact current battle membership."""
-        shooter_side = (
-            shooter.side
-            if isinstance(shooter.side, str)
-            else shooter.side.value
-        )
+        shooter_side = shooter.side if isinstance(shooter.side, str) else shooter.side.value
         targets = tuple(
             target
             for unit_id in sorted(member_ids)
             if (target := unit_index.get(unit_id)) is not None
             and target.status == UnitStatus.ACTIVE
-            and (
-                target.side
-                if isinstance(target.side, str)
-                else target.side.value
-            )
-            != shooter_side
+            and (target.side if isinstance(target.side, str) else target.side.value) != shooter_side
         )
         if not targets:
             return self._empty_targeting_decision(
@@ -4036,18 +4794,21 @@ class BattleManager:
                 visibility_bound_m=environment[0],
                 direct_visual_range_m=direct_visual_range_m,
                 sensor_ranges=sensor_ranges,
+                evidence_cache=evidence_cache,
             )
             for contact in contacts:
-                candidates.append(self._targeting_candidate_for_contact(
-                    ctx=ctx,
-                    shooter=shooter,
-                    target=target,
-                    distance_m=distance_m,
-                    direct_visual_range_m=direct_visual_range_m,
-                    contact=contact,
-                    sensor_ranges=sensor_ranges,
-                    evidence_cache=evidence_cache,
-                ))
+                candidates.append(
+                    self._targeting_candidate_for_contact(
+                        ctx=ctx,
+                        shooter=shooter,
+                        target=target,
+                        distance_m=distance_m,
+                        direct_visual_range_m=direct_visual_range_m,
+                        contact=contact,
+                        sensor_ranges=sensor_ranges,
+                        evidence_cache=evidence_cache,
+                    )
+                )
 
         if not candidates:
             return self._empty_targeting_decision(
@@ -4059,12 +4820,15 @@ class BattleManager:
                 visibility_bound_m=visibility_bound_m,
             )
 
-        valid_candidates = [
-            candidate
-            for candidate in candidates
-            if candidate.resolution.engagement_solution_valid
-        ]
+        valid_candidates = [candidate for candidate in candidates if candidate.resolution.engagement_solution_valid]
         selectable = valid_candidates or candidates
+        current_witness_candidates = [
+            candidate
+            for candidate in selectable
+            if candidate.resolution.contact.source is ContactSource.FOW_OBSERVER_WITNESS
+        ]
+        if current_witness_candidates:
+            selectable = current_witness_candidates
         mode = calibration.get(
             "target_selection_mode",
             "threat_scored",
@@ -4074,11 +4838,7 @@ class BattleManager:
             candidate: _TargetingCandidate,
         ) -> tuple[str, str]:
             raw_target_side = candidate.target.side
-            target_side = (
-                raw_target_side
-                if isinstance(raw_target_side, str)
-                else raw_target_side.value
-            )
+            target_side = raw_target_side if isinstance(raw_target_side, str) else raw_target_side.value
             return (
                 target_side,
                 candidate.target.entity_id,
@@ -4091,36 +4851,17 @@ class BattleManager:
             contact_sensor = resolution.contact.sensor_attachment
             weapon = resolution.weapon
             fire_control = resolution.fire_control
-            fire_control_sensor = (
-                fire_control.sensor_attachment
-                if fire_control is not None
-                else None
-            )
+            fire_control_sensor = fire_control.sensor_attachment if fire_control is not None else None
             return (
                 weapon.source_equipment_index if weapon is not None else -1,
                 weapon.weapon.weapon_id if weapon is not None else "",
-                (
-                    contact_sensor.source_equipment_index
-                    if contact_sensor is not None
-                    else -1
-                ),
+                (contact_sensor.source_equipment_index if contact_sensor is not None else -1),
                 contact_sensor.sensor_id if contact_sensor is not None else "",
-                (
-                    fire_control.source.value
-                    if fire_control is not None
-                    else FireControlSource.NONE.value
-                ),
-                (
-                    fire_control_sensor.source_equipment_index
-                    if fire_control_sensor is not None
-                    else -1
-                ),
-                (
-                    fire_control_sensor.sensor_id
-                    if fire_control_sensor is not None
-                    else ""
-                ),
+                (fire_control.source.value if fire_control is not None else FireControlSource.NONE.value),
+                (fire_control_sensor.source_equipment_index if fire_control_sensor is not None else -1),
+                (fire_control_sensor.sensor_id if fire_control_sensor is not None else ""),
             )
+
         if mode in {"closest", "nearest"}:
             selected = min(
                 selectable,
@@ -4155,9 +4896,7 @@ class BattleManager:
             disposition=resolution.disposition,
             authorized_standoff_m=resolution.authorized_standoff_m,
             hold_authorized=resolution.hold_authorized,
-            engagement_solution_valid=(
-                resolution.engagement_solution_valid
-            ),
+            engagement_solution_valid=(resolution.engagement_solution_valid),
         )
 
     def _empty_targeting_decision(
@@ -4186,11 +4925,7 @@ class BattleManager:
             battle_id=battle.battle_id,
             ordinal=ordinal,
             shooter_id=shooter.entity_id,
-            shooter_side=(
-                shooter.side
-                if isinstance(shooter.side, str)
-                else shooter.side.value
-            ),
+            shooter_side=(shooter.side if isinstance(shooter.side, str) else shooter.side.value),
             shooter_domain=shooter.domain,
             target_id=None,
             target_side=None,
@@ -4246,29 +4981,25 @@ class BattleManager:
             declared_members = interval.battle_memberships[battle.battle_id]
         except KeyError as exc:
             raise RuntimeError(
-                f"Battle {battle.battle_id!r} is absent from the prepared "
-                "targeting interval",
+                f"Battle {battle.battle_id!r} is absent from the prepared targeting interval",
             ) from exc
 
-        unit_index = {
-            unit.entity_id: unit
-            for units in ctx.units_by_side.values()
-            for unit in units
-        }
-        ordered_members = tuple(sorted(
-            declared_members,
-            key=lambda unit_id: (
-                interval.unit_sides[unit_id],
-                unit_id,
-            ),
-        ))
+        unit_index = {unit.entity_id: unit for units in ctx.units_by_side.values() for unit in units}
+        ordered_members = tuple(
+            sorted(
+                declared_members,
+                key=lambda unit_id: (
+                    interval.unit_sides[unit_id],
+                    unit_id,
+                ),
+            )
+        )
         decisions: list[TacticalTargetingDecision] = []
         for ordinal, unit_id in enumerate(ordered_members):
             shooter = unit_index.get(unit_id)
             if shooter is None:
                 raise RuntimeError(
-                    f"Prepared targeting member {unit_id!r} is absent from "
-                    "the runtime roster",
+                    f"Prepared targeting member {unit_id!r} is absent from the runtime roster",
                 )
             if shooter.status != UnitStatus.ACTIVE:
                 decision = self._empty_targeting_decision(
@@ -4317,37 +5048,42 @@ class BattleManager:
         dt:
             Tick duration in seconds.
         """
+        self.validate_performance_runtime(ctx)
         if not battle.active:
             return
 
+        cal_flat = _resolve_cal_flat(ctx)
         targeting_runtime = getattr(ctx, "tactical_targeting", None)
+        if targeting_runtime is None and cal_flat.get(
+            "enable_fog_of_war",
+            False,
+        ):
+            raise RuntimeError(
+                "Fog-of-war battle execution requires the receipt-bearing TacticalTargetingRuntime boundary",
+            )
         if targeting_runtime is not None:
             if type(targeting_runtime) is not TacticalTargetingRuntime:
                 raise RuntimeError(
-                    "Battle execution requires an exact "
-                    "TacticalTargetingRuntime owner",
+                    "Battle execution requires an exact TacticalTargetingRuntime owner",
                 )
             interval = targeting_runtime.prepared_interval
             picture = targeting_runtime.latest_picture(battle.battle_id)
             if (
                 interval is None
                 or interval.engine_tick != int(ctx.clock.tick_count)
-                or interval.logical_time_s
-                != float(ctx.clock.elapsed.total_seconds())
+                or interval.logical_time_s != float(ctx.clock.elapsed.total_seconds())
                 or battle.battle_id not in interval.battle_ids
                 or picture is None
                 or picture.engine_tick != interval.engine_tick
                 or picture.logical_time_s != interval.logical_time_s
             ):
                 raise RuntimeError(
-                    "Battle execution requires its complete prepublished "
-                    "targeting picture",
+                    "Battle execution requires its complete prepublished targeting picture",
                 )
 
         battle.ticks_executed += 1
         battle.battle_elapsed_s += dt
         units_by_side = ctx.units_by_side
-        cal_flat = _resolve_cal_flat(ctx)
         timestamp = ctx.clock.current_time
 
         # 1. Pre-build per-side active enemy lists and position arrays
@@ -4362,10 +5098,17 @@ class BattleManager:
                 unit_weapons=getattr(ctx, "unit_weapons", None),
             )
             # Override enemy_pos_arrays with SoA-derived versions
-            enemy_pos_arrays = {
-                side: _unit_arrays.get_enemy_positions(side)
-                for side in units_by_side
-            }
+            enemy_pos_arrays = {side: _unit_arrays.get_enemy_positions(side) for side in units_by_side}
+            self._stage_performance_delta(
+                PerformanceReceiptDelta(
+                    soa=SoAReceipt(
+                        pre_movement_builds=1,
+                        pre_movement_enemy_position_projections=len(
+                            units_by_side,
+                        ),
+                    ),
+                ),
+            )
 
         # 1a. Phase 70b: entity_id → Unit index for O(1) lookups
         _unit_index: dict[str, Unit] = {}
@@ -4373,153 +5116,15 @@ class BattleManager:
             for _u_idx in _side_units_idx:
                 _unit_index[_u_idx.entity_id] = _u_idx
 
-        # 1c. Phase 85: LOD tier classification
-        if (
-            getattr(ctx, "tactical_targeting", None) is not None
-            and self._targeting_lod_tick == int(ctx.clock.tick_count)
-        ):
-            _lod_full_update = set(self._targeting_lod_full_update)
-        else:
-            _lod_full_update = self._classify_lod_tiers(
+        # 1c. Phase 85/118: publish sensing-only LOD tiers when the typed
+        # targeting coordinator did not already publish this interval.
+        if getattr(ctx, "tactical_targeting", None) is None:
+            self._classify_lod_tiers(
                 ctx,
                 units_by_side,
                 enemy_pos_arrays,
-                battle,
                 active_enemies=active_enemies,
             )
-
-        # 1b. Phase 53a: Fog of war — per-side detection picture
-        _enable_fow = cal_flat.get("enable_fog_of_war", False)
-        _enable_det_culling = cal_flat.get("enable_detection_culling", True)
-        _enable_scan_sched = cal_flat.get("enable_scan_scheduling", False)
-        _enable_parallel_det = cal_flat.get("enable_parallel_detection", False)
-        if (
-            getattr(ctx, "tactical_targeting", None) is None
-            and _enable_fow
-            and getattr(ctx, "fog_of_war", None) is not None
-        ):
-            _fow_time = getattr(timestamp, "timestamp", lambda: 0.0)()
-
-            # Pre-build per-side input data (sequential)
-            _side_fow_inputs: dict[str, tuple[list, list]] = {}
-            for _fow_side, _fow_units in units_by_side.items():
-                _own_data: list[dict[str, Any]] = []
-                for _u in _fow_units:
-                    if _u.status != UnitStatus.ACTIVE:
-                        continue
-                    if _u.entity_id not in _lod_full_update:
-                        continue  # Phase 85: LOD skip (non-update tick)
-                    _own_data.append({
-                        "position": _u.position,
-                        "sensors": ctx.unit_sensors.get(_u.entity_id, []),
-                        "observer_height": 1.8,
-                        "observer_heading_deg": math.degrees(_u.heading) % 360.0,
-                    })
-                _enemy_data: list[dict[str, Any]] = []
-                for _other_side, _other_units in units_by_side.items():
-                    if _other_side == _fow_side:
-                        continue
-                    for _eu in _other_units:
-                        if _eu.status != UnitStatus.ACTIVE:
-                            continue
-                        # Phase 70c: cached signature lookup
-                        _eu_ut = getattr(_eu, "unit_type", "")
-                        if _eu_ut not in self._signature_cache:
-                            self._signature_cache[_eu_ut] = _get_unit_signature(ctx, _eu)
-                        _enemy_data.append({
-                            "unit_id": _eu.entity_id,
-                            "position": _eu.position,
-                            "signature": self._signature_cache[_eu_ut],
-                            "unit": _eu,
-                            "target_height": 0.0,
-                        })
-                _side_fow_inputs[_fow_side] = (_own_data, _enemy_data)
-
-            # Phase 89: per-side parallel detection
-            if _enable_parallel_det and len(_side_fow_inputs) >= 2:
-                _det_rng = ctx.fog_of_war._rng
-                _n_sides = len(_side_fow_inputs)
-                _side_seeds = _det_rng.integers(0, 2**63, size=_n_sides)
-                _side_rngs = {
-                    _s: np.random.Generator(np.random.PCG64(int(_sd)))
-                    for _s, _sd in zip(_side_fow_inputs, _side_seeds)
-                }
-                with ThreadPoolExecutor(
-                    max_workers=min(_n_sides, 4),
-                ) as _pool:
-                    _futures = {}
-                    for _side, (_own, _enemies) in _side_fow_inputs.items():
-                        _f = _pool.submit(
-                            ctx.fog_of_war.update,
-                            side=_side,
-                            own_units=_own,
-                            enemy_units=_enemies,
-                            dt=dt,
-                            current_time=_fow_time,
-                            detection_culling=_enable_det_culling,
-                            scan_scheduling=_enable_scan_sched,
-                            current_tick=battle.ticks_executed,
-                            unit_arrays=_unit_arrays,
-                            rng=_side_rngs[_side],
-                        )
-                        _futures[_f] = _side
-                    for _f in as_completed(_futures):
-                        _f.result()  # propagate exceptions
-            else:
-                # Sequential path
-                for _fow_side, (_own_data, _enemy_data) in _side_fow_inputs.items():
-                    try:
-                        ctx.fog_of_war.update(
-                            side=_fow_side,
-                            own_units=_own_data,
-                            enemy_units=_enemy_data,
-                            dt=dt,
-                            current_time=_fow_time,
-                            detection_culling=_enable_det_culling,
-                            scan_scheduling=_enable_scan_sched,
-                            current_tick=battle.ticks_executed,
-                            unit_arrays=_unit_arrays,
-                        )
-                    except Exception:
-                        logger.debug(
-                            "FogOfWar update failed for %s",
-                            _fow_side,
-                            exc_info=True,
-                        )
-
-            # Phase 85: promote non-ACTIVE-tier units that detected contacts
-            if cal_flat.get("enable_lod", False):
-                for _fow_side, _fow_units in units_by_side.items():
-                    try:
-                        _wv = ctx.fog_of_war.get_world_view(_fow_side)
-                        for _u in _fow_units:
-                            _uid = _u.entity_id
-                            if self._lod_tiers.get(_uid, 0) == UnitLodTier.ACTIVE:
-                                continue
-                            if _uid not in _lod_full_update:
-                                continue  # didn't scan this tick
-                            for _ct in _wv.contacts.values():
-                                _cp = _ct.estimated_position
-                                if _cp is not None:
-                                    _contact_unit = _unit_index.get(
-                                        _ct.contact_id,
-                                    )
-                                    _contact_domain = (
-                                        _contact_unit.domain
-                                        if _contact_unit is not None
-                                        else None
-                                    )
-                                    _max_wpn = _max_weapon_range_for_domain(
-                                        ctx.unit_weapons.get(_uid, ()),
-                                        _contact_domain,
-                                    )
-                                    _dx = _u.position.easting - _cp.easting
-                                    _dy = _u.position.northing - _cp.northing
-                                    if math.sqrt(_dx * _dx + _dy * _dy) <= _max_wpn * 2:
-                                        self._lod_promoted.add(_uid)
-                                        break
-                    except Exception:
-                        pass
 
         # 2. AI OODA loop update → completions trigger assess/decide
         if ctx.ooda_engine is not None:
@@ -4556,7 +5161,12 @@ class BattleManager:
                     pre_positions[u.entity_id] = (u.position.easting, u.position.northing)
 
         self._execute_movement(
-            ctx, units_by_side, active_enemies, dt, battle, behavior_rules,
+            ctx,
+            units_by_side,
+            active_enemies,
+            dt,
+            battle,
+            behavior_rules,
             enemy_pos_arrays=enemy_pos_arrays,
         )
 
@@ -4598,6 +5208,7 @@ class BattleManager:
                 if ap is None:
                     continue
                 from stochastic_warfare.entities.unit_classes.aerial import AirPosture
+
                 fs = getattr(u, "flight_state", None)
                 fuel = getattr(u, "fuel_remaining", 1.0)
                 if fs is not None and int(fs) == 0:  # FlightState.GROUNDED
@@ -4621,12 +5232,14 @@ class BattleManager:
                     if np_attr is None:
                         continue
                     from stochastic_warfare.entities.unit_classes.naval import NavalPosture
+
                     if not enemies:
                         if int(np_attr) == 3:  # BATTLE_STATIONS → UNDERWAY
                             object.__setattr__(u, "naval_posture", NavalPosture.UNDERWAY)
                         continue
                     min_dist = _nearest_enemy_dist(
-                        u.position, enemies,
+                        u.position,
+                        enemies,
                         enemy_pos_arr=enemy_pos_arrays.get(side_name),
                     )
                     if min_dist < self._config.engagement_range_m * 2:
@@ -4639,10 +5252,12 @@ class BattleManager:
         pending_mine_damage: list[tuple[Unit, UnitStatus, str]] = []
         if mine_engine is not None and mine_engine._mines:
             dest_thresh_m = cal_flat.get(
-                "destruction_threshold", self._config.destruction_threshold,
+                "destruction_threshold",
+                self._config.destruction_threshold,
             )
             dis_thresh_m = cal_flat.get(
-                "disable_threshold", self._config.disable_threshold,
+                "disable_threshold",
+                self._config.disable_threshold,
             )
             for side_units in units_by_side.values():
                 for u in side_units:
@@ -4662,8 +5277,10 @@ class BattleManager:
                         trigger_radius = _trigger_radii.get(int(mine.mine_type), 50)
                         if dist_m <= trigger_radius:
                             mr = mine_engine.resolve_mine_encounter(
-                                ship_id=u.entity_id, mine=mine,
-                                ship_magnetic_sig=0.5, ship_acoustic_sig=0.5,
+                                ship_id=u.entity_id,
+                                mine=mine,
+                                ship_magnetic_sig=0.5,
+                                ship_acoustic_sig=0.5,
                                 timestamp=timestamp,
                             )
                             if mr.detonated and mr.damage_fraction > 0:
@@ -4674,11 +5291,7 @@ class BattleManager:
 
         # 4f. Phase 66a: IED encounters during ground movement
         _uw_eng = getattr(ctx, "unconventional_engine", None)
-        if (
-            cal_flat.get("enable_unconventional_warfare", False)
-            and _uw_eng is not None
-            and _uw_eng._ieds
-        ):
+        if cal_flat.get("enable_unconventional_warfare", False) and _uw_eng is not None and _uw_eng._ieds:
             for _ied_id, _ied_data in list(_uw_eng._ieds.items()):
                 if not _ied_data["active"]:
                     continue
@@ -4688,7 +5301,9 @@ class BattleManager:
                         if _u_ied.status != UnitStatus.ACTIVE:
                             continue
                         if getattr(_u_ied, "domain", None) in (
-                            Domain.NAVAL, Domain.SUBMARINE, Domain.AMPHIBIOUS,
+                            Domain.NAVAL,
+                            Domain.SUBMARINE,
+                            Domain.AMPHIBIOUS,
                         ):
                             continue  # naval mines handled above
                         # Only units that moved this tick
@@ -4707,7 +5322,9 @@ class BattleManager:
                         if _ied_data["subtype"] == "remote":
                             _ew_eng_ied = getattr(ctx, "ew_engine", None)
                             _jammed = _uw_eng.check_ew_jamming(
-                                _ied_id, _ew_eng_ied is not None, 0.5,
+                                _ied_id,
+                                _ew_eng_ied is not None,
+                                0.5,
                             )
                             if _jammed:
                                 continue
@@ -4720,7 +5337,9 @@ class BattleManager:
                         _result_ied = _uw_eng.detonate_ied(_ied_id, _u_ied.entity_id, timestamp=timestamp)
                         logger.info(
                             "IED %s detonated on %s (blast=%.1fm)",
-                            _ied_id, _u_ied.entity_id, _result_ied.blast_radius_m,
+                            _ied_id,
+                            _u_ied.entity_id,
+                            _result_ied.blast_radius_m,
                         )
                         break  # one IED per tick per location
 
@@ -4767,20 +5386,21 @@ class BattleManager:
 
                             if _env_rate > 0:
                                 _frac = _env_rate * (dt / 3600.0)
-                                self._env_casualty_accum[_uid62] = (
-                                    self._env_casualty_accum.get(_uid62, 0.0) + _frac
-                                )
+                                self._env_casualty_accum[_uid62] = self._env_casualty_accum.get(_uid62, 0.0) + _frac
                                 if self._env_casualty_accum[_uid62] >= 1.0:
                                     _cas = int(self._env_casualty_accum[_uid62])
                                     self._env_casualty_accum[_uid62] -= _cas
                                     _pers = _u62.personnel
                                     if _pers and len(_pers) > _cas:
                                         object.__setattr__(
-                                            _u62, "personnel", _pers[:-_cas],
+                                            _u62,
+                                            "personnel",
+                                            _pers[:-_cas],
                                         )
                                         logger.debug(
                                             "Env casualty: %s lost %d personnel (heat/cold)",
-                                            _uid62, _cas,
+                                            _uid62,
+                                            _cas,
                                         )
                 except Exception:
                     logger.debug("Phase 62a env casualty failed", exc_info=True)
@@ -4868,8 +5488,10 @@ class BattleManager:
                                 continue
                             _ad_pk_71 = 0.7  # base Pk for AD systems
                             from stochastic_warfare.combat.missiles import MissileType as _MT71
+
                             if _m71.flight_profile.missile_type in (
-                                _MT71.CRUISE_SUBSONIC, _MT71.CRUISE_SUPERSONIC,
+                                _MT71.CRUISE_SUBSONIC,
+                                _MT71.CRUISE_SUPERSONIC,
                                 _MT71.COASTAL_DEFENSE_SSM,
                             ):
                                 _cmd_result = _md_eng_71.engage_cruise_missile(
@@ -4883,7 +5505,8 @@ class BattleManager:
                                     _m71.active = False
                                     logger.info(
                                         "Missile %s intercepted by %s (cruise defense)",
-                                        _m71.missile_id, _ad71.entity_id,
+                                        _m71.missile_id,
+                                        _ad71.entity_id,
                                     )
                                     break
                             else:
@@ -4897,7 +5520,8 @@ class BattleManager:
                                     _m71.active = False
                                     logger.info(
                                         "Missile %s intercepted by %s (BMD)",
-                                        _m71.missile_id, _ad71.entity_id,
+                                        _m71.missile_id,
+                                        _ad71.entity_id,
                                     )
                                     break
 
@@ -4923,7 +5547,13 @@ class BattleManager:
                             _best_unit_71 = _u71b
                 if _best_unit_71 is not None:
                     _apply_aggregate_casualties(
-                        max(1, int(_impact_71.damage_fraction * max(1, len(_best_unit_71.personnel) if _best_unit_71.personnel else 4))),
+                        max(
+                            1,
+                            int(
+                                _impact_71.damage_fraction
+                                * max(1, len(_best_unit_71.personnel) if _best_unit_71.personnel else 4)
+                            ),
+                        ),
                         _best_unit_71,
                         _pending_missile_damage,
                         _dest_thresh_71,
@@ -4932,7 +5562,8 @@ class BattleManager:
                     )
                     logger.debug(
                         "Missile %s hit unit %s (dmg=%.2f)",
-                        _impact_71.missile_id, _best_unit_71.entity_id,
+                        _impact_71.missile_id,
+                        _best_unit_71.entity_id,
                         _impact_71.damage_fraction,
                     )
 
@@ -4962,12 +5593,15 @@ class BattleManager:
                     _sea_state_71 = 0.0
                     if _weather_eng_71 is not None:
                         _sea_state_71 = getattr(
-                            getattr(_weather_eng_71, "current", None), "sea_state", 0.0,
+                            getattr(_weather_eng_71, "current", None),
+                            "sea_state",
+                            0.0,
                         )
                     if _sea_state_71 > 7.0:
                         logger.info(
                             "Carrier %s: flight ops suspended (Beaufort %.0f)",
-                            _cu71.entity_id, _sea_state_71,
+                            _cu71.entity_id,
+                            _sea_state_71,
                         )
                         continue
                     # Count aircraft assigned to this carrier
@@ -4979,6 +5613,7 @@ class BattleManager:
                         ):
                             _ac_count_71 += 1
                     from stochastic_warfare.combat.carrier_ops import DeckState
+
                     _sortie_rate_71 = _carrier_eng_71.compute_sortie_rate(
                         aircraft_available=_ac_count_71,
                         deck_crew_quality=getattr(_cu71, "training_level", 0.7),
@@ -4987,7 +5622,9 @@ class BattleManager:
                     )
                     logger.debug(
                         "Carrier %s sortie rate: %.1f/hr (aircraft=%d)",
-                        _cu71.entity_id, _sortie_rate_71, _ac_count_71,
+                        _cu71.entity_id,
+                        _sortie_rate_71,
+                        _ac_count_71,
                     )
 
         # 5. Rebuild enemy data after movement — position arrays from step 1
@@ -5003,16 +5640,27 @@ class BattleManager:
                 morale_states=getattr(ctx, "morale_states", None),
                 unit_weapons=getattr(ctx, "unit_weapons", None),
             )
-            enemy_pos_arrays = {
-                side: _unit_arrays.get_enemy_positions(side)
-                for side in units_by_side
-            }
+            enemy_pos_arrays = {side: _unit_arrays.get_enemy_positions(side) for side in units_by_side}
+            self._stage_performance_delta(
+                PerformanceReceiptDelta(
+                    soa=SoAReceipt(
+                        post_movement_builds=1,
+                        post_movement_enemy_position_projections=len(
+                            units_by_side,
+                        ),
+                    ),
+                ),
+            )
 
         # 6. Engagement — detection + combat
         pending_damage = self._execute_engagements(
-            ctx, units_by_side, active_enemies, enemy_pos_arrays, dt, timestamp,
+            ctx,
+            units_by_side,
+            active_enemies,
+            enemy_pos_arrays,
+            dt,
+            timestamp,
             _unit_index=_unit_index,
-            _lod_full_update=_lod_full_update,
             battle=battle,
         )
         # Include mine damage and missile impact damage
@@ -5034,8 +5682,7 @@ class BattleManager:
             if _inc_eng_fz is not None and _inc_eng_fz._active_zones:
                 # Phase 70b: reuse _unit_index for O(1) lookup
                 _unit_positions: dict[str, Position] = {
-                    uid: u.position for uid, u in _unit_index.items()
-                    if u.status == UnitStatus.ACTIVE
+                    uid: u.position for uid, u in _unit_index.items() if u.status == UnitStatus.ACTIVE
                 }
                 _unit_lookup = _unit_index
                 _fire_hits = _inc_eng_fz.units_in_fire(_unit_positions)
@@ -5054,8 +5701,11 @@ class BattleManager:
                         _fire_dmg *= 0.5
                     _fire_cas = max(1, int(_fire_dmg * max(1, len(_fu_unit.personnel) if _fu_unit.personnel else 4)))
                     _apply_aggregate_casualties(
-                        _fire_cas, _fu_unit, _fire_pending,
-                        _fire_dest, _fire_dis,
+                        _fire_cas,
+                        _fu_unit,
+                        _fire_pending,
+                        _fire_dest,
+                        _fire_dis,
                         self._cumulative_casualties,
                     )
                     logger.debug("Unit %s fire damage: %.3f (burn_rate=%.3f)", _fu_id, _fire_dmg, _burn_rate)
@@ -5072,8 +5722,12 @@ class BattleManager:
 
         # 8. Morale checks
         if battle.ticks_executed % self._config.morale_check_interval == 0:
-            self._execute_morale(ctx, units_by_side, active_enemies, timestamp,
-                                _lod_full_update=_lod_full_update)
+            self._execute_morale(
+                ctx,
+                units_by_side,
+                active_enemies,
+                timestamp,
+            )
 
     # ── Battle termination ──────────────────────────────────────────
 
@@ -5202,18 +5856,12 @@ class BattleManager:
             morale_factor = 1.0
             supply_factor = 1.0
             if morale_states:
-                side_morale_vals = [
-                    morale_states.get(u.entity_id, MoraleState.STEADY)
-                    for u in side_units_active[side]
-                ]
+                side_morale_vals = [morale_states.get(u.entity_id, MoraleState.STEADY) for u in side_units_active[side]]
                 if side_morale_vals:
                     avg_morale = sum(int(m) for m in side_morale_vals) / len(side_morale_vals)
                     morale_factor = max(0.3, 1.0 - avg_morale * 0.15)
             if supply_states:
-                side_supply = [
-                    supply_states.get(u.entity_id, 1.0)
-                    for u in side_units_active[side]
-                ]
+                side_supply = [supply_states.get(u.entity_id, 1.0) for u in side_units_active[side]]
                 if side_supply:
                     avg_supply = sum(side_supply) / len(side_supply)
                     supply_factor = max(0.5, avg_supply)
@@ -5263,13 +5911,15 @@ class BattleManager:
                 for i in indices[:num_to_destroy]:
                     unit = active[i]
                     object.__setattr__(unit, "status", UnitStatus.DESTROYED)
-                    self._bus.publish(UnitDestroyedEvent(
-                        timestamp=datetime.min,
-                        source=ModuleId.COMBAT,
-                        unit_id=unit.entity_id,
-                        cause="auto_resolve",
-                        side=unit.side,
-                    ))
+                    self._bus.publish(
+                        UnitDestroyedEvent(
+                            timestamp=datetime.min,
+                            source=ModuleId.COMBAT,
+                            unit_id=unit.entity_id,
+                            cause="auto_resolve",
+                            side=unit.side,
+                        )
+                    )
 
         # Estimate duration (shorter for one-sided battles)
         power_ratio = max(power.values()) / max(sum(power.values()), 1e-10)
@@ -5297,13 +5947,35 @@ class BattleManager:
     ) -> dict[str, Any]:
         if not isinstance(assessment, SituationAssessment):
             raise ValueError(
-                "Battle assessment state must contain SituationAssessment "
-                "instances",
+                "Battle assessment state must contain SituationAssessment instances",
+            )
+        force_ratio = assessment.force_ratio
+        if isinstance(force_ratio, bool) or not isinstance(
+            force_ratio,
+            (int, float),
+        ):
+            raise ValueError(
+                "Battle assessment force_ratio must be a non-negative number or positive infinity",
+            )
+        normalized_force_ratio = float(force_ratio)
+        if math.isinf(normalized_force_ratio) and normalized_force_ratio > 0.0:
+            force_ratio_state: float | None = None
+        elif not math.isfinite(normalized_force_ratio) or normalized_force_ratio < 0.0:
+            raise ValueError(
+                "Battle assessment force_ratio must be a non-negative number or positive infinity",
+            )
+        else:
+            force_ratio_state = normalized_force_ratio
+        if force_ratio_state is None and assessment.force_ratio_rating is not AssessmentRating.VERY_FAVORABLE:
+            raise ValueError(
+                "Battle assessment unbounded force_ratio must have a VERY_FAVORABLE rating",
             )
         return {
             "unit_id": assessment.unit_id,
             "timestamp": assessment.timestamp.isoformat(),
-            "force_ratio": assessment.force_ratio,
+            # ``None`` is the explicit finite-JSON representation of an
+            # unbounded friendly/enemy ratio when enemy power is zero.
+            "force_ratio": force_ratio_state,
             "force_ratio_rating": int(assessment.force_ratio_rating),
             "terrain_advantage": assessment.terrain_advantage,
             "terrain_rating": int(assessment.terrain_rating),
@@ -5330,8 +6002,7 @@ class BattleManager:
     ) -> dict[str, Any]:
         if not isinstance(result, PropagationResult):
             raise ValueError(
-                "Battle misinterpreted-order state must contain "
-                "PropagationResult instances",
+                "Battle misinterpreted-order state must contain PropagationResult instances",
             )
         return {
             "success": result.success,
@@ -5376,10 +6047,7 @@ class BattleManager:
             "ticks_stationary": dict(
                 sorted(self._ticks_stationary.items()),
             ),
-            "suppression_states": {
-                uid: s.get_state()
-                for uid, s in sorted(self._suppression_states.items())
-            },
+            "suppression_states": {uid: s.get_state() for uid, s in sorted(self._suppression_states.items())},
             "cumulative_casualties": dict(
                 sorted(self._cumulative_casualties.items()),
             ),
@@ -5404,15 +6072,15 @@ class BattleManager:
                 sorted(self._lod_pending_counts.items()),
             ),
             "lod_promoted": sorted(self._lod_promoted),
+            "fow_observer_unit_ids": sorted(
+                self._fow_observer_unit_ids,
+            ),
+            "performance_execution_receipt": (self._performance_receipts.checkpoint_state(self)),
         }
 
     @staticmethod
     def _state_identifier(value: Any, *, field_name: str) -> str:
-        if (
-            not isinstance(value, str)
-            or not value
-            or value != value.strip()
-        ):
+        if not isinstance(value, str) or not value or value != value.strip():
             raise ValueError(
                 f"Battle {field_name} must be a non-empty trimmed string",
             )
@@ -5425,11 +6093,7 @@ class BattleManager:
         field_name: str,
         minimum: int = 0,
     ) -> int:
-        if (
-            isinstance(value, bool)
-            or not isinstance(value, int)
-            or value < minimum
-        ):
+        if isinstance(value, bool) or not isinstance(value, int) or value < minimum:
             raise ValueError(
                 f"Battle {field_name} must be a strict integer >= {minimum}",
             )
@@ -5443,11 +6107,7 @@ class BattleManager:
         minimum: float | None = None,
         maximum: float | None = None,
     ) -> float:
-        if (
-            isinstance(value, bool)
-            or not isinstance(value, (int, float))
-            or not math.isfinite(float(value))
-        ):
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(float(value)):
             raise ValueError(
                 f"Battle {field_name} must be a finite number",
             )
@@ -5473,8 +6133,7 @@ class BattleManager:
         if not isinstance(raw, dict):
             raise ValueError(f"Battle {field_name} must be a mapping")
         return {
-            cls._state_identifier(key, field_name=f"{field_name} key"):
-            cls._state_int(
+            cls._state_identifier(key, field_name=f"{field_name} key"): cls._state_int(
                 value,
                 field_name=f"{field_name}[{key!r}]",
                 minimum=minimum,
@@ -5494,8 +6153,7 @@ class BattleManager:
         if not isinstance(raw, dict):
             raise ValueError(f"Battle {field_name} must be a mapping")
         return {
-            cls._state_identifier(key, field_name=f"{field_name} key"):
-            cls._state_float(
+            cls._state_identifier(key, field_name=f"{field_name} key"): cls._state_float(
                 value,
                 field_name=f"{field_name}[{key!r}]",
                 minimum=minimum,
@@ -5561,8 +6219,7 @@ class BattleManager:
                 after_checkpoint = timestamp > checkpoint_time
             except TypeError as exc:
                 raise ValueError(
-                    "Battle assessment and checkpoint timestamps have "
-                    "incompatible timezone awareness",
+                    "Battle assessment and checkpoint timestamps have incompatible timezone awareness",
                 ) from exc
             if after_checkpoint:
                 raise ValueError(
@@ -5601,15 +6258,26 @@ class BattleManager:
                 )
             return result
 
+        force_ratio_rating = rating("force_ratio_rating")
+        raw_force_ratio = raw["force_ratio"]
+        if raw_force_ratio is None:
+            if force_ratio_rating is not AssessmentRating.VERY_FAVORABLE:
+                raise ValueError(
+                    "Battle assessment unbounded force_ratio must have a VERY_FAVORABLE rating",
+                )
+            force_ratio = float("inf")
+        else:
+            force_ratio = cls._state_float(
+                raw_force_ratio,
+                field_name="assessment force_ratio",
+                minimum=0.0,
+            )
+
         return SituationAssessment(
             unit_id=unit_id,
             timestamp=timestamp,
-            force_ratio=cls._state_float(
-                raw["force_ratio"],
-                field_name="assessment force_ratio",
-                minimum=0.0,
-            ),
-            force_ratio_rating=rating("force_ratio_rating"),
+            force_ratio=force_ratio,
+            force_ratio_rating=force_ratio_rating,
             terrain_advantage=cls._state_float(
                 raw["terrain_advantage"],
                 field_name="assessment terrain_advantage",
@@ -5671,17 +6339,13 @@ class BattleManager:
         success = raw["success"]
         was_misinterpreted = raw["was_misinterpreted"]
         degraded = raw["degraded"]
-        if not all(
-            isinstance(value, bool)
-            for value in (success, was_misinterpreted, degraded)
-        ):
+        if not all(isinstance(value, bool) for value in (success, was_misinterpreted, degraded)):
             raise ValueError(
                 "Battle propagation flags must be boolean",
             )
         if not success or not was_misinterpreted:
             raise ValueError(
-                "Battle misinterpreted-order state requires a successful "
-                "misinterpreted propagation result",
+                "Battle misinterpreted-order state requires a successful misinterpreted propagation result",
             )
         misinterpretation_type = cls._state_identifier(
             raw["misinterpretation_type"],
@@ -5745,11 +6409,11 @@ class BattleManager:
             "lod_pending_tiers",
             "lod_pending_counts",
             "lod_promoted",
+            "fow_observer_unit_ids",
+            "performance_execution_receipt",
         }
         actual_keys = set(state)
-        if actual_keys - expected_keys or (
-            not allow_legacy and actual_keys != expected_keys
-        ):
+        if actual_keys - expected_keys or (not allow_legacy and actual_keys != expected_keys):
             raise ValueError(
                 "Battle checkpoint key topology is invalid: "
                 f"missing={sorted(expected_keys - actual_keys)!r}, "
@@ -5777,8 +6441,7 @@ class BattleManager:
                 field_name="battle map key",
             )
             if not isinstance(raw, dict) or (
-                (not allow_legacy and set(raw) != battle_fields)
-                or set(raw) - battle_fields
+                (not allow_legacy and set(raw) != battle_fields) or set(raw) - battle_fields
             ):
                 raise ValueError(
                     f"Battle {battle_id!r} has invalid fields",
@@ -5809,10 +6472,7 @@ class BattleManager:
             if (
                 len(involved_sides) < 2
                 or len(involved_sides) != len(set(involved_sides))
-                or (
-                    expected_sides is not None
-                    and not set(involved_sides) <= expected_sides
-                )
+                or (expected_sides is not None and not set(involved_sides) <= expected_sides)
             ):
                 raise ValueError(
                     f"Battle {battle_id!r} has invalid side topology",
@@ -5828,8 +6488,7 @@ class BattleManager:
                 for unit_id in raw_unit_ids
             }
             if len(unit_ids) != len(raw_unit_ids) or (
-                expected_unit_ids is not None
-                and not unit_ids <= expected_unit_ids
+                expected_unit_ids is not None and not unit_ids <= expected_unit_ids
             ):
                 raise ValueError(
                     f"Battle {battle_id!r} has invalid unit topology",
@@ -5841,8 +6500,7 @@ class BattleManager:
             )
             if not set(wave_assignments) <= unit_ids:
                 raise ValueError(
-                    "Battle wave assignments reference units outside the "
-                    "battle",
+                    "Battle wave assignments reference units outside the battle",
                 )
             active = raw.get("active")
             if not isinstance(active, bool):
@@ -5876,23 +6534,17 @@ class BattleManager:
         allocated_ids: list[int] = []
         for battle_id in battles:
             suffix = battle_id.removeprefix("battle_")
-            is_runtime_id = (
-                suffix.isascii()
-                and suffix.isdecimal()
-                and battle_id == f"battle_{int(suffix):04d}"
-            )
+            is_runtime_id = suffix.isascii() and suffix.isdecimal() and battle_id == f"battle_{int(suffix):04d}"
             if not is_runtime_id:
                 if not allow_legacy:
                     raise ValueError(
-                        "Current battle checkpoint IDs must use the runtime "
-                        "allocator format",
+                        "Current battle checkpoint IDs must use the runtime allocator format",
                     )
                 continue
             allocated_ids.append(int(suffix))
         if allocated_ids and next_battle_id <= max(allocated_ids):
             raise ValueError(
-                "Battle next_battle_id would collide with restored "
-                "battle topology",
+                "Battle next_battle_id would collide with restored battle topology",
             )
 
         raw_assessments = state.get("cached_assessments", {})
@@ -5911,9 +6563,7 @@ class BattleManager:
             )
             for unit_id, raw in sorted(raw_assessments.items())
         }
-        if expected_unit_ids is not None and (
-            not set(cached_assessments) <= expected_unit_ids
-        ):
+        if expected_unit_ids is not None and (not set(cached_assessments) <= expected_unit_ids):
             raise ValueError(
                 "Battle assessment cache references unknown runtime units",
             )
@@ -5935,10 +6585,7 @@ class BattleManager:
                 unit_id,
                 field_name="suppression unit_id",
             )
-            if (
-                not isinstance(raw, dict)
-                or set(raw) != {"value", "source_direction"}
-            ):
+            if not isinstance(raw, dict) or set(raw) != {"value", "source_direction"}:
                 raise ValueError(
                     f"Battle suppression state {unit_id!r} is invalid",
                 )
@@ -5997,6 +6644,82 @@ class BattleManager:
         if len(lod_promoted) != len(raw_lod_promoted):
             raise ValueError("Battle lod_promoted values must be unique")
 
+        raw_fow_observers = state.get("fow_observer_unit_ids", [])
+        if not isinstance(raw_fow_observers, list):
+            raise ValueError("Battle fow_observer_unit_ids must be a list")
+        fow_observer_unit_ids = frozenset(
+            self._state_identifier(
+                unit_id,
+                field_name="fog-of-war observer unit_id",
+            )
+            for unit_id in raw_fow_observers
+        )
+        if len(fow_observer_unit_ids) != len(raw_fow_observers):
+            raise ValueError(
+                "Battle fow_observer_unit_ids values must be unique",
+            )
+
+        if allow_legacy:
+            if "performance_execution_receipt" in state:
+                raise ValueError(
+                    "Versionless battle state cannot contain a Phase 118 performance receipt",
+                )
+            if "fow_observer_unit_ids" in state:
+                raise ValueError(
+                    "Versionless battle state cannot contain a Phase 118 fog-of-war observer roster",
+                )
+            raw_performance_receipt = PerformanceExecutionReceipt.zero(
+                effective_flags=(self._performance_receipts.effective_flags),
+                tactical_interval_microseconds=(self._performance_receipts.tactical_interval_microseconds),
+                complete_from_tick_zero=False,
+            ).to_state()
+        else:
+            raw_performance_receipt = state["performance_execution_receipt"]
+        performance_receipt_plan = self._performance_receipts.stage_state(
+            self,
+            raw_performance_receipt,
+        )
+        lod_tiers = self._stage_int_map(
+            state.get("lod_tiers", {}),
+            field_name="lod_tiers",
+        )
+        lod_pending_tiers = self._stage_int_map(
+            state.get("lod_pending_tiers", {}),
+            field_name="lod_pending_tiers",
+        )
+        lod_pending_counts = self._stage_int_map(
+            state.get("lod_pending_counts", {}),
+            field_name="lod_pending_counts",
+            minimum=1,
+        )
+        valid_lod_values = {int(tier) for tier in UnitLodTier}
+        if any(value not in valid_lod_values for value in lod_tiers.values()):
+            raise ValueError("Battle lod_tiers contains an unknown tier")
+        if any(value not in valid_lod_values for value in lod_pending_tiers.values()):
+            raise ValueError(
+                "Battle lod_pending_tiers contains an unknown tier",
+            )
+        if set(lod_pending_tiers) != set(lod_pending_counts):
+            raise ValueError(
+                "Battle LOD pending tier and count owners disagree",
+            )
+        if not set(lod_pending_tiers) <= set(lod_tiers):
+            raise ValueError(
+                "Battle LOD pending state references an unclassified unit",
+            )
+        if any(lod_pending_tiers[unit_id] <= lod_tiers[unit_id] for unit_id in lod_pending_tiers):
+            raise ValueError(
+                "Battle LOD pending state must describe a demotion",
+            )
+        if not lod_promoted <= set(lod_tiers):
+            raise ValueError(
+                "Battle lod_promoted references an unclassified unit",
+            )
+        if self._performance_receipts.effective_flags.enable_lod and not fow_observer_unit_ids <= set(lod_tiers):
+            raise ValueError(
+                "Battle LOD-enabled observer roster contains an unclassified unit",
+            )
+
         plan = BattleStatePlan(
             owner_id=id(self),
             battles=battles,
@@ -6036,19 +6759,12 @@ class BattleManager:
                 minimum=0.0,
             ),
             misinterpreted_orders=misinterpreted_orders,
-            lod_tiers=self._stage_int_map(
-                state.get("lod_tiers", {}),
-                field_name="lod_tiers",
-            ),
-            lod_pending_tiers=self._stage_int_map(
-                state.get("lod_pending_tiers", {}),
-                field_name="lod_pending_tiers",
-            ),
-            lod_pending_counts=self._stage_int_map(
-                state.get("lod_pending_counts", {}),
-                field_name="lod_pending_counts",
-            ),
+            lod_tiers=lod_tiers,
+            lod_pending_tiers=lod_pending_tiers,
+            lod_pending_counts=lod_pending_counts,
             lod_promoted=lod_promoted,
+            fow_observer_unit_ids=fow_observer_unit_ids,
+            performance_execution_receipt=performance_receipt_plan,
         )
         all_unit_maps = (
             plan.pending_decisions,
@@ -6064,18 +6780,17 @@ class BattleManager:
             plan.lod_pending_tiers,
             plan.lod_pending_counts,
         )
-        if expected_unit_ids is not None and any(
-            not set(mapping) <= expected_unit_ids
-            for mapping in all_unit_maps
-        ):
+        if expected_unit_ids is not None and any(not set(mapping) <= expected_unit_ids for mapping in all_unit_maps):
             raise ValueError(
                 "Battle unit-owned state references unknown runtime units",
             )
-        if expected_unit_ids is not None and (
-            not plan.lod_promoted <= expected_unit_ids
-        ):
+        if expected_unit_ids is not None and (not plan.lod_promoted <= expected_unit_ids):
             raise ValueError(
                 "Battle lod_promoted references unknown runtime units",
+            )
+        if expected_unit_ids is not None and (not plan.fow_observer_unit_ids <= expected_unit_ids):
+            raise ValueError(
+                "Battle fog-of-war observer roster references unknown runtime units",
             )
         return plan
 
@@ -6108,12 +6823,19 @@ class BattleManager:
         self._lod_pending_tiers = dict(plan.lod_pending_tiers)
         self._lod_pending_counts = dict(plan.lod_pending_counts)
         self._lod_promoted = set(plan.lod_promoted)
+        self._fow_observer_unit_ids = frozenset(
+            plan.fow_observer_unit_ids,
+        )
+        self._performance_receipts.commit_state(
+            self,
+            plan.performance_execution_receipt,
+        )
 
     def set_state(
         self,
         state: dict[str, Any],
         *,
-        allow_legacy: bool = True,
+        allow_legacy: bool = False,
     ) -> None:
         """Validate and atomically restore standalone tactical state."""
         self.commit_state(
@@ -6126,11 +6848,7 @@ class BattleManager:
     @property
     def active_battles(self) -> list[BattleContext]:
         """Return all currently active battles."""
-        return [
-            battle
-            for _, battle in sorted(self._battles.items())
-            if battle.active
-        ]
+        return [battle for _, battle in sorted(self._battles.items()) if battle.active]
 
     # ── Private helpers ─────────────────────────────────────────────
 
@@ -6152,35 +6870,37 @@ class BattleManager:
         dists = np.sqrt(np.sum(diffs * diffs, axis=2))
         return float(np.min(dists))
 
-    def _classify_lod_tiers(
+    def _stage_lod_tiers(
         self,
         ctx: Any,
         units_by_side: dict[str, list[Unit]],
         enemy_pos_arrays: dict[str, np.ndarray],
-        battle: Any,
         *,
         active_enemies: dict[str, list[Unit]] | None = None,
-        tick_override: int | None = None,
-    ) -> set[str]:
-        """Classify units into LOD tiers. Returns entity_ids for full update this tick."""
+    ) -> _LODClassificationPlan:
+        """Stage LOD classification without mutating Battle-owned state."""
         cal_flat = _resolve_cal_flat(ctx)
+        lod_tiers = dict(self._lod_tiers)
+        pending_tiers = dict(self._lod_pending_tiers)
+        pending_counts = dict(self._lod_pending_counts)
+        promoted_unit_ids = frozenset(self._lod_promoted)
         if not cal_flat.get("enable_lod", False):
-            return {
-                u.entity_id
-                for su in units_by_side.values()
-                for u in su
-                if u.status == UnitStatus.ACTIVE
-            }
+            active_units = {u.entity_id for su in units_by_side.values() for u in su if u.status == UnitStatus.ACTIVE}
+            return _LODClassificationPlan(
+                lod_tiers=lod_tiers,
+                pending_tiers=pending_tiers,
+                pending_counts=pending_counts,
+                receipt=LODReceipt(
+                    active_classifications=len(active_units),
+                ),
+            )
 
-        nearby_interval = cal_flat.get("lod_nearby_interval", 5)
-        distant_interval = cal_flat.get("lod_distant_interval", 20)
         hysteresis = cal_flat.get("lod_hysteresis_ticks", 3)
-        tick = (
-            battle.ticks_executed
-            if tick_override is None
-            else tick_override
-        )
-        full_update: set[str] = set()
+        classification_counts = {
+            UnitLodTier.ACTIVE: 0,
+            UnitLodTier.NEARBY: 0,
+            UnitLodTier.DISTANT: 0,
+        }
 
         for side_name, side_units in units_by_side.items():
             pos_arr = enemy_pos_arrays.get(side_name, np.empty((0, 2)))
@@ -6188,13 +6908,14 @@ class BattleManager:
             if active_enemies is not None:
                 positions: dict[Domain, list[tuple[float, float]]] = {}
                 for enemy in active_enemies.get(side_name, ()):
-                    positions.setdefault(enemy.domain, []).append((
-                        enemy.position.easting,
-                        enemy.position.northing,
-                    ))
+                    positions.setdefault(enemy.domain, []).append(
+                        (
+                            enemy.position.easting,
+                            enemy.position.northing,
+                        )
+                    )
                 enemy_positions_by_domain = {
-                    domain: np.asarray(points, dtype=np.float64)
-                    for domain, points in positions.items()
+                    domain: np.asarray(points, dtype=np.float64) for domain, points in positions.items()
                 }
 
             for u in side_units:
@@ -6203,7 +6924,7 @@ class BattleManager:
                 uid = u.entity_id
 
                 # 1. Compute raw tier from distance to nearest enemy
-                if uid in self._lod_promoted:
+                if uid in promoted_unit_ids:
                     raw_tier = UnitLodTier.ACTIVE
                 elif pos_arr.shape[0] == 0:
                     raw_tier = UnitLodTier.DISTANT
@@ -6236,8 +6957,7 @@ class BattleManager:
                                 for sensor in sensors
                                 if (
                                     sensor.operational
-                                    and sensor.sensor_type
-                                    is not SensorType.ESM
+                                    and sensor.sensor_type is not SensorType.ESM
                                     and sensor.supports_target_domain(domain)
                                 )
                             ),
@@ -6249,13 +6969,13 @@ class BattleManager:
                         [u.position.easting, u.position.northing],
                         dtype=np.float64,
                     )
-                    for domain, domain_positions in (
-                        enemy_positions_by_domain.items()
-                    ):
+                    for domain, domain_positions in enemy_positions_by_domain.items():
                         offsets = domain_positions - unit_position
-                        nearest_distance_sq = float(np.min(
-                            np.sum(offsets * offsets, axis=1),
-                        ))
+                        nearest_distance_sq = float(
+                            np.min(
+                                np.sum(offsets * offsets, axis=1),
+                            )
+                        )
                         active_threshold = max(
                             weapon_ranges[domain] * 2.0,
                             100.0,
@@ -6267,10 +6987,7 @@ class BattleManager:
                         if nearest_distance_sq <= active_threshold**2:
                             raw_tier = UnitLodTier.ACTIVE
                             break
-                        if (
-                            nearest_distance_sq <= nearby_threshold**2
-                            and raw_tier is UnitLodTier.DISTANT
-                        ):
+                        if nearest_distance_sq <= nearby_threshold**2 and raw_tier is UnitLodTier.DISTANT:
                             raw_tier = UnitLodTier.NEARBY
                 else:
                     upos = np.array([u.position.easting, u.position.northing])
@@ -6299,43 +7016,122 @@ class BattleManager:
                         raw_tier = UnitLodTier.DISTANT
 
                 # 2. Apply hysteresis (immediate promotion, delayed demotion)
-                is_new = uid not in self._lod_tiers
-                current = self._lod_tiers.get(uid, UnitLodTier.ACTIVE)
+                is_new = uid not in lod_tiers
+                current = lod_tiers.get(uid, UnitLodTier.ACTIVE)
                 if is_new:  # first classification — assign directly
                     final = raw_tier
                 elif raw_tier < current:  # promotion (lower tier value = higher priority)
                     final = raw_tier
-                    self._lod_pending_tiers.pop(uid, None)
-                    self._lod_pending_counts.pop(uid, None)
+                    pending_tiers.pop(uid, None)
+                    pending_counts.pop(uid, None)
                 elif raw_tier > current:  # demotion
-                    if self._lod_pending_tiers.get(uid) == raw_tier:
-                        count = self._lod_pending_counts.get(uid, 0) + 1
-                        self._lod_pending_counts[uid] = count
+                    if pending_tiers.get(uid) == raw_tier:
+                        count = pending_counts.get(uid, 0) + 1
+                        pending_counts[uid] = count
                         final = raw_tier if count >= hysteresis else current
                         if count >= hysteresis:
-                            self._lod_pending_tiers.pop(uid, None)
-                            self._lod_pending_counts.pop(uid, None)
+                            pending_tiers.pop(uid, None)
+                            pending_counts.pop(uid, None)
                     else:
-                        self._lod_pending_tiers[uid] = raw_tier
-                        self._lod_pending_counts[uid] = 1
+                        pending_tiers[uid] = raw_tier
+                        pending_counts[uid] = 1
                         final = current
                 else:
                     final = raw_tier
-                    self._lod_pending_tiers.pop(uid, None)
-                    self._lod_pending_counts.pop(uid, None)
+                    pending_tiers.pop(uid, None)
+                    pending_counts.pop(uid, None)
 
-                self._lod_tiers[uid] = final
+                lod_tiers[uid] = final
+                classification_counts[UnitLodTier(final)] += 1
 
-                # 3. Determine if this unit gets full update this tick
-                if final == UnitLodTier.ACTIVE:
-                    full_update.add(uid)
-                elif final == UnitLodTier.NEARBY and tick % nearby_interval == 0:
-                    full_update.add(uid)
-                elif final == UnitLodTier.DISTANT and tick % distant_interval == 0:
-                    full_update.add(uid)
+        return _LODClassificationPlan(
+            lod_tiers=lod_tiers,
+            pending_tiers=pending_tiers,
+            pending_counts=pending_counts,
+            receipt=LODReceipt(
+                active_classifications=(classification_counts[UnitLodTier.ACTIVE]),
+                nearby_classifications=(classification_counts[UnitLodTier.NEARBY]),
+                distant_classifications=(classification_counts[UnitLodTier.DISTANT]),
+            ),
+        )
 
-        self._lod_promoted.clear()
-        return full_update
+    @staticmethod
+    def _validate_lod_publication(
+        plan: _LODClassificationPlan,
+        *,
+        witness_promoted_unit_ids: Collection[str] = (),
+    ) -> frozenset[str]:
+        """Validate next-interval witness promotions without publication."""
+        if type(plan) is not _LODClassificationPlan:
+            raise TypeError("LOD classification plan has the wrong type")
+        promoted = frozenset(witness_promoted_unit_ids)
+        if any(type(unit_id) is not str or not unit_id or unit_id != unit_id.strip() for unit_id in promoted):
+            raise ValueError(
+                "Witness-promoted LOD unit IDs must be non-empty trimmed strings",
+            )
+        if not promoted <= set(plan.lod_tiers):
+            raise ValueError(
+                "Witness-promoted LOD units are absent from the staged classification",
+            )
+        return promoted
+
+    def _commit_lod_tiers(
+        self,
+        plan: _LODClassificationPlan,
+        *,
+        witness_promoted_unit_ids: frozenset[str],
+    ) -> None:
+        """Publish one fully prevalidated Battle-owned LOD plan."""
+        lod_tiers = dict(plan.lod_tiers)
+        pending_tiers = dict(plan.pending_tiers)
+        pending_counts = dict(plan.pending_counts)
+        for unit_id in witness_promoted_unit_ids:
+            lod_tiers[unit_id] = UnitLodTier.ACTIVE
+            pending_tiers.pop(unit_id, None)
+            pending_counts.pop(unit_id, None)
+        self._lod_tiers = lod_tiers
+        self._lod_pending_tiers = pending_tiers
+        self._lod_pending_counts = pending_counts
+        # Damage after observation may populate this set for the next staged
+        # interval.  Witness promotions are already reflected in both the
+        # Battle tier map and the scheduler's staged period mirror.
+        self._lod_promoted = set()
+
+    def _publish_lod_tiers(
+        self,
+        plan: _LODClassificationPlan,
+        *,
+        witness_promoted_unit_ids: Collection[str] = (),
+    ) -> None:
+        """Validate and publish the compatibility LOD boundary."""
+        promoted = self._validate_lod_publication(
+            plan,
+            witness_promoted_unit_ids=witness_promoted_unit_ids,
+        )
+        self._stage_performance_delta(
+            PerformanceReceiptDelta(lod=plan.receipt),
+        )
+        self._commit_lod_tiers(
+            plan,
+            witness_promoted_unit_ids=promoted,
+        )
+
+    def _classify_lod_tiers(
+        self,
+        ctx: Any,
+        units_by_side: dict[str, list[Unit]],
+        enemy_pos_arrays: dict[str, np.ndarray],
+        *,
+        active_enemies: dict[str, list[Unit]] | None = None,
+    ) -> None:
+        """Compatibility publication around the staged LOD authority."""
+        plan = self._stage_lod_tiers(
+            ctx,
+            units_by_side,
+            enemy_pos_arrays,
+            active_enemies=active_enemies,
+        )
+        self._publish_lod_tiers(plan)
 
     @staticmethod
     def _build_enemy_data(
@@ -6402,17 +7198,9 @@ class BattleManager:
                                 _wv = ctx.fog_of_war.get_world_view(side)
                                 enemies = len(_wv.contacts)
                             except Exception:
-                                enemies = sum(
-                                    len(ctx.active_units(s))
-                                    for s in ctx.side_names()
-                                    if s != side
-                                )
+                                enemies = sum(len(ctx.active_units(s)) for s in ctx.side_names() if s != side)
                         else:
-                            enemies = sum(
-                                len(ctx.active_units(s))
-                                for s in ctx.side_names()
-                                if s != side
-                            )
+                            enemies = sum(len(ctx.active_units(s)) for s in ctx.side_names() if s != side)
 
                         # Real morale from state tracking
                         morale_level = self._get_unit_morale_level(ctx, unit_id)
@@ -6434,9 +7222,7 @@ class BattleManager:
                             if _cal_69c is not None and _cal_69c.get("enable_fog_of_war", False):
                                 try:
                                     _active_decoys = _fow_69c_obs.get_active_decoys()
-                                    _enemy_power_69c += sum(
-                                        1.0 for d in _active_decoys if d.effectiveness > 0
-                                    )
+                                    _enemy_power_69c += sum(1.0 for d in _active_decoys if d.effectiveness > 0)
                                 except (AttributeError, TypeError):
                                     pass
 
@@ -6464,26 +7250,35 @@ class BattleManager:
                         _c2_eff = self._compute_c2_effectiveness(ctx, unit_id, _c2_side)
                         _c2_min = _cal_c2.get("c2_min_effectiveness", 0.3)
                         if _c2_eff < _c2_min:
-                            logger.debug("C2 friction: unit %s DECIDE skipped (eff=%.2f < min=%.2f)",
-                                         unit_id, _c2_eff, _c2_min)
+                            logger.debug(
+                                "C2 friction: unit %s DECIDE skipped (eff=%.2f < min=%.2f)", unit_id, _c2_eff, _c2_min
+                            )
                             continue
 
                 # Phase 64b: Planning delay — skip DECIDE if unit is still planning
                 _planning_64 = getattr(ctx, "planning_engine", None)
                 if _planning_64 is not None and _cal_c2 is not None and _cal_c2.get("enable_c2_friction", False):
                     from stochastic_warfare.c2.planning.process import PlanningPhase as _PP64
+
                     _plan_status = _planning_64.get_planning_status(unit_id)
                     if _plan_status not in (_PP64.IDLE, _PP64.COMPLETE):
-                        logger.debug("Planning delay: unit %s in phase %s, DECIDE deferred",
-                                     unit_id, _plan_status.name)
+                        logger.debug("Planning delay: unit %s in phase %s, DECIDE deferred", unit_id, _plan_status.name)
                         continue
                     if _plan_status == _PP64.IDLE:
-                        from stochastic_warfare.c2.orders.types import Order as _Ord64b, OrderType as _OT64b, OrderPriority as _OP64b
+                        from stochastic_warfare.c2.orders.types import (
+                            Order as _Ord64b,
+                            OrderType as _OT64b,
+                            OrderPriority as _OP64b,
+                        )
+
                         _plan_order = _Ord64b(
                             order_id=f"plan_{unit_id}_{timestamp}",
-                            issuer_id=unit_id, recipient_id=unit_id,
-                            timestamp=timestamp, order_type=_OT64b.FRAGO,
-                            echelon_level=5, priority=_OP64b.PRIORITY,
+                            issuer_id=unit_id,
+                            recipient_id=unit_id,
+                            timestamp=timestamp,
+                            order_type=_OT64b.FRAGO,
+                            echelon_level=5,
+                            priority=_OP64b.PRIORITY,
                             mission_type=0,
                         )
                         # Planning time scales with C2 effectiveness — healthy
@@ -6491,14 +7286,23 @@ class BattleManager:
                         # slower planning (up to the configured maximum).
                         _plan_max = _cal_c2.get("planning_available_time_s", 7200.0)
                         _c2_plan_side2 = self._find_unit_side(ctx, unit_id)
-                        _c2_plan_eff2 = self._compute_c2_effectiveness(
-                            ctx, unit_id, _c2_plan_side2,
-                        ) if _c2_plan_side2 else 1.0
+                        _c2_plan_eff2 = (
+                            self._compute_c2_effectiveness(
+                                ctx,
+                                unit_id,
+                                _c2_plan_side2,
+                            )
+                            if _c2_plan_side2
+                            else 1.0
+                        )
                         # Scale: eff=1.0 → 60s, eff=0.3 → full planning time
                         _avail_time = max(60.0, _plan_max * (1.0 - _c2_plan_eff2))
                         try:
                             _method = _planning_64.initiate_planning(
-                                unit_id, _plan_order, _avail_time, timestamp,
+                                unit_id,
+                                _plan_order,
+                                _avail_time,
+                                timestamp,
                             )
                             logger.debug("Initiated %s planning for %s", _method.name, unit_id)
                         except Exception:
@@ -6517,7 +7321,9 @@ class BattleManager:
 
                     # Build assessment summary from real data
                     assessment_summary = self._build_assessment_summary(
-                        ctx, unit_id, assessment,
+                        ctx,
+                        unit_id,
+                        assessment,
                     )
 
                     # Get school decision adjustments
@@ -6530,11 +7336,9 @@ class BattleManager:
                         # Apply opponent modeling if enabled
                         if school.definition.opponent_modeling_enabled:
                             side = self._find_unit_side(ctx, unit_id)
-                            enemies = sum(
-                                len(ctx.active_units(s))
-                                for s in ctx.side_names()
-                                if s != side
-                            ) if side else 1
+                            enemies = (
+                                sum(len(ctx.active_units(s)) for s in ctx.side_names() if s != side) if side else 1
+                            )
                             friendly = len(ctx.active_units(side)) if side else 1
                             opponent_prediction = school.predict_opponent_action(
                                 own_assessment=assessment_summary,
@@ -6545,7 +7349,8 @@ class BattleManager:
                             if opponent_prediction:
                                 temp_scores = dict(school_adjustments)
                                 adjusted = school.adjust_scores_for_opponent(
-                                    temp_scores, opponent_prediction,
+                                    temp_scores,
+                                    opponent_prediction,
                                 )
                                 school_adjustments = adjusted
 
@@ -6557,14 +7362,19 @@ class BattleManager:
                             school_adjustments[_plan_result_69b] = (
                                 school_adjustments.get(_plan_result_69b, 0.0) + _planning_bonus
                             )
-                            logger.debug("Planning result '%s' injected for %s (+%.2f)",
-                                         _plan_result_69b, unit_id, _planning_bonus)
+                            logger.debug(
+                                "Planning result '%s' injected for %s (+%.2f)",
+                                _plan_result_69b,
+                                unit_id,
+                                _planning_bonus,
+                            )
 
                     # Phase 68f: expire old stratagems before evaluating new ones
                     if getattr(ctx, "stratagem_engine", None) is not None and battle is not None:
                         _strat_dur = _cal_c2.get("stratagem_duration_ticks", 100) if _cal_c2 is not None else 100
                         _expired = ctx.stratagem_engine.expire_stratagems(
-                            battle.ticks_executed, _strat_dur,
+                            battle.ticks_executed,
+                            _strat_dur,
                         )
                         for _exp_id in _expired:
                             logger.debug("Stratagem %s expired at tick %d", _exp_id, battle.ticks_executed)
@@ -6579,30 +7389,36 @@ class BattleManager:
                             affinity: dict[str, float] = {}
                             if school is not None:
                                 affinity = school.get_stratagem_affinity()
-                            _strat_activate = (
-                                _cal_c2 is not None and _cal_c2.get("enable_c2_friction", False)
-                            )
+                            _strat_activate = _cal_c2 is not None and _cal_c2.get("enable_c2_friction", False)
                             conc_viable = False
                             dec_viable = False
                             try:
                                 conc_viable, _ = ctx.stratagem_engine.evaluate_concentration_opportunity(
-                                    assessment, unit_ids, echelon=5, experience=experience,
+                                    assessment,
+                                    unit_ids,
+                                    echelon=5,
+                                    experience=experience,
                                 )
                                 if conc_viable:
                                     logger.debug(
                                         "Concentration opportunity for %s (affinity=%.2f)",
-                                        unit_id, affinity.get("CONCENTRATION", 0.5),
+                                        unit_id,
+                                        affinity.get("CONCENTRATION", 0.5),
                                     )
                             except Exception:
                                 pass
                             try:
                                 dec_viable, _ = ctx.stratagem_engine.evaluate_deception_opportunity(
-                                    assessment, unit_ids, echelon=5, experience=experience,
+                                    assessment,
+                                    unit_ids,
+                                    echelon=5,
+                                    experience=experience,
                                 )
                                 if dec_viable:
                                     logger.debug(
                                         "Deception opportunity for %s (affinity=%.2f)",
-                                        unit_id, affinity.get("DECEPTION", 0.5),
+                                        unit_id,
+                                        affinity.get("DECEPTION", 0.5),
                                     )
                             except Exception:
                                 pass
@@ -6615,33 +7431,55 @@ class BattleManager:
                                     for _es in _enemy_sides:
                                         _enemy_units_64.extend(ctx.active_units(_es))
                                     if _enemy_units_64:
-                                        _avg_e = sum((getattr(e, "position", None) or Position(0, 0, 0)).easting for e in _enemy_units_64) / len(_enemy_units_64)
-                                        _avg_n = sum((getattr(e, "position", None) or Position(0, 0, 0)).northing for e in _enemy_units_64) / len(_enemy_units_64)
+                                        _avg_e = sum(
+                                            (getattr(e, "position", None) or Position(0, 0, 0)).easting
+                                            for e in _enemy_units_64
+                                        ) / len(_enemy_units_64)
+                                        _avg_n = sum(
+                                            (getattr(e, "position", None) or Position(0, 0, 0)).northing
+                                            for e in _enemy_units_64
+                                        ) / len(_enemy_units_64)
                                         _conc_point = Position(_avg_e, _avg_n, 0.0)
                                         _economy = unit_ids[-2:] if len(unit_ids) > 4 else []
                                         _conc_units = [u for u in unit_ids if u not in _economy]
                                         try:
-                                            _plan = ctx.stratagem_engine.plan_concentration(_conc_units, _conc_point, _economy)
+                                            _plan = ctx.stratagem_engine.plan_concentration(
+                                                _conc_units, _conc_point, _economy
+                                            )
                                             _strat_tick = battle.ticks_executed if battle is not None else 0
-                                            ctx.stratagem_engine.activate_stratagem(unit_id, _plan, timestamp, tick=_strat_tick)
+                                            ctx.stratagem_engine.activate_stratagem(
+                                                unit_id, _plan, timestamp, tick=_strat_tick
+                                            )
                                             if school_adjustments is not None:
                                                 _bonus = _cal_c2.get("stratagem_concentration_bonus", 0.08)
-                                                school_adjustments["ATTACK"] = school_adjustments.get("ATTACK", 0.0) + _bonus
+                                                school_adjustments["ATTACK"] = (
+                                                    school_adjustments.get("ATTACK", 0.0) + _bonus
+                                                )
                                         except Exception:
-                                            logger.debug("Concentration activation failed for %s", unit_id, exc_info=True)
+                                            logger.debug(
+                                                "Concentration activation failed for %s", unit_id, exc_info=True
+                                            )
                                 if dec_viable:
                                     _feint = unit_ids[:1]
                                     _main = unit_ids[1:]
                                     try:
                                         _plan = ctx.stratagem_engine.plan_deception(_feint, "enemy_front", _main)
                                         _strat_tick = battle.ticks_executed if battle is not None else 0
-                                        ctx.stratagem_engine.activate_stratagem(unit_id, _plan, timestamp, tick=_strat_tick)
+                                        ctx.stratagem_engine.activate_stratagem(
+                                            unit_id, _plan, timestamp, tick=_strat_tick
+                                        )
                                         if school_adjustments is not None:
                                             _bonus = _cal_c2.get("stratagem_deception_bonus", 0.10)
-                                            school_adjustments["ATTACK"] = school_adjustments.get("ATTACK", 0.0) + _bonus
+                                            school_adjustments["ATTACK"] = (
+                                                school_adjustments.get("ATTACK", 0.0) + _bonus
+                                            )
                                         # Phase 69c: deploy phantom decoys via FOW
                                         _fow_69c = getattr(ctx, "fog_of_war", None)
-                                        if _fow_69c is not None and _cal_c2 is not None and _cal_c2.get("enable_fog_of_war", False):
+                                        if (
+                                            _fow_69c is not None
+                                            and _cal_c2 is not None
+                                            and _cal_c2.get("enable_fog_of_war", False)
+                                        ):
                                             _phantom_count = _cal_c2.get("deception_phantom_count", 3)
                                             _feint_pos_list = []
                                             for _fid in _feint:
@@ -6650,18 +7488,28 @@ class BattleManager:
                                                     _feint_pos_list.append(_fp)
                                             if _feint_pos_list:
                                                 _rng_69c = getattr(ctx, "rng_manager", None)
-                                                _dec_stream = _rng_69c.get_stream(ModuleId.C2) if _rng_69c is not None else None
+                                                _dec_stream = (
+                                                    _rng_69c.get_stream(ModuleId.C2) if _rng_69c is not None else None
+                                                )
                                                 for _pi in range(_phantom_count):
                                                     _base = _feint_pos_list[_pi % len(_feint_pos_list)]
-                                                    _dist = 500.0 + 1000.0 * (_dec_stream.random() if _dec_stream else 0.5)
-                                                    _ang = 2 * math.pi * (_dec_stream.random() if _dec_stream else 0.25 * _pi)
+                                                    _dist = 500.0 + 1000.0 * (
+                                                        _dec_stream.random() if _dec_stream else 0.5
+                                                    )
+                                                    _ang = (
+                                                        2
+                                                        * math.pi
+                                                        * (_dec_stream.random() if _dec_stream else 0.25 * _pi)
+                                                    )
                                                     _dec_pos = Position(
                                                         _base.easting + math.cos(_ang) * _dist,
                                                         _base.northing + math.sin(_ang) * _dist,
                                                         _base.altitude,
                                                     )
                                                     _fow_69c.deploy_decoy(_dec_pos)
-                                                logger.debug("Deception: %d phantoms deployed for %s", _phantom_count, unit_id)
+                                                logger.debug(
+                                                    "Deception: %d phantoms deployed for %s", _phantom_count, unit_id
+                                                )
                                     except Exception:
                                         logger.debug("Deception activation failed for %s", unit_id, exc_info=True)
 
@@ -6677,8 +7525,9 @@ class BattleManager:
                             _elapsed_s = battle.battle_elapsed_s if battle is not None else 0.0
                             if _pending_at is not None:
                                 if _elapsed_s < _pending_at:
-                                    logger.debug("Order pending for %s (%.1fs remaining)",
-                                                 unit_id, _pending_at - _elapsed_s)
+                                    logger.debug(
+                                        "Order pending for %s (%.1fs remaining)", unit_id, _pending_at - _elapsed_s
+                                    )
                                     continue  # still waiting
                                 else:
                                     # Delay matured — pop and execute
@@ -6686,7 +7535,12 @@ class BattleManager:
                                     logger.debug("Order delay matured for %s", unit_id)
                             else:
                                 # First time: propagate order to determine delay
-                                from stochastic_warfare.c2.orders.types import Order as _Order64a, OrderType as _OT64a, OrderPriority as _OP64a
+                                from stochastic_warfare.c2.orders.types import (
+                                    Order as _Order64a,
+                                    OrderType as _OT64a,
+                                    OrderPriority as _OP64a,
+                                )
+
                                 _order_64a = _Order64a(
                                     order_id=f"decide_{unit_id}_{timestamp}",
                                     issuer_id=unit_id,
@@ -6704,15 +7558,28 @@ class BattleManager:
                                     # healthy comms (eff=1.0) → minimal friction,
                                     # degraded comms (eff→0) → full friction
                                     _c2_delay_side = self._find_unit_side(ctx, unit_id)
-                                    _c2_delay_eff = self._compute_c2_effectiveness(
-                                        ctx, unit_id, _c2_delay_side,
-                                    ) if _c2_delay_side else 1.0
+                                    _c2_delay_eff = (
+                                        self._compute_c2_effectiveness(
+                                            ctx,
+                                            unit_id,
+                                            _c2_delay_side,
+                                        )
+                                        if _c2_delay_side
+                                        else 1.0
+                                    )
                                     _c2_friction_scale = max(0.0, 1.0 - _c2_delay_eff)
-                                    _prop_cfg.delay_sigma = _cal_64a.get("order_propagation_delay_sigma", 0.4) * _c2_friction_scale
-                                    _prop_cfg.base_misinterpretation = _cal_64a.get("order_misinterpretation_base", 0.05) * _c2_friction_scale
+                                    _prop_cfg.delay_sigma = (
+                                        _cal_64a.get("order_propagation_delay_sigma", 0.4) * _c2_friction_scale
+                                    )
+                                    _prop_cfg.base_misinterpretation = (
+                                        _cal_64a.get("order_misinterpretation_base", 0.05) * _c2_friction_scale
+                                    )
                                 try:
                                     _result_68c = ctx.order_propagation.propagate_order(
-                                        _order_64a, _sender_pos, _sender_pos, timestamp,
+                                        _order_64a,
+                                        _sender_pos,
+                                        _sender_pos,
+                                        timestamp,
                                     )
                                     if not _result_68c.success:
                                         logger.debug("Order propagation failed for %s", unit_id)
@@ -6725,7 +7592,11 @@ class BattleManager:
                                     # Phase 68d: store misinterpretation for enforcement
                                     if _result_68c.was_misinterpreted:
                                         self._misinterpreted_orders[unit_id] = _result_68c
-                                        logger.debug("Order misinterpreted for %s: %s", unit_id, _result_68c.misinterpretation_type)
+                                        logger.debug(
+                                            "Order misinterpreted for %s: %s",
+                                            unit_id,
+                                            _result_68c.misinterpretation_type,
+                                        )
                                 except Exception:
                                     logger.debug("Order propagation error for %s", unit_id, exc_info=True)
                         else:
@@ -6778,7 +7649,9 @@ class BattleManager:
                                             if _u_68d.entity_id == unit_id:
                                                 object.__setattr__(_u_68d, "position", _new_pos)
                                                 break
-                                    logger.debug("Position misinterpretation: %s offset by %.0fm", unit_id, _misinterp_radius)
+                                    logger.debug(
+                                        "Position misinterpretation: %s offset by %.0fm", unit_id, _misinterp_radius
+                                    )
 
                     ctx.decision_engine.decide(
                         unit_id=unit_id,
@@ -6865,9 +7738,7 @@ class BattleManager:
                     "Movement requires a prepared targeting interval",
                 )
             try:
-                membership_unit_ids = interval.battle_memberships[
-                    battle.battle_id
-                ]
+                membership_unit_ids = interval.battle_memberships[battle.battle_id]
                 battle_member_ids = frozenset(membership_unit_ids)
                 targeting_membership = MovementTargetingMembership(
                     battle_id=battle.battle_id,
@@ -6875,14 +7746,38 @@ class BattleManager:
                 )
             except KeyError as exc:
                 raise RuntimeError(
-                    f"Battle {battle.battle_id!r} is absent from the "
-                    "prepared targeting interval",
+                    f"Battle {battle.battle_id!r} is absent from the prepared targeting interval",
                 ) from exc
-        movement_unit_index = {
-            unit.entity_id: unit
-            for side_units in units_by_side.values()
-            for unit in side_units
+        movement_tier_counts = {
+            UnitLodTier.ACTIVE: 0,
+            UnitLodTier.NEARBY: 0,
+            UnitLodTier.DISTANT: 0,
         }
+        for side_units in units_by_side.values():
+            for unit in side_units:
+                if unit.status is not UnitStatus.ACTIVE or (
+                    battle_member_ids is not None and unit.entity_id not in battle_member_ids
+                ):
+                    continue
+                tier = UnitLodTier(
+                    self._lod_tiers.get(
+                        unit.entity_id,
+                        UnitLodTier.ACTIVE,
+                    ),
+                )
+                movement_tier_counts[tier] += 1
+        self._stage_performance_delta(
+            PerformanceReceiptDelta(
+                lod=LODReceipt(
+                    movement=LODMovementReceipt(
+                        active_processed=(movement_tier_counts[UnitLodTier.ACTIVE]),
+                        nearby_processed=(movement_tier_counts[UnitLodTier.NEARBY]),
+                        distant_processed=(movement_tier_counts[UnitLodTier.DISTANT]),
+                    ),
+                ),
+            ),
+        )
+        movement_unit_index = {unit.entity_id: unit for side_units in units_by_side.values() for unit in side_units}
         hold_revalidations: dict[str, MovementHoldRevalidationOutcome] = {}
 
         def _resolve_hold_revalidation(
@@ -6899,14 +7794,9 @@ class BattleManager:
                     "A can-hold targeting decision lacks its target identity",
                 )
             live_target = movement_unit_index.get(decision.target_id)
-            if (
-                live_target is None
-                or battle_member_ids is None
-                or live_target.entity_id not in battle_member_ids
-            ):
+            if live_target is None or battle_member_ids is None or live_target.entity_id not in battle_member_ids:
                 raise RuntimeError(
-                    "A can-hold targeting decision is absent from its live "
-                    "movement battle topology",
+                    "A can-hold targeting decision is absent from its live movement battle topology",
                 )
             live_distance_m = self._targeting_distance(unit, live_target)
             live_disposition = (
@@ -6921,8 +7811,7 @@ class BattleManager:
                 )[0]
             )
             hold_authorized = (
-                live_disposition
-                is TargetingDisposition.VALID_ENGAGEMENT_SOLUTION
+                live_disposition is TargetingDisposition.VALID_ENGAGEMENT_SOLUTION
                 and live_distance_m <= decision.authorized_standoff_m
             )
             outcome = MovementHoldRevalidationOutcome(
@@ -6954,39 +7843,31 @@ class BattleManager:
                 )
                 if targeting_decision is None:
                     raise RuntimeError(
-                        "Tactical diagnostics are missing the published "
-                        f"targeting decision for {unit.entity_id!r}",
+                        f"Tactical diagnostics are missing the published targeting decision for {unit.entity_id!r}",
                     )
                 hold_revalidation = _resolve_hold_revalidation(
                     unit,
                     targeting_decision,
                 )
-                if (
-                    reason is MovementReason.ENGINE_WEAPON_STANDOFF
-                    and (
-                        hold_revalidation is None
-                        or not hold_revalidation.hold_authorized
-                    )
+                if reason is MovementReason.ENGINE_WEAPON_STANDOFF and (
+                    hold_revalidation is None or not hold_revalidation.hold_authorized
                 ):
                     raise RuntimeError(
-                        "Automatic standoff movement requires an authorized "
-                        "live hold revalidation",
+                        "Automatic standoff movement requires an authorized live hold revalidation",
                     )
-            movement_decisions.append(MovementDecision(
-                unit_id=unit.entity_id,
-                side=unit.side,
-                reason=reason,
-                attempted_m=attempted_m,
-                pre_position=pre_position,
-                post_position=unit.position,
-                targeting_decision=targeting_decision,
-                targeting_membership=(
-                    targeting_membership
-                    if targeting_decision is not None
-                    else None
-                ),
-                hold_revalidation=hold_revalidation,
-            ))
+            movement_decisions.append(
+                MovementDecision(
+                    unit_id=unit.entity_id,
+                    side=unit.side,
+                    reason=reason,
+                    attempted_m=attempted_m,
+                    pre_position=pre_position,
+                    post_position=unit.position,
+                    targeting_decision=targeting_decision,
+                    targeting_membership=(targeting_membership if targeting_decision is not None else None),
+                    hold_revalidation=hold_revalidation,
+                )
+            )
 
         # Sides that should hold position (defensive doctrine)
         defensive_sides = set(cal_flat.get("defensive_sides", []))
@@ -7016,34 +7897,29 @@ class BattleManager:
 
         # Phase 78b: weight defaults for bridge capacity enforcement
         _WEIGHT_DEFAULTS: dict[str, float] = {
-            "m1a2_abrams": 62.0, "t72b": 41.0, "t90a": 46.5,
-            "leopard_2a6": 62.3, "challenger_2": 62.5,
-            "m2_bradley": 27.6, "bmp2": 14.3, "btr80": 13.6,
-            "m113": 12.3, "stryker": 18.0,
+            "m1a2_abrams": 62.0,
+            "t72b": 41.0,
+            "t90a": 46.5,
+            "leopard_2a6": 62.3,
+            "challenger_2": 62.5,
+            "m2_bradley": 27.6,
+            "bmp2": 14.3,
+            "btr80": 13.6,
+            "m113": 12.3,
+            "stryker": 18.0,
         }
 
         for side, units in units_by_side.items():
             enemies = active_enemies.get(side, [])
             if battle_member_ids is not None:
-                enemies = [
-                    enemy
-                    for enemy in enemies
-                    if enemy.entity_id in battle_member_ids
-                ]
+                enemies = [enemy for enemy in enemies if enemy.entity_id in battle_member_ids]
             if not enemies:
                 for u in units:
-                    if (
-                        battle_member_ids is not None
-                        and u.entity_id not in battle_member_ids
-                    ):
+                    if battle_member_ids is not None and u.entity_id not in battle_member_ids:
                         continue
                     _observe(
                         u,
-                        (
-                            MovementReason.NO_TARGET
-                            if u.status == UnitStatus.ACTIVE
-                            else MovementReason.INACTIVE
-                        ),
+                        (MovementReason.NO_TARGET if u.status == UnitStatus.ACTIVE else MovementReason.INACTIVE),
                         u.position,
                     )
                 continue
@@ -7056,18 +7932,11 @@ class BattleManager:
             side_rules = _rules.get(side, {})
             if side_rules.get("hold_position", False):
                 for u in units:
-                    if (
-                        battle_member_ids is not None
-                        and u.entity_id not in battle_member_ids
-                    ):
+                    if battle_member_ids is not None and u.entity_id not in battle_member_ids:
                         continue
                     _observe(
                         u,
-                        (
-                            MovementReason.AUTHORED_HOLD
-                            if u.status == UnitStatus.ACTIVE
-                            else MovementReason.INACTIVE
-                        ),
+                        (MovementReason.AUTHORED_HOLD if u.status == UnitStatus.ACTIVE else MovementReason.INACTIVE),
                         u.position,
                     )
                 continue
@@ -7075,18 +7944,11 @@ class BattleManager:
             # Defensive sides don't advance
             if side in defensive_sides:
                 for u in units:
-                    if (
-                        battle_member_ids is not None
-                        and u.entity_id not in battle_member_ids
-                    ):
+                    if battle_member_ids is not None and u.entity_id not in battle_member_ids:
                         continue
                     _observe(
                         u,
-                        (
-                            MovementReason.DEFENSIVE_HOLD
-                            if u.status == UnitStatus.ACTIVE
-                            else MovementReason.INACTIVE
-                        ),
+                        (MovementReason.DEFENSIVE_HOLD if u.status == UnitStatus.ACTIVE else MovementReason.INACTIVE),
                         u.position,
                     )
                 continue
@@ -7098,17 +7960,12 @@ class BattleManager:
                     for ou in units
                     if (
                         ou.status == UnitStatus.ACTIVE
-                        and (
-                            battle_member_ids is None
-                            or ou.entity_id in battle_member_ids
-                        )
+                        and (battle_member_ids is None or ou.entity_id in battle_member_ids)
                     )
                 ],
                 key=lambda ou: ou.entity_id,
             )
-            _unit_formation_idx: dict[str, int] = {
-                ou.entity_id: i for i, ou in enumerate(_sorted_active)
-            }
+            _unit_formation_idx: dict[str, int] = {ou.entity_id: i for i, ou in enumerate(_sorted_active)}
             _n_sorted = len(_sorted_active)
             # Phase 70c: hoist side-specific formation spacing
             _spacing_side = cal_flat.get(
@@ -7117,10 +7974,7 @@ class BattleManager:
             )
 
             for u in units:
-                if (
-                    battle_member_ids is not None
-                    and u.entity_id not in battle_member_ids
-                ):
+                if battle_member_ids is not None and u.entity_id not in battle_member_ids:
                     continue
                 pre_position = u.position
                 if u.status != UnitStatus.ACTIVE:
@@ -7276,18 +8130,14 @@ class BattleManager:
                     )
                     if targeting_decision is None:
                         raise RuntimeError(
-                            "Tactical movement is missing its published "
-                            f"targeting decision for {u.entity_id!r}",
+                            f"Tactical movement is missing its published targeting decision for {u.entity_id!r}",
                         )
                     if targeting_decision.can_hold:
                         hold_revalidation = _resolve_hold_revalidation(
                             u,
                             targeting_decision,
                         )
-                        if (
-                            hold_revalidation is not None
-                            and hold_revalidation.hold_authorized
-                        ):
+                        if hold_revalidation is not None and hold_revalidation.hold_authorized:
                             _observe(
                                 u,
                                 MovementReason.ENGINE_WEAPON_STANDOFF,
@@ -7295,13 +8145,11 @@ class BattleManager:
                             )
                             continue
                 else:
-                    nearest_index, nearest_dist, standoff = (
-                        nearest_enemy_weapon_standoff(
-                            u,
-                            ctx,
-                            enemies,
-                            enemy_pos_arr=_epa,
-                        )
+                    nearest_index, nearest_dist, standoff = nearest_enemy_weapon_standoff(
+                        u,
+                        ctx,
+                        enemies,
+                        enemy_pos_arr=_epa,
                     )
                     if nearest_index is None:
                         _observe(u, MovementReason.NO_TARGET, pre_position)
@@ -7347,7 +8195,8 @@ class BattleManager:
                 if _mv_trench_eng is not None and u.position is not None:
                     try:
                         mvt_factor = _mv_trench_eng.movement_factor_at(
-                            u.position.easting, u.position.northing,
+                            u.position.easting,
+                            u.position.northing,
                         )
                         if mvt_factor < 1.0:
                             effective_speed *= mvt_factor
@@ -7408,6 +8257,7 @@ class BattleManager:
                     mopp_level = mopp_levels.get(u.entity_id, 0)
                     if mopp_level > 0:
                         from stochastic_warfare.cbrn.protection import ProtectionEngine
+
                         mopp_speed_factor = ProtectionEngine.get_mopp_speed_factor(mopp_level)
 
                 # Production targeting has already decided whether a hold is
@@ -7415,9 +8265,7 @@ class BattleManager:
                 # hidden ground-truth range floor.  The legacy fixture path
                 # retains its historical overshoot guard.
                 max_close = (
-                    dist
-                    if targeting_runtime is not None and battle is not None
-                    else max(0.0, nearest_dist - standoff)
+                    dist if targeting_runtime is not None and battle is not None else max(0.0, nearest_dist - standoff)
                 )
                 move_dist = min(effective_speed * dt * mopp_speed_factor, dist, max_close)
                 if move_dist <= 0:
@@ -7471,6 +8319,7 @@ class BattleManager:
                         if _mv_classif is not None:
                             try:
                                 from stochastic_warfare.terrain.classification import LandCover as _LC78
+
                                 _tent_lc = _mv_classif.land_cover_at(_tent_pos_ice)
                                 if _tent_lc == _LC78.WATER:
                                     if not _mv_movement_eng.is_on_ice(_tent_pos_ice, _ice_snap):
@@ -7505,7 +8354,10 @@ class BattleManager:
                                 if _u_weight > _br.capacity_tons:
                                     logger.debug(
                                         "Unit %s (%.1ft) blocked by bridge %s (%.1ft capacity)",
-                                        u.entity_id, _u_weight, _br.bridge_id, _br.capacity_tons,
+                                        u.entity_id,
+                                        _u_weight,
+                                        _br.bridge_id,
+                                        _br.capacity_tons,
                                     )
                                     _blocked_bridge = True
                                     break
@@ -7527,9 +8379,12 @@ class BattleManager:
                                     move_dist *= 0.3
                                 else:
                                     # No ford — block unless ice allows
-                                    if not (_mv_enable_ice_crossing and _mv_seasons_eng is not None
-                                            and _mv_movement_eng is not None
-                                            and _mv_movement_eng.is_on_ice(_tent_bpos, _mv_seasons_eng.current)):
+                                    if not (
+                                        _mv_enable_ice_crossing
+                                        and _mv_seasons_eng is not None
+                                        and _mv_movement_eng is not None
+                                        and _mv_movement_eng.is_on_ice(_tent_bpos, _mv_seasons_eng.current)
+                                    ):
                                         _observe(
                                             u,
                                             MovementReason.RESOURCE_BLOCKED,
@@ -7586,6 +8441,7 @@ class BattleManager:
                             _is_dry = True
                             if _mv_seasons_eng is not None:
                                 from stochastic_warfare.environment.seasons import GroundState
+
                                 _is_dry = _mv_seasons_eng.current.ground_state == GroundState.DRY
                             if _is_dry:
                                 try:
@@ -7629,11 +8485,7 @@ class BattleManager:
                     u,
                     movement_reason,
                     pre_position,
-                    attempted_m=(
-                        move_dist
-                        if move_dist > MOVEMENT_EPSILON_M
-                        else 0.0
-                    ),
+                    attempted_m=(move_dist if move_dist > MOVEMENT_EPSILON_M else 0.0),
                 )
 
         if diagnostics is not None:
@@ -7641,11 +8493,7 @@ class BattleManager:
             diagnostics.record_batch(
                 engine_tick=diagnostic_tick,
                 stage=MovementStage.TACTICAL,
-                battle_id=(
-                    battle.battle_id
-                    if battle is not None
-                    else ""
-                ),
+                battle_id=(battle.battle_id if battle is not None else ""),
                 decisions=movement_decisions,
             )
 
@@ -7681,7 +8529,9 @@ class BattleManager:
                 # Phase 59b: seasonal vegetation concealment bonus
                 if seasonal_vegetation > 0:
                     _lc_name = getattr(
-                        getattr(props, "land_cover", None), "name", "",
+                        getattr(props, "land_cover", None),
+                        "name",
+                        "",
                     )
                     if "FOREST" in _lc_name or "SHRUB" in _lc_name:
                         concealment = min(1.0, concealment + seasonal_vegetation * 0.3)
@@ -7715,7 +8565,9 @@ class BattleManager:
                 obstacles = obstacle_mgr.obstacles_at(target_pos)
                 for obs in obstacles:
                     if hasattr(obs, "obstacle_type"):
-                        ot_name = obs.obstacle_type.name if hasattr(obs.obstacle_type, "name") else str(obs.obstacle_type)
+                        ot_name = (
+                            obs.obstacle_type.name if hasattr(obs.obstacle_type, "name") else str(obs.obstacle_type)
+                        )
                         if ot_name == "FORTIFICATION":
                             cover = max(cover, 0.8)
             except (IndexError, ValueError, AttributeError):
@@ -7823,13 +8675,10 @@ class BattleManager:
         weapon = attachment.weapon
         definition = weapon.definition
         indirect_fire = getattr(ctx, "indirect_fire_engine", None)
-        if (
-            indirect_fire is not None
-            and indirect_fire.is_attachment_reserved(
-                attacker.entity_id,
-                attachment.source_equipment_index,
-                weapon.weapon_id,
-            )
+        if indirect_fire is not None and indirect_fire.is_attachment_reserved(
+            attacker.entity_id,
+            attachment.source_equipment_index,
+            weapon.weapon_id,
         ):
             return None
 
@@ -7864,10 +8713,7 @@ class BattleManager:
             )
         if ammunition is None:
             return None
-        if (
-            definition.max_range_m > 0
-            and distance_m > definition.max_range_m
-        ):
+        if definition.max_range_m > 0 and distance_m > definition.max_range_m:
             return None
         if not _weapon_supports_domain(definition, target.domain):
             return None
@@ -7881,8 +8727,7 @@ class BattleManager:
             and isinstance(traverse_deg, (int, float))
             and 0 < traverse_deg < 360.0
             and attacker.domain is not Domain.AERIAL
-            and getattr(attacker, "ground_type", None)
-            is not GroundUnitType.LIGHT_INFANTRY
+            and getattr(attacker, "ground_type", None) is not GroundUnitType.LIGHT_INFANTRY
         ):
             target_bearing = math.atan2(
                 target.position.easting - attacker.position.easting,
@@ -7900,15 +8745,13 @@ class BattleManager:
         if (
             not uses_indirect_owner
             and distance_m > 0
-            and definition.parsed_category()
-            is not WeaponCategory.MISSILE_LAUNCHER
+            and definition.parsed_category() is not WeaponCategory.MISSILE_LAUNCHER
             and isinstance(elevation_min, (int, float))
             and isinstance(elevation_max, (int, float))
             and (elevation_min != -5.0 or elevation_max != 85.0)
         ):
-            altitude_difference = (
-                getattr(target.position, "altitude", 0.0)
-                - getattr(attacker.position, "altitude", 0.0)
+            altitude_difference = getattr(target.position, "altitude", 0.0) - getattr(
+                attacker.position, "altitude", 0.0
             )
             elevation_deg = math.degrees(
                 math.atan2(altitude_difference, distance_m),
@@ -7922,8 +8765,7 @@ class BattleManager:
             and isinstance(seeker_fov, (int, float))
             and seeker_fov > 0
             and attacker.domain is not Domain.AERIAL
-            and getattr(attacker, "ground_type", None)
-            is not GroundUnitType.LIGHT_INFANTRY
+            and getattr(attacker, "ground_type", None) is not GroundUnitType.LIGHT_INFANTRY
         ):
             launch_bearing = math.atan2(
                 target.position.easting - attacker.position.easting,
@@ -7958,11 +8800,9 @@ class BattleManager:
             ),
         ):
             if targeting_decision is not None and (
-                attachment.source_equipment_index
-                != targeting_decision.weapon_source_equipment_index
+                attachment.source_equipment_index != targeting_decision.weapon_source_equipment_index
                 or attachment.weapon.weapon_id != targeting_decision.weapon_id
-                or attachment.modeled_role
-                is not targeting_decision.weapon_modeled_role
+                or attachment.modeled_role is not targeting_decision.weapon_modeled_role
             ):
                 continue
             ammunition = self._intent_ammunition(
@@ -7977,11 +8817,7 @@ class BattleManager:
             if ammunition is None:
                 continue
             maximum_range_m = float(attachment.weapon.definition.max_range_m)
-            weapon_fit_score = (
-                min(maximum_range_m / max(distance_m, 1.0), 3.0)
-                if maximum_range_m > 0
-                else 0.1
-            )
+            weapon_fit_score = min(maximum_range_m / max(distance_m, 1.0), 3.0) if maximum_range_m > 0 else 0.1
             choices.append((weapon_fit_score, attachment, ammunition))
         if not choices:
             return None
@@ -8021,10 +8857,7 @@ class BattleManager:
         if role in _INDIRECT_FIRE_ROLES:
             return getattr(ctx, "indirect_fire_engine", None) is not None
         if role in _AIR_DELIVERY_ROLES:
-            return (
-                air_routing_enabled
-                and getattr(ctx, "air_ground_engine", None) is not None
-            )
+            return air_routing_enabled and getattr(ctx, "air_ground_engine", None) is not None
         if role in _NAVAL_SUBSURFACE_ROLES:
             return getattr(ctx, "naval_subsurface_engine", None) is not None
         return False
@@ -8057,10 +8890,7 @@ class BattleManager:
         candidates: list[_EngagementIntent] = []
         for target in sorted(enemies, key=lambda item: item.entity_id):
             distance_m = self._targeting_distance(attacker, target)
-            baseline_visible = (
-                target.domain is not Domain.SUBMARINE
-                and distance_m <= visibility_m
-            )
+            baseline_visible = target.domain is not Domain.SUBMARINE and distance_m <= visibility_m
             sensor_detectable = any(
                 sensor.operational
                 and sensor.sensor_type is not SensorType.ESM
@@ -8134,6 +8964,87 @@ class BattleManager:
             ),
         )
 
+    @staticmethod
+    def _revalidate_observer_track_support(
+        ctx: Any,
+        attacker: Unit,
+        target: Unit,
+        sensing: SensorAttachment,
+        decision: TacticalTargetingDecision,
+        *,
+        current_distance_m: float,
+        live_sensing_range_m: float,
+    ) -> TargetingDisposition | None:
+        """Rebind one support-backed solution without another sensor draw."""
+        if decision.contact_source is not ContactSource.FOW_OBSERVER_TRACK_SUPPORT:
+            return None
+        evidence = decision.observer_track_support
+        fog_of_war = getattr(ctx, "fog_of_war", None)
+        if evidence is None or fog_of_war is None:
+            return TargetingDisposition.STALE_CONTACT
+        if (
+            sensing.sensor.sensor_type is not evidence.sensor_type
+            or sensing.source_equipment_index != evidence.identity.attachment_identity.source_equipment_index
+            or sensing.sensor_id != evidence.identity.attachment_identity.sensor_id
+            or sensing.modeled_role.value != evidence.identity.attachment_identity.modeled_role
+        ):
+            return TargetingDisposition.CONTACT_SENSOR_UNAVAILABLE
+
+        committed_ordinal = fog_of_war.cadence.committed_ordinal
+        if committed_ordinal <= 0 or evidence.projection_ordinal != committed_ordinal - 1:
+            return TargetingDisposition.STALE_CONTACT
+
+        retained_matches = tuple(
+            support
+            for support in fog_of_war.get_observer_track_supports(
+                decision.shooter_side,
+            )
+            if support.identity == evidence.identity
+        )
+        if len(retained_matches) != 1:
+            return TargetingDisposition.STALE_CONTACT
+        retained = retained_matches[0]
+        try:
+            projected = retained.project(
+                projection_ordinal=evidence.projection_ordinal,
+                projection_time_s=decision.logical_time_s,
+                process_noise_std_mps2=(fog_of_war.observer_track_support_process_noise_std_mps2),
+            )
+        except ValueError:
+            return TargetingDisposition.STALE_CONTACT
+        if projected != evidence:
+            return TargetingDisposition.STALE_CONTACT
+
+        world_view = fog_of_war.peek_world_view(decision.shooter_side)
+        contact = (
+            None if world_view is None or decision.target_id is None else world_view.contacts.get(decision.target_id)
+        )
+        if (
+            contact is None
+            or world_view.last_update_time != decision.logical_time_s
+            or contact.contact_info.level < ContactLevel.DETECTED
+            or contact.track.status in {TrackStatus.STALE, TrackStatus.LOST}
+            or contact.track.track_id != evidence.fusion_track_id
+            or contact.last_sensor_contact_time > decision.logical_time_s
+            or sensing.sensor_id not in contact.reporting_sensors
+            or target.entity_id != evidence.identity.target_id
+        ):
+            return TargetingDisposition.STALE_CONTACT
+
+        max_uncertainty_m = fog_of_war.observer_track_support_max_position_uncertainty_m
+        if evidence.position_uncertainty_m >= max_uncertainty_m:
+            return TargetingDisposition.STALE_CONTACT
+        estimated_range_m = evidence.estimated_range_m(
+            observer_easting_m=float(attacker.position.easting),
+            observer_northing_m=float(attacker.position.northing),
+        )
+        if (
+            current_distance_m > live_sensing_range_m
+            or estimated_range_m + evidence.position_uncertainty_m > live_sensing_range_m
+        ):
+            return TargetingDisposition.CONTACT_RANGE_EXCEEDED
+        return None
+
     def _revalidate_tactical_engagement(
         self,
         ctx: Any,
@@ -8145,14 +9056,9 @@ class BattleManager:
     ) -> tuple[TargetingDisposition, WeaponAttachment | None]:
         """Revalidate mutable facts for one exact published solution."""
         evidence_cache = _TargetingIntervalEvidenceCache()
-        if (
-            target.status is not UnitStatus.ACTIVE
-            or target.entity_id != decision.target_id
-        ):
+        if target.status is not UnitStatus.ACTIVE or target.entity_id != decision.target_id:
             return TargetingDisposition.TARGET_INACTIVE, None
-        target_side = (
-            target.side if isinstance(target.side, str) else target.side.value
-        )
+        target_side = target.side if isinstance(target.side, str) else target.side.value
         if target_side != decision.target_side or target_side == decision.shooter_side:
             return TargetingDisposition.TARGET_NOT_HOSTILE, None
         if target.domain is not decision.target_domain:
@@ -8163,8 +9069,7 @@ class BattleManager:
             for attachment in ctx.unit_weapons.get(attacker.entity_id, ())
             if (
                 isinstance(attachment, WeaponAttachment)
-                and attachment.source_equipment_index
-                == decision.weapon_source_equipment_index
+                and attachment.source_equipment_index == decision.weapon_source_equipment_index
                 and attachment.weapon.weapon_id == decision.weapon_id
                 and attachment.modeled_role is decision.weapon_modeled_role
             )
@@ -8175,13 +9080,10 @@ class BattleManager:
         if not weapon.weapon.operational:
             return TargetingDisposition.WEAPON_INOPERABLE, weapon
         indirect_fire = getattr(ctx, "indirect_fire_engine", None)
-        if (
-            indirect_fire is not None
-            and indirect_fire.is_attachment_reserved(
-                attacker.entity_id,
-                weapon.source_equipment_index,
-                weapon.weapon.weapon_id,
-            )
+        if indirect_fire is not None and indirect_fire.is_attachment_reserved(
+            attacker.entity_id,
+            weapon.source_equipment_index,
+            weapon.weapon.weapon_id,
         ):
             return TargetingDisposition.WEAPON_RESERVED, weapon
         ammunition = self._targeting_ammunition(ctx, attacker, weapon)
@@ -8207,6 +9109,7 @@ class BattleManager:
             attacker,
             evidence_cache=evidence_cache,
         )
+        sensing: SensorAttachment | None = None
         sensing_index = decision.sensing_sensor_source_equipment_index
         if sensing_index is not None:
             sensing_matches = tuple(
@@ -8215,8 +9118,7 @@ class BattleManager:
                 if (
                     attachment.source_equipment_index == sensing_index
                     and attachment.sensor_id == decision.sensing_sensor_id
-                    and attachment.modeled_role
-                    is decision.sensing_sensor_modeled_role
+                    and attachment.modeled_role is decision.sensing_sensor_modeled_role
                 )
             )
             if len(sensing_matches) != 1:
@@ -8229,8 +9131,7 @@ class BattleManager:
                 not in allowed_shooter_domains_for_sensor_role(
                     sensing.modeled_role,
                 )
-                or target.domain
-                not in required_domains_for_sensor_role(sensing.modeled_role)
+                or target.domain not in required_domains_for_sensor_role(sensing.modeled_role)
                 or not sensing.sensor.supports_target_domain(target.domain)
             ):
                 return TargetingDisposition.CONTACT_SENSOR_WRONG_DOMAIN, weapon
@@ -8294,6 +9195,21 @@ class BattleManager:
                 evidence_cache=evidence_cache,
             )
 
+        if decision.contact_source is ContactSource.FOW_OBSERVER_TRACK_SUPPORT:
+            if sensing is None:
+                return TargetingDisposition.CONTACT_SENSOR_UNAVAILABLE, weapon
+            support_rejection = self._revalidate_observer_track_support(
+                ctx,
+                attacker,
+                target,
+                sensing,
+                decision,
+                current_distance_m=current_distance_m,
+                live_sensing_range_m=live_sensing_range_m,
+            )
+            if support_rejection is not None:
+                return support_rejection, weapon
+
         if current_distance_m > decision.contact_range_m:
             return TargetingDisposition.CONTACT_RANGE_EXCEEDED, weapon
         if current_distance_m > min(
@@ -8301,10 +9217,7 @@ class BattleManager:
             live_sensing_range_m,
         ):
             return TargetingDisposition.SENSING_RANGE_EXCEEDED, weapon
-        if (
-            sensing_index is None
-            and current_distance_m > decision.visibility_bound_m
-        ):
+        if sensing_index is None and current_distance_m > decision.visibility_bound_m:
             return TargetingDisposition.VISIBILITY_LIMITED, weapon
 
         if decision.fire_control_source is FireControlSource.SENSOR_ATTACHMENT:
@@ -8312,12 +9225,9 @@ class BattleManager:
                 attachment
                 for attachment in sensor_attachments
                 if (
-                    attachment.source_equipment_index
-                    == decision.fire_control_sensor_source_equipment_index
-                    and attachment.sensor_id
-                    == decision.fire_control_sensor_id
-                    and attachment.modeled_role
-                    is decision.fire_control_sensor_modeled_role
+                    attachment.source_equipment_index == decision.fire_control_sensor_source_equipment_index
+                    and attachment.sensor_id == decision.fire_control_sensor_id
+                    and attachment.modeled_role is decision.fire_control_sensor_modeled_role
                 )
             )
             if len(fire_control_matches) != 1:
@@ -8329,27 +9239,19 @@ class BattleManager:
                 fire_control.modeled_role,
             ):
                 return (
-                    TargetingDisposition
-                    .FIRE_CONTROL_SHOOTER_DOMAIN_UNSUPPORTED,
+                    TargetingDisposition.FIRE_CONTROL_SHOOTER_DOMAIN_UNSUPPORTED,
                     weapon,
                 )
-            if (
-                target.domain
-                not in required_domains_for_sensor_role(
-                    fire_control.modeled_role,
-                )
-                or not fire_control.sensor.supports_target_domain(target.domain)
-            ):
+            if target.domain not in required_domains_for_sensor_role(
+                fire_control.modeled_role,
+            ) or not fire_control.sensor.supports_target_domain(target.domain):
                 return (
-                    TargetingDisposition
-                    .FIRE_CONTROL_TARGET_DOMAIN_UNSUPPORTED,
+                    TargetingDisposition.FIRE_CONTROL_TARGET_DOMAIN_UNSUPPORTED,
                     weapon,
                 )
             if (
-                weapon.source_equipment_index
-                not in fire_control.compatible_weapon_source_indexes
-                or weapon.modeled_role
-                not in fire_control.compatible_weapon_roles
+                weapon.source_equipment_index not in fire_control.compatible_weapon_source_indexes
+                or weapon.modeled_role not in fire_control.compatible_weapon_roles
             ):
                 return TargetingDisposition.NO_COMPATIBLE_FIRE_CONTROL, weapon
             if not self._targeting_los_visible(
@@ -8375,15 +9277,12 @@ class BattleManager:
                 range_policy=range_policy,
                 evidence_cache=evidence_cache,
             )
-        elif (
-            decision.fire_control_source is FireControlSource.DIRECT_VISUAL
-            and not self._targeting_los_visible(
-                ctx,
-                attacker,
-                target,
-                required=True,
-                evidence_cache=evidence_cache,
-            )
+        elif decision.fire_control_source is FireControlSource.DIRECT_VISUAL and not self._targeting_los_visible(
+            ctx,
+            attacker,
+            target,
+            required=True,
+            evidence_cache=evidence_cache,
         ):
             return TargetingDisposition.LINE_OF_SIGHT_BLOCKED, weapon
         else:
@@ -8432,15 +9331,11 @@ class BattleManager:
             shooter_id=decision.shooter_id,
             target_id=decision.target_id,
             weapon_id=decision.weapon_id,
-            weapon_source_equipment_index=(
-                decision.weapon_source_equipment_index
-            ),
+            weapon_source_equipment_index=(decision.weapon_source_equipment_index),
             weapon_modeled_role=decision.weapon_modeled_role,
             ammunition_id=decision.ammunition_id,
             disposition=disposition,
-            revalidation_passed=(
-                disposition is TargetingDisposition.VALID_ENGAGEMENT_SOLUTION
-            ),
+            revalidation_passed=(disposition is TargetingDisposition.VALID_ENGAGEMENT_SOLUTION),
             fog_of_war_enabled=decision.fog_of_war_enabled,
         )
         return runtime.publish_engagement_revalidation(outcome)
@@ -8454,7 +9349,6 @@ class BattleManager:
         dt: float,
         timestamp: datetime,
         _unit_index: dict[str, Unit] | None = None,
-        _lod_full_update: set[str] | None = None,
         battle: BattleContext | None = None,
     ) -> list[tuple[Unit, UnitStatus, str]]:
         """Run detection + engagement for all units. Returns deferred damage."""
@@ -8474,8 +9368,7 @@ class BattleManager:
                 )
             except KeyError as exc:
                 raise RuntimeError(
-                    f"Battle {battle.battle_id!r} is absent from the "
-                    "prepared targeting interval",
+                    f"Battle {battle.battle_id!r} is absent from the prepared targeting interval",
                 ) from exc
         visibility_m = self._targeting_visibility_bound(
             ctx,
@@ -8521,9 +9414,7 @@ class BattleManager:
             try:
                 illum = tod_engine.illumination_at(lat, lon)
                 _thermal_floor = cal_flat.get("night_thermal_floor", 0.8)
-                night_visual_modifier, night_thermal_modifier = (
-                    _compute_night_modifiers(illum, _thermal_floor)
-                )
+                night_visual_modifier, night_thermal_modifier = _compute_night_modifiers(illum, _thermal_floor)
             except Exception:
                 pass
 
@@ -8555,9 +9446,7 @@ class BattleManager:
                 _sea_wave_period = sea.wave_period
                 _sea_wave_dir = sea.tidal_current_direction  # swell direction
                 if sea.beaufort_scale > 4:
-                    sea_dispersion_modifier = 1.0 + 0.2 * (
-                        sea.beaufort_scale - 4
-                    )
+                    sea_dispersion_modifier = 1.0 + 0.2 * (sea.beaufort_scale - 4)
             except Exception:
                 pass
 
@@ -8566,6 +9455,7 @@ class BattleManager:
         roe_level_str = cal_flat.get("roe_level", None)
         if roe_engine is not None and roe_level_str is not None:
             from stochastic_warfare.c2.roe import RoeLevel
+
             try:
                 roe_engine._default_level = RoeLevel[roe_level_str.upper()]
             except (KeyError, AttributeError):
@@ -8628,10 +9518,7 @@ class BattleManager:
         for _et_side in units_by_side:
             _et_pos = enemy_pos_arrays.get(_et_side)
             if _et_pos is not None and _et_pos.shape[0] > 0:
-                _et_pts = [
-                    Point(_et_pos[i, 0], _et_pos[i, 1])
-                    for i in range(_et_pos.shape[0])
-                ]
+                _et_pts = [Point(_et_pos[i, 0], _et_pos[i, 1]) for i in range(_et_pos.shape[0])]
                 _eng_trees[_et_side] = STRtree(_et_pts)
             else:
                 _eng_trees[_et_side] = None
@@ -8692,6 +9579,8 @@ class BattleManager:
                     readiness=_obs_rdns,
                 )
 
+        attacker_cycles_processed = 0
+
         for side_name, side_units in units_by_side.items():
             side_enemies = active_enemies.get(side_name, [])
             side_pos_arr = enemy_pos_arrays.get(
@@ -8706,13 +9595,10 @@ class BattleManager:
                 if attacker.status != UnitStatus.ACTIVE:
                     continue
 
-                # Phase 85: LOD gate — only full-update units initiate
-                if _lod_full_update is not None and attacker.entity_id not in _lod_full_update:
-                    continue
-
                 # Phase 41a: force channeling — limit engagers per side
                 if max_engagers > 0 and side_engagements >= max_engagers:
                     break
+                attacker_cycles_processed += 1
 
                 # Phase 50b: air posture gate — GROUNDED/RETURNING skip
                 air_posture = getattr(attacker, "air_posture", None)
@@ -8727,7 +9613,11 @@ class BattleManager:
                 # Phase 40f: morale gate — routed/surrendered units don't fire
                 attacker_morale = ctx.morale_states.get(attacker.entity_id)
                 if attacker_morale is not None:
-                    ms = MoraleState(int(attacker_morale)) if not isinstance(attacker_morale, MoraleState) else attacker_morale
+                    ms = (
+                        MoraleState(int(attacker_morale))
+                        if not isinstance(attacker_morale, MoraleState)
+                        else attacker_morale
+                    )
                     if ms in (MoraleState.ROUTED, MoraleState.SURRENDERED):
                         continue
 
@@ -8755,13 +9645,9 @@ class BattleManager:
                 targeting_decision = None
                 routed_only_targeting = False
                 if targeting_runtime is not None and battle is not None:
-                    if not all(
-                        isinstance(attachment, WeaponAttachment)
-                        for attachment in weapons
-                    ):
+                    if not all(isinstance(attachment, WeaponAttachment) for attachment in weapons):
                         raise RuntimeError(
-                            "Production targeting requires typed weapon "
-                            f"attachments for {attacker.entity_id!r}",
+                            f"Production targeting requires typed weapon attachments for {attacker.entity_id!r}",
                         )
                     typed_weapons = tuple(weapons)
                     direct_attachments = tuple(
@@ -8779,12 +9665,8 @@ class BattleManager:
                         )
                     )
                     staged_intents: list[_EngagementIntent] = []
-                    staged_direct_revalidation: (
-                        TargetingDisposition | None
-                    ) = None
-                    staged_direct_decision: (
-                        TacticalTargetingDecision | None
-                    ) = None
+                    staged_direct_revalidation: TargetingDisposition | None = None
+                    staged_direct_decision: TacticalTargetingDecision | None = None
                     if (
                         direct_attachments
                         and targeting_member_ids is not None
@@ -8802,49 +9684,35 @@ class BattleManager:
                             )
                         if staged_direct_decision.can_engage:
                             unit_lookup = _unit_index or {
-                                unit.entity_id: unit
-                                for units in units_by_side.values()
-                                for unit in units
+                                unit.entity_id: unit for units in units_by_side.values() for unit in units
                             }
                             direct_target = (
                                 unit_lookup.get(staged_direct_decision.target_id)
-                                if staged_direct_decision.target_id
-                                in targeting_member_ids
+                                if staged_direct_decision.target_id in targeting_member_ids
                                 else None
                             )
                             if direct_target is None:
-                                staged_direct_revalidation = (
-                                    TargetingDisposition.TARGET_NOT_IN_BATTLE
-                                )
+                                staged_direct_revalidation = TargetingDisposition.TARGET_NOT_IN_BATTLE
                             else:
                                 direct_distance_m = self._targeting_distance(
                                     attacker,
                                     direct_target,
                                 )
-                                staged_direct_revalidation, _ = (
-                                    self._revalidate_tactical_engagement(
-                                        ctx,
-                                        attacker,
-                                        direct_target,
-                                        staged_direct_decision,
-                                        current_distance_m=direct_distance_m,
-                                    )
+                                staged_direct_revalidation, _ = self._revalidate_tactical_engagement(
+                                    ctx,
+                                    attacker,
+                                    direct_target,
+                                    staged_direct_decision,
+                                    current_distance_m=direct_distance_m,
                                 )
-                                if staged_direct_revalidation is (
-                                    TargetingDisposition
-                                    .VALID_ENGAGEMENT_SOLUTION
-                                ):
-                                    direct_intent = (
-                                        self._stage_engagement_intent(
-                                            ctx=ctx,
-                                            attacker=attacker,
-                                            target=direct_target,
-                                            attachments=direct_attachments,
-                                            enable_ammo_gate=_enable_ammo_gate,
-                                            targeting_decision=(
-                                                staged_direct_decision
-                                            ),
-                                        )
+                                if staged_direct_revalidation is (TargetingDisposition.VALID_ENGAGEMENT_SOLUTION):
+                                    direct_intent = self._stage_engagement_intent(
+                                        ctx=ctx,
+                                        attacker=attacker,
+                                        target=direct_target,
+                                        attachments=direct_attachments,
+                                        enable_ammo_gate=_enable_ammo_gate,
+                                        targeting_decision=(staged_direct_decision),
                                     )
                                     if direct_intent is not None:
                                         staged_intents.append(direct_intent)
@@ -8868,10 +9736,7 @@ class BattleManager:
                     if (
                         staged_direct_decision is not None
                         and staged_direct_revalidation is not None
-                        and (
-                            committed_intent is None
-                            or committed_intent.targeting_decision is None
-                        )
+                        and (committed_intent is None or committed_intent.targeting_decision is None)
                     ):
                         self._publish_tactical_revalidation(
                             targeting_runtime,
@@ -8881,9 +9746,7 @@ class BattleManager:
                     if committed_intent is None:
                         continue
 
-                    targeting_decision = (
-                        committed_intent.targeting_decision
-                    )
+                    targeting_decision = committed_intent.targeting_decision
                     routed_only_targeting = targeting_decision is None
                     # The arbitration boundary commits exactly one attachment
                     # and target before downstream RNG, ammunition, or events.
@@ -8892,19 +9755,18 @@ class BattleManager:
                     weapons = [committed_intent.attachment]
                     enemies = [committed_intent.target]
                     pos_arr = np.asarray(
-                        [[
-                            committed_intent.target.position.easting,
-                            committed_intent.target.position.northing,
-                        ]],
+                        [
+                            [
+                                committed_intent.target.position.easting,
+                                committed_intent.target.position.northing,
+                            ]
+                        ],
                         dtype=np.float64,
                     )
 
                 if pos_arr.shape[0] == 0:
                     if targeting_decision is not None:
-                        target_exists = (
-                            _unit_index is not None
-                            and targeting_decision.target_id in _unit_index
-                        )
+                        target_exists = _unit_index is not None and targeting_decision.target_id in _unit_index
                         self._publish_tactical_revalidation(
                             targeting_runtime,
                             targeting_decision,
@@ -8927,16 +9789,9 @@ class BattleManager:
                 # The interval runtime filters to declared battle membership.
                 # The side-wide STRtree was built before that filter, so its
                 # indexes are not valid for the filtered enemy sequence.
-                _eng_tree = (
-                    None
-                    if targeting_member_ids is not None
-                    else _eng_trees.get(side_name)
-                )
+                _eng_tree = None if targeting_member_ids is not None else _eng_trees.get(side_name)
                 _max_wpn_range = max(
-                    (
-                        weapon_instance.definition.max_range_m
-                        for weapon_instance, _ in weapons
-                    ),
+                    (weapon_instance.definition.max_range_m for weapon_instance, _ in weapons),
                     default=0.0,
                 )
                 if targeting_decision is not None:
@@ -8948,12 +9803,14 @@ class BattleManager:
                 elif _max_wpn_range <= 0.0:
                     _range_candidate_idxs = list(range(len(enemies)))
                 elif _eng_tree is not None:
-                    _range_candidate_idxs = sorted(_eng_tree.query(
-                        Point(
-                            attacker.position.easting,
-                            attacker.position.northing,
-                        ).buffer(_max_wpn_range),
-                    ))
+                    _range_candidate_idxs = sorted(
+                        _eng_tree.query(
+                            Point(
+                                attacker.position.easting,
+                                attacker.position.northing,
+                            ).buffer(_max_wpn_range),
+                        )
+                    )
                 else:
                     _range_candidate_idxs = [
                         enemy_index
@@ -8962,10 +9819,7 @@ class BattleManager:
                     ]
                 if not _range_candidate_idxs:
                     if targeting_decision is not None:
-                        target_exists = (
-                            _unit_index is not None
-                            and targeting_decision.target_id in _unit_index
-                        )
+                        target_exists = _unit_index is not None and targeting_decision.target_id in _unit_index
                         self._publish_tactical_revalidation(
                             targeting_runtime,
                             targeting_decision,
@@ -8986,10 +9840,7 @@ class BattleManager:
                 sensors = ctx.unit_sensors.get(attacker.entity_id, [])
                 selected_sensing_attachment: SensorAttachment | None = None
                 if targeting_decision is not None:
-                    sensing_index = (
-                        targeting_decision
-                        .sensing_sensor_source_equipment_index
-                    )
+                    sensing_index = targeting_decision.sensing_sensor_source_equipment_index
                     sensing_id = targeting_decision.sensing_sensor_id
                     if sensing_index is None:
                         sensors = []
@@ -9002,11 +9853,9 @@ class BattleManager:
                                 {},
                             ).get(attacker.entity_id, ())
                             if (
-                                attachment.source_equipment_index
-                                == sensing_index
+                                attachment.source_equipment_index == sensing_index
                                 and attachment.sensor_id == sensing_id
-                                and attachment.modeled_role
-                                is targeting_decision.sensing_sensor_modeled_role
+                                and attachment.modeled_role is targeting_decision.sensing_sensor_modeled_role
                             )
                         )
                         if len(exact_sensing) == 1:
@@ -9028,22 +9877,15 @@ class BattleManager:
                             )
                             and (
                                 weapon_instance.definition.max_range_m <= 0.0
-                                or enemy_distance
-                                <= weapon_instance.definition.max_range_m
+                                or enemy_distance <= weapon_instance.definition.max_range_m
                             )
-                            and any(
-                                weapon_instance.can_fire(ammo.ammo_id)
-                                for ammo in ammo_definitions
-                            )
+                            and any(weapon_instance.can_fire(ammo.ammo_id) for ammo in ammo_definitions)
                         )
                         for weapon_instance, ammo_definitions in weapons
                     )
                     if not usable_weapon:
                         continue
-                    baseline_visible = (
-                        enemy.domain is not Domain.SUBMARINE
-                        and enemy_distance <= visibility_m
-                    )
+                    baseline_visible = enemy.domain is not Domain.SUBMARINE and enemy_distance <= visibility_m
                     sensor_detectable = any(
                         (
                             sensor.operational
@@ -9075,7 +9917,11 @@ class BattleManager:
                     best_idx = _cand_idxs[0]
                     for ei in _cand_idxs:
                         score = self._score_target(
-                            attacker, enemies[ei], float(dists[ei]), weapons, ctx,
+                            attacker,
+                            enemies[ei],
+                            float(dists[ei]),
+                            weapons,
+                            ctx,
                         )
                         if score > best_score:
                             best_score = score
@@ -9084,28 +9930,22 @@ class BattleManager:
                 best_range = float(dists[best_idx])
                 best_target = enemies[best_idx]
                 live_targeting_range = (
-                    self._targeting_distance(attacker, best_target)
-                    if targeting_decision is not None
-                    else best_range
+                    self._targeting_distance(attacker, best_target) if targeting_decision is not None else best_range
                 )
                 if targeting_decision is not None:
-                    revalidation, _exact_weapon = (
-                        self._revalidate_tactical_engagement(
-                            ctx,
-                            attacker,
-                            best_target,
-                            targeting_decision,
-                            current_distance_m=live_targeting_range,
-                        )
+                    revalidation, _exact_weapon = self._revalidate_tactical_engagement(
+                        ctx,
+                        attacker,
+                        best_target,
+                        targeting_decision,
+                        current_distance_m=live_targeting_range,
                     )
                     self._publish_tactical_revalidation(
                         targeting_runtime,
                         targeting_decision,
                         revalidation,
                     )
-                    if revalidation is not (
-                        TargetingDisposition.VALID_ENGAGEMENT_SOLUTION
-                    ):
+                    if revalidation is not (TargetingDisposition.VALID_ENGAGEMENT_SOLUTION):
                         continue
 
                 # Phase 41a: terrain modifiers
@@ -9114,18 +9954,16 @@ class BattleManager:
                 if _seasons_eng is not None and _enable_seasonal:
                     _sv = _seasons_eng.current.vegetation_density
                 terrain_cover, elevation_mod, concealment = self._compute_terrain_modifiers(
-                    ctx, best_target.position, attacker.position,
+                    ctx,
+                    best_target.position,
+                    attacker.position,
                     elevation_cap=self._config.elevation_advantage_cap,
                     elevation_floor=self._config.elevation_disadvantage_floor,
                     seasonal_vegetation=_sv,
                 )
 
                 # Detection check
-                baseline_visual_range = (
-                    0.0
-                    if best_target.domain is Domain.SUBMARINE
-                    else visibility_m
-                )
+                baseline_visual_range = 0.0 if best_target.domain is Domain.SUBMARINE else visibility_m
                 eligible_sensors = [
                     sensor
                     for sensor in sensors
@@ -9160,13 +9998,12 @@ class BattleManager:
                         self._concealment_scores[tid] = terrain_concealment
                     # Moving target resets concealment (harder to stay hidden)
                     if best_target.speed > 0.5:
-                        self._concealment_scores[tid] = (
-                            terrain_concealment * 0.5
-                        )
+                        self._concealment_scores[tid] = terrain_concealment * 0.5
                     # Decay with sustained observation
                     decay = _observation_decay
                     self._concealment_scores[tid] = max(
-                        0.0, self._concealment_scores[tid] - decay,
+                        0.0,
+                        self._concealment_scores[tid] - decay,
                     )
                     effective_concealment = self._concealment_scores[tid]
 
@@ -9195,33 +10032,24 @@ class BattleManager:
                     1.0 - effective_concealment * 0.3,
                 )
                 detection_range = (
-                    baseline_visual_range
-                    * _visual_concealment
-                    * night_visual_modifier
-                    * (1.0 - _opacity_visual)
+                    baseline_visual_range * _visual_concealment * night_visual_modifier * (1.0 - _opacity_visual)
                 )
                 _nvg_visual_modifier = night_visual_modifier
-                if (
-                    _enable_nvg
-                    and night_visual_modifier < 1.0
-                    and tod_engine is not None
-                ):
+                if _enable_nvg and night_visual_modifier < 1.0 and tod_engine is not None:
                     try:
                         _nvg_eff = tod_engine.nvg_effectiveness(lat, lon)
                         _nvg_recovery = _nvg_eff * 0.5
-                        _nvg_visual_modifier = (
-                            night_visual_modifier
-                            + _nvg_recovery
-                            * (1.0 - night_visual_modifier)
-                        )
+                        _nvg_visual_modifier = night_visual_modifier + _nvg_recovery * (1.0 - night_visual_modifier)
                     except Exception:
                         pass
 
-                _sonar_types = frozenset({
-                    SensorType.ACTIVE_SONAR,
-                    SensorType.PASSIVE_SONAR,
-                    SensorType.PASSIVE_ACOUSTIC,
-                })
+                _sonar_types = frozenset(
+                    {
+                        SensorType.ACTIVE_SONAR,
+                        SensorType.PASSIVE_SONAR,
+                        SensorType.PASSIVE_ACOUSTIC,
+                    }
+                )
                 for sensor in eligible_sensors:
                     sensor_type = sensor.sensor_type
                     sensor_range = float(sensor.effective_range)
@@ -9234,31 +10062,18 @@ class BattleManager:
                         )
                     elif sensor_type is SensorType.NVG:
                         sensor_range = (
-                            sensor_range
-                            * _visual_concealment
-                            * _nvg_visual_modifier
-                            * (1.0 - _opacity_visual)
+                            sensor_range * _visual_concealment * _nvg_visual_modifier * (1.0 - _opacity_visual)
                         )
                     elif sensor_type is SensorType.THERMAL:
                         if _enable_thermal_xo:
                             thermal_factor = thermal_dt_contrast
-                            if (
-                                thermal_factor < 0.5
-                                and getattr(best_target, "speed", 0) > 1.0
-                            ):
+                            if thermal_factor < 0.5 and getattr(best_target, "speed", 0) > 1.0:
                                 thermal_factor = max(thermal_factor, 0.5)
                         else:
                             thermal_factor = night_thermal_modifier
-                        sensor_range *= (
-                            _nonvisual_concealment
-                            * thermal_factor
-                            * (1.0 - _opacity_thermal)
-                        )
+                        sensor_range *= _nonvisual_concealment * thermal_factor * (1.0 - _opacity_thermal)
                     elif sensor_type is SensorType.RADAR:
-                        sensor_range *= (
-                            _nonvisual_concealment
-                            * (1.0 - _opacity_radar)
-                        )
+                        sensor_range *= _nonvisual_concealment * (1.0 - _opacity_radar)
                         # Phase 61c: radar horizon gate + EM ducting.
                         if _enable_em_prop and _conditions_eng is not None:
                             try:
@@ -9276,16 +10091,10 @@ class BattleManager:
                                 else:
                                     _ant_h = 10.0
                                 _tgt_alt = best_target.position.altitude
-                                _total_hz = (
-                                    _conditions_eng.radar_horizon(_ant_h)
-                                    + _conditions_eng.radar_horizon(
-                                        max(0.0, _tgt_alt),
-                                    )
+                                _total_hz = _conditions_eng.radar_horizon(_ant_h) + _conditions_eng.radar_horizon(
+                                    max(0.0, _tgt_alt),
                                 )
-                                if (
-                                    best_range > _total_hz
-                                    and _tgt_alt < 500.0
-                                ):
+                                if best_range > _total_hz and _tgt_alt < 500.0:
                                     sensor_range = 0.0
                                 from stochastic_warfare.environment.electromagnetic import (
                                     FrequencyBand,
@@ -9295,17 +10104,13 @@ class BattleManager:
                                     FrequencyBand.SHF,
                                     best_range / 1000.0,
                                 )
-                                if (
-                                    _prop.ducting_possible
-                                    and _att_domain in (
-                                        Domain.NAVAL,
-                                        Domain.SUBMARINE,
-                                    )
+                                if _prop.ducting_possible and _att_domain in (
+                                    Domain.NAVAL,
+                                    Domain.SUBMARINE,
                                 ):
                                     sensor_range *= min(
                                         2.0,
-                                        _conditions_eng.effective_earth_radius_factor()
-                                        / (4.0 / 3.0),
+                                        _conditions_eng.effective_earth_radius_factor() / (4.0 / 3.0),
                                     )
                             except Exception:
                                 pass
@@ -9320,10 +10125,7 @@ class BattleManager:
                                     _rain_atten_factor,
                                 ),
                             )
-                        if (
-                            _enable_air_combat_env
-                            and _conditions_eng is not None
-                        ):
+                        if _enable_air_combat_env and _conditions_eng is not None:
                             try:
                                 _icing = _conditions_eng.air().icing_risk
                                 if _icing > 0.5:
@@ -9334,11 +10136,7 @@ class BattleManager:
                                     sensor_range *= 10.0 ** (-_ice_db / 40.0)
                             except Exception:
                                 pass
-                    elif (
-                        sensor_type in _sonar_types
-                        and _enable_acoustic
-                        and _ua_eng is not None
-                    ):
+                    elif sensor_type in _sonar_types and _enable_acoustic and _ua_eng is not None:
                         try:
                             _ac = _ua_eng.conditions
                             _obs_depth = getattr(attacker, "depth", 0.0)
@@ -9351,28 +10149,15 @@ class BattleManager:
                             ):
                                 _layer_mod *= 0.1
                             if _ac.surface_duct_depth:
-                                if (
-                                    _obs_depth < _ac.surface_duct_depth
-                                    and _tgt_depth < _ac.surface_duct_depth
-                                ):
+                                if _obs_depth < _ac.surface_duct_depth and _tgt_depth < _ac.surface_duct_depth:
                                     _layer_mod *= 3.0
-                                elif (
-                                    _obs_depth < _ac.surface_duct_depth
-                                    and _tgt_depth > _ac.surface_duct_depth
-                                ):
+                                elif _obs_depth < _ac.surface_duct_depth and _tgt_depth > _ac.surface_duct_depth:
                                     _layer_mod *= 0.06
                             _cz_ranges = _ua_eng.convergence_zone_ranges(
                                 _obs_depth,
                             )
-                            _in_cz = any(
-                                abs(best_range - cz_range) < 5_000.0
-                                for cz_range in _cz_ranges
-                            )
-                            if (
-                                _cz_ranges
-                                and best_range > 30_000.0
-                                and not _in_cz
-                            ):
+                            _in_cz = any(abs(best_range - cz_range) < 5_000.0 for cz_range in _cz_ranges)
+                            if _cz_ranges and best_range > 30_000.0 and not _in_cz:
                                 _layer_mod *= 0.05
                             elif _in_cz:
                                 _layer_mod *= 2.0
@@ -9390,8 +10175,7 @@ class BattleManager:
                     None,
                 )
                 weather_independent = (
-                    selected_sensor_type in _WEATHER_BYPASS_TYPES
-                    or selected_sensor_type in _sonar_types
+                    selected_sensor_type in _WEATHER_BYPASS_TYPES or selected_sensor_type in _sonar_types
                 )
 
                 # Phase 86b: MOPP + altitude modifiers from pre-computed batch
@@ -9424,9 +10208,7 @@ class BattleManager:
                     # of allowing the legacy visual/sensor competition above
                     # to reconstruct a different winning path after movement.
                     best_sensor = (
-                        selected_sensing_attachment.sensor
-                        if selected_sensing_attachment is not None
-                        else None
+                        selected_sensing_attachment.sensor if selected_sensing_attachment is not None else None
                     )
                     selected_sensor_type = getattr(
                         best_sensor,
@@ -9434,15 +10216,11 @@ class BattleManager:
                         None,
                     )
                     weather_independent = (
-                        selected_sensor_type in _WEATHER_BYPASS_TYPES
-                        or selected_sensor_type in _sonar_types
+                        selected_sensor_type in _WEATHER_BYPASS_TYPES or selected_sensor_type in _sonar_types
                     )
                     detection_range = targeting_decision.sensing_range_m
 
-                if (
-                    targeting_decision is None
-                    and best_range > detection_range
-                ):
+                if targeting_decision is None and best_range > detection_range:
                     continue
 
                 # Phase 41d: detection quality modulates engagement effectiveness
@@ -9464,7 +10242,10 @@ class BattleManager:
                             continue
                         try:
                             snr = _det_eng.compute_snr_visual(
-                                sensor, 1.0, best_range, visibility_m=visibility_m,
+                                sensor,
+                                1.0,
+                                best_range,
+                                visibility_m=visibility_m,
                             )
                             if snr > best_snr:
                                 best_snr = snr
@@ -9478,25 +10259,38 @@ class BattleManager:
                 # Phase 44b: EW jamming degrades radar detection. Thermal and
                 # acoustic modalities may also bypass visual weather, but
                 # they do not expose a radar carrier for this interface.
-                if (
-                    _ew_eng is not None
-                    and selected_sensor_type is SensorType.RADAR
-                ):
+                if _ew_eng is not None and selected_sensor_type is SensorType.RADAR:
                     try:
                         snr_penalty_db = _ew_eng.compute_radar_snr_penalty(
                             sensor_pos=attacker.position,
                             sensor_freq_ghz=getattr(
-                                best_sensor, "frequency_ghz", 10.0,
-                            ) if best_sensor is not None else 10.0,
+                                best_sensor,
+                                "frequency_ghz",
+                                10.0,
+                            )
+                            if best_sensor is not None
+                            else 10.0,
                             sensor_power_dbm=getattr(
-                                best_sensor, "power_dbm", 70.0,
-                            ) if best_sensor is not None else 70.0,
+                                best_sensor,
+                                "power_dbm",
+                                70.0,
+                            )
+                            if best_sensor is not None
+                            else 70.0,
                             sensor_gain_dbi=getattr(
-                                best_sensor, "antenna_gain_dbi", 30.0,
-                            ) if best_sensor is not None else 30.0,
+                                best_sensor,
+                                "antenna_gain_dbi",
+                                30.0,
+                            )
+                            if best_sensor is not None
+                            else 30.0,
                             sensor_bw_ghz=getattr(
-                                best_sensor, "bandwidth_ghz", 0.1,
-                            ) if best_sensor is not None else 0.1,
+                                best_sensor,
+                                "bandwidth_ghz",
+                                0.1,
+                            )
+                            if best_sensor is not None
+                            else 0.1,
                             target_range_m=best_range,
                         )
                         if snr_penalty_db > 0:
@@ -9509,19 +10303,29 @@ class BattleManager:
                                     _eccm_reduction = _eccm_eng.compute_jam_reduction(
                                         _eccm_suite,
                                         jammer_freq_ghz=getattr(
-                                            best_sensor, "frequency_ghz", 10.0,
-                                        ) if best_sensor is not None else 10.0,
+                                            best_sensor,
+                                            "frequency_ghz",
+                                            10.0,
+                                        )
+                                        if best_sensor is not None
+                                        else 10.0,
                                         jammer_bw_ghz=getattr(
-                                            best_sensor, "bandwidth_ghz", 0.1,
-                                        ) if best_sensor is not None else 0.1,
+                                            best_sensor,
+                                            "bandwidth_ghz",
+                                            0.1,
+                                        )
+                                        if best_sensor is not None
+                                        else 0.1,
                                         js_ratio_db=snr_penalty_db,
                                     )
                                     snr_penalty_db = max(
-                                        0.0, snr_penalty_db - _eccm_reduction,
+                                        0.0,
+                                        snr_penalty_db - _eccm_reduction,
                                     )
                             # Phase 48: jammer_coverage_mult scales EW effect
                             ew_factor = max(
-                                0.1, 1.0 - (snr_penalty_db * _jammer_mult) / 40.0,
+                                0.1,
+                                1.0 - (snr_penalty_db * _jammer_mult) / 40.0,
                             )
                             detection_quality_mod *= ew_factor
                     except Exception:
@@ -9540,18 +10344,13 @@ class BattleManager:
                     for sensor in eligible_sensors:
                         if getattr(sensor, "sensor_type", None) == SensorType.ESM:
                             detection_quality_mod = min(
-                                1.0, detection_quality_mod * (1.0 + _sigint_bonus),
+                                1.0,
+                                detection_quality_mod * (1.0 + _sigint_bonus),
                             )
                             break
 
                 vis_mod = (
-                    1.0
-                    if weather_independent
-                    else (
-                        min(visibility_m / best_range, 1.0)
-                        if best_range > 0
-                        else 1.0
-                    )
+                    1.0 if weather_independent else (min(visibility_m / best_range, 1.0) if best_range > 0 else 1.0)
                 )
                 vis_mod = vis_mod * detection_quality_mod
 
@@ -9567,6 +10366,7 @@ class BattleManager:
                 # Phase 42a: ROE gate
                 if roe_engine is not None:
                     from stochastic_warfare.c2.roe import TargetCategory
+
                     id_confidence = detection_quality_mod
                     authorized, _reason = roe_engine.check_engagement_authorized(
                         shooter_id=attacker.entity_id,
@@ -9594,17 +10394,12 @@ class BattleManager:
                     if targeting_decision is not None:
                         if not isinstance(attachment, WeaponAttachment):
                             raise RuntimeError(
-                                "Production targeting requires typed weapon "
-                                f"attachments for {attacker.entity_id!r}",
+                                f"Production targeting requires typed weapon attachments for {attacker.entity_id!r}",
                             )
                         if (
-                            attachment.source_equipment_index
-                            != targeting_decision
-                            .weapon_source_equipment_index
-                            or attachment.weapon.weapon_id
-                            != targeting_decision.weapon_id
-                            or attachment.modeled_role
-                            is not targeting_decision.weapon_modeled_role
+                            attachment.source_equipment_index != targeting_decision.weapon_source_equipment_index
+                            or attachment.weapon.weapon_id != targeting_decision.weapon_id
+                            or attachment.modeled_role is not targeting_decision.weapon_modeled_role
                         ):
                             continue
                     if (
@@ -9632,15 +10427,9 @@ class BattleManager:
                             0,
                         )
                         if _mag_cap > 0:
-                            _legacy_ammo_key = (
-                                f"{attacker.entity_id}:"
-                                f"{wpn_inst.definition.weapon_id}"
-                            )
+                            _legacy_ammo_key = f"{attacker.entity_id}:{wpn_inst.definition.weapon_id}"
                             for candidate in ammo_defs:
-                                _ammo_key = (
-                                    f"{_legacy_ammo_key}:"
-                                    f"{candidate.ammo_id}"
-                                )
+                                _ammo_key = f"{_legacy_ammo_key}:{candidate.ammo_id}"
                                 _rounds_fired = self._ammo_expended.get(
                                     _ammo_key,
                                     self._ammo_expended.get(
@@ -9659,10 +10448,8 @@ class BattleManager:
                                     candidate
                                     for candidate in attachment.ammunition
                                     if (
-                                        candidate.ammo_id
-                                        == targeting_decision.ammunition_id
-                                        and candidate.ammo_id
-                                        not in excluded_ammo_ids
+                                        candidate.ammo_id == targeting_decision.ammunition_id
+                                        and candidate.ammo_id not in excluded_ammo_ids
                                         and attachment.weapon.can_fire(
                                             candidate.ammo_id,
                                         )
@@ -9680,8 +10467,7 @@ class BattleManager:
                                 candidate
                                 for candidate in ammo_defs
                                 if (
-                                    candidate.ammo_id
-                                    not in excluded_ammo_ids
+                                    candidate.ammo_id not in excluded_ammo_ids
                                     and wpn_inst.can_fire(
                                         candidate.ammo_id,
                                     )
@@ -9705,8 +10491,7 @@ class BattleManager:
                     if attacker.speed > 0.5 and wpn_inst.definition.requires_deployed:
                         continue
                     _typed_indirect_owner = (
-                        isinstance(attachment, WeaponAttachment)
-                        and attachment.modeled_role in _INDIRECT_FIRE_ROLES
+                        isinstance(attachment, WeaponAttachment) and attachment.modeled_role in _INDIRECT_FIRE_ROLES
                     )
                     # Phase 54f: weapon traverse arc constraint
                     # traverse_deg 0 or 360 = no constraint (platform-aimed)
@@ -9715,16 +10500,11 @@ class BattleManager:
                     # Phase 99 did for seeker FOV.  Also exempt dismounted
                     # infantry (they rotate bodily like Javelin/Stinger crews).
                     _traverse = getattr(wpn_inst.definition, "traverse_deg", 360.0)
-                    if (
-                        not _typed_indirect_owner
-                        and isinstance(_traverse, (int, float))
-                        and 0 < _traverse < 360.0
-                    ):
+                    if not _typed_indirect_owner and isinstance(_traverse, (int, float)) and 0 < _traverse < 360.0:
                         _att_domain_tv = getattr(attacker, "domain", None)
                         _att_ground_tv = getattr(attacker, "ground_type", None)
                         _traverse_exempt = (
-                            _att_domain_tv == Domain.AERIAL
-                            or _att_ground_tv == GroundUnitType.LIGHT_INFANTRY
+                            _att_domain_tv == Domain.AERIAL or _att_ground_tv == GroundUnitType.LIGHT_INFANTRY
                         )
                         if not _traverse_exempt:
                             _att_heading = getattr(attacker, "heading", 0.0) or 0.0
@@ -9747,15 +10527,13 @@ class BattleManager:
                         # A missile launcher's rail/canister elevation defines
                         # its launch attitude, not a direct line-of-sight firing
                         # arc.  The guided flight path resolves downstream.
-                        and wpn_inst.definition.parsed_category()
-                        != WeaponCategory.MISSILE_LAUNCHER
+                        and wpn_inst.definition.parsed_category() != WeaponCategory.MISSILE_LAUNCHER
                         and isinstance(_elev_min, (int, float))
                         and isinstance(_elev_max, (int, float))
                         and (_elev_min != -5.0 or _elev_max != 85.0)
                     ):
-                        _alt_diff = (
-                            getattr(best_target.position, "altitude", 0.0)
-                            - getattr(attacker.position, "altitude", 0.0)
+                        _alt_diff = getattr(best_target.position, "altitude", 0.0) - getattr(
+                            attacker.position, "altitude", 0.0
                         )
                         _elev_deg = math.degrees(math.atan2(_alt_diff, best_range))
                         if _elev_deg < _elev_min or _elev_deg > _elev_max:
@@ -9768,16 +10546,11 @@ class BattleManager:
                     # acquire; the constraint applies to fixed/turret-mounted
                     # launchers only.
                     _seeker_fov = getattr(ammo_def, "seeker_fov_deg", 0.0)
-                    if (
-                        not _typed_indirect_owner
-                        and isinstance(_seeker_fov, (int, float))
-                        and _seeker_fov > 0
-                    ):
+                    if not _typed_indirect_owner and isinstance(_seeker_fov, (int, float)) and _seeker_fov > 0:
                         _att_domain_sk = getattr(attacker, "domain", None)
                         _att_ground_sk = getattr(attacker, "ground_type", None)
                         _seeker_exempt = (
-                            _att_domain_sk == Domain.AERIAL
-                            or _att_ground_sk == GroundUnitType.LIGHT_INFANTRY
+                            _att_domain_sk == Domain.AERIAL or _att_ground_sk == GroundUnitType.LIGHT_INFANTRY
                         )
                         if not _seeker_exempt:
                             _launch_bearing = math.atan2(
@@ -9805,11 +10578,7 @@ class BattleManager:
                         selected_wpn = wpn_inst
                         selected_ammo_def = ammo_def
                         selected_ammo_id = ammo_id
-                        selected_attachment = (
-                            attachment
-                            if isinstance(attachment, WeaponAttachment)
-                            else None
-                        )
+                        selected_attachment = attachment if isinstance(attachment, WeaponAttachment) else None
 
                 if selected_wpn is None:
                     continue
@@ -9818,8 +10587,7 @@ class BattleManager:
                 side_rules = behavior_rules.get(side_name, {})
                 if isinstance(side_rules, dict) and side_rules.get("hold_fire_until_effective_range", False):
                     best_eff_range = max(
-                        (w[0].definition.get_effective_range()
-                         for w in weapons if w[0].definition.max_range_m > 0),
+                        (w[0].definition.get_effective_range() for w in weapons if w[0].definition.max_range_m > 0),
                         default=0.0,
                     )
                     if best_eff_range > 0 and best_range > best_eff_range:
@@ -9829,9 +10597,7 @@ class BattleManager:
                 ammo_def = selected_ammo_def
                 ammo_id = selected_ammo_id
                 runtime_system_multiplier = (
-                    selected_attachment.runtime_system_multiplier
-                    if selected_attachment is not None
-                    else 1
+                    selected_attachment.runtime_system_multiplier if selected_attachment is not None else 1
                 )
 
                 target_armor = getattr(best_target, "armor_front", 0.0)
@@ -9847,7 +10613,11 @@ class BattleManager:
                 # Phase 40f: morale accuracy modifier
                 morale_accuracy_mod = 1.0
                 if attacker_morale is not None:
-                    ms = MoraleState(int(attacker_morale)) if not isinstance(attacker_morale, MoraleState) else attacker_morale
+                    ms = (
+                        MoraleState(int(attacker_morale))
+                        if not isinstance(attacker_morale, MoraleState)
+                        else attacker_morale
+                    )
                     effects = _MORALE_EFFECTS.get(ms, {})
                     morale_accuracy_mod = effects.get("accuracy_mult", 1.0)
 
@@ -9857,28 +10627,31 @@ class BattleManager:
                 effective_skill = base_skill * (0.5 + 0.5 * unit_training)
                 # Per-side hit probability modifier (Phase 48)
                 side_hit_prob = cal_flat.get(
-                    f"hit_probability_modifier_{side_name}", hit_prob_mod,
+                    f"hit_probability_modifier_{side_name}",
+                    hit_prob_mod,
                 )
                 # Phase 48: force_ratio_modifier — Dupuy CEV (Combat
                 # Effectiveness Value).  Captures training, doctrine,
                 # weapon superiority, and C2 quality as a single scalar.
                 # Values >1 = more effective than raw numbers suggest.
                 force_ratio_mod = cal_flat.get(
-                    f"{side_name}_force_ratio_modifier", 1.0,
+                    f"{side_name}_force_ratio_modifier",
+                    1.0,
                 )
                 crew_skill = (
-                    effective_skill * side_hit_prob
-                    * morale_accuracy_mod * weather_pk_modifier
-                    * force_ratio_mod
+                    effective_skill * side_hit_prob * morale_accuracy_mod * weather_pk_modifier * force_ratio_mod
                 )
 
                 # Phase 52b: crosswind accuracy penalty
                 if wind_e != 0.0 or wind_n != 0.0:
                     _wind_scale = _wind_accuracy_scale
                     crew_skill *= _compute_crosswind_penalty(
-                        wind_e, wind_n,
-                        attacker.position.easting, attacker.position.northing,
-                        best_target.position.easting, best_target.position.northing,
+                        wind_e,
+                        wind_n,
+                        attacker.position.easting,
+                        attacker.position.northing,
+                        best_target.position.easting,
+                        best_target.position.northing,
                         _wind_scale,
                     )
 
@@ -9900,8 +10673,10 @@ class BattleManager:
                         _wpn_equip = getattr(wpn_inst, "equipment", None)
                         if _wpn_equip is not None:
                             from stochastic_warfare.entities.equipment import EquipmentManager
+
                             _stress = EquipmentManager.environment_stress(
-                                _wpn_equip, _temp59d,
+                                _wpn_equip,
+                                _temp59d,
                             )
                             if _stress > 0:
                                 _jam_rng = getattr(ctx, "rng_manager", None)
@@ -9912,7 +10687,9 @@ class BattleManager:
 
                 # Phase 50e: compute weapon category early for fire-on-move exemption
                 _early_wpn_cat = getattr(
-                    wpn_inst.definition, "category", "",
+                    wpn_inst.definition,
+                    "category",
+                    "",
                 ).upper()
 
                 # Phase 48a: fire-on-move accuracy penalty (non-deployed)
@@ -9921,11 +10698,7 @@ class BattleManager:
                     attacker.speed > 0.5
                     and not wpn_inst.definition.requires_deployed
                     and _early_wpn_cat not in _INDIRECT_FIRE_CATEGORIES
-                    and (
-                        selected_attachment is None
-                        or selected_attachment.modeled_role
-                        not in _INDIRECT_FIRE_ROLES
-                    )
+                    and (selected_attachment is None or selected_attachment.modeled_role not in _INDIRECT_FIRE_ROLES)
                 ):
                     _max_spd = getattr(attacker, "max_speed_mps", 20.0) or 20.0
                     _speed_frac = min(1.0, attacker.speed / max(1.0, _max_spd))
@@ -9953,8 +10726,10 @@ class BattleManager:
 
                 # Phase 61a: wave period resonance + swell direction → gunnery
                 if _enable_sea_state_ops:
-                    if (attacker.domain in (Domain.NAVAL, Domain.SUBMARINE)
-                            or best_target.domain in (Domain.NAVAL, Domain.SUBMARINE)):
+                    if attacker.domain in (Domain.NAVAL, Domain.SUBMARINE) or best_target.domain in (
+                        Domain.NAVAL,
+                        Domain.SUBMARINE,
+                    ):
                         # Wave period resonance: hull natural period ~8–12s
                         _hull_period = 10.0  # typical destroyer
                         _disp_a = getattr(attacker, "displacement_tons", 0)
@@ -9982,7 +10757,9 @@ class BattleManager:
                     if gps_eng is not None:
                         try:
                             guidance = getattr(
-                                ammo_def, "guidance_type", "none",
+                                ammo_def,
+                                "guidance_type",
+                                "none",
                             )
                             if guidance in ("gps", "gps_ins"):
                                 gps_state = gps_eng.compute_gps_accuracy(
@@ -10007,11 +10784,14 @@ class BattleManager:
                         _tgt_pos_66 = getattr(best_target, "position", None)
                         if _tgt_pos_66 is not None:
                             _civ_density_66 = getattr(
-                                _pop_eng, "get_density_at", lambda p: 0.0,
+                                _pop_eng,
+                                "get_density_at",
+                                lambda p: 0.0,
                             )(_tgt_pos_66)
                     if _civ_density_66 > 0:
                         _shield_val = _uw_eng.evaluate_human_shield(
-                            best_target.position, _civ_density_66,
+                            best_target.position,
+                            _civ_density_66,
                         )
                         _pk_red = cal_flat.get("human_shield_pk_reduction", 0.5) * _shield_val
                         crew_skill *= max(0.1, 1.0 - _pk_red)
@@ -10023,13 +10803,11 @@ class BattleManager:
                 # ── Phase 43: domain-specific engagement routing ──────
                 routed_aggregate = False
                 wpn_cat_str = getattr(
-                    wpn_inst.definition, "category", "",
+                    wpn_inst.definition,
+                    "category",
+                    "",
                 ).upper()
-                selected_modeled_role = (
-                    selected_attachment.modeled_role
-                    if selected_attachment is not None
-                    else None
-                )
+                selected_modeled_role = selected_attachment.modeled_role if selected_attachment is not None else None
                 dest_thresh = _dest_thresh
                 dis_thresh = _dis_thresh
 
@@ -10044,8 +10822,13 @@ class BattleManager:
                     )
                 ):
                     handled, naval_status = _route_naval_engagement(
-                        ctx, attacker, best_target, wpn_inst,
-                        best_range, dt, timestamp,
+                        ctx,
+                        attacker,
+                        best_target,
+                        wpn_inst,
+                        best_range,
+                        dt,
+                        timestamp,
                         naval_config=self._config.naval_config,
                         force_ratio_mod=force_ratio_mod,
                         vls_launches=self._vls_launches,
@@ -10076,8 +10859,13 @@ class BattleManager:
                     )
                 ):
                     handled, air_status = _route_air_engagement(
-                        ctx, attacker, best_target, wpn_inst,
-                        best_range, dt, timestamp,
+                        ctx,
+                        attacker,
+                        best_target,
+                        wpn_inst,
+                        best_range,
+                        dt,
+                        timestamp,
                         force_ratio_mod=force_ratio_mod,
                         ammo_def=ammo_def,
                         current_time_s=current_time_s,
@@ -10096,11 +10884,7 @@ class BattleManager:
                         routed_aggregate = True
                         # Phase 69a: record sortie consumption
                         _ato_69a = getattr(ctx, "ato_engine", None)
-                        if (
-                            routed_shot_fired
-                            and attacker.domain is Domain.AERIAL
-                            and _ato_69a is not None
-                        ):
+                        if routed_shot_fired and attacker.domain is Domain.AERIAL and _ato_69a is not None:
                             _sim_time_69a = ctx.clock.elapsed.total_seconds() if hasattr(ctx.clock, "elapsed") else 0.0
                             _ato_69a.record_sortie(attacker.entity_id, _sim_time_69a)
 
@@ -10113,10 +10897,7 @@ class BattleManager:
                 _agg_skill = min(1.0, max(0.1, crew_skill))
                 _agg_modifier = _terrain_cas_mult * _agg_skill
 
-                if (
-                    not routed_aggregate
-                    and selected_modeled_role not in _INDIRECT_FIRE_ROLES
-                ):
+                if not routed_aggregate and selected_modeled_role not in _INDIRECT_FIRE_ROLES:
                     era = ctx.era_runtime_contract.era.value
 
                     if era == "napoleonic":
@@ -10134,8 +10915,10 @@ class BattleManager:
                                 )
                                 _apply_aggregate_casualties(
                                     int(vr.casualties * _agg_modifier),
-                                    best_target, pending_damage,
-                                    dest_thresh, dis_thresh,
+                                    best_target,
+                                    pending_damage,
+                                    dest_thresh,
+                                    dis_thresh,
                                     self._cumulative_casualties,
                                     event_bus=getattr(ctx, "event_bus", None),
                                     attacker=attacker,
@@ -10145,33 +10928,31 @@ class BattleManager:
                                 routed_aggregate = True
                                 # Suppression from volley fire
                                 _apply_aggregate_suppression(
-                                    ctx, best_target, wpn_inst,
-                                    best_range, dt, self._suppression_states,
+                                    ctx,
+                                    best_target,
+                                    wpn_inst,
+                                    best_range,
+                                    dt,
+                                    self._suppression_states,
                                 )
-                        if not routed_aggregate and (
-                            wpn_cat_str == "MELEE" or best_range <= _MELEE_RANGE_M
-                        ):
+                        if not routed_aggregate and (wpn_cat_str == "MELEE" or best_range <= _MELEE_RANGE_M):
                             # Phase 54c: cavalry charge state machine
                             cavalry_eng = getattr(ctx, "cavalry_engine", None)
                             unit_type_lower = getattr(
-                                attacker, "unit_type", "",
+                                attacker,
+                                "unit_type",
+                                "",
                             ).lower()
                             is_cavalry = any(
-                                kw in unit_type_lower for kw in
-                                ("cavalry", "hussar", "dragoon",
-                                 "lancer", "cuirassier")
+                                kw in unit_type_lower for kw in ("cavalry", "hussar", "dragoon", "lancer", "cuirassier")
                             )
-                            if (
-                                cavalry_eng is not None
-                                and is_cavalry
-                            ):
-                                charge_id = (
-                                    f"{attacker.entity_id}"
-                                    f"_vs_{best_target.entity_id}"
-                                )
+                            if cavalry_eng is not None and is_cavalry:
+                                charge_id = f"{attacker.entity_id}_vs_{best_target.entity_id}"
                                 try:
                                     charges = getattr(
-                                        cavalry_eng, "_charges", {},
+                                        cavalry_eng,
+                                        "_charges",
+                                        {},
                                     )
                                     if charge_id not in charges:
                                         cavalry_eng.initiate_charge(
@@ -10181,18 +10962,21 @@ class BattleManager:
                                             distance_m=best_range,
                                         )
                                     phase = cavalry_eng.update_charge(
-                                        charge_id, dt,
+                                        charge_id,
+                                        dt,
                                     )
                                     logger.debug(
                                         "Cavalry charge %s phase: %s",
-                                        charge_id, phase,
+                                        charge_id,
+                                        phase,
                                     )
                                     routed_aggregate = True
                                     side_engagements += 1
                                 except Exception:
                                     logger.debug(
                                         "Cavalry charge failed for %s",
-                                        charge_id, exc_info=True,
+                                        charge_id,
+                                        exc_info=True,
                                     )
 
                             if not routed_aggregate:
@@ -10204,9 +10988,13 @@ class BattleManager:
                                         melee_type=_infer_melee_type(attacker, wpn_inst),
                                     )
                                     _apply_melee_result(
-                                        mr, attacker, best_target, pending_damage,
+                                        mr,
+                                        attacker,
+                                        best_target,
+                                        pending_damage,
                                         getattr(ctx, "morale_runtime", None),
-                                        dest_thresh, dis_thresh,
+                                        dest_thresh,
+                                        dis_thresh,
                                         event_bus=getattr(ctx, "event_bus", None),
                                         wpn_inst=wpn_inst,
                                         timestamp=timestamp,
@@ -10239,8 +11027,10 @@ class BattleManager:
                                         pass
                                 _apply_aggregate_casualties(
                                     int(ar.casualties * _agg_modifier * arch_vuln),
-                                    best_target, pending_damage,
-                                    dest_thresh, dis_thresh,
+                                    best_target,
+                                    pending_damage,
+                                    dest_thresh,
+                                    dis_thresh,
                                     self._cumulative_casualties,
                                     event_bus=getattr(ctx, "event_bus", None),
                                     attacker=attacker,
@@ -10249,12 +11039,14 @@ class BattleManager:
                                 side_engagements += 1
                                 routed_aggregate = True
                                 _apply_aggregate_suppression(
-                                    ctx, best_target, wpn_inst,
-                                    best_range, dt, self._suppression_states,
+                                    ctx,
+                                    best_target,
+                                    wpn_inst,
+                                    best_range,
+                                    dt,
+                                    self._suppression_states,
                                 )
-                        if not routed_aggregate and (
-                            wpn_cat_str == "MELEE" or best_range <= _MELEE_RANGE_M
-                        ):
+                        if not routed_aggregate and (wpn_cat_str == "MELEE" or best_range <= _MELEE_RANGE_M):
                             me = getattr(ctx, "melee_engine", None)
                             if me is not None:
                                 # Phase 54d: formation melee/defense modifiers
@@ -10274,20 +11066,18 @@ class BattleManager:
                                     except Exception:
                                         pass
                                 mr = me.resolve_melee_round(
-                                    attacker_strength=int(
-                                        max(1, len(attacker.personnel))
-                                        * melee_power_mod
-                                    ),
-                                    defender_strength=int(
-                                        max(1, len(best_target.personnel))
-                                        * defense_mod_val
-                                    ),
+                                    attacker_strength=int(max(1, len(attacker.personnel)) * melee_power_mod),
+                                    defender_strength=int(max(1, len(best_target.personnel)) * defense_mod_val),
                                     melee_type=_infer_melee_type(attacker, wpn_inst),
                                 )
                                 _apply_melee_result(
-                                    mr, attacker, best_target, pending_damage,
+                                    mr,
+                                    attacker,
+                                    best_target,
+                                    pending_damage,
                                     getattr(ctx, "morale_runtime", None),
-                                    dest_thresh, dis_thresh,
+                                    dest_thresh,
+                                    dis_thresh,
                                     event_bus=getattr(ctx, "event_bus", None),
                                     wpn_inst=wpn_inst,
                                     timestamp=timestamp,
@@ -10321,8 +11111,7 @@ class BattleManager:
                                         best_target.position.easting,
                                         best_target.position.northing,
                                         in_dugout=(
-                                            getattr(best_target, "posture", None)
-                                            is not None
+                                            getattr(best_target, "posture", None) is not None
                                             and int(getattr(best_target, "posture", 0)) >= 3
                                         ),
                                     )
@@ -10330,7 +11119,8 @@ class BattleManager:
                                     if b_supp > 0:
                                         logger.debug(
                                             "Barrage suppression on %s: %.2f",
-                                            best_target.entity_id, b_supp,
+                                            best_target.entity_id,
+                                            b_supp,
                                         )
                             except Exception:
                                 pass
@@ -10347,8 +11137,10 @@ class BattleManager:
                                 )
                                 _apply_aggregate_casualties(
                                     int(vr.casualties * _agg_modifier * _gas_cas_mod),
-                                    best_target, pending_damage,
-                                    dest_thresh, dis_thresh,
+                                    best_target,
+                                    pending_damage,
+                                    dest_thresh,
+                                    dis_thresh,
                                     self._cumulative_casualties,
                                     event_bus=getattr(ctx, "event_bus", None),
                                     attacker=attacker,
@@ -10357,12 +11149,14 @@ class BattleManager:
                                 side_engagements += 1
                                 routed_aggregate = True
                                 _apply_aggregate_suppression(
-                                    ctx, best_target, wpn_inst,
-                                    best_range, dt, self._suppression_states,
+                                    ctx,
+                                    best_target,
+                                    wpn_inst,
+                                    best_range,
+                                    dt,
+                                    self._suppression_states,
                                 )
-                        if not routed_aggregate and (
-                            wpn_cat_str == "MELEE" or best_range <= _MELEE_RANGE_M
-                        ):
+                        if not routed_aggregate and (wpn_cat_str == "MELEE" or best_range <= _MELEE_RANGE_M):
                             me = getattr(ctx, "melee_engine", None)
                             if me is not None:
                                 mr = me.resolve_melee_round(
@@ -10371,9 +11165,13 @@ class BattleManager:
                                     melee_type=_infer_melee_type(attacker, wpn_inst),
                                 )
                                 _apply_melee_result(
-                                    mr, attacker, best_target, pending_damage,
+                                    mr,
+                                    attacker,
+                                    best_target,
+                                    pending_damage,
                                     getattr(ctx, "morale_runtime", None),
-                                    dest_thresh, dis_thresh,
+                                    dest_thresh,
+                                    dis_thresh,
                                     event_bus=getattr(ctx, "event_bus", None),
                                     wpn_inst=wpn_inst,
                                     timestamp=timestamp,
@@ -10386,10 +11184,7 @@ class BattleManager:
                 # Phase 43b: indirect fire routing (all eras)
                 if not routed_aggregate and (
                     selected_modeled_role in _INDIRECT_FIRE_ROLES
-                    or (
-                        selected_modeled_role is None
-                        and wpn_cat_str in _INDIRECT_FIRE_CATEGORIES
-                    )
+                    or (selected_modeled_role is None and wpn_cat_str in _INDIRECT_FIRE_CATEGORIES)
                 ):
                     ife = getattr(ctx, "indirect_fire_engine", None)
                     if ife is not None:
@@ -10398,13 +11193,10 @@ class BattleManager:
                             from stochastic_warfare.combat.indirect_fire import (
                                 FireMissionType,
                             )
+
                             round_count = max(
                                 1,
-                                int(
-                                    wpn_inst.definition.rate_of_fire_rpm
-                                    * dt
-                                    / 60
-                                ),
+                                int(wpn_inst.definition.rate_of_fire_rpm * dt / 60),
                             )
                             rounds_fired = _consume_routed_ammunition(
                                 ctx,
@@ -10414,15 +11206,11 @@ class BattleManager:
                                 quantity=round_count,
                                 timestamp=timestamp,
                                 current_time_s=current_time_s,
-                                cooldown_multiplier=(
-                                    runtime_system_multiplier
-                                ),
+                                cooldown_multiplier=(runtime_system_multiplier),
                             )
                             if rounds_fired <= 0:
                                 continue
-                            if selected_modeled_role is (
-                                WeaponModeledRole.ROCKET_ARTILLERY
-                            ):
+                            if selected_modeled_role is (WeaponModeledRole.ROCKET_ARTILLERY):
                                 fm_result = ife.rocket_salvo(
                                     launcher_id=attacker.entity_id,
                                     fire_pos=attacker.position,
@@ -10439,19 +11227,25 @@ class BattleManager:
                                     target_pos=best_target.position,
                                     weapon=wpn_inst.definition,
                                     ammo=ammo_def,
-                                    mission_type=(
-                                        FireMissionType.FIRE_FOR_EFFECT
-                                    ),
+                                    mission_type=(FireMissionType.FIRE_FOR_EFFECT),
                                     round_count=rounds_fired,
                                     timestamp=timestamp,
                                 )
                             if fm_result.impacts:
-                                _ifire_radius = getattr(
-                                    ammo_def, "blast_radius_m", 0.0,
-                                ) or 50.0
+                                _ifire_radius = (
+                                    getattr(
+                                        ammo_def,
+                                        "blast_radius_m",
+                                        0.0,
+                                    )
+                                    or 50.0
+                                )
                                 _apply_indirect_fire_result(
-                                    fm_result, best_target, pending_damage,
-                                    dest_thresh, dis_thresh,
+                                    fm_result,
+                                    best_target,
+                                    pending_damage,
+                                    dest_thresh,
+                                    dis_thresh,
                                     self._cumulative_casualties,
                                     _agg_modifier,
                                     lethal_radius_m=_ifire_radius,
@@ -10467,8 +11261,12 @@ class BattleManager:
                             side_engagements += 1
                             routed_aggregate = True
                             _apply_aggregate_suppression(
-                                ctx, best_target, wpn_inst,
-                                best_range, dt, self._suppression_states,
+                                ctx,
+                                best_target,
+                                wpn_inst,
+                                best_range,
+                                dt,
+                                self._suppression_states,
                             )
 
                 # ── Standard direct-fire path (modern, WW2, fallback) ─────
@@ -10492,6 +11290,7 @@ class BattleManager:
                         try:
                             if wpn_inst.definition.parsed_category() == WeaponCategory.MISSILE_LAUNCHER:
                                 from stochastic_warfare.combat.ammunition import GuidanceType
+
                                 _g = ammo_def.parsed_guidance()
                                 if _g != GuidanceType.NONE:
                                     engagement_type = EngagementType.MISSILE
@@ -10527,8 +11326,8 @@ class BattleManager:
                         weapon=wpn_inst,
                         ammo_id=ammo_id,
                         ammo_def=ammo_def,
-                        missile_engine=getattr(ctx, 'missile_engine', None),
-                        dew_engine=getattr(ctx, 'dew_engine', None),
+                        missile_engine=getattr(ctx, "missile_engine", None),
+                        dew_engine=getattr(ctx, "dew_engine", None),
                         crew_skill=crew_skill,
                         target_size_m2=8.5 * target_size_mod,
                         target_armor_mm=target_armor,
@@ -10552,9 +11351,7 @@ class BattleManager:
                                 self._suppression_states[tid] = UnitSuppressionState()
                             _sup_eng.apply_fire_volume(
                                 state=self._suppression_states[tid],
-                                rounds_per_minute=(
-                                    wpn_inst.definition.rate_of_fire_rpm
-                                ),
+                                rounds_per_minute=(wpn_inst.definition.rate_of_fire_rpm),
                                 caliber_mm=wpn_inst.definition.caliber_mm,
                                 range_m=best_range,
                                 duration_s=dt,
@@ -10570,8 +11367,7 @@ class BattleManager:
                                 pending_damage.append((best_target, UnitStatus.DESTROYED, _df_wpn_id))
                             else:
                                 pending_damage.append((best_target, UnitStatus.DISABLED, _df_wpn_id))
-                        elif (result.damage_result
-                                and result.damage_result.damage_fraction > 0):
+                        elif result.damage_result and result.damage_result.damage_fraction > 0:
                             if result.damage_result.damage_fraction >= dest_thresh:
                                 pending_damage.append((best_target, UnitStatus.DESTROYED, _df_wpn_id))
                             elif result.damage_result.damage_fraction >= dis_thresh:
@@ -10583,12 +11379,14 @@ class BattleManager:
                             if _dmg.casualties:
                                 logger.debug(
                                     "%d casualties on %s",
-                                    len(_dmg.casualties), best_target.entity_id,
+                                    len(_dmg.casualties),
+                                    best_target.entity_id,
                                 )
                             if _dmg.systems_damaged:
                                 logger.debug(
                                     "%d systems_damaged on %s",
-                                    len(_dmg.systems_damaged), best_target.entity_id,
+                                    len(_dmg.systems_damaged),
+                                    best_target.entity_id,
                                 )
                             # Phase 101: INCENDIARY_WEAPON ammo always starts a fire
                             # on hit (WP, thermobaric, napalm). Force fire_started
@@ -10596,6 +11394,7 @@ class BattleManager:
                             # "shake and bake" semantics.
                             try:
                                 from stochastic_warfare.combat.ammunition import AmmoType as _AT
+
                                 if ammo_def is not None and ammo_def.parsed_ammo_type() == _AT.INCENDIARY_WEAPON:
                                     object.__setattr__(_dmg, "fire_started", True)
                             except Exception:
@@ -10604,7 +11403,8 @@ class BattleManager:
                             if _dmg.fire_started:
                                 logger.debug(
                                     "Fire started at %s from hit on %s",
-                                    best_target.position, best_target.entity_id,
+                                    best_target.position,
+                                    best_target.entity_id,
                                 )
                                 # Phase 60b: create fire zone on combustible terrain
                                 if _enable_fire_zones:
@@ -10639,18 +11439,10 @@ class BattleManager:
                                             logger.debug("Fire zone creation failed", exc_info=True)
 
                 if _enable_ammo_gate:
-                    _ammo_consumed = (
-                        _ammo_before_routing
-                        - wpn_inst.ammo_state.available(ammo_id)
-                    )
+                    _ammo_consumed = _ammo_before_routing - wpn_inst.ammo_state.available(ammo_id)
                     if _ammo_consumed > 0:
-                        _legacy_ammo_key_trk = (
-                            f"{attacker.entity_id}:"
-                            f"{wpn_inst.definition.weapon_id}"
-                        )
-                        _ammo_key_trk = (
-                            f"{_legacy_ammo_key_trk}:{ammo_id}"
-                        )
+                        _legacy_ammo_key_trk = f"{attacker.entity_id}:{wpn_inst.definition.weapon_id}"
+                        _ammo_key_trk = f"{_legacy_ammo_key_trk}:{ammo_id}"
                         self._ammo_expended[_ammo_key_trk] = (
                             self._ammo_expended.get(
                                 _ammo_key_trk,
@@ -10689,7 +11481,9 @@ class BattleManager:
                                 _gd = getattr(_pop_eng, "get_density_at", lambda p: 0.0)(_gp)
                                 _in_pop = _gd > 0
                         _disengage, _blend = _uw_eng.evaluate_guerrilla_disengage(
-                            _u_guer.entity_id, _cas_frac, _in_pop,
+                            _u_guer.entity_id,
+                            _cas_frac,
+                            _in_pop,
                         )
                         if _disengage:
                             if _blend > 0:
@@ -10700,7 +11494,8 @@ class BattleManager:
                                 )
                             logger.debug(
                                 "Guerrilla %s disengaging (blend=%.2f)",
-                                _u_guer.entity_id, _blend,
+                                _u_guer.entity_id,
+                                _blend,
                             )
                             # Phase 68g: move unit away from nearest enemy
                             _gp = getattr(_u_guer, "position", None)
@@ -10727,8 +11522,19 @@ class BattleManager:
                                 object.__setattr__(_u_guer, "position", _new_pos)
                                 logger.debug(
                                     "Guerrilla %s retreated %.0fm to (%s)",
-                                    _u_guer.entity_id, _retreat_dist, _new_pos,
+                                    _u_guer.entity_id,
+                                    _retreat_dist,
+                                    _new_pos,
                                 )
+        self._stage_performance_delta(
+            PerformanceReceiptDelta(
+                lod=LODReceipt(
+                    engagement=LODEngagementReceipt(
+                        attacker_cycles_processed=(attacker_cycles_processed),
+                    ),
+                ),
+            ),
+        )
         return pending_damage
 
     @staticmethod
@@ -10754,23 +11560,27 @@ class BattleManager:
                 applied.pop(target.entity_id, None)
                 if event_bus is not None:
                     if new_status == UnitStatus.DESTROYED:
-                        event_bus.publish(UnitDestroyedEvent(
-                            timestamp=ts,
-                            source=ModuleId.COMBAT,
-                            unit_id=target.entity_id,
-                            cause="combat_damage",
-                            side=target.side,
-                            weapon_id=weapon_id,
-                        ))
+                        event_bus.publish(
+                            UnitDestroyedEvent(
+                                timestamp=ts,
+                                source=ModuleId.COMBAT,
+                                unit_id=target.entity_id,
+                                cause="combat_damage",
+                                side=target.side,
+                                weapon_id=weapon_id,
+                            )
+                        )
                     elif new_status == UnitStatus.DISABLED:
-                        event_bus.publish(UnitDisabledEvent(
-                            timestamp=ts,
-                            source=ModuleId.COMBAT,
-                            unit_id=target.entity_id,
-                            cause="combat_damage",
-                            side=target.side,
-                            weapon_id=weapon_id,
-                        ))
+                        event_bus.publish(
+                            UnitDisabledEvent(
+                                timestamp=ts,
+                                source=ModuleId.COMBAT,
+                                unit_id=target.entity_id,
+                                cause="combat_damage",
+                                side=target.side,
+                                weapon_id=weapon_id,
+                            )
+                        )
 
     def _execute_morale(
         self,
@@ -10778,7 +11588,6 @@ class BattleManager:
         units_by_side: dict[str, list[Unit]],
         active_enemies: dict[str, list[Unit]],
         timestamp: datetime,
-        _lod_full_update: set[str] | None = None,
     ) -> None:
         """Run morale checks for all active/routing units."""
         morale_runtime = getattr(ctx, "morale_runtime", None)
@@ -10789,20 +11598,15 @@ class BattleManager:
         morale_degrade_mod = cal_flat.get("morale_degrade_rate_modifier", 1.0)
         rout_engine = morale_runtime.rout_engine
         current_time_s = ctx.clock.elapsed.total_seconds()
+        morale_unit_cycles_processed = 0
 
         # Phase 56a: build per-side STRtree for rally + cascade (O(n log n))
         _side_trees: dict[str, tuple[STRtree, list[Unit]]] = {}
         if rout_engine is not None:
             for _sn, _su in units_by_side.items():
-                _eligible = [
-                    u for u in _su
-                    if u.status in (UnitStatus.ACTIVE, UnitStatus.ROUTING)
-                ]
+                _eligible = [u for u in _su if u.status in (UnitStatus.ACTIVE, UnitStatus.ROUTING)]
                 if _eligible:
-                    _pts = [
-                        Point(u.position.easting, u.position.northing)
-                        for u in _eligible
-                    ]
+                    _pts = [Point(u.position.easting, u.position.northing) for u in _eligible]
                     _side_trees[_sn] = (STRtree(_pts), _eligible)
 
         # Phase 42c / 56a: rally check for routing units (STRtree)
@@ -10821,7 +11625,8 @@ class BattleManager:
                     if tree_data is not None:
                         tree, eligible = tree_data
                         query_geom = Point(
-                            u.position.easting, u.position.northing,
+                            u.position.easting,
+                            u.position.northing,
                         ).buffer(_rally_r)
                         idxs = tree.query(query_geom)
                         for idx in idxs:
@@ -10849,10 +11654,7 @@ class BattleManager:
 
         for side_name, side_units in units_by_side.items():
             total = len(side_units)
-            destroyed = sum(
-                1 for u in side_units
-                if u.status in (UnitStatus.DESTROYED, UnitStatus.SURRENDERED)
-            )
+            destroyed = sum(1 for u in side_units if u.status in (UnitStatus.DESTROYED, UnitStatus.SURRENDERED))
             casualty_rate = destroyed / total if total > 0 else 0.0
 
             enemies = active_enemies.get(side_name, [])
@@ -10866,15 +11668,6 @@ class BattleManager:
                 if u.status not in (UnitStatus.ACTIVE, UnitStatus.ROUTING):
                     continue
 
-                # Phase 85: LOD skip for morale degradation (ROUTING
-                # units always checked so rally works regardless of tier)
-                if (
-                    _lod_full_update is not None
-                    and u.status == UnitStatus.ACTIVE
-                    and u.entity_id not in _lod_full_update
-                ):
-                    continue
-
                 # The runtime derives the first dt from scenario time zero;
                 # logical zero therefore has no admissible stochastic check.
                 if current_time_s <= 0.0:
@@ -10885,16 +11678,14 @@ class BattleManager:
                 # authoritative record, rather than local loop bookkeeping,
                 # prevents a second same-tick stochastic admission even when
                 # transition_cooldown_s is configured to zero.
-                if (
-                    morale_runtime.record_for(u.entity_id).last_check_time_s
-                    == current_time_s
-                ):
+                if morale_runtime.record_for(u.entity_id).last_check_time_s == current_time_s:
                     continue
 
                 # Phase 40e: use actual suppression level
                 sup_state = self._suppression_states.get(u.entity_id)
                 suppression_level = sup_state.value if sup_state is not None else 0.0
 
+                morale_unit_cycles_processed += 1
                 morale_runtime.check_transition(
                     unit_id=u.entity_id,
                     casualty_rate=casualty_rate * morale_degrade_mod,
@@ -10945,6 +11736,16 @@ class BattleManager:
                     current_time_s=current_time_s,
                 )
 
+        self._stage_performance_delta(
+            PerformanceReceiptDelta(
+                lod=LODReceipt(
+                    morale=LODMoraleReceipt(
+                        unit_cycles_processed=(morale_unit_cycles_processed),
+                    ),
+                ),
+            ),
+        )
+
     @staticmethod
     def _find_unit_side(ctx: Any, unit_id: str) -> str:
         """Find which side a unit belongs to."""
@@ -10972,7 +11773,9 @@ class BattleManager:
         min_eff = cal_flat.get("c2_min_effectiveness", 0.3)
         try:
             eff = comms.compute_c2_effectiveness(
-                unit_id, positions, min_effectiveness=min_eff,
+                unit_id,
+                positions,
+                min_effectiveness=min_eff,
             )
         except Exception:
             eff = 1.0
@@ -11037,11 +11840,7 @@ class BattleManager:
                 side = s
                 break
         friendly = len(ctx.active_units(side)) if side else 1
-        enemies = sum(
-            len(ctx.active_units(s))
-            for s in ctx.side_names()
-            if s != side
-        ) if side else 1
+        enemies = sum(len(ctx.active_units(s)) for s in ctx.side_names() if s != side) if side else 1
         force_ratio = friendly / max(enemies, 1)
         return {
             "force_ratio": force_ratio,

@@ -4,7 +4,7 @@
 
 ![Python](https://img.shields.io/badge/python-%3E%3D3.12-blue)
 ![Tests](https://img.shields.io/badge/tests-partitioned_validation-blue)
-![Phase](https://img.shields.io/badge/phase-117_COMPLETE-brightgreen)
+![Phase](https://img.shields.io/badge/phase-118_IN_PROGRESS-yellow)
 
 ---
 
@@ -43,7 +43,10 @@ core -> coordinates -> terrain -> environment -> entities -> movement
   -> detection -> combat -> morale -> c2 -> logistics -> simulation
 ```
 
-Dependencies flow downward only. Entities hold data; modules implement behavior (ECS-like separation). All randomness flows through per-module PRNG streams for deterministic reproducibility.
+Dependencies flow downward only. Entities hold data; modules implement behavior
+(ECS-like separation). Stochastic decisions use `RNGManager`-owned conventional
+module streams or typed identity-addressed indexed authority when execution
+order must not select a different result.
 
 ## Getting Started
 
@@ -95,9 +98,51 @@ digest-bearing artifact, accepted-evidence gate, and conservative API/UI
 status surface. The retained 73 Easting study is a completed `FAIL`: 0/20 runs
 jointly met its declared envelope, its one-sided lower confidence bound is
 0.0, and it is not promotion-eligible. The catalog therefore remains at zero
-production-validated scenarios. See the
-[contract](specs/historical-outcome-envelope-integrity.md) and
-[artifact](evidence/phase-117/73-easting-phase117.json).
+production-validated scenarios. The retained artifact SHA-256 is
+`57bfe7d89575e721d9cee30c213505c760da3cede642624c7ed7532051e524f4`,
+with off-main locator
+`branch=evidence/full; path=docs/evidence/phase-117/73-easting-phase117.json`.
+The `evidence/full` branch is currently local and unpublished pending a
+separate evidence-remote or Git LFS decision; the same qualification applies
+to the Phase 118 locators below.
+See the [contract](specs/historical-outcome-envelope-integrity.md).
+
+Phase 118 is complete and REM-031 is closed. Detection culling, SoA selection,
+and parallel per-side detection are `supported_exact_validated`. Native scan
+scheduling and sensing-only LOD remain model-fidelity approximations, but
+current production rejects their activation and non-default LOD tuning because
+their frozen semantic evidence failed. Typed runtime receipts, strict
+cross-owner guards, indexed FOW RNG transcripts, and
+`GET /api/meta/performance-flags` expose the actual production support state.
+The retained v6 study is a terminal `EXTERNALLY_CONTENDED` `ERROR` at manifest
+artifact SHA-256
+`eb8e12f147c14ee4e83e7f5e80e4b1e50aa2bfe847d5e5e681b2462f7850051a`. The
+owner-approved schema-2 v7 study completed all 96 pairs / 396 attempts and
+independently reloaded as an eligible `EXTERNALLY_CONTENDED` `FAIL` at manifest
+artifact SHA-256
+`bf9e00ce4a7774af29b5657c49bbbe4481b407a966d9922e48970022f5c6ad86`.
+Culling, SoA, and parallel detection passed 16/16; scan scheduling passed 3/16;
+calibration LOD passed 16/16 and Suwalki LOD passed 12/16. The terminal bytes
+remain immutable negative evidence at
+`branch=evidence/full; path=docs/evidence/phase-118/v6-terminal/` and
+`branch=evidence/full; path=docs/evidence/phase-118/v7-terminal/`. Execution
+guards in the retained evidence harness permanently reject the terminal plan
+ID and every burned v7 seed, while
+the typed handoff at
+`branch=evidence/full; path=docs/evidence/phase-118/runtime-manifest-handoff.json`
+(SHA-256
+`b505edc418f87ffdf659bed52b502cef043df472c8a04696d0fda8d99d4e746d`)
+binds the 1,408-entry execution snapshot to the reviewed 1,408-entry retirement
+snapshot through fifteen exact path changes. A matched production profile also
+measured a 1.259063 median runtime ratio (+25.906%) and localized 81.60% of the
+instrumented delta beneath the transactional FOW update. Phase 118 retains
+those integrity checks and makes no speed claim: REM-054 / Phase 141 owns
+future scan/LOD re-enablement, while REM-055 / Phase 142 owns the measured
+runtime regression. The final
+cross-document audit and postmortem accepted this qualified-negative closure.
+See the
+[contract](specs/performance-flag-semantic-integrity.md) and
+[Phase 118 devlog](devlog/phase-118.md).
 
 See the [Getting Started Guide](guide/getting-started.md) for a complete tutorial including running your first scenario.
 
@@ -138,8 +183,11 @@ See the [Getting Started Guide](guide/getting-started.md) for a complete tutoria
 | Block 17 | 133 | Active deception checkpoint integrity | **Planned** |
 | Block 18 | 134 | 73 Easting source-synchronous engagement fidelity | **Planned** |
 | Block 19 | 135--137 | Package-bound accepted-evidence attestation, Web UI semantics, and Escalation/DEW configuration integrity | **Planned** |
+| Block 20 | 138--140 | Detection scan-history lifecycle, FOW update ownership, and checkpoint capture integrity | **Planned** |
+| Block 21 | 141--142 | Performance-approximation re-enablement and transactional FOW runtime-cost integrity | **Planned** |
 
-Phases 105 through 117 and Block 12 are complete. Phase 116 implements the
+Phases 105 through 118 and Block 12 are complete. Phase 119 has not started.
+Phase 116 implements the
 strict format-116 roster-backed ordinary-contact, fusion-alias,
 bounded-witness, targeting, and DETECTION RNG continuation contract, and
 REM-029 is closed. Its long-run evidence carries an explicit owner-approved
@@ -153,7 +201,11 @@ modern plus historical scenarios across five eras.
 
 Block 13 is active with Phase 117 / REM-030 complete and closed. Its production
 historical-validation boundary retains a truthful failed study and no claim
-has been promoted. Phase 118 is next and has not started. Phase 115 also records REM-041 through
+has been promoted. Phase 118 / REM-031 retains a complete, independently
+verified v7 `FAIL` and implements the accepted qualified-negative support
+boundary; Phase 118 is complete and REM-031 is closed. Phase
+115 also records
+REM-041 through
 REM-043 for the planned Block 14 follow-ups rather than absorbing them into its
 claim.
 REM-044 separately assigns sourced sensor covariance and atomic predictive
@@ -167,14 +219,26 @@ Phase 116 rejects non-pristine deception state instead of accepting loss.
 REM-047 assigns the frozen 73 Easting engagement-fidelity miss to Phase 134 in
 planned Block 18. REM-048 assigns build-time/no-`.git` accepted-evidence
 attestation to Phase 135 in planned Block 19. Phase 117's local evidence proves
-only the packaged-loader boundary for the current zero-accepted catalog; the
-hosted image smoke is configured and pending the phase push.
+only the packaged-loader boundary for the current zero-accepted catalog. The
+Phase 117 push prerequisite is satisfied at `84cf4c4`, but no successful
+hosted image result is recorded in the repository; the configured smoke
+remains unverified pending a successful workflow run.
 REM-049 assigns the remaining replay/export/editor/analysis Web UI semantic
 integrity boundary to Phase 136 in Block 19; REM-041 continues to own complete
 authorized side-safe FOW exposure.
 REM-050 assigns strict consumed Escalation/DEW configuration and a real
 configured DEW engagement to Phase 137 in Block 19; current escalation tuning
 is discarded and DEW block presence is not outcome evidence.
+REM-051 through REM-053 assign scoped detection scan-history lifecycle,
+canonical FOW update ownership, and single-snapshot checkpoint capture to
+Phases 138--140 in planned Block 20.
+REM-054 assigns any future scan-scheduling or LOD re-enablement to Phase 141 in
+planned Block 21. Current explicit rejection remains authoritative until that
+phase supplies a sourced redesign and fresh accepted evidence.
+REM-055 assigns the measured Phase 118 transactional-FOW runtime regression to
+Phase 142 in Block 21. The optimization must preserve atomicity, tamper
+detection, deterministic RNG, receipts, continuation, and exact outcomes; the
+current profile is a local gross-regression signal, not a speed claim.
 The changed 73 Easting loadout/configuration identity was handled by the strict
 version-4 non-timing transition contract; it is not a paired performance pass.
 Phase 116 subsequently promoted that clean endpoint to the ordinary paired

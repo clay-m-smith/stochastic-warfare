@@ -41,12 +41,8 @@ from api.schemas import (
 )
 from stochastic_warfare.simulation.scenario import parse_campaign_scenario_config
 from stochastic_warfare.simulation.targeting_exposure import (
-    PrivilegedEngagementRevalidationExposure,
-    PrivilegedTargetingExposure,
-    TargetingExposureBundle,
     TargetingExposureScope,
-    decode_stored_side_fow_targeting_exposure,
-    validate_privileged_targeting_roster,
+    decode_stored_targeting_exposure,
 )
 
 router = APIRouter(prefix="/runs", tags=["runs"])
@@ -322,40 +318,13 @@ def _frame_from_storage(
     if not isinstance(value, dict):
         raise ValueError("stored replay frame must be a mapping")
     tick = value.get("tick", 0)
-    stored_scope = value.get(
-        "scope",
-        TargetingExposureScope.PRIVILEGED_ENGINE.value,
+    decoded = decode_stored_targeting_exposure(
+        engine_tick=tick,
+        stored_frame=value,
     )
-    if stored_scope != TargetingExposureScope.PRIVILEGED_ENGINE.value:
-        raise ValueError("stored frame has an unknown exposure scope")
     if scope is TargetingExposureScope.PRIVILEGED_ENGINE:
-        raw_targeting = value.get("targeting", [])
-        if not isinstance(raw_targeting, list):
-            raise ValueError("stored privileged targeting must be a list")
-        raw_outcomes = value.get("targeting_outcomes", [])
-        if not isinstance(raw_outcomes, list):
-            raise ValueError("stored privileged targeting outcomes must be a list")
-        raw_units = value.get("units", [])
-        if not isinstance(raw_units, list):
-            raise ValueError("stored privileged units must be a list")
-        privileged = PrivilegedTargetingExposure.from_wire(
-            engine_tick=tick,
-            value=raw_targeting,
-        )
-        outcomes = PrivilegedEngagementRevalidationExposure.from_wire(
-            engine_tick=tick,
-            value=raw_outcomes,
-        )
-        bundle = TargetingExposureBundle(
-            privileged=privileged,
-            privileged_engagement_revalidations=outcomes,
-            side_fow_available=False,
-            sides=(),
-        )
-        validate_privileged_targeting_roster(
-            exposure=bundle,
-            authoritative_unit_frames=raw_units,
-        )
+        bundle = decoded.bundle
+        raw_units = decoded.root_unit_frames
         return ReplayFrame(
             scope=scope,
             tick=tick,
@@ -363,23 +332,21 @@ def _frame_from_storage(
             detected=value.get("det", {}),
             targeting=[
                 PrivilegedTargetingDecision.model_validate(item)
-                for item in privileged.to_wire()
+                for item in bundle.privileged.to_wire()
             ],
             targeting_outcomes=[
                 PrivilegedEngagementRevalidationOutcome.model_validate(item)
-                for item in outcomes.to_wire()
+                for item in (
+                    bundle.privileged_engagement_revalidations.to_wire()
+                )
             ],
         )
 
     if side is None:
         raise ValueError("SIDE_FOW projection requires side")
-    decoded = decode_stored_side_fow_targeting_exposure(
-        engine_tick=tick,
-        viewer_side=side,
-        stored_frame=value,
-    )
-    public = decoded.exposure
-    raw_units = decoded.unit_frames
+    selected = decoded.for_side(side)
+    public = selected.exposure
+    raw_units = selected.unit_frames
     units = [_map_unit_frame(item) for item in raw_units]
     if any(unit.side != side for unit in units):
         raise ValueError("SIDE_FOW unit snapshot contains another side")
@@ -485,18 +452,15 @@ async def get_run_frames(
             detail="stored frame exposure entries must be mappings",
         )
 
-    # Filter by tick range
-    filtered = all_frames
-    if start_tick is not None:
-        filtered = [f for f in filtered if f.get("tick", 0) >= start_tick]
-    if end_tick is not None:
-        filtered = [f for f in filtered if f.get("tick", 0) <= end_tick]
-
     try:
         frames = [
             _frame_from_storage(frame, scope=scope, side=side)
-            for frame in filtered
+            for frame in all_frames
         ]
+        if start_tick is not None:
+            frames = [frame for frame in frames if frame.tick >= start_tick]
+        if end_tick is not None:
+            frames = [frame for frame in frames if frame.tick <= end_tick]
     except (TypeError, ValueError) as exc:
         raise HTTPException(
             status_code=409,

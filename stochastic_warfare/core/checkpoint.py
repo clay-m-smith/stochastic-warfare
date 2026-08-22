@@ -11,6 +11,7 @@ via a fallback path.
 from __future__ import annotations
 
 import json
+import math
 import pickle  # legacy checkpoint fallback only
 from pathlib import Path
 from typing import Any, Callable
@@ -44,11 +45,203 @@ class NumpyEncoder(json.JSONEncoder):
         return super().default(obj)
 
 
-def _numpy_object_hook(dct: dict) -> Any:  # noqa: ANN401
-    """Reconstruct numpy arrays from the ``__ndarray__`` marker."""
-    if "__ndarray__" in dct and "__dtype__" in dct:
-        return np.array(dct["__ndarray__"], dtype=np.dtype(dct["__dtype__"]))
-    return dct
+class _LegacyNonFinite:
+    """Path-checked placeholder used only by versionless migration."""
+
+    __slots__ = ("token",)
+
+    def __init__(self, token: str) -> None:
+        self.token = token
+
+
+def _strict_float(value: str) -> float:
+    parsed = float(value)
+    if not math.isfinite(parsed):
+        raise ValueError(f"non-finite JSON number is unsupported: {value}")
+    return parsed
+
+
+def _validate_numpy_checkpoint_values(
+    value: Any,  # noqa: ANN401
+    *,
+    dtype: np.dtype,
+) -> tuple[int, ...]:
+    """Validate JSON leaves and rectangular shape before NumPy conversion."""
+    if isinstance(value, list):
+        child_shapes = tuple(
+            _validate_numpy_checkpoint_values(item, dtype=dtype)
+            for item in value
+        )
+        if child_shapes and any(shape != child_shapes[0] for shape in child_shapes[1:]):
+            raise ValueError("Malformed or ragged NumPy checkpoint array")
+        return (len(value), *(child_shapes[0] if child_shapes else ()))
+
+    if dtype.kind == "b":
+        if type(value) is not bool:
+            raise ValueError(
+                "Boolean NumPy checkpoint arrays require JSON boolean values",
+            )
+        return ()
+
+    if dtype.kind in {"i", "u"}:
+        if type(value) is not int:
+            raise ValueError(
+                "Integer NumPy checkpoint arrays require JSON integer values",
+            )
+        bounds = np.iinfo(dtype)
+        if not int(bounds.min) <= value <= int(bounds.max):
+            raise ValueError("NumPy checkpoint integer is outside dtype bounds")
+        return ()
+
+    if type(value) not in {int, float}:
+        raise ValueError(
+            "Floating NumPy checkpoint arrays require JSON numeric values",
+        )
+    if type(value) is float and not math.isfinite(value):
+        raise ValueError("NumPy checkpoint arrays must contain only finite values")
+    if abs(value) > float(np.finfo(dtype).max):
+        raise ValueError("NumPy checkpoint float is outside dtype bounds")
+    return ()
+
+
+def _strict_numpy_object(pairs: list[tuple[str, Any]]) -> Any:  # noqa: ANN401
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"duplicate JSON key: {key!r}")
+        result[key] = value
+
+    marker_keys = {"__ndarray__", "__dtype__"}
+    present_markers = marker_keys.intersection(result)
+    if not present_markers:
+        return result
+    if set(result) != marker_keys:
+        raise ValueError(
+            "NumPy checkpoint marker must contain exactly '__ndarray__' and '__dtype__'",
+        )
+
+    raw_dtype = result["__dtype__"]
+    raw_values = result["__ndarray__"]
+    if not isinstance(raw_dtype, str) or not raw_dtype:
+        raise ValueError("NumPy checkpoint dtype must be a non-empty string")
+    try:
+        dtype = np.dtype(raw_dtype)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"Unsupported NumPy checkpoint dtype: {raw_dtype!r}") from exc
+    if (
+        dtype.fields is not None
+        or dtype.subdtype is not None
+        or dtype.hasobject
+        or dtype.kind not in {"b", "i", "u", "f"}
+        or str(dtype) != raw_dtype
+    ):
+        raise ValueError(f"Unsupported NumPy checkpoint dtype: {raw_dtype!r}")
+    _validate_numpy_checkpoint_values(raw_values, dtype=dtype)
+    try:
+        array = np.asarray(raw_values, dtype=dtype)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError("Malformed or ragged NumPy checkpoint array") from exc
+    if array.dtype.kind == "f" and not bool(np.isfinite(array).all()):
+        raise ValueError("NumPy checkpoint arrays must contain only finite values")
+    return array
+
+
+def _legacy_constant(token: str) -> _LegacyNonFinite:
+    return _LegacyNonFinite(token)
+
+
+def _replace_legacy_weapon_sentinels(
+    value: Any,  # noqa: ANN401
+    *,
+    path: tuple[str | int, ...] = (),
+) -> tuple[Any, int]:  # noqa: ANN401
+    if isinstance(value, _LegacyNonFinite):
+        valid_path = (
+            len(path) == 5
+            and path[0:2] == ("context", "unit_weapon_states")
+            and isinstance(path[2], str)
+            and isinstance(path[3], int)
+            and path[4] == "last_fire_time_s"
+            and value.token == "-Infinity"
+        )
+        if not valid_path:
+            raise ValueError(
+                "Legacy non-finite value is outside a weapon timestamp path",
+            )
+        return None, 1
+    if isinstance(value, dict):
+        replaced: dict[str, Any] = {}
+        count = 0
+        for key, item in value.items():
+            new_item, item_count = _replace_legacy_weapon_sentinels(
+                item,
+                path=(*path, key),
+            )
+            replaced[key] = new_item
+            count += item_count
+        return replaced, count
+    if isinstance(value, list):
+        replaced_list: list[Any] = []
+        count = 0
+        for index, item in enumerate(value):
+            new_item, item_count = _replace_legacy_weapon_sentinels(
+                item,
+                path=(*path, index),
+            )
+            replaced_list.append(new_item)
+            count += item_count
+        return replaced_list, count
+    return value, 0
+
+
+def decode_checkpoint_json(
+    data: bytes,
+    *,
+    allow_versionless_weapon_sentinels: bool = False,
+) -> dict[str, Any]:
+    """Decode one strict, finite, duplicate-free JSON checkpoint.
+
+    This boundary is deliberately JSON-only and never invokes the legacy
+    pickle fallback.  The optional non-finite migration accepts only negative
+    infinity at exact legacy weapon timestamp paths and only when the engine
+    checkpoint has no explicit ``checkpoint_version``.
+    """
+    if not isinstance(data, bytes):
+        raise TypeError("Checkpoint payload must be bytes")
+    try:
+        text = data.decode("utf-8", errors="strict")
+    except UnicodeDecodeError as exc:
+        raise ValueError("Checkpoint must be valid UTF-8 JSON") from exc
+
+    legacy_placeholder_seen = False
+
+    def reject_constant(token: str) -> Any:  # noqa: ANN401
+        nonlocal legacy_placeholder_seen
+        if allow_versionless_weapon_sentinels:
+            legacy_placeholder_seen = True
+            return _legacy_constant(token)
+        raise ValueError(f"non-finite JSON constant is unsupported: {token}")
+
+    try:
+        decoded = json.loads(
+            text,
+            object_pairs_hook=_strict_numpy_object,
+            parse_constant=reject_constant,
+            parse_float=_strict_float,
+        )
+    except json.JSONDecodeError as exc:
+        raise ValueError("Checkpoint must be valid JSON") from exc
+    if not isinstance(decoded, dict):
+        raise ValueError("Checkpoint top level must be a JSON object")
+
+    migrated_count = 0
+    if legacy_placeholder_seen:
+        decoded, migrated_count = _replace_legacy_weapon_sentinels(decoded)
+    if migrated_count and "checkpoint_version" in decoded:
+        raise ValueError(
+            "Legacy weapon sentinels are permitted only in versionless checkpoints",
+        )
+    return decoded
 
 
 class CheckpointManager:
@@ -76,27 +269,24 @@ class CheckpointManager:
             "format": "json",
             "clock": clock.get_state(),
             "rng": rng.get_state(),
-            "modules": {
-                mod.value: provider()
-                for mod, provider in self._providers.items()
-            },
+            "modules": {mod.value: provider() for mod, provider in self._providers.items()},
         }
-        return json.dumps(payload, cls=NumpyEncoder).encode("utf-8")
+        return json.dumps(payload, cls=NumpyEncoder, allow_nan=False).encode("utf-8")
 
     def restore_checkpoint(self, data: bytes) -> dict:
         """Deserialize checkpoint data and return the full state dict.
 
-        Tries JSON first (version 2+).  Falls back to pickle for legacy
-        version-1 checkpoints.
+        Version-2+ checkpoints use the strict JSON boundary.  A payload with
+        the binary pickle protocol marker uses the isolated legacy version-1
+        compatibility path; malformed JSON never falls through to pickle.
 
         The caller is responsible for calling ``clock.set_state``,
         ``rng.set_state``, and restoring individual module states.
         """
-        try:
-            return json.loads(data.decode("utf-8"), object_hook=_numpy_object_hook)
-        except (UnicodeDecodeError, json.JSONDecodeError):
-            logger.info("JSON decode failed; falling back to legacy pickle checkpoint")
+        if data.startswith(b"\x80"):
+            logger.info("Restoring an explicitly marked legacy pickle checkpoint")
             return pickle.loads(data)  # noqa: S301
+        return decode_checkpoint_json(data)
 
     def save_to_file(self, path: Path, data: bytes) -> None:
         """Write checkpoint bytes to disk."""

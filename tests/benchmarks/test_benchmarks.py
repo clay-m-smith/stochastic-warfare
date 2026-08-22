@@ -2505,6 +2505,40 @@ def test_morale_timing_identity_unifies_only_discrete_default() -> None:
     assert continuous != implicit_discrete
 
 
+@pytest.mark.parametrize(
+    "strict_field",
+    ("strict_extraction_errors", "strict_overflow"),
+)
+def test_recorder_identity_unifies_only_legacy_false_strictness(
+    strict_field: str,
+) -> None:
+    """Legacy absence equals false, while either strict mode stays distinct."""
+    legacy = {
+        "max_events": benchmark_module.WORKER_RECORDER_MAX_EVENTS,
+        "snapshot_interval_ticks": 0,
+        "enabled": True,
+    }
+    current_defaults = {
+        **legacy,
+        "strict_overflow": False,
+        "strict_extraction_errors": False,
+    }
+
+    normalized_defaults = benchmark_module._normalize_recorder_config_identity(
+        current_defaults,
+    )
+    legacy_digest = benchmark_module.canonical_sha256(legacy)
+    assert normalized_defaults == legacy
+    assert benchmark_module.canonical_sha256(normalized_defaults) == legacy_digest
+
+    strict = {**current_defaults, strict_field: True}
+    normalized_strict = benchmark_module._normalize_recorder_config_identity(
+        strict,
+    )
+    assert normalized_strict[strict_field] is True
+    assert benchmark_module.canonical_sha256(normalized_strict) != legacy_digest
+
+
 @pytest.mark.benchmark
 class TestProductionWorker:
     def test_morale_neutral_workload_executes_exact_runtime_draw_budget(

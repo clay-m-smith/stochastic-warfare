@@ -43,6 +43,35 @@ class TargetingExposureScope(str, Enum):
     SIDE_FOW = "SIDE_FOW"
 
 
+TARGETING_EXPOSURE_SCHEMA_VERSION = 118
+_TARGETING_EXPOSURE_SCHEMA_KEY = "targeting_exposure_schema_version"
+_PAIRED_TARGETING_ROOT_KEYS = frozenset(
+    {
+        "tick",
+        "units",
+        "scope",
+        "targeting",
+        "targeting_outcomes",
+        "side_fow_available",
+        "side_fow",
+        "side_fow_associations",
+    },
+)
+_VERSIONED_TARGETING_ROOT_KEYS = _PAIRED_TARGETING_ROOT_KEYS | {
+    _TARGETING_EXPOSURE_SCHEMA_KEY,
+    "fog_of_war_enabled",
+}
+_PAIRED_TARGETING_MARKER_KEYS = frozenset(
+    {
+        "fog_of_war_enabled",
+        "scope",
+        "side_fow_available",
+        "side_fow",
+        "side_fow_associations",
+    },
+)
+
+
 class PublicTrackStatus(str, Enum):
     """Stable string-valued public projection of ``TrackStatus``."""
 
@@ -410,10 +439,15 @@ class SideFowTargetingDecisionExposure:
                     "a targetless SIDE_FOW decision cannot carry contact evidence",
                 )
         elif (
-            self.contact_source is not ContactSource.FOW_OBSERVER_WITNESS or self.contact_time_s != self.logical_time_s
+            self.contact_source
+            not in {
+                ContactSource.FOW_OBSERVER_WITNESS,
+                ContactSource.FOW_OBSERVER_TRACK_SUPPORT,
+            }
+            or self.contact_time_s != self.logical_time_s
         ):
             raise ValueError(
-                "a targeted SIDE_FOW decision requires a same-interval FOW witness",
+                "a targeted SIDE_FOW decision requires same-interval FOW authority",
             )
         valid_solution = targeting_disposition_is_valid_engagement(
             self.disposition,
@@ -462,6 +496,18 @@ class SideFowTargetingDecisionExposure:
                 raise ValueError("targetless decision cannot reference a track")
         elif target_track_id is None:
             raise ValueError("targeted SIDE_FOW decision requires a public track")
+        elif (
+            decision.contact_source
+            is ContactSource.FOW_OBSERVER_TRACK_SUPPORT
+            and (
+                decision.observer_track_support is None
+                or decision.observer_track_support.fusion_track_id
+                != target_track_id
+            )
+        ):
+            raise ValueError(
+                "observer track support disagrees with the public target track",
+            )
         ordinal = _non_negative_int(
             side_local_ordinal,
             label="side_local_ordinal",
@@ -752,10 +798,46 @@ class PrivilegedTargetingExposure:
         """Validate stored privileged evidence without recomputing it."""
         if not isinstance(value, list):
             raise ValueError("privileged targeting exposure must be a list")
+        if any(not isinstance(item, dict) for item in value):
+            raise ValueError(
+                "privileged targeting exposure decisions must be mappings",
+            )
+        support_key_presence = {
+            "observer_track_support" in item for item in value
+        }
+        if len(support_key_presence) > 1:
+            raise ValueError(
+                "privileged targeting exposure mixes pre-118 and current decision topology",
+            )
+        legacy_topology = support_key_presence == {False}
         return cls(
             engine_tick=engine_tick,
-            decisions=tuple(targeting_decision_from_state(item) for item in value),
+            decisions=tuple(
+                _targeting_decision_from_stored_exposure(
+                    item,
+                    legacy_topology=legacy_topology,
+                )
+                for item in value
+            ),
         )
+
+
+def _targeting_decision_from_stored_exposure(
+    value: dict[str, Any],
+    *,
+    legacy_topology: bool,
+) -> TacticalTargetingDecision:
+    """Decode current or exact pre-118 stored-frame decision topology.
+
+    Replay frames persisted before Phase 118 have the current decision shape
+    minus the required nullable ``observer_track_support`` key.  Normalize only
+    that one historical topology at the storage boundary; the shared strict
+    decoder still rejects every other omission, addition, or semantic mismatch.
+    Checkpoint and live runtime decoding therefore remain format-118 strict.
+    """
+    if legacy_topology:
+        value = {**value, "observer_track_support": None}
+    return targeting_decision_from_state(value)
 
 
 @dataclass(frozen=True, slots=True)
@@ -1149,8 +1231,24 @@ class TargetingExposureBundle:
         self,
         *,
         unit_frames: Collection[Mapping[str, Any]],
+        fog_of_war_enabled: bool,
     ) -> dict[str, Any]:
         """Return storage payloads with side unit frames filtered up front."""
+        declared_fow_enabled = _strict_bool(
+            fog_of_war_enabled,
+            label="fog_of_war_enabled",
+        )
+        if declared_fow_enabled is not self.side_fow_available:
+            raise ValueError(
+                "frame FOW mode disagrees with SIDE_FOW availability",
+            )
+        if any(
+            decision.fog_of_war_enabled is not declared_fow_enabled
+            for decision in self.privileged.decisions
+        ):
+            raise ValueError(
+                "frame FOW mode disagrees with the targeting interval",
+            )
         root_unit_frames = tuple(unit_frames)
         validate_privileged_targeting_roster(
             exposure=self,
@@ -1179,6 +1277,14 @@ class TargetingExposureBundle:
             for side in self.sides
         }
         return {
+            _TARGETING_EXPOSURE_SCHEMA_KEY: (
+                TARGETING_EXPOSURE_SCHEMA_VERSION
+            ),
+            # This runtime-mode declaration is intentionally distinct from
+            # the materialized side-view availability below.  Their exact
+            # agreement makes an empty FOW interval fail closed if its side
+            # envelope is downgraded or removed in storage.
+            "fog_of_war_enabled": declared_fow_enabled,
             "scope": TargetingExposureScope.PRIVILEGED_ENGINE.value,
             "targeting": self.privileged.to_wire(),
             "targeting_outcomes": (self.privileged_engagement_revalidations.to_wire()),
@@ -1262,6 +1368,13 @@ def validate_privileged_targeting_roster(
         authoritative_unit_frames,
         label="authoritative ROOT snapshot",
     )
+    if exposure.side_fow_available:
+        root_sides = {side for side, _ in roster.values()}
+        exposure_sides = {side.viewer_side for side in exposure.sides}
+        if exposure_sides != root_sides:
+            raise ValueError(
+                "SIDE_FOW snapshot sides must exactly match the ROOT roster sides",
+            )
     for decision in exposure.privileged.decisions:
         shooter = roster.get(decision.shooter_id)
         if shooter is None:
@@ -1354,30 +1467,228 @@ class DecodedSideFowTargetingExposure:
     unit_frames: tuple[Mapping[str, Any], ...]
 
 
-def decode_stored_side_fow_targeting_exposure(
+@dataclass(frozen=True, slots=True)
+class DecodedStoredTargetingExposure:
+    """One atomically validated stored root bundle and scoped unit snapshots."""
+
+    bundle: TargetingExposureBundle
+    root_unit_frames: tuple[Mapping[str, Any], ...]
+    side_unit_frames: Mapping[
+        str,
+        tuple[Mapping[str, Any], ...],
+    ]
+
+    def for_side(
+        self,
+        viewer_side: str,
+    ) -> DecodedSideFowTargetingExposure:
+        """Return one bounded view from the already validated root bundle."""
+        requested_side = _identifier(viewer_side, label="viewer_side")
+        if not self.bundle.side_fow_available:
+            raise ValueError(
+                "legacy or non-FOW frame is explicitly privileged-only",
+            )
+        exposure = next(
+            (
+                side
+                for side in self.bundle.sides
+                if side.viewer_side == requested_side
+            ),
+            None,
+        )
+        unit_frames = self.side_unit_frames.get(requested_side)
+        if exposure is None or unit_frames is None:
+            raise ValueError("requested side has no stored SIDE_FOW snapshot")
+        return DecodedSideFowTargetingExposure(
+            exposure=exposure,
+            unit_frames=unit_frames,
+        )
+
+
+def _copied_unit_frames(
+    value: object,
+    *,
+    label: str,
+) -> tuple[Mapping[str, Any], ...]:
+    """Validate and defensively copy one stored unit-frame list."""
+    if not isinstance(value, list):
+        raise ValueError(f"{label} must be a list")
+    frames: list[Mapping[str, Any]] = []
+    for item in value:
+        if not isinstance(item, Mapping):
+            raise ValueError(f"{label} contains a non-mapping frame")
+        frames.append(dict(item))
+    return tuple(frames)
+
+
+def decode_stored_targeting_exposure(
     *,
     engine_tick: int,
-    viewer_side: str,
     stored_frame: object,
-) -> DecodedSideFowTargetingExposure:
-    """Decode and cross-bind one stored SIDE_FOW projection.
+) -> DecodedStoredTargetingExposure:
+    """Decode and cross-bind one complete stored targeting frame.
 
     The privileged root remains the sole owner of exact target identity.  All
-    stored side projections are decoded together so the requested view cannot
-    bypass root decision/outcome or target-to-track association validation.
+    stored side projections are decoded together so neither response scope can
+    bypass decision/outcome, target-to-track association, or roster validation.
     """
     tick = _non_negative_int(engine_tick, label="engine_tick")
-    requested_side = _identifier(viewer_side, label="viewer_side")
     if not isinstance(stored_frame, dict):
         raise ValueError("stored targeting frame must be a mapping")
-    if stored_frame.get("side_fow_available") is not True:
-        raise ValueError("legacy or non-FOW frame is explicitly privileged-only")
-    if stored_frame.get("scope") != TargetingExposureScope.PRIVILEGED_ENGINE.value:
+
+    schema_declared = _TARGETING_EXPOSURE_SCHEMA_KEY in stored_frame
+    paired_marker_declared = any(
+        key in stored_frame for key in _PAIRED_TARGETING_MARKER_KEYS
+    )
+    if schema_declared:
+        raw_schema_version = stored_frame[_TARGETING_EXPOSURE_SCHEMA_KEY]
+        if (
+            type(raw_schema_version) is not int
+            or raw_schema_version != TARGETING_EXPOSURE_SCHEMA_VERSION
+        ):
+            raise ValueError(
+                "targeting exposure schema version must be the strict integer 118",
+            )
+        if not _VERSIONED_TARGETING_ROOT_KEYS <= set(stored_frame):
+            raise ValueError(
+                "versioned targeting exposure requires the complete root envelope",
+            )
+        stored_format = "versioned"
+    elif "fog_of_war_enabled" in stored_frame:
+        raise ValueError(
+            "unversioned targeting exposure contains a current-only FOW mode",
+        )
+    elif paired_marker_declared:
+        if not _PAIRED_TARGETING_ROOT_KEYS <= set(stored_frame):
+            raise ValueError(
+                "unversioned paired targeting exposure requires the complete root envelope",
+            )
+        stored_format = "paired_legacy"
+    else:
+        stored_format = "privileged_legacy"
+
+    if stored_format != "privileged_legacy":
+        stored_tick = _non_negative_int(
+            stored_frame["tick"],
+            label="stored targeting frame tick",
+        )
+        if stored_tick != tick:
+            raise ValueError(
+                "stored targeting frame tick disagrees with its owner",
+            )
+    stored_scope = stored_frame.get(
+        "scope",
+        TargetingExposureScope.PRIVILEGED_ENGINE.value,
+    )
+    if stored_scope != TargetingExposureScope.PRIVILEGED_ENGINE.value:
         raise ValueError("stored targeting frame has the wrong root scope")
 
+    raw_targeting = stored_frame.get("targeting", [])
+    if (
+        stored_format == "privileged_legacy"
+        and isinstance(raw_targeting, list)
+        and not raw_targeting
+    ):
+        raise ValueError(
+            "unversioned empty targeting exposure is unsupported",
+        )
+    privileged = PrivilegedTargetingExposure.from_wire(
+        engine_tick=tick,
+        value=raw_targeting,
+    )
+    current_decision_topology = bool(raw_targeting) and (
+        "observer_track_support" in raw_targeting[0]
+    )
+    if stored_format == "versioned" and raw_targeting and not current_decision_topology:
+        raise ValueError(
+            "versioned targeting exposure requires current decision topology",
+        )
+    if stored_format != "versioned" and current_decision_topology:
+        raise ValueError(
+            "stored current decision topology requires the format-118 root envelope",
+        )
+    privileged_outcomes = PrivilegedEngagementRevalidationExposure.from_wire(
+        engine_tick=tick,
+        value=stored_frame.get("targeting_outcomes", []),
+    )
+    root_unit_frames = _copied_unit_frames(
+        stored_frame.get("units", []),
+        label="stored privileged units",
+    )
+    root_only_bundle = TargetingExposureBundle(
+        privileged=privileged,
+        privileged_engagement_revalidations=privileged_outcomes,
+        side_fow_available=False,
+        sides=(),
+    )
+    validate_privileged_targeting_roster(
+        exposure=root_only_bundle,
+        authoritative_unit_frames=root_unit_frames,
+    )
+
+    availability_declared = "side_fow_available" in stored_frame
+    raw_available = stored_frame.get("side_fow_available", False)
+    if type(raw_available) is not bool:
+        raise ValueError("stored SIDE_FOW availability must be a boolean")
+    if stored_format == "versioned":
+        raw_fow_enabled = stored_frame["fog_of_war_enabled"]
+        if type(raw_fow_enabled) is not bool:
+            raise ValueError(
+                "stored targeting FOW mode must be a boolean",
+            )
+        if raw_fow_enabled is not raw_available:
+            raise ValueError(
+                "stored targeting FOW mode disagrees with SIDE_FOW availability",
+            )
+        if any(
+            decision.fog_of_war_enabled is not raw_fow_enabled
+            for decision in privileged.decisions
+        ):
+            raise ValueError(
+                "stored targeting FOW mode disagrees with the targeting interval",
+            )
+    if not raw_available:
+        raw_side_views = stored_frame.get("side_fow", {})
+        raw_associations = stored_frame.get("side_fow_associations", {})
+        if (
+            not isinstance(raw_side_views, dict)
+            or not isinstance(raw_associations, dict)
+            or raw_side_views
+            or raw_associations
+        ):
+            raise ValueError(
+                "stored privileged-only frame must contain empty SIDE_FOW envelopes",
+            )
+        if not availability_declared and current_decision_topology:
+            raise ValueError(
+                "stored current decision topology requires SIDE_FOW availability",
+            )
+        if any(
+            decision.observer_track_support is not None
+            for decision in privileged.decisions
+        ):
+            raise ValueError(
+                "stored observer track support lacks exact SIDE_FOW associations",
+            )
+        if availability_declared and any(
+            decision.fog_of_war_enabled for decision in privileged.decisions
+        ):
+            raise ValueError(
+                "stored explicit privileged-only frame cannot contain FOW decisions",
+            )
+        return DecodedStoredTargetingExposure(
+            bundle=root_only_bundle,
+            root_unit_frames=root_unit_frames,
+            side_unit_frames=MappingProxyType({}),
+        )
+
+    # A SIDE_FOW-capable frame was introduced with an explicit root scope; do
+    # not let omission of that field masquerade as an older privileged frame.
+    if stored_frame.get("scope") != TargetingExposureScope.PRIVILEGED_ENGINE.value:
+        raise ValueError("stored targeting frame has the wrong root scope")
     raw_side_views = stored_frame.get("side_fow")
-    if not isinstance(raw_side_views, dict) or requested_side not in raw_side_views:
-        raise ValueError("requested side has no stored SIDE_FOW snapshot")
+    if not isinstance(raw_side_views, dict):
+        raise ValueError("stored SIDE_FOW snapshots must be a mapping")
     raw_associations = stored_frame.get("side_fow_associations")
     if not isinstance(raw_associations, dict):
         raise ValueError(
@@ -1387,20 +1698,35 @@ def decode_stored_side_fow_targeting_exposure(
         raise ValueError(
             "stored SIDE_FOW association sides disagree with side snapshots",
         )
+    side_names = tuple(
+        sorted(
+            _identifier(raw_side, label="stored SIDE_FOW side key")
+            for raw_side in raw_side_views
+        ),
+    )
+    root_roster, _ = _unit_frame_roster(
+        root_unit_frames,
+        label="authoritative ROOT snapshot",
+    )
+    root_sides = {side for side, _ in root_roster.values()}
+    if set(side_names) != root_sides:
+        raise ValueError(
+            "stored SIDE_FOW snapshot sides must exactly match the ROOT roster sides",
+        )
+    support_sides = {
+        decision.shooter_side
+        for decision in privileged.decisions
+        if decision.observer_track_support is not None
+    }
+    if not support_sides <= set(side_names):
+        raise ValueError(
+            "stored observer track support lacks its SIDE_FOW snapshot",
+        )
 
-    privileged = PrivilegedTargetingExposure.from_wire(
-        engine_tick=tick,
-        value=stored_frame.get("targeting", []),
-    )
-    privileged_outcomes = PrivilegedEngagementRevalidationExposure.from_wire(
-        engine_tick=tick,
-        value=stored_frame.get("targeting_outcomes", []),
-    )
     side_exposures: list[SideFowTargetingExposure] = []
     unit_frames_by_side: dict[str, tuple[Mapping[str, Any], ...]] = {}
     associations: list[PrivilegedFowTrackAssociation] = []
-    for raw_side in sorted(raw_side_views):
-        side = _identifier(raw_side, label="stored SIDE_FOW side key")
+    for side in side_names:
         public = SideFowTargetingExposure.from_wire(
             engine_tick=tick,
             value=raw_side_views[side],
@@ -1409,29 +1735,34 @@ def decode_stored_side_fow_targeting_exposure(
             raise ValueError(
                 "stored SIDE_FOW snapshot viewer side disagrees with requested side",
             )
-        raw_units = raw_side_views[side].get("units")
-        if not isinstance(raw_units, list):
-            raise ValueError("SIDE_FOW unit snapshot must be a list")
-        decoded_unit_frames: list[Mapping[str, Any]] = []
-        for item in raw_units:
-            if not isinstance(item, Mapping):
-                raise ValueError(
-                    "SIDE_FOW unit snapshot contains a non-mapping frame",
-                )
-            decoded_unit_frames.append(dict(item))
-        unit_frames_by_side[side] = tuple(decoded_unit_frames)
+        unit_frames_by_side[side] = _copied_unit_frames(
+            raw_side_views[side].get("units"),
+            label="SIDE_FOW unit snapshot",
+        )
         raw_side_associations = raw_associations[side]
         if not isinstance(raw_side_associations, dict):
             raise ValueError(
                 "stored privileged FOW associations must be a mapping",
             )
-        for raw_target_id, raw_track_id in sorted(
-            raw_side_associations.items(),
-        ):
+        canonical_side_associations = tuple(
+            sorted(
+                (
+                    _identifier(
+                        raw_target_id,
+                        label="stored privileged FOW target ID",
+                    ),
+                    raw_track_id,
+                )
+                for raw_target_id, raw_track_id in (
+                    raw_side_associations.items()
+                )
+            ),
+        )
+        for target_id, raw_track_id in canonical_side_associations:
             associations.append(
                 PrivilegedFowTrackAssociation(
                     reporting_side=side,
-                    target_id=raw_target_id,
+                    target_id=target_id,
                     track_id=raw_track_id,
                 ),
             )
@@ -1444,22 +1775,36 @@ def decode_stored_side_fow_targeting_exposure(
         sides=tuple(side_exposures),
         privileged_fow_associations=tuple(associations),
     )
-    root_units = stored_frame.get("units", [])
     validate_privileged_targeting_roster(
         exposure=bundle,
-        authoritative_unit_frames=root_units,
+        authoritative_unit_frames=root_unit_frames,
     )
     for public in bundle.sides:
         validate_side_fow_targeting_roster(
             exposure=public,
-            authoritative_unit_frames=root_units,
+            authoritative_unit_frames=root_unit_frames,
             side_unit_frames=unit_frames_by_side[public.viewer_side],
         )
 
-    selected = next(side for side in bundle.sides if side.viewer_side == requested_side)
-    return DecodedSideFowTargetingExposure(
-        exposure=selected,
-        unit_frames=unit_frames_by_side[requested_side],
+    return DecodedStoredTargetingExposure(
+        bundle=bundle,
+        root_unit_frames=root_unit_frames,
+        side_unit_frames=MappingProxyType(unit_frames_by_side),
+    )
+
+
+def decode_stored_side_fow_targeting_exposure(
+    *,
+    engine_tick: int,
+    viewer_side: str,
+    stored_frame: object,
+) -> DecodedSideFowTargetingExposure:
+    """Decode one side from an atomically validated stored root bundle."""
+    return decode_stored_targeting_exposure(
+        engine_tick=engine_tick,
+        stored_frame=stored_frame,
+    ).for_side(
+        viewer_side,
     )
 
 
@@ -1481,12 +1826,22 @@ def capture_targeting_exposure(
         fog_of_war_enabled,
         label="fog_of_war_enabled",
     )
-    sides = tuple(sorted({_identifier(side, label="viewer side") for side in viewer_sides}))
+    requested_sides = tuple(
+        _identifier(side, label="viewer side") for side in viewer_sides
+    )
+    if len(requested_sides) != len(set(requested_sides)):
+        raise ValueError("viewer sides must be duplicate-free")
+    sides = tuple(sorted(requested_sides))
     decisions: tuple[TacticalTargetingDecision, ...] = ()
     outcomes: tuple[TacticalEngagementRevalidationOutcome, ...] = ()
     if not isinstance(runtime, TacticalTargetingRuntime):
         raise ValueError("runtime must be a TacticalTargetingRuntime")
     registered_unit_ids = frozenset(runtime.registered_unit_sides)
+    registered_sides = tuple(sorted(set(runtime.registered_unit_sides.values())))
+    if fow_enabled and sides != registered_sides:
+        raise ValueError(
+            "SIDE_FOW viewer sides must exactly match targeting registration",
+        )
     decisions = tuple(
         sorted(
             (
@@ -1499,6 +1854,13 @@ def capture_targeting_exposure(
         )
     )
     outcomes = tuple(outcome for outcome in runtime.latest_engagement_revalidations() if outcome.engine_tick == tick)
+    if any(
+        decision.fog_of_war_enabled is not fow_enabled
+        for decision in decisions
+    ):
+        raise ValueError(
+            "frame FOW enablement disagrees with the committed targeting interval",
+        )
     privileged = PrivilegedTargetingExposure(
         engine_tick=tick,
         decisions=decisions,
@@ -1644,6 +2006,7 @@ def capture_targeting_exposure(
 
 __all__ = [
     "DecodedSideFowTargetingExposure",
+    "DecodedStoredTargetingExposure",
     "PrivilegedEngagementRevalidationExposure",
     "PrivilegedFowTrackAssociation",
     "PrivilegedTargetingExposure",
@@ -1652,11 +2015,13 @@ __all__ = [
     "PublicTrackStatus",
     "SideFowEngagementRevalidationExposure",
     "SideFowTargetingDecisionExposure",
+    "TARGETING_EXPOSURE_SCHEMA_VERSION",
     "SideFowTargetingExposure",
     "TargetingExposureBundle",
     "TargetingExposureScope",
     "capture_targeting_exposure",
     "decode_stored_side_fow_targeting_exposure",
+    "decode_stored_targeting_exposure",
     "filter_side_unit_frames",
     "validate_privileged_targeting_roster",
     "validate_side_fow_targeting_roster",

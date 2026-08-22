@@ -419,6 +419,50 @@ class TestTrackLifecycleEdgeCases:
 
 
 class TestKalmanEdgeCases:
+    def test_covariance_remains_exactly_symmetric_through_filter_cycles(
+        self,
+    ) -> None:
+        """Numerical cancellation must not corrupt persisted covariance."""
+        est = _estimator(
+            config=EstimationConfig(
+                enable_gating=False,
+                process_noise_std=0.25,
+            ),
+        )
+        track = _make_track()
+        factor = np.array([
+            [-62.65, 5_522.0, 3.819e7, -2.326e5],
+            [42.87, -2_669.0, -1.688e8, 3.648e4],
+            [96.17, -350.3, -4.609e8, -6.370e4],
+            [48.56, 7_115.0, -3.063e8, -1.468e5],
+        ])
+        track.state = TrackState(
+            position=track.state.position,
+            velocity=track.state.velocity,
+            covariance=factor @ factor.T,
+            last_update_time=track.state.last_update_time,
+        )
+        measurement_noise = np.diag([831_254.0, 24_253.0])
+
+        for ordinal in range(1, 65):
+            est.predict(track, dt=0.25 + (ordinal % 7) * 0.125)
+            assert est.update(
+                track,
+                np.array([
+                    1_000.0 + ordinal * 0.75,
+                    2_000.0 - ordinal * 0.25,
+                ]),
+                measurement_noise,
+                time=float(ordinal),
+            )
+            covariance = track.state.covariance
+            assert np.array_equal(covariance, covariance.T)
+            tolerance = -1e-12 * max(
+                1.0,
+                float(np.max(np.abs(covariance))),
+            )
+            assert float(np.min(np.linalg.eigvalsh(covariance))) >= tolerance
+
     def test_predict_then_update_reduces_uncertainty(self) -> None:
         """Predict grows uncertainty; subsequent update should reduce it."""
         est = _estimator()

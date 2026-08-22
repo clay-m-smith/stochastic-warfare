@@ -575,11 +575,15 @@ class TestVLSEnforcement:
         state = bm.get_state()
         assert state["vls_launches"] == {}
 
-    def test_vls_set_state_missing_key(self):
-        """set_state handles missing vls_launches gracefully."""
+    def test_vls_set_state_missing_key_rejects_atomically(self):
+        """Strict restore rejects incomplete state without clearing launches."""
         from stochastic_warfare.simulation.battle import BattleManager
 
         bm = BattleManager(event_bus=EventBus())
         bm._vls_launches["x"] = 5
-        bm.set_state({"battles": {}, "next_battle_id": 0})
-        assert bm._vls_launches == {}
+        before = bm.get_state()
+
+        with pytest.raises(ValueError, match="key topology"):
+            bm.set_state({"battles": {}, "next_battle_id": 0})
+
+        assert bm.get_state() == before

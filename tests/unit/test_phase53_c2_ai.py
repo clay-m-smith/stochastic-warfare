@@ -540,8 +540,8 @@ class TestFogOfWarWiring:
         assert cal.enable_fog_of_war is True
         assert cal.get("enable_fog_of_war") is True
 
-    def test_fow_update_called_when_enabled(self):
-        """With enable_fog_of_war=True, fog_of_war.update() is called."""
+    def test_fow_without_targeting_owner_rejects_before_mutation(self):
+        """Battle FOW may execute only through the receipt-bearing owner."""
         from stochastic_warfare.simulation.calibration import CalibrationSchema
         from stochastic_warfare.simulation.battle import BattleManager, BattleContext
 
@@ -563,8 +563,14 @@ class TestFogOfWarWiring:
             involved_sides=["blue", "red"],
         )
         mgr = BattleManager(EventBus())
-        mgr.execute_tick(ctx, battle, dt=5.0)
-        assert fow.update.called
+        with pytest.raises(
+            RuntimeError,
+            match="receipt-bearing TacticalTargetingRuntime boundary",
+        ):
+            mgr.execute_tick(ctx, battle, dt=5.0)
+        assert battle.ticks_executed == 0
+        assert battle.battle_elapsed_s == 0.0
+        fow.update.assert_not_called()
 
     def test_fow_not_called_when_disabled(self):
         """With enable_fog_of_war=False, fog_of_war.update() NOT called."""
@@ -592,75 +598,8 @@ class TestFogOfWarWiring:
         mgr.execute_tick(ctx, battle, dt=5.0)
         assert not fow.update.called
 
-    def test_fow_per_side_views(self):
-        """Per-side detection: side A and side B get independent world views."""
-        from stochastic_warfare.simulation.calibration import CalibrationSchema
-        from stochastic_warfare.simulation.battle import BattleManager, BattleContext
-
-        cal = CalibrationSchema(enable_fog_of_war=True)
-        fow = MagicMock()
-        u1 = _make_unit("u1", easting=0.0)
-        u2 = _make_unit("u2", easting=1000.0)
-
-        ctx = _make_ctx(
-            units_by_side={"blue": [u1], "red": [u2]},
-            fog_of_war=fow,
-            calibration=cal,
-        )
-
-        battle = BattleContext(
-            battle_id="b1",
-            start_tick=0,
-            start_time=_TS,
-            involved_sides=["blue", "red"],
-        )
-        mgr = BattleManager(EventBus())
-        mgr.execute_tick(ctx, battle, dt=5.0)
-        # update should be called once per side
-        assert fow.update.call_count == 2
-        sides_called = {call.kwargs["side"] for call in fow.update.call_args_list}
-        assert "blue" in sides_called
-        assert "red" in sides_called
-
-    @pytest.mark.structural
-    def test_fow_exception_emits_structural_diagnostic(
-        self,
-        caplog,
-    ):
-        """Structural mock/log diagnostic; no behavioral wiring claim."""
-        from stochastic_warfare.simulation.calibration import CalibrationSchema
-        from stochastic_warfare.simulation.battle import BattleManager, BattleContext
-
-        cal = CalibrationSchema(enable_fog_of_war=True)
-        fow = MagicMock()
-        fow.update.side_effect = RuntimeError("FoW error")
-        u1 = _make_unit("u1", easting=0.0)
-        u2 = _make_unit("u2", easting=1000.0)
-
-        ctx = _make_ctx(
-            units_by_side={"blue": [u1], "red": [u2]},
-            fog_of_war=fow,
-            calibration=cal,
-        )
-
-        battle = BattleContext(
-            battle_id="b1",
-            start_tick=0,
-            start_time=_TS,
-            involved_sides=["blue", "red"],
-        )
-        mgr = BattleManager(EventBus())
-        with caplog.at_level("DEBUG"):
-            mgr.execute_tick(ctx, battle, dt=5.0)
-        assert fow.update.call_count == 2
-        assert {message for message in caplog.messages if message.startswith("FogOfWar update failed for ")} == {
-            "FogOfWar update failed for blue",
-            "FogOfWar update failed for red",
-        }
-
-    @pytest.mark.structural
-    def test_missing_fow_does_not_raise_structural_diagnostic(self):
-        """Structural no-raise diagnostic for an absent optional owner."""
+    def test_missing_fow_and_targeting_owners_rejects(self):
+        """An enabled FOW flag cannot silently run without its owners."""
         from stochastic_warfare.simulation.calibration import CalibrationSchema
         from stochastic_warfare.simulation.battle import BattleManager, BattleContext
 
@@ -681,7 +620,13 @@ class TestFogOfWarWiring:
             involved_sides=["blue", "red"],
         )
         mgr = BattleManager(EventBus())
-        mgr.execute_tick(ctx, battle, dt=5.0)
+        with pytest.raises(
+            RuntimeError,
+            match="receipt-bearing TacticalTargetingRuntime boundary",
+        ):
+            mgr.execute_tick(ctx, battle, dt=5.0)
+        assert battle.ticks_executed == 0
+        assert battle.battle_elapsed_s == 0.0
 
     def test_fow_detected_count_used_in_assessment(self):
         """Assessment uses detected enemy count when fog_of_war enabled."""

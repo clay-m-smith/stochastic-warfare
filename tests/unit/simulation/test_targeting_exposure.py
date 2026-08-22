@@ -10,11 +10,17 @@ import numpy as np
 import pytest
 
 from stochastic_warfare.core.types import Domain
+from stochastic_warfare.detection.cadence import TacticalAttachmentIdentity
 from stochastic_warfare.detection.estimation import (
     Track,
     TrackState,
     TrackStatus,
 )
+from stochastic_warfare.detection.observer_support import (
+    ObserverTrackSupportEvidence,
+    ObserverTrackSupportIdentity,
+)
+from stochastic_warfare.detection.sensors import SensorType
 from stochastic_warfare.detection.fog_of_war import (
     ContactRecord,
     FogOfWarManager,
@@ -41,9 +47,11 @@ from stochastic_warfare.simulation.tactical_targeting import (
 from stochastic_warfare.simulation.targeting_exposure import (
     PrivilegedTargetingExposure,
     SideFowEngagementRevalidationExposure,
+    SideFowTargetingDecisionExposure,
     SideFowTargetingExposure,
     TargetingExposureScope,
     capture_targeting_exposure,
+    decode_stored_targeting_exposure,
     filter_side_unit_frames,
 )
 
@@ -152,6 +160,53 @@ def _red_no_target_decision() -> TacticalTargetingDecision:
         sensing_aware_standoff_enabled=True,
         fog_of_war_enabled=True,
         consumable=True,
+    )
+
+
+def _supported_blue_decision() -> TacticalTargetingDecision:
+    support = ObserverTrackSupportEvidence(
+        identity=ObserverTrackSupportIdentity(
+            attachment_identity=TacticalAttachmentIdentity(
+                reporting_side="blue",
+                observer_unit_id="blue-1",
+                source_equipment_index=3,
+                sensor_id="hidden-fire-control-radar",
+                modeled_role=SensorModeledRole.FIRE_CONTROL_RADAR.value,
+            ),
+            target_id="red-1",
+        ),
+        fusion_track_id="fow-track-0042",
+        sensor_type=SensorType.RADAR,
+        observation_ordinal=1,
+        observation_time_s=25.0,
+        native_period=2,
+        native_phase_residue=1,
+        native_due_ordinal=3,
+        projection_ordinal=2,
+        projection_time_s=30.0,
+        position_m=(0.0, 500.0),
+        velocity_mps=(0.0, 0.0),
+        covariance=(
+            (100.0, 0.0, 0.0, 0.0),
+            (0.0, 100.0, 0.0, 0.0),
+            (0.0, 0.0, 100.0, 0.0),
+            (0.0, 0.0, 0.0, 100.0),
+        ),
+    )
+    return replace(
+        _targeted_blue_decision(),
+        contact_source=ContactSource.FOW_OBSERVER_TRACK_SUPPORT,
+        contact_sensor_id="hidden-fire-control-radar",
+        contact_sensor_modeled_role=SensorModeledRole.FIRE_CONTROL_RADAR,
+        contact_range_m=1_000.0,
+        sensing_sensor_id="hidden-fire-control-radar",
+        sensing_sensor_modeled_role=SensorModeledRole.FIRE_CONTROL_RADAR,
+        sensing_range_m=1_000.0,
+        fire_control_source=FireControlSource.SENSOR_ATTACHMENT,
+        fire_control_sensor_source_equipment_index=3,
+        fire_control_sensor_id="hidden-fire-control-radar",
+        fire_control_sensor_modeled_role=SensorModeledRole.FIRE_CONTROL_RADAR,
+        observer_track_support=support,
     )
 
 
@@ -304,11 +359,14 @@ def test_side_wire_omits_ground_truth_attachment_and_other_side_units() -> None:
         unit_frames=(
             {"id": "blue-1", "side": "blue", "x": 0.0, "y": 0.0},
             {"id": "red-1", "side": "red", "x": 500.0, "y": 0.0},
-        )
+        ),
+        fog_of_war_enabled=True,
     )
     blue = wire["side_fow"]["blue"]
     serialized = json.dumps(blue, sort_keys=True)
 
+    assert wire["targeting_exposure_schema_version"] == 118
+    assert wire["fog_of_war_enabled"] is True
     assert wire["side_fow_associations"] == {
         "blue": {"red-1": "fow-track-0042"},
         "red": {},
@@ -334,6 +392,35 @@ def test_side_wire_omits_ground_truth_attachment_and_other_side_units() -> None:
     privileged_outcome = wire["targeting_outcomes"][0]
     assert privileged_outcome["target_id"] == "red-1"
     assert privileged_outcome["weapon_id"] == "direct-gun"
+
+
+def test_side_projection_accepts_support_only_for_its_exact_public_track() -> None:
+    decision = _supported_blue_decision()
+    public = SideFowTargetingDecisionExposure.from_decision(
+        decision,
+        viewer_side="blue",
+        target_track_id="fow-track-0042",
+        side_local_ordinal=0,
+    )
+
+    wire = public.to_wire()
+    assert wire["contact_source"] == "FOW_OBSERVER_TRACK_SUPPORT"
+    assert wire["contact_time_s"] == decision.logical_time_s
+    serialized = json.dumps(wire, sort_keys=True)
+    assert "observer_track_support" not in serialized
+    assert "hidden-fire-control-radar" not in serialized
+    assert "red-1" not in serialized
+
+    with pytest.raises(
+        ValueError,
+        match="support disagrees with the public target track",
+    ):
+        SideFowTargetingDecisionExposure.from_decision(
+            decision,
+            viewer_side="blue",
+            target_track_id="fow-track-0043",
+            side_local_ordinal=0,
+        )
 
 
 def test_side_failed_revalidation_exposes_reason_without_exact_identity() -> None:
@@ -412,6 +499,88 @@ def test_exposure_filters_bounded_history_to_requested_tick() -> None:
     assert bundle.sides == ()
 
 
+@pytest.mark.parametrize("fog_of_war_enabled", (False, True))
+def test_empty_current_capture_persists_explicit_fow_mode(
+    fog_of_war_enabled: bool,
+) -> None:
+    runtime = TacticalTargetingRuntime(
+        sensing_aware_standoff_enabled=True,
+        unit_sides={"blue-1": "blue", "red-1": "red"},
+    )
+    unit_frames = (
+        {"id": "blue-1", "side": "blue"},
+        {"id": "red-1", "side": "red"},
+    )
+    bundle = capture_targeting_exposure(
+        engine_tick=0,
+        runtime=runtime,
+        fog_of_war=(
+            _fog_owner(include_blue_contact=False)
+            if fog_of_war_enabled
+            else None
+        ),
+        fog_of_war_enabled=fog_of_war_enabled,
+        viewer_sides=("blue", "red"),
+    )
+    wire = {
+        "tick": 0,
+        "units": list(unit_frames),
+        **bundle.to_wire(
+            unit_frames=unit_frames,
+            fog_of_war_enabled=fog_of_war_enabled,
+        ),
+    }
+
+    assert wire["targeting_exposure_schema_version"] == 118
+    assert wire["fog_of_war_enabled"] is fog_of_war_enabled
+    assert wire["side_fow_available"] is fog_of_war_enabled
+    expected_sides = {"blue", "red"} if fog_of_war_enabled else set()
+    assert set(wire["side_fow"]) == expected_sides
+    assert set(wire["side_fow_associations"]) == expected_sides
+    decoded = decode_stored_targeting_exposure(
+        engine_tick=0,
+        stored_frame=wire,
+    )
+    assert decoded.bundle.side_fow_available is fog_of_war_enabled
+    assert decoded.bundle.privileged.decisions == ()
+
+
+def test_current_wire_rejects_fow_mode_availability_disagreement() -> None:
+    bundle = capture_targeting_exposure(
+        engine_tick=0,
+        runtime=TacticalTargetingRuntime(
+            sensing_aware_standoff_enabled=True,
+            unit_sides={"blue-1": "blue"},
+        ),
+        fog_of_war=FogOfWarManager(rng=np.random.default_rng(118)),
+        fog_of_war_enabled=True,
+        viewer_sides=("blue",),
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="frame FOW mode disagrees with SIDE_FOW availability",
+    ):
+        bundle.to_wire(
+            unit_frames=({"id": "blue-1", "side": "blue"},),
+            fog_of_war_enabled=False,
+        )
+
+
+def test_capture_rejects_fow_enablement_disagreement_with_decisions() -> None:
+    with pytest.raises(
+        ValueError,
+        match="FOW enablement disagrees with the committed targeting interval",
+    ):
+        capture_targeting_exposure(
+            engine_tick=7,
+            runtime=_runtime(),
+            fog_of_war=None,
+            fog_of_war_enabled=False,
+            viewer_sides=("blue", "red"),
+        )
+
+
 def test_exposure_read_does_not_create_missing_fog_world_views() -> None:
     runtime = TacticalTargetingRuntime(
         sensing_aware_standoff_enabled=True,
@@ -433,6 +602,20 @@ def test_exposure_read_does_not_create_missing_fog_world_views() -> None:
     assert fog.get_state() == before
 
 
+def test_side_snapshot_requires_exact_registered_viewer_sides() -> None:
+    with pytest.raises(
+        ValueError,
+        match="viewer sides must exactly match targeting registration",
+    ):
+        capture_targeting_exposure(
+            engine_tick=7,
+            runtime=_runtime(),
+            fog_of_war=_fog_owner(),
+            fog_of_war_enabled=True,
+            viewer_sides=("blue",),
+        )
+
+
 def test_side_snapshot_codec_rejects_extra_ground_truth_field() -> None:
     bundle = capture_targeting_exposure(
         engine_tick=7,
@@ -445,7 +628,8 @@ def test_side_snapshot_codec_rejects_extra_ground_truth_field() -> None:
         unit_frames=(
             {"id": "blue-1", "side": "blue"},
             {"id": "red-1", "side": "red"},
-        )
+        ),
+        fog_of_war_enabled=True,
     )["side_fow"]["blue"]
     restored = SideFowTargetingExposure.from_wire(engine_tick=7, value=wire)
     assert restored == bundle.sides[0]
@@ -458,7 +642,8 @@ def test_side_snapshot_codec_rejects_extra_ground_truth_field() -> None:
         unit_frames=(
             {"id": "blue-1", "side": "blue"},
             {"id": "red-1", "side": "red"},
-        )
+        ),
+        fog_of_war_enabled=True,
     )["side_fow"]["blue"]
     clean_wire["targeting_outcomes"][0]["weapon_id"] = "direct-gun"
     with pytest.raises(ValueError, match="invalid key topology"):
@@ -487,7 +672,8 @@ def test_side_snapshot_rejects_unknown_public_track_enums(
         unit_frames=(
             {"id": "blue-1", "side": "blue"},
             {"id": "red-1", "side": "red"},
-        )
+        ),
+        fog_of_war_enabled=True,
     )["side_fow"]["blue"]
     wire["tracks"][0][field] = value
 
@@ -520,13 +706,13 @@ def test_side_snapshot_rejects_unknown_public_track_enums(
             "targeting",
             "contact_source",
             "NON_FOW_LOCAL_OBSERVATION",
-            "same-interval FOW witness",
+            "same-interval FOW authority",
         ),
         (
             "targeting",
             "contact_time_s",
             29.0,
-            "same-interval FOW witness",
+            "same-interval FOW authority",
         ),
     ),
 )
@@ -546,7 +732,8 @@ def test_side_snapshot_rejects_semantically_inconsistent_public_evidence(
         unit_frames=(
             {"id": "blue-1", "side": "blue"},
             {"id": "red-1", "side": "red"},
-        )
+        ),
+        fog_of_war_enabled=True,
     )["side_fow"]["blue"]
     wire[section][0][field] = value
 
@@ -593,7 +780,8 @@ def test_side_flattened_picture_revalidates_retained_ordinal_coherence(
         unit_frames=(
             {"id": "blue-1", "side": "blue"},
             {"id": "red-1", "side": "red"},
-        )
+        ),
+        fog_of_war_enabled=True,
     )["side_fow"]["blue"]
     second = deepcopy(wire["targeting"][0])
     second["shooter_id"] = "blue-2"

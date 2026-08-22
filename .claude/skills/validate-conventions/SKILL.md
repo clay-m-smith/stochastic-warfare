@@ -23,11 +23,14 @@ before classifying findings.
 
 ### Randomness
 
-- Production simulation draws must use an injected
-  `numpy.random.Generator` from
-  `RNGManager.get_stream(ModuleId.<SUBSYSTEM>)`.
+- Production stochastic decisions must use `RNGManager`-owned authority: an
+  injected `numpy.random.Generator` from
+  `RNGManager.get_stream(ModuleId.<SUBSYSTEM>)`, or the typed indexed
+  allocation/commit boundary for order-independent FOW decisions.
 - Flag Python `random`, legacy/global `np.random` draws, hidden generator
-  construction, incorrect stream selection, and unintended stream sharing.
+  construction, direct indexed-owner construction, incorrect stream or
+  decision-domain selection, reused indexed identities, and unintended stream
+  sharing.
 - Allow central RNG initialization and purpose-built test/tool generators when
   they do not bypass the production contract.
 

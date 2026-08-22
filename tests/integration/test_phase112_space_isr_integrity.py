@@ -317,11 +317,8 @@ def test_non_strict_master_loop_propagates_malformed_real_target_immediately() -
     _advance_to(engine, 14_340.0)
     context = engine._ctx
     target = context.units_by_side["blue"][0]
-    target.position = Position(
-        math.nan,
-        target.position.northing,
-        target.position.altitude,
-    )
+    valid_position = target.position
+    before_checkpoint = engine.checkpoint()
     before_diagnostics = copy.deepcopy(
         context.movement_diagnostics.get_state(),
     )
@@ -335,7 +332,11 @@ def test_non_strict_master_loop_propagates_malformed_real_target_immediately() -
     before_detection_rng = copy.deepcopy(
         context.rng_manager.get_state()["streams"]["detection"],
     )
-    before_checkpoint = engine.checkpoint()
+    target.position = Position(
+        math.nan,
+        target.position.northing,
+        target.position.altitude,
+    )
 
     with pytest.raises(
         UnsupportedISRTargetError,
@@ -343,12 +344,14 @@ def test_non_strict_master_loop_propagates_malformed_real_target_immediately() -
     ):
         engine.step()
 
-    assert engine.checkpoint() == before_checkpoint
+    assert math.isnan(target.position.easting)
     assert context.movement_diagnostics.get_state() == before_diagnostics
     assert context.space_engine.get_state() == before_space
     assert context.fog_of_war.intel_fusion.get_state() == before_fusion
     assert context.rng_manager.get_state()["streams"]["space"] == before_space_rng
     assert context.rng_manager.get_state()["streams"]["detection"] == before_detection_rng
+    target.position = valid_position
+    assert engine.checkpoint() == before_checkpoint
 
 
 def test_non_strict_fusion_lifecycle_failure_is_preflight_atomic_and_retries(

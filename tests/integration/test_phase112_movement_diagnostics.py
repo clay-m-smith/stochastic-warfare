@@ -292,7 +292,7 @@ def test_schema112_movement_state_restores_and_continues_exactly() -> None:
     assert control.step() is False
     checkpoint = control.checkpoint()
     state_at_t = control.get_state()
-    assert state_at_t["checkpoint_version"] == 116
+    assert state_at_t["checkpoint_version"] == 118
     assert state_at_t["context"]["movement_diagnostics"] == control._ctx.movement_diagnostics.get_state()
 
     resumed = _campaign_engine(seed=999_112)
@@ -377,7 +377,18 @@ def test_tick_zero_versionless_checkpoint_can_migrate_empty_diagnostics() -> Non
 
     target = _campaign_engine(seed=999_112)
     target.set_state(legacy)
-    assert target.checkpoint() == source.checkpoint()
+    restored = json.loads(target.checkpoint())
+    expected = json.loads(source.checkpoint())
+    expected["battle"]["performance_execution_receipt"][
+        "complete_from_tick_zero"
+    ] = False
+    expected["context"]["fog_of_war"]["cadence"][
+        "complete_from_tick_zero"
+    ] = False
+    expected["context"]["rng"]["indexed_fow"][
+        "complete_from_tick_zero"
+    ] = False
+    assert restored == expected
 
 
 def test_same_seed_movement_diagnostics_replay_is_byte_exact() -> None:

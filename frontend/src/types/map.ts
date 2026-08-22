@@ -42,6 +42,7 @@ export type ContactSource =
   | 'NONE'
   | 'NON_FOW_LOCAL_OBSERVATION'
   | 'FOW_OBSERVER_WITNESS'
+  | 'FOW_OBSERVER_TRACK_SUPPORT'
 
 export type EffectiveRangeBasis =
   | 'AUTHORED'
@@ -166,6 +167,45 @@ export type SensorModeledRole =
   | 'active_sonar'
   | 'passive_sonar'
 
+export type ObserverTrackSupportRadarRole =
+  | 'airborne_fire_control_radar'
+  | 'airborne_ground_fire_control_radar'
+  | 'airborne_multi_domain_fire_control_radar'
+  | 'fire_control_radar'
+  | 'ground_air_defense_fire_control_radar'
+  | 'naval_fire_control_radar'
+  | 'naval_air_defense_fire_control_radar'
+
+export interface PrivilegedObserverTrackSupportIdentity {
+  reporting_side: string
+  observer_unit_id: string
+  source_equipment_index: number
+  sensor_id: string
+  modeled_role: ObserverTrackSupportRadarRole
+  target_id: string
+}
+
+export interface PrivilegedObserverTrackSupportEvidence {
+  identity: PrivilegedObserverTrackSupportIdentity
+  fusion_track_id: string
+  sensor_type: 'RADAR'
+  observation_ordinal: number
+  observation_time_s: number
+  native_period: number
+  native_phase_residue: number
+  native_due_ordinal: number
+  position_m: [number, number]
+  velocity_mps: [number, number]
+  covariance: [
+    [number, number, number, number],
+    [number, number, number, number],
+    [number, number, number, number],
+    [number, number, number, number],
+  ]
+  projection_ordinal: number
+  projection_time_s: number
+}
+
 export interface PrivilegedTargetingDecision {
   engine_tick: number
   logical_time_s: number
@@ -210,6 +250,7 @@ export interface PrivilegedTargetingDecision {
   sensing_aware_standoff_enabled: boolean
   fog_of_war_enabled: boolean
   consumable: boolean
+  observer_track_support: PrivilegedObserverTrackSupportEvidence | null
 }
 
 export interface PrivilegedEngagementRevalidationOutcome {

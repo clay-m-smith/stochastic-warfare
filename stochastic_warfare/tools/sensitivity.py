@@ -17,6 +17,9 @@ from pydantic import (
     field_validator,
 )
 
+from stochastic_warfare.simulation.performance_flags import (
+    validate_supported_runtime_performance_parameter_name,
+)
 from stochastic_warfare.simulation.runtime import AnalysisVariant
 from stochastic_warfare.tools._run_helpers import (
     AnalysisBatchResult,
@@ -41,13 +44,17 @@ class SweepConfig(BaseModel):
     @field_validator("scenario_path", "parameter_name", mode="before")
     @classmethod
     def _trimmed_required_text(cls, value: Any) -> str:
-        if (
-            not isinstance(value, str)
-            or not value
-            or value != value.strip()
-        ):
+        if not isinstance(value, str) or not value or value != value.strip():
             raise ValueError("value must be a non-empty trimmed string")
         return value
+
+    @field_validator("parameter_name")
+    @classmethod
+    def _supported_governed_performance_parameter(
+        cls,
+        value: str,
+    ) -> str:
+        return validate_supported_runtime_performance_parameter_name(value)
 
     @field_validator("values")
     @classmethod
@@ -55,10 +62,7 @@ class SweepConfig(BaseModel):
         cls,
         values: list[float],
     ) -> list[float]:
-        if any(
-            isinstance(value, bool) or not math.isfinite(value)
-            for value in values
-        ):
+        if any(isinstance(value, bool) or not math.isfinite(value) for value in values):
             raise ValueError("sweep values must be finite numbers")
         if len(values) != len(set(values)):
             raise ValueError("sweep values must be duplicate-free")
@@ -72,12 +76,7 @@ class SweepConfig(BaseModel):
     ) -> list[str] | None:
         if values is None:
             return None
-        if any(
-            not isinstance(value, str)
-            or not value
-            or value != value.strip()
-            for value in values
-        ):
+        if any(not isinstance(value, str) or not value or value != value.strip() for value in values):
             raise ValueError(
                 "metric_names must contain non-empty trimmed strings",
             )
@@ -138,10 +137,7 @@ def run_sweep(config: SweepConfig) -> SweepResult:
     )
 
     points: list[SweepPoint] = []
-    seeds = tuple(
-        config.base_seed + index
-        for index in range(config.iterations_per_point)
-    )
+    seeds = tuple(config.base_seed + index for index in range(config.iterations_per_point))
     for value, variant in zip(config.values, variants, strict=True):
         batch = runner.run_variant(
             variant.variant_id,
@@ -206,15 +202,10 @@ def plot_sweep(result: SweepResult, metric: str | None = None) -> Any:
     means: list[float] = []
     stds: list[float] = []
     for point in result.points:
-        matches = [
-            item
-            for item in point.metric_results
-            if item.metric == metric
-        ]
+        matches = [item for item in point.metric_results if item.metric == metric]
         if len(matches) != 1:
             raise ValueError(
-                f"Sweep point {point.parameter_value!r} does not contain "
-                f"exactly one vector for metric {metric!r}",
+                f"Sweep point {point.parameter_value!r} does not contain exactly one vector for metric {metric!r}",
             )
         x_values.append(point.parameter_value)
         means.append(matches[0].mean)

@@ -33,3 +33,7 @@ scripts/eval_summary.py
 
 # Local verification output
 /test_results.json
+
+# Generated validation/test evidence (retained away from main)
+/artifacts/
+/docs/evidence/

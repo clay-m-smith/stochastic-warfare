@@ -362,6 +362,43 @@ class TestMemoryLimits:
         bus.publish(Event(timestamp=TS, source=ModuleId.CORE))
         assert rec.event_count() == 3
 
+    def test_strict_overflow_raises_before_dropping_event(self) -> None:
+        bus = EventBus()
+        rec = SimulationRecorder(
+            bus,
+            RecorderConfig(max_events=1, strict_overflow=True),
+        )
+        rec.start()
+        bus.publish(Event(timestamp=TS, source=ModuleId.CORE))
+
+        with pytest.raises(RuntimeError, match="event limit exceeded"):
+            bus.publish(Event(timestamp=TS, source=ModuleId.CORE))
+
+        assert rec.event_count() == 1
+
+    def test_strict_extraction_error_propagates(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        bus = EventBus()
+        rec = SimulationRecorder(
+            bus,
+            RecorderConfig(strict_extraction_errors=True),
+        )
+        rec.start()
+
+        def fail_extraction(event: Event) -> dict[str, object]:
+            raise TypeError(f"cannot extract {event!r}")
+
+        monkeypatch.setattr(
+            "stochastic_warfare.simulation.recorder.asdict",
+            fail_extraction,
+        )
+        with pytest.raises(RuntimeError, match="complete event data"):
+            bus.publish(Event(timestamp=TS, source=ModuleId.CORE))
+
+        assert rec.event_count() == 0
+
     def test_disabled_recorder_captures_nothing(self) -> None:
         bus = EventBus()
         cfg = RecorderConfig(enabled=False)

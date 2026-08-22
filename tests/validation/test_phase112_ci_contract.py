@@ -827,7 +827,10 @@ def test_extended_partitions_are_weekly_manual_sharded_and_bounded() -> None:
     matrix = workflow["jobs"]["marker-partition"]["strategy"]["matrix"]
     configured = matrix["include"]
     expected_shards = {
-        "slow-only": (4, 4200),
+        # There are exactly 15 selected slow-only modules.  One module-affine
+        # shard per module prevents node-count balancing from serializing
+        # several multi-hour production scenario workloads in one job.
+        "slow-only": (15, 14400),
         "benchmark-only": (3, 2400),
         "slow-benchmark": (1, 4200),
     }
@@ -858,6 +861,13 @@ def test_extended_partitions_are_weekly_manual_sharded_and_bounded() -> None:
         >= 1200
     )
     assert all("if" not in job for job in workflow["jobs"].values())
+    marker_steps = workflow["jobs"]["marker-partition"]["steps"]
+    checkout_step = next(
+        step
+        for step in marker_steps
+        if step.get("uses") == "actions/checkout@v4"
+    )
+    assert checkout_step["with"]["fetch-depth"] == "0"
     superset_command = "uv sync --locked --extra dev --extra api --extra terrain --extra mcp"
     run_commands = [step["run"] for job in workflow["jobs"].values() for step in job["steps"] if "run" in step]
     assert run_commands.count(superset_command) == 2

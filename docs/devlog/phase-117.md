@@ -160,7 +160,9 @@ split by responsibility rather than by test fixture:
   receipt recomputation, atomic write, and reload validation; and
 - `scripts/run_historical_backtest.py` is the bounded command boundary that
   loads the canonical ledger/plan, calls `SimulationRuntimeFactory.prepare`,
-  runs the study, and publishes only beneath `docs/evidence/`.
+  and runs the study. Phase 117 originally published below `docs/evidence/`;
+  the current repository policy writes generated output below the ignored
+  `artifacts/evidence/phase-117/` tree and retains full publications off main.
 
 The plan and claim schemas share one stable lowercase ID contract. Seed
 interval counts and overlaps use arithmetic rather than constructing unbounded
@@ -201,13 +203,13 @@ reviewed-nonclaim rationale. Reviews are deliberately file-level rather than
 occurrence-level; semantic locators and the manual cross-document audit remain
 part of closure evidence.
 
-The current ledger contains 243 claims: 224 `unsupported`, 19
+The current ledger contains 233 claims: 214 `unsupported`, 19
 `current_engine_regression_only`, and zero `production_validated`. Its surface
 inventory is:
 
 | Surface | Claims |
 |---|---:|
-| Public documentation | 164 across 67 paths |
+| Public documentation | 154 across 66 paths |
 | Scenario `documented_outcomes` collections | 31 collections / 83 metrics |
 | Python `documented_outcomes` tests | 19 |
 | Python historical-claim tests | 6 |
@@ -218,7 +220,7 @@ inventory is:
 | Frontend claim surfaces | 11 |
 | Frontend historical-claim test | 1 |
 
-The 196 candidate-file reviews consist of 135 claim-bound reviews and 61
+The 196 candidate-file reviews consist of 134 claim-bound reviews and 62
 explicit exclusions. Full ledger/data validation currently reports zero
 uninventoried collections, missing collections, unreviewed candidates, stale
 reviews, source-digest mismatches, source-rule mismatches, binding errors,
@@ -724,7 +726,7 @@ The write-frozen replacement then completed all 20 production sessions in
 ```text
 UV_CACHE_DIR=/tmp/sw-phase117-final-uv-cache uv run --no-sync python \
   scripts/run_historical_backtest.py \
-  --output docs/evidence/phase-117/73-easting-phase117.json
+  --output artifacts/evidence/phase-117/73-easting-phase117.json
 # status=FAIL; runs=20; joint_successes=0; lower_confidence_bound=0.0;
 # promotion_eligible=false; artifact payload SHA-256 cb33583c...;
 # file SHA-256 ba367f39...; 887,834 bytes
@@ -1093,6 +1095,17 @@ School/commander controls; 451 frontend tests plus lint/build; the exact
 52/34/0 live projection; Ruff, diff, docs, provider, and repository-skill
 gates. The late async transport process, slow/E2E containment results, and
 hosted no-`.git` image are explicitly qualified rather than called passes.
+
+The later repository-wide evidence-storage policy removes the raw JSON from
+the main tree without changing this verdict. Its retained locator is
+`branch=evidence/full; immutable_ref=ebcb888a59d4259ccc1e9149cc0a7364f2a65853; path=docs/evidence/phase-117/73-easting-phase117.json`;
+the retained bytes are 917,974 bytes with raw SHA-256
+`4216ab05cf56c0246dc21f93f0f0dbed8367ac53ac88700fdfa54023699a9a89`
+and embedded artifact SHA-256
+`57bfe7d89575e721d9cee30c213505c760da3cede642624c7ed7532051e524f4`.
+New local runs write to `artifacts/evidence/phase-117/` and main validation
+does not require this branch to be fetched. This storage move neither promotes
+nor reinterprets the retained `FAIL`.
 
 The postmortem authorized this status transition and one coherent Phase 117
 commit after the status-only documentation changes are rebound into the final

@@ -17,6 +17,7 @@ from pydantic import (
 )
 from scipy.stats import binomtest
 
+from stochastic_warfare.simulation.calibration import CalibrationSchema
 from stochastic_warfare.simulation.runtime import AnalysisVariant
 from stochastic_warfare.tools._run_helpers import (
     AnalysisBatchResult,
@@ -44,20 +45,23 @@ class ComparisonConfig(BaseModel):
     @field_validator("scenario_path", "label_a", "label_b", mode="before")
     @classmethod
     def _trimmed_required_text(cls, value: Any) -> str:
-        if (
-            not isinstance(value, str)
-            or not value
-            or value != value.strip()
-        ):
+        if not isinstance(value, str) or not value or value != value.strip():
             raise ValueError("value must be a non-empty trimmed string")
         return value
 
     @field_validator("overrides_a", "overrides_b", mode="before")
     @classmethod
     def _mapping_override(cls, value: Any) -> dict[str, Any]:
-        if not isinstance(value, Mapping):
+        if isinstance(value, CalibrationSchema):
+            raw = value.to_sparse_patch(mode="python")
+        elif isinstance(value, Mapping):
+            raw = dict(value)
+        else:
             raise ValueError("calibration overrides must be mappings")
-        return dict(value)
+        return CalibrationSchema.model_validate(
+            raw,
+            strict=True,
+        ).to_sparse_patch(mode="python")
 
     @field_validator("metric_names")
     @classmethod
@@ -67,12 +71,7 @@ class ComparisonConfig(BaseModel):
     ) -> list[str] | None:
         if values is None:
             return None
-        if any(
-            not isinstance(value, str)
-            or not value
-            or value != value.strip()
-            for value in values
-        ):
+        if any(not isinstance(value, str) or not value or value != value.strip() for value in values):
             raise ValueError(
                 "metric_names must contain non-empty trimmed strings",
             )
@@ -145,18 +144,9 @@ def compare_distributions(
     alpha: float = 0.05,
 ) -> MetricComparison:
     """Compare aligned values with the two-sided exact paired sign test."""
-    if (
-        not isinstance(metric_name, str)
-        or not metric_name
-        or metric_name != metric_name.strip()
-    ):
+    if not isinstance(metric_name, str) or not metric_name or metric_name != metric_name.strip():
         raise ValueError("metric_name must be a non-empty trimmed string")
-    if (
-        isinstance(alpha, bool)
-        or not isinstance(alpha, float)
-        or not math.isfinite(alpha)
-        or not 0.0 < alpha < 1.0
-    ):
+    if isinstance(alpha, bool) or not isinstance(alpha, float) or not math.isfinite(alpha) or not 0.0 < alpha < 1.0:
         raise ValueError("alpha must be a strict finite float in (0, 1)")
     if len(values_a) != len(values_b):
         raise ValueError("Paired metric vectors must have equal length")
@@ -166,8 +156,7 @@ def compare_distributions(
     def _strict_vector(values: list[float], *, label: str) -> np.ndarray:
         if any(type(value) not in {int, float} for value in values):
             raise ValueError(
-                f"Paired metric vector {label} must contain only strict "
-                "integer or float values",
+                f"Paired metric vector {label} must contain only strict integer or float values",
             )
         array = np.asarray(values, dtype=float)
         if not np.isfinite(array).all():
@@ -233,8 +222,7 @@ def _apply_holm(
     for rank, original_index in enumerate(ordered_indexes):
         candidate = min(
             1.0,
-            (count - rank)
-            * comparisons[original_index].raw_p_value,
+            (count - rank) * comparisons[original_index].raw_p_value,
         )
         running_max = max(running_max, candidate)
         adjusted[original_index] = running_max
@@ -252,13 +240,15 @@ def _holm_order_indices(
     comparisons: list[MetricComparison],
 ) -> tuple[int, ...]:
     """Return the production step-down order, including stable p-value ties."""
-    return tuple(sorted(
-        range(len(comparisons)),
-        key=lambda index: (
-            comparisons[index].raw_p_value,
-            index,
-        ),
-    ))
+    return tuple(
+        sorted(
+            range(len(comparisons)),
+            key=lambda index: (
+                comparisons[index].raw_p_value,
+                index,
+            ),
+        )
+    )
 
 
 def run_comparison(config: ComparisonConfig) -> ComparisonResult:
@@ -326,18 +316,11 @@ def format_comparison(result: ComparisonResult) -> str:
         f"Iterations: {result.num_iterations}",
         f"Family-wise alpha: {result.alpha:g}",
         "",
-        (
-            f"{'Metric':<22} {'Mean A':>9} {'Mean B':>9} "
-            f"{'+/-/=':>11} {'Raw p':>9} {'Holm p':>9} {'Sig?':>5}"
-        ),
+        (f"{'Metric':<22} {'Mean A':>9} {'Mean B':>9} {'+/-/=':>11} {'Raw p':>9} {'Holm p':>9} {'Sig?':>5}"),
         "-" * 82,
     ]
     for comparison in result.metrics:
-        signs = (
-            f"{comparison.positive}/"
-            f"{comparison.negative}/"
-            f"{comparison.tied}"
-        )
+        signs = f"{comparison.positive}/{comparison.negative}/{comparison.tied}"
         significant = "*" if comparison.family_wise_significant else ""
         lines.append(
             f"{comparison.metric:<22} "

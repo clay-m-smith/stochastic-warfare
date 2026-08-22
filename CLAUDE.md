@@ -7,7 +7,8 @@ models, a headless Python engine, FastAPI service, and React frontend. Modern
 warfare is the primary data package, with four historical-era packages and
 integrated maritime warfare.
 
-**Current status**: Phases 105 through 117 and Block 12 are complete. Phase
+**Current status**: Phases 105 through 118 and Block 12 are complete. Phase 119
+has not started. Phase
 117's typed historical-claim ledger, production backtest, conservative public
 projection, and persisted failure artifact passed documentation,
 cross-document review, and postmortem; REM-030 is closed. Its frozen 20-seed
@@ -18,11 +19,67 @@ API/slow/E2E runs are not called passes. See `docs/devlog/phase-117.md`,
 `docs/specs/historical-outcome-envelope-integrity.md`, and
 `docs/remediation-backlog.md` for the exact evidence and unresolved follow-ups.
 
-Block 13 is active with Phase 117 / REM-030 complete and closed. Phase 118 is
-next and has not started.
+Block 13 is active with Phase 117 / REM-030 complete and closed. Phase 118 /
+REM-031 has implemented typed performance classifications, execution receipts,
+indexed FOW RNG, correlation-safe fusion, bounded radar observer support, and
+format-118 continuation. Its immutable v6 archive is retained off `main` at
+`branch=evidence/full; path=docs/evidence/phase-118/v6-terminal/`; manifest
+artifact SHA-256
+`eb8e12f147c14ee4e83e7f5e80e4b1e50aa2bfe847d5e5e681b2462f7850051a`.
+It is a terminal `ERROR`, not accepted evidence. The owner-approved schema-2
+`phase118-performance-semantics-v7` plan, SHA-256
+`5ffb74205281d8913b618fc607f47bf4cdccc0f2741bd812cc82989761c1b41d`,
+executed all 96 pairs / 396 attempts once and independently reloaded as an
+eligible terminal `FAIL` under `EXTERNALLY_CONTENDED`; the immutable manifest
+artifact SHA-256 is
+`bf9e00ce4a7774af29b5657c49bbbe4481b407a966d9922e48970022f5c6ad86`.
+The immutable v7 bytes are retained at
+`branch=evidence/full; path=docs/evidence/phase-118/v7-terminal/`.
+Every execution entry point in the retained evidence harness rejects the
+terminal v7 plan identity or any burned v7 seed before construction. The typed
+runtime-manifest handoff at
+`branch=evidence/full; path=docs/evidence/phase-118/runtime-manifest-handoff.json`
+has SHA-256
+`b505edc418f87ffdf659bed52b502cef043df472c8a04696d0fda8d99d4e746d` and
+reconstructs the archived 1,408-entry execution snapshot into the reviewed
+1,408-entry qualified-negative retirement snapshot through fifteen exact
+runtime-path modifications; the closure run proved the current tree matched
+that retirement snapshot. These evidence locators currently name a local,
+unpublished branch pending a separate evidence-remote or Git LFS decision.
+Detection culling, SoA selection, and parallel detection retain exact `PASS`
+support. Scan scheduling and sensing-only LOD retain model-fidelity
+classifications but are explicitly unsupported after their v7 `FAIL` results.
+Current YAML, API, comparison/sensitivity, live runtime, and current-checkpoint
+boundaries reject either retired flag enabled and reject nondefault LOD tuning.
+Authored configuration, typed calibration, flattened calibration, and the
+committed execution receipt are cross-bound before work and receipt exposure.
+`GET /api/meta/performance-flags` exposes the canonical disposition and exact
+retained-evidence identity. The off-main archive is immutable historical input;
+ordinary `main` validation neither fetches nor reinterprets it, and it cannot
+authorize executing burned seeds, aggregating new evidence, or requiring later
+phases to equal the Phase 118 retirement tree. No speed claim follows
+from either terminal archive or externally contended execution. The separate
+matched production profile measured a 1.259063 median runtime ratio (+25.906%)
+and enclosed 81.60% of the instrumented delta beneath the transactional FOW
+update. Phase 118 preserves those integrity checks and does not promote a speed
+claim; REM-055 / Phase 142 owns the measured runtime regression. The accepted
+qualified-negative postmortem closed Phase 118 / REM-031; Phase 119 has not
+started.
+
+The observer-support codec, checkpoint topology, and archived/dormant
+scan-deferral algorithm contract remain preserved, but current supported
+production cannot emit non-null observer-track support because the only
+emission controls are rejected. REM-054 / Phase 141 owns restoring a supported
+production-reachable path; structural availability is not a current capability
+claim.
+REM-055 / Phase 142 separately owns the transactional-FOW runtime cost found by
+the Phase 118 profile. Any optimization must retain atomicity, tamper detection,
+indexed stochastic identity, receipts, continuation, and exact outcomes.
+
 REM-041 through REM-043 are assigned to planned Block 14.
-REM-044 is assigned to planned Block 15 for sourced sensor covariance and an
-atomic predictive-tracking transaction.
+REM-044 is assigned to planned Block 15 for sourced per-sensor range/bearing/
+correlation covariance and provenance inside Phase 118's existing detached,
+correlation-safe predictive transaction.
 REM-045 assigns the legacy Fallujah scripted-action lifecycle to planned Block
 16 / Phase 132; declaration/reference loading is not authoritative dispatch,
 effect, or exact-once continuation evidence.
@@ -36,7 +93,9 @@ to force agreement.
 REM-048 assigns package-bound accepted-evidence attestation to planned Block 19
 / Phase 135. Phase 117 locally proves the packaged-loader boundary only for the
 current zero-accepted ledger; its hosted no-`.git` image smoke is configured
-and pending the phase push. A future accepted claim requires a build-time
+and its push prerequisite is satisfied at `84cf4c4`, but no successful hosted
+result is recorded in the repository. The smoke remains unverified pending a
+successful workflow run. A future accepted claim requires a build-time
 repository proof and tamper-evident runtime receipt.
 REM-049 assigns remaining replay/export/editor/analysis Web UI semantic
 integrity to planned Block 19 / Phase 136 after Phase 117 corrects bounded
@@ -46,6 +105,9 @@ REM-050 assigns strict consumed Escalation/DEW configuration and a real
 configured DEW engagement to planned Block 19 / Phase 137. Phase 117 records
 that escalation mappings are discarded and DEW is presence-enabled; engine
 construction or ignored enable-like keys are not behavioral proof.
+REM-051 through REM-053 assign scoped detection scan-history lifecycle,
+canonical FOW update ownership, and single-snapshot checkpoint capture to
+planned Block 20 / Phases 138--140.
 Phase 115's 73 Easting workload-identity change uses a strict non-timing
 transition qualification and is never called a performance pass. Phase 116
 has promoted the clean endpoint to the ordinary version-4 paired gate.
@@ -116,7 +178,10 @@ Layered hybrid — graph (strategic), grid (operational/tactical), continuous (u
 `numpy`, `scipy`, `pydantic`, `pyproj`, `shapely`, `networkx` (+ `pytest`, `pytest-cov`, `matplotlib`, `httpx`, `pytest-asyncio` for dev). Optional: `numba` (perf), `mcp[cli]` (mcp), `rasterio`/`xarray` (terrain), `mkdocs-material` (docs), `fastapi`/`uvicorn`/`aiosqlite`/`pydantic-settings` (api).
 
 ## Project Conventions
-- **PRNG discipline**: No `np.random` module-level calls. All randomness via `RNGManager.get_stream(ModuleId)` → `np.random.Generator`. No bare `random` module.
+- **PRNG discipline**: No module-level `np.random` or bare `random`. All
+  stochastic decisions use `RNGManager`-owned authority: injected
+  `get_stream(ModuleId)` generators or the typed indexed boundary for
+  order-independent FOW decisions.
 - **Deterministic iteration**: No `set()` or unordered dict driving simulation logic.
 - **State protocol**: Checkpoint-participating runtime owners implement the
   coordinated `get_state() -> dict` and `set_state(dict) -> None` contract.
@@ -224,12 +289,14 @@ production-evidence requirements.
 | `docs/development-phases-block17.md` | Block 17 roadmap (133), active-deception checkpoint-integrity follow-up |
 | `docs/development-phases-block18.md` | Block 18 roadmap (134), 73 Easting source-synchronous engagement-fidelity follow-up |
 | `docs/development-phases-block19.md` | Block 19 roadmap (135–137), package-bound accepted-evidence, Web UI semantics, and Escalation/DEW configuration follow-ups |
+| `docs/development-phases-block20.md` | Block 20 roadmap (138–140), detection scan-state lifecycle, FOW update ownership, and single-snapshot checkpoint follow-ups |
+| `docs/development-phases-block21.md` | Block 21 roadmap (141--142), performance-approximation re-enablement and transactional FOW runtime-cost integrity |
 | `docs/remediation-backlog.md` | Audited implementation gaps and completion evidence |
 | `docs/specs/project-structure.md` | Full package tree, module decomposition, dependency graph |
 | `docs/devlog/` | Per-phase implementation logs (`index.md` tracks status) |
 | `docs/skills-and-hooks.md` | Dev infrastructure documentation |
 | `docs/specs/` | Per-module specifications (written before implementation) |
-| `README.md` | Project overview, setup, architecture summary, status |
+| `README.md` | Durable project overview, setup, run, validation, and documentation entry point |
 | `mkdocs.yml` | MkDocs site configuration (Phase 31) |
 | `docs/index.md` | Docs site landing page (Phase 31) |
 | `docs/guide/` | User-facing guides (getting started, web UI, scenarios) |
@@ -257,11 +324,13 @@ All phase details are in `docs/devlog/` (one file per phase). Per-phase tables i
 | Block 12 | 105–114 | Production-path integrity remediation; complete | 11,903 audited closure passes; 6 classified warnings |
 | Block 13 | 115–127 | Active sensing, checkpoint, historical-validation, performance-semantics, concealment, surrender/POW, event-time, battle-topology, C2, CBRN-action, medical, maintenance, and validation-era follow-ups | Active |
 | Block 14 | 128–130 | Targeting exposure authorization, authored mount/director topology, and availability-aware threat selection | Planned |
-| Block 15 | 131 | Sourced sensor measurement covariance and atomic predictive tracking | Planned |
+| Block 15 | 131 | Sourced sensor range/bearing/correlation covariance integrated into the existing atomic predictive transaction | Planned |
 | Block 16 | 132 | Typed, fail-closed, exact-once scripted scenario actions | Planned |
 | Block 17 | 133 | Complete active-deception checkpoint state with one DETECTION RNG authority | Planned |
 | Block 18 | 134 | Source-synchronous 73 Easting engagement and natural-boundary fidelity | Planned |
 | Block 19 | 135–137 | Build-time/no-Git accepted-evidence attestation, Web UI semantics, and Escalation/DEW configuration integrity | Planned |
+| Block 20 | 138–140 | Detection scan-state lifecycle, canonical FOW update ownership, and single-snapshot checkpoint integrity | Planned |
+| Block 21 | 141--142 | Performance-approximation re-enablement and transactional FOW runtime-cost integrity | Planned |
 
 ### Block 11 Detail (COMPLETE)
 

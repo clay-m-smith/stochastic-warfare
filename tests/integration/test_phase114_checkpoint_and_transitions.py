@@ -327,9 +327,7 @@ def test_strategic_to_operational_transition_binds_the_next_interval(
         separation_m=50_000.0,
     )
     calls = _trace_interval_consumers(engine, context, monkeypatch)
-    maintenance_events: list[
-        MaintenanceStartedEvent | MaintenanceCompletedEvent
-    ] = []
+    maintenance_events: list[MaintenanceStartedEvent | MaintenanceCompletedEvent] = []
     context.event_bus.subscribe(
         MaintenanceStartedEvent,
         maintenance_events.append,
@@ -354,10 +352,7 @@ def test_strategic_to_operational_transition_binds_the_next_interval(
     first_timestamp = context.clock.current_time
     assert first_endpoint == _TICK_SECONDS[TickResolution.STRATEGIC]
     assert engine.resolution is TickResolution.STRATEGIC
-    assert (
-        context.maintenance_engine.get_record(unit_id, equipment_id).status
-        is MaintenanceStatus.MAINTENANCE_DUE
-    )
+    assert context.maintenance_engine.get_record(unit_id, equipment_id).status is MaintenanceStatus.MAINTENANCE_DUE
     assert context.maintenance_engine.start_repair(
         unit_id,
         equipment_id,
@@ -369,10 +364,7 @@ def test_strategic_to_operational_transition_binds_the_next_interval(
     assert engine.step() is False
 
     assert engine.resolution is TickResolution.OPERATIONAL
-    assert (
-        context.clock.elapsed.total_seconds() - first_endpoint
-        == _TICK_SECONDS[TickResolution.OPERATIONAL]
-    )
+    assert context.clock.elapsed.total_seconds() - first_endpoint == _TICK_SECONDS[TickResolution.OPERATIONAL]
     assert calls["campaign"] == [
         (
             _TICK_SECONDS[TickResolution.STRATEGIC],
@@ -389,10 +381,7 @@ def test_strategic_to_operational_transition_binds_the_next_interval(
     ]
     assert maintenance_events[0].timestamp == first_timestamp
     assert maintenance_events[1].timestamp == context.clock.current_time
-    assert (
-        context.maintenance_engine.get_record(unit_id, equipment_id).status
-        is MaintenanceStatus.OPERATIONAL
-    )
+    assert context.maintenance_engine.get_record(unit_id, equipment_id).status is MaintenanceStatus.OPERATIONAL
 
 
 def test_operational_contact_waits_for_next_tactical_interval(
@@ -426,10 +415,7 @@ def test_operational_contact_waits_for_next_tactical_interval(
     assert engine.step() is False
 
     assert engine.resolution is TickResolution.TACTICAL
-    assert (
-        context.clock.elapsed.total_seconds() - operational_endpoint
-        == _TICK_SECONDS[TickResolution.TACTICAL]
-    )
+    assert context.clock.elapsed.total_seconds() - operational_endpoint == _TICK_SECONDS[TickResolution.TACTICAL]
     assert calls["battle"] == [_TICK_SECONDS[TickResolution.TACTICAL]]
     assert newly_detected.ticks_executed == 1
 
@@ -455,19 +441,13 @@ def test_deescalation_binds_operational_then_strategic_intervals(
     operational_endpoint = context.clock.elapsed.total_seconds()
 
     assert engine.resolution is TickResolution.OPERATIONAL
-    assert (
-        operational_endpoint - tactical_endpoint
-        == _TICK_SECONDS[TickResolution.OPERATIONAL]
-    )
+    assert operational_endpoint - tactical_endpoint == _TICK_SECONDS[TickResolution.OPERATIONAL]
 
     _move_red_to_separation(context, 50_000.0)
     assert engine.step() is False
 
     assert engine.resolution is TickResolution.STRATEGIC
-    assert (
-        context.clock.elapsed.total_seconds() - operational_endpoint
-        == _TICK_SECONDS[TickResolution.STRATEGIC]
-    )
+    assert context.clock.elapsed.total_seconds() - operational_endpoint == _TICK_SECONDS[TickResolution.STRATEGIC]
     assert calls["campaign"] == [
         (
             _TICK_SECONDS[TickResolution.OPERATIONAL],
@@ -496,9 +476,7 @@ def test_natural_transition_checkpoints_restore_each_bound_cadence() -> None:
     operational_checkpoint = source.checkpoint()
     operational_state = json.loads(operational_checkpoint)
     assert operational_state["resolution"] == TickResolution.OPERATIONAL.value
-    assert operational_state["context"]["clock"][
-        "tick_duration_seconds"
-    ] == _TICK_SECONDS[TickResolution.OPERATIONAL]
+    assert operational_state["context"]["clock"]["tick_duration_seconds"] == _TICK_SECONDS[TickResolution.OPERATIONAL]
     assert operational_state["context"]["era_runtime_contract"] == (
         source_context.era_runtime_contract.model_dump(mode="json")
     )
@@ -528,9 +506,7 @@ def test_natural_transition_checkpoints_restore_each_bound_cadence() -> None:
     assert resumed.checkpoint() == tactical_checkpoint
     tactical_state = json.loads(tactical_checkpoint)
     assert tactical_state["resolution"] == TickResolution.TACTICAL.value
-    assert tactical_state["context"]["clock"][
-        "tick_duration_seconds"
-    ] == _TICK_SECONDS[TickResolution.TACTICAL]
+    assert tactical_state["context"]["clock"]["tick_duration_seconds"] == _TICK_SECONDS[TickResolution.TACTICAL]
     assert tactical_state["context"]["era_runtime_contract"] == (
         source_context.era_runtime_contract.model_dump(mode="json")
     )
@@ -554,10 +530,7 @@ def test_natural_transition_checkpoints_restore_each_bound_cadence() -> None:
 
 def _count_mapping_key(value: Any, key: str) -> int:
     if isinstance(value, dict):
-        return int(key in value) + sum(
-            _count_mapping_key(nested, key)
-            for nested in value.values()
-        )
+        return int(key in value) + sum(_count_mapping_key(nested, key) for nested in value.values())
     if isinstance(value, list):
         return sum(_count_mapping_key(nested, key) for nested in value)
     return 0
@@ -568,9 +541,9 @@ def test_format_116_persists_one_exact_effective_contract() -> None:
     engine, context = _engine(era=_TRANSITION_ERA)
     state = json.loads(engine.checkpoint().decode("utf-8"))
 
-    assert state["checkpoint_version"] == 116
+    assert state["checkpoint_version"] == 118
     contract = state["context"]["era_runtime_contract"]
-    assert tuple(contract) == _CONTRACT_KEYS
+    assert tuple(contract) == tuple(sorted(_CONTRACT_KEYS, key=str.encode))
     assert contract == context.era_runtime_contract.model_dump(mode="json")
     assert _count_mapping_key(state, "era_runtime_contract") == 1
 
@@ -648,9 +621,7 @@ def test_format_113_is_explicitly_rejected_atomically() -> None:
         ),
         lambda state: state["context"]["clock"].update(
             {
-                "tick_duration_seconds": _TICK_SECONDS[
-                    TickResolution.OPERATIONAL
-                ],
+                "tick_duration_seconds": _TICK_SECONDS[TickResolution.OPERATIONAL],
             },
         ),
     ),
@@ -730,10 +701,18 @@ def test_versionless_baseline_checkpoint_remains_bounded_and_compatible() -> Non
     resumed, _ = _engine(seed=999_114)
     resumed.set_state(legacy)
 
-    assert resumed.checkpoint() == source.checkpoint()
+    def qualified_state(engine: SimulationEngine) -> dict[str, Any]:
+        state = json.loads(engine.checkpoint())
+        state["battle"]["performance_execution_receipt"]["complete_from_tick_zero"] = False
+        state["context"]["fog_of_war"]["cadence"]["complete_from_tick_zero"] = False
+        state["context"]["rng"]["indexed_fow"]["complete_from_tick_zero"] = False
+        return state
+
+    assert resumed.battle_manager.performance_execution_receipt().complete_from_tick_zero is False
+    assert qualified_state(resumed) == qualified_state(source)
     assert source.step() is False
     assert resumed.step() is False
-    assert resumed.checkpoint() == source.checkpoint()
+    assert qualified_state(resumed) == qualified_state(source)
 
 
 @pytest.mark.parametrize(
@@ -878,7 +857,7 @@ def test_active_medical_and_maintenance_state_restore_and_continue_exactly() -> 
     checkpoint_at_t = control.engine.checkpoint()
     state_at_t = json.loads(checkpoint_at_t.decode("utf-8"))
 
-    assert state_at_t["checkpoint_version"] == 116
+    assert state_at_t["checkpoint_version"] == 118
     assert state_at_t["context"]["era_runtime_contract"] == {
         "selected_registry_id": _STATE_ERA,
         "era": "modern",
@@ -894,10 +873,7 @@ def test_active_medical_and_maintenance_state_restore_and_continue_exactly() -> 
     _advance(control, 3)
     uninterrupted = control.engine.checkpoint()
     uninterrupted_state = json.loads(uninterrupted.decode("utf-8"))
-    event_types = {
-        event["event_type"]
-        for event in uninterrupted_state["recorder"]["events"]
-    }
+    event_types = {event["event_type"] for event in uninterrupted_state["recorder"]["events"]}
     assert "CasualtyTreatedEvent" in event_types
     assert "MaintenanceCompletedEvent" in event_types
     assert (

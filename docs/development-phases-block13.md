@@ -2,7 +2,7 @@
 
 **Phase range:** 115 through 127
 
-**Status:** Active; Phases 115--117 are complete and Phase 118 is next
+**Status:** Active; Phases 115--118 are complete and Phase 119 has not started
 
 Block 13 owns integrity deficits discovered while specifying and validating
 Phases 112 through 114. It is not part of those implementations or the Block
@@ -14,7 +14,8 @@ postmortem, and single-commit workflow before its remediation item can close.
 
 Status: **Complete**. REM-028 is closed with accepted production, data,
 determinism, scenario, exposure, qualified broad-run, documentation, and
-postmortem evidence. Phases 116--117 are complete and Phase 118 is next.
+postmortem evidence. Phases 116--118 are complete and Phase 119 has not
+started.
 
 Replace unrestricted catalog-range movement holding with a typed targeting
 precondition that distinguishes physical weapon reach from owner-side sensing,
@@ -29,8 +30,8 @@ production-exercised, outcome-affecting, and checkpoint/exposure evidence.
 
 Status: **Complete**. REM-029 is closed with accepted specification, benchmark
 promotion, production, determinism, data, scenario, qualified broad-run,
-documentation, cross-document, and postmortem evidence. Phase 117 is complete
-and Phase 118 is next.
+documentation, cross-document, and postmortem evidence. Phases 117--118 are
+complete and Phase 119 has not started.
 
 Before Phase 116 changes production state, promote the clean Phase 115
 73 Easting transition endpoint to an ordinary version-4 paired reference and
@@ -101,14 +102,19 @@ or same-data calibrated result is described as historical or predictive
 validation.
 
 Phase 117 locally proves conservative packaged-loader exposure of the current
-zero-accepted ledger. Its hosted no-`.git` image smoke is configured and
-remains pending the phase push. Package-bound attestation for a future
-nonempty accepted claim is separately assigned to REM-048 / Phase 135 and does
-not permit this phase to imply that unexercised capability.
+zero-accepted ledger. Its Phase 117 push prerequisite is satisfied at
+`84cf4c4`, but no successful hosted no-`.git` image result is recorded in the
+repository; that smoke remains unverified pending a successful workflow run.
+Package-bound attestation for a future nonempty accepted claim is separately
+assigned to REM-048 / Phase 135 and does not permit this phase to imply that
+unexercised capability.
 
 ## Phase 118 - Performance-Flag Semantic Integrity
 
-Status: **Not started**. REM-031 remains queued.
+Status: **Complete**. The owner-approved v7 study is a complete, independently
+reload-verified eligible `FAIL`; the accepted qualified-negative postmortem
+closed REM-031 while preserving that result and the explicit unsupported
+production disposition below.
 
 Replace Block 9's one-sided authored-configuration checks with a typed, paired
 production contract for `enable_detection_culling`,
@@ -128,10 +134,77 @@ and data fingerprints, semantic digests, and a per-flag verdict in bounded,
 sharded artifacts. Performance timing remains a separate claim, and combat
 parameters may not be recalibrated to conceal a semantic delta.
 
-Exit criteria: REM-031 is closed with declared, loaded, wired,
-enabled/disabled, realistic production-exercised, observable semantic-verdict,
-and persisted/exposed evidence for every flag. Every required validation job
-must fit its declared timeout without discarding unexamined catalog runs.
+The implemented contract classifies detection culling, SoA selection, and
+parallel per-side detection as semantics-preserving execution optimizations.
+Native scan scheduling and sensing-only LOD remain model-fidelity
+approximations, but they are no longer supported production controls. The
+shared calibration/runtime/checkpoint boundary now rejects either flag when
+true and rejects non-default LOD tuning; false/default compatibility values
+remain accepted. Runtime-owned typed receipts expose the exact supported flag
+values and controlled work, while `RNGManager` owns a persisted
+identity-addressed FOW transcript so parallel completion order cannot select a
+different stochastic decision. `GET /api/meta/performance-flags` projects the
+same canonical support registry and retained evidence identity.
+
+The retained v6 diagnostic exhausted its terminal budget at 96 pairs / 396
+attempts under explicit external-contention qualification and ended `ERROR`.
+On 2026-08-22 the owner approved Option A for the v7 proof topology. The frozen
+schema-2 v7 plan used 16 fresh held-out seeds disjoint from all diagnostic
+exclusions, 96 pairs / 396 attempts, and plan SHA-256
+`5ffb74205281d8913b618fc607f47bf4cdccc0f2741bd812cc82989761c1b41d`.
+Its one authoritative execution published a complete `EXTERNALLY_CONTENDED`
+eligible `FAIL`, independently reproduced at manifest artifact SHA-256
+`bf9e00ce4a7774af29b5657c49bbbe4481b407a966d9922e48970022f5c6ad86`.
+Culling, SoA, and parallel detection passed 16/16. Scan scheduling passed 3/16
+and failed 13/16. Calibration LOD passed 16/16; Suwalki LOD passed 12/16 and
+failed 4/16, while all three accepted case-level recovery totals passed at 74,
+37, and 185. No failed shard was relabelled, no budget was widened, and no
+speed conclusion follows.
+
+The raw study, frozen plan, one-off executor/verifiers, and immutable terminal
+bytes are intentionally off main. Their durable locators are
+`branch=evidence/full; path=docs/evidence/phase-118/v6-terminal/`,
+`branch=evidence/full; path=docs/evidence/phase-118/v7-terminal/`,
+`branch=evidence/full; path=data/validation/performance_semantics/phase118.yaml`,
+and
+`branch=evidence/full; path=docs/evidence/phase-118/runtime-manifest-handoff.json`.
+The typed handoff reconstructs the immutable 1,408-entry execution snapshot
+into the reviewed 1,408-entry qualified-negative retirement snapshot through
+exactly fifteen content-addressed modifications: execution SHA-256
+`2f10ab7c7a2b409067c90f92616609e921750fa7641c4d3165f90b53fa21e9a8`,
+retirement SHA-256
+`0a6b32a48fd7ea764d6522eb7ebccdc32c803663aed295c916ba47240668bf07`,
+and handoff SHA-256
+`b505edc418f87ffdf659bed52b502cef043df472c8a04696d0fda8d99d4e746d`.
+The archived validation machinery can reload the v7 `FAIL` and handoff but
+cannot turn the qualified-negative result into a speed claim.
+
+The required matched production profile separately found a material local
+runtime regression: the phase-start ten-tick `benchmark_battalion` median was
+47.035449 seconds and the Phase 118 median was 59.220597 seconds, a 1.259063
+ratio (+25.906%), with identical results and less than 0.85% dispersion in
+each group. cProfile enclosed 81.60% of the instrumented delta beneath the new
+transactional FOW update. Phase 118 retains those integrity checks and makes
+no speed claim; REM-055 / Phase 142 owns a semantics-preserving optimization
+with persistent timing, call, and memory proof.
+
+Exit criteria: REM-031 is closed with declared, loaded, wired, realistic
+production-exercised, outcome, and persisted/exposed evidence for all five
+entries. The three supported controls require enabled/disabled proof; the two
+failed controls require explicit rejection at every current production input
+and restore boundary. Every required validation job must fit its declared
+timeout without discarding unexamined catalog runs.
+
+Phase 118 also surfaced five separately scoped follow-ups: REM-051 / Phase
+138 owns battle-scoped detection scan-history lifecycle, REM-052 / Phase 139
+owns removal of the duplicate legacy FOW update algorithm, and REM-053 / Phase
+140 owns single-snapshot checkpoint capture. They are planned in Block 20.
+REM-054 / Phase 141 in Block 21 owns any future scan-scheduling or LOD
+re-enablement, including the track-lifecycle and sourced-covariance
+prerequisites exposed by the terminal v7 study. REM-055 / Phase 142 in the
+same block owns the measured transactional-FOW runtime regression. None
+weakens REM-031's current qualified-negative proof obligations, and creating
+those roadmap entries does not start the later phases.
 
 ## Phase 119 - Guerrilla Concealment State Integrity
 

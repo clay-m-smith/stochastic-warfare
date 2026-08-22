@@ -168,6 +168,7 @@ def _as_versionless_legacy_context(
 ) -> dict[str, Any]:
     """Translate an idle current context into the bounded legacy envelope."""
     legacy = copy.deepcopy(checkpoint)
+    legacy["rng"].pop("indexed_fow")
     legacy.pop("targeting_default_visibility_m")
     legacy.pop("tactical_targeting")
     legacy.pop("era_runtime_contract")
@@ -441,7 +442,7 @@ def test_in_place_restore_preserves_nested_references_and_typed_morale() -> None
     assert type(ctx.morale_states["blue-1"]) is MoraleState
 
 
-def test_fresh_restore_rebuilds_exact_order_and_all_concrete_classes() -> None:
+def test_fresh_restore_rebuilds_authored_side_order_and_all_concrete_classes() -> None:
     classes = [
         Unit,
         GroundUnit,
@@ -475,7 +476,10 @@ def test_fresh_restore_rebuilds_exact_order_and_all_concrete_classes() -> None:
 
     target.set_state(checkpoint)
 
-    assert list(target.units_by_side) == ["red", "blue"]
+    assert list(target.units_by_side) == [
+        side.side
+        for side in target.config.sides
+    ] == ["blue", "red"]
     assert _unit_ids(target) == {
         "red": ["u-5", "u-3", "u-1"],
         "blue": ["u-4", "u-2", "u-0"],

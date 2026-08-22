@@ -1,15 +1,9 @@
-"""Phase 91 performance-flag declaration checks.
+"""Current Block 9 performance-configuration declaration checks.
 
 This module verifies only the typed configuration and catalog declaration
-boundary for the four opt-in Block 9 flags.  It does not claim that enabling a
-flag is outcome-neutral, historically accurate, deterministic, or manually
-benchmark-validated.  Those semantic and performance obligations require
-controlled enabled/disabled production runs.
-
-The former tests reran the full evaluator while assuming its ordinary scenarios
-had all four flags enabled.  In fact, only the two benchmark scenarios author
-all four flags, and the evaluator intentionally excludes both.  Repeating that
-run could therefore prove none of the claimed flag effects.
+boundary. Detection culling, SoA, and parallel detection retain supported
+production evidence. Scan scheduling and LOD are explicit false-only retired
+inputs after the terminal Phase 118 semantic failure.
 """
 
 from __future__ import annotations
@@ -25,13 +19,17 @@ from tests.validation.test_historical_accuracy import EVALUATOR_EXCLUSIONS
 
 DATA_DIR = Path(__file__).resolve().parents[2] / "data"
 
-PERFORMANCE_FLAGS = {
-    "enable_scan_scheduling",
-    "enable_lod",
+SUPPORTED_EXECUTION_FLAGS = {
+    "enable_detection_culling",
     "enable_soa",
     "enable_parallel_detection",
 }
-ALL_FLAG_SCENARIOS = {
+RETIRED_MODEL_CONTROLS = {
+    "enable_scan_scheduling",
+    "enable_lod",
+}
+PERFORMANCE_FLAGS = SUPPORTED_EXECUTION_FLAGS | RETIRED_MODEL_CONTROLS
+SUPPORTED_FLAG_SCENARIOS = {
     "benchmark_battalion",
     "benchmark_brigade",
 }
@@ -51,13 +49,43 @@ def _catalog_declarations() -> dict[str, set[str]]:
 
 
 class TestPerformanceFlagSchema:
-    """The four opt-in declarations are typed, disabled-by-default inputs."""
+    """Supported flags stay typed while retired controls are false-only."""
 
-    @pytest.mark.parametrize("flag", sorted(PERFORMANCE_FLAGS))
-    def test_flag_is_declared_as_boolean(self, flag: str) -> None:
+    @pytest.mark.parametrize(
+        ("flag", "default"),
+        (
+            ("enable_detection_culling", True),
+            ("enable_parallel_detection", False),
+            ("enable_soa", False),
+        ),
+    )
+    def test_supported_flag_accepts_explicit_true(
+        self,
+        flag: str,
+        default: bool,
+    ) -> None:
+        field = CalibrationSchema.model_fields[flag]
+        assert field.annotation is bool
+        assert field.default is default
+        assert getattr(CalibrationSchema.model_validate({flag: True}), flag)
+
+    @pytest.mark.parametrize("flag", sorted(RETIRED_MODEL_CONTROLS))
+    def test_retired_flag_accepts_false_and_rejects_true(
+        self,
+        flag: str,
+    ) -> None:
         field = CalibrationSchema.model_fields[flag]
         assert field.annotation is bool
         assert field.default is False
+        assert (
+            getattr(
+                CalibrationSchema.model_validate({flag: False}),
+                flag,
+            )
+            is False
+        )
+        with pytest.raises(ValidationError, match=flag):
+            CalibrationSchema.model_validate({flag: True})
 
     @pytest.mark.parametrize("flag", sorted(PERFORMANCE_FLAGS))
     def test_invalid_boolean_value_is_rejected(self, flag: str) -> None:
@@ -66,17 +94,31 @@ class TestPerformanceFlagSchema:
 
 
 class TestPerformanceFlagCatalogDeclarations:
-    """Catalog declaration inventory, without a behavior-equivalence claim."""
+    """Catalog activation follows the supported/retired disposition."""
 
-    def test_each_flag_is_authored_only_by_benchmark_scenarios(self) -> None:
+    def test_supported_flags_are_authored_only_by_benchmark_scenarios(
+        self,
+    ) -> None:
         declarations = _catalog_declarations()
-        assert declarations == {
-            flag: ALL_FLAG_SCENARIOS
-            for flag in PERFORMANCE_FLAGS
+        assert {flag: declarations[flag] for flag in SUPPORTED_EXECUTION_FLAGS} == {
+            flag: SUPPORTED_FLAG_SCENARIOS for flag in SUPPORTED_EXECUTION_FLAGS
         }
 
-    def test_all_flag_scenarios_are_exactly_evaluator_exclusions(self) -> None:
+    def test_all_supported_flag_scenarios_are_evaluator_exclusions(
+        self,
+    ) -> None:
         declarations = _catalog_declarations()
-        all_four = set.intersection(*declarations.values())
-        assert all_four == ALL_FLAG_SCENARIOS
-        assert all_four == EVALUATOR_EXCLUSIONS
+        all_supported = set.intersection(
+            *(declarations[flag] for flag in SUPPORTED_EXECUTION_FLAGS),
+        )
+        assert all_supported == SUPPORTED_FLAG_SCENARIOS
+        assert all_supported == EVALUATOR_EXCLUSIONS
+
+    @pytest.mark.parametrize("flag", sorted(RETIRED_MODEL_CONTROLS))
+    def test_retired_model_control_has_no_catalog_activation(
+        self,
+        flag: str,
+    ) -> None:
+        declarations = _catalog_declarations()
+
+        assert declarations[flag] == set()

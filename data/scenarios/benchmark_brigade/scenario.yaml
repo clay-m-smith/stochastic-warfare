@@ -139,10 +139,10 @@ victory_conditions:
       max_duration_s: 21600
 
 calibration_overrides:
-  # Performance flags (Phase 84-89) — all enabled for benchmarking
+  # Supported performance flags; failed semantic controls remain disabled
   enable_detection_culling: true
-  enable_scan_scheduling: true
-  enable_lod: true
+  enable_scan_scheduling: false
+  enable_lod: false
   enable_soa: true
   enable_parallel_detection: true
   # FOW required for detection optimizations

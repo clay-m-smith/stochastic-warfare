@@ -22,13 +22,18 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from stochastic_warfare.core.checkpoint import NumpyEncoder, _numpy_object_hook
+from stochastic_warfare.core.checkpoint import NumpyEncoder, decode_checkpoint_json
 from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.types import Position
 from stochastic_warfare.entities.base import UnitStatus
 from stochastic_warfare.simulation.battle import BattleConfig, BattleManager
 from stochastic_warfare.simulation.campaign import CampaignConfig, CampaignManager
 from stochastic_warfare.simulation.movement_diagnostics import MovementStage
+from stochastic_warfare.simulation.performance_flags import (
+    PerformanceExecutionReceipt,
+    resolve_cross_bound_runtime_performance_flags,
+    resolve_supported_runtime_performance_flags,
+)
 from stochastic_warfare.simulation.recorder import SimulationRecorder
 from stochastic_warfare.simulation.scenario import SimulationContext
 from stochastic_warfare.simulation.tactical_targeting import (
@@ -41,7 +46,7 @@ from stochastic_warfare.simulation.victory import VictoryEvaluator, VictoryResul
 
 logger = get_logger(__name__)
 
-_CHECKPOINT_VERSION = 116
+_CHECKPOINT_VERSION = 118
 PRODUCTION_TERMINAL_CONDITION_TYPES: frozenset[str] = frozenset(
     {
         "armistice",
@@ -55,6 +60,109 @@ PRODUCTION_TERMINAL_CONDITION_TYPES: frozenset[str] = frozenset(
         "time_expired",
     },
 )
+
+
+def _validate_performance_checkpoint_integrity(
+    *,
+    context_state: dict[str, Any],
+    performance_receipt: PerformanceExecutionReceipt | dict[str, Any],
+    fog_of_war_enabled: bool,
+) -> None:
+    """Reconcile the three Phase 118 checkpoint evidence owners.
+
+    The battle receipt, FOW cadence scheduler, and indexed-RNG transcript are
+    independently persisted owners.  A valid checkpoint must describe one
+    common committed interval history before capture or restore may proceed.
+    """
+    if type(fog_of_war_enabled) is not bool:
+        raise ValueError("fog_of_war_enabled must be a strict boolean")
+    receipt = (
+        performance_receipt
+        if type(performance_receipt) is PerformanceExecutionReceipt
+        else PerformanceExecutionReceipt.from_state(performance_receipt)
+    )
+    resolve_supported_runtime_performance_flags(receipt.effective_flags)
+    try:
+        fog_state = context_state.get("fog_of_war")
+        if fog_state is None:
+            if fog_of_war_enabled:
+                raise KeyError("fog_of_war")
+            # Lightweight or explicitly FOW-free runtimes have no cadence
+            # authority.  Their only valid topology is the zero-work disabled
+            # branch below; use the receipt's completeness solely so absence
+            # is not mistaken for contradictory evidence.
+            cadence = {
+                "complete_from_tick_zero": receipt.complete_from_tick_zero,
+                "committed_ordinal": 0,
+            }
+        else:
+            cadence = fog_state["cadence"]
+        indexed = context_state["rng"]["indexed_fow"]
+        transcript = indexed["transcript"]
+    except (KeyError, TypeError) as exc:
+        raise ValueError(
+            "Phase 118 checkpoint evidence owners are missing or malformed",
+        ) from exc
+    if not all(type(value) is dict for value in (cadence, indexed, transcript)):
+        raise ValueError(
+            "Phase 118 checkpoint evidence owners must be mappings",
+        )
+
+    cadence_complete = cadence.get("complete_from_tick_zero")
+    indexed_complete = indexed.get("complete_from_tick_zero")
+    if type(cadence_complete) is not bool or type(indexed_complete) is not bool:
+        raise ValueError(
+            "Phase 118 checkpoint completeness fields must be booleans",
+        )
+    if not (receipt.complete_from_tick_zero == cadence_complete == indexed_complete):
+        raise ValueError(
+            "Performance receipt, cadence, and indexed-RNG completeness evidence disagree",
+        )
+
+    cadence_intervals = cadence.get("committed_ordinal")
+    indexed_intervals = transcript.get("committed_interval_count")
+    indexed_entries = transcript.get("committed_entry_count")
+    if any(
+        type(value) is not int or value < 0
+        for value in (
+            cadence_intervals,
+            indexed_intervals,
+            indexed_entries,
+        )
+    ):
+        raise ValueError(
+            "Phase 118 checkpoint evidence counters must be non-negative strict integers",
+        )
+
+    if fog_of_war_enabled:
+        if not (cadence_intervals == receipt.tactical_intervals == indexed_intervals):
+            raise ValueError(
+                "Enabled FOW checkpoint cadence, receipt, and indexed-RNG interval counts disagree",
+            )
+        indexed_receipt = receipt.fow.indexed_rng
+        if not (
+            indexed_entries
+            == indexed_receipt.blocks
+            == indexed_receipt.detection_lanes
+            == indexed_receipt.transcript_entries
+        ):
+            raise ValueError(
+                "Enabled FOW checkpoint indexed-entry and receipt counts disagree",
+            )
+        return
+
+    if any(
+        (
+            cadence_intervals,
+            indexed_intervals,
+            indexed_entries,
+            receipt.fow.side_cycles,
+            receipt.fow.indexed_rng.blocks,
+        ),
+    ):
+        raise ValueError(
+            "Disabled FOW checkpoint contains cadence, side-cycle, or indexed-RNG work",
+        )
 
 
 def _checkpoint_targeting_memberships(
@@ -190,6 +298,11 @@ class SimulationEngine:
         recorder: SimulationRecorder | None = None,
         strict_mode: bool = False,
     ) -> None:
+        effective_performance_flags = resolve_cross_bound_runtime_performance_flags(
+            authored_configuration=ctx.config.calibration_overrides,
+            typed_calibration=ctx.calibration,
+            flat_calibration=(ctx.cal_flat if ctx.cal_flat else ctx.calibration),
+        )
         self._ctx = ctx
         self._config = config or EngineConfig()
         self._strict_mode = strict_mode
@@ -218,10 +331,15 @@ class SimulationEngine:
         self._campaign.set_reinforcements(
             getattr(ctx.config, "reinforcements", []),
         )
+        era_contract = ctx.era_runtime_contract
+        if era_contract is None:
+            raise RuntimeError("SimulationContext lacks EraRuntimeContract")
         self._battle = BattleManager(
             ctx.event_bus,
             battle_config,
             movement_diagnostics=ctx.movement_diagnostics,
+            effective_performance_flags=effective_performance_flags,
+            tactical_interval_seconds=era_contract.tactical_s,
         )
         self._targeting_default_visibility_m = targeting_visibility_bound_m(
             calibration={},
@@ -236,9 +354,6 @@ class SimulationEngine:
 
         # Tick resolution state
         self._resolution = TickResolution.STRATEGIC
-        era_contract = ctx.era_runtime_contract
-        if era_contract is None:
-            raise RuntimeError("SimulationContext lacks EraRuntimeContract")
         self._tick_durations = MappingProxyType({
             TickResolution.STRATEGIC: era_contract.strategic_s,
             TickResolution.OPERATIONAL: era_contract.operational_s,
@@ -302,6 +417,11 @@ class SimulationEngine:
         """The event recorder, if any."""
         return self._recorder
 
+    def performance_execution_receipt(self) -> PerformanceExecutionReceipt:
+        """Return committed evidence after revalidating every runtime owner."""
+        self._validate_runtime_bindings()
+        return self._battle.performance_execution_receipt()
+
     def _validate_runtime_bindings(self) -> None:
         """Reject owner, cadence, or domain-config drift before all work."""
         self._ctx.validate_era_runtime_bindings()
@@ -311,6 +431,7 @@ class SimulationEngine:
                 "SimulationContext tactical-targeting owner changed after "
                 "engine construction",
             )
+        self._battle.validate_performance_runtime(self._ctx)
         # The owner object alone is insufficient: its registered unit/side
         # topology is behavior-affecting mutable state.  Validate the bounded
         # registration before a step can advance the clock or consume RNG.
@@ -463,17 +584,29 @@ class SimulationEngine:
         SimulationRunResult
             Final result with ticks executed, duration, and victory info.
         """
-        if self._recorder is not None:
-            self._recorder.start()
+        self._validate_runtime_bindings()
+        run_error: BaseException | None = None
+        try:
+            if self._recorder is not None:
+                self._recorder.start()
 
-        game_over = False
-        while not game_over:
-            game_over = self.step()
-
-        if self._recorder is not None:
-            self._recorder.stop()
-
-        return self.finalize()
+            game_over = False
+            while not game_over:
+                game_over = self.step()
+            return self.finalize()
+        except BaseException as exc:
+            run_error = exc
+            raise
+        finally:
+            if self._recorder is not None:
+                try:
+                    self._recorder.stop()
+                except BaseException:
+                    if run_error is None:
+                        raise
+                    logger.exception(
+                        "Recorder cleanup failed after simulation run failure",
+                    )
 
     def finalize(self) -> SimulationRunResult:
         """Return the public result after an authored or engine terminal step.
@@ -482,6 +615,7 @@ class SimulationEngine:
         engine state.  Cancellation or a local consumer loop limit is not a
         terminal simulation result and therefore cannot be finalized.
         """
+        self._validate_runtime_bindings()
         victory = self._last_victory
         if victory is None or not victory.game_over:
             raise RuntimeError(
@@ -839,25 +973,51 @@ class SimulationEngine:
             else ()
         )
         if active:
-            active = self._battle.prepare_tactical_interval(ctx, active, dt)
-            logistics_activity_unit_ids.update(
-                unit_id
-                for battle in active
-                for unit_id in battle.unit_ids
-            )
-            for battle in active:
-                self._battle.execute_tick(ctx, battle, dt)
-                if self._battle.check_battle_termination(battle, ctx.units_by_side):
-                    self._battle.resolve_battle(battle, ctx.units_by_side)
-                    # Clear integration gain scan counts so they don't bleed
-                    # across battles.
-                    det_eng = getattr(
-                        getattr(ctx, "fog_of_war", None), "_detection", None
-                    )
-                    if det_eng is not None and hasattr(det_eng, "reset_scan_counts"):
-                        det_eng.reset_scan_counts()
-                    logger.info("Battle %s resolved after %d ticks",
-                                battle.battle_id, battle.ticks_executed)
+            performance_transaction = self._battle.begin_performance_interval(dt_seconds=dt)
+            try:
+                active = self._battle.prepare_tactical_interval(
+                    ctx,
+                    active,
+                    dt,
+                )
+                logistics_activity_unit_ids.update(unit_id for battle in active for unit_id in battle.unit_ids)
+                for battle in active:
+                    self._battle.execute_tick(ctx, battle, dt)
+                    if self._battle.check_battle_termination(
+                        battle,
+                        ctx.units_by_side,
+                    ):
+                        self._battle.resolve_battle(
+                            battle,
+                            ctx.units_by_side,
+                        )
+                        # Clear integration gain scan counts so they don't
+                        # bleed across battles.
+                        det_eng = getattr(
+                            getattr(ctx, "fog_of_war", None),
+                            "_detection",
+                            None,
+                        )
+                        if det_eng is not None and hasattr(
+                            det_eng,
+                            "reset_scan_counts",
+                        ):
+                            det_eng.reset_scan_counts()
+                        logger.info(
+                            "Battle %s resolved after %d ticks",
+                            battle.battle_id,
+                            battle.ticks_executed,
+                        )
+            except BaseException as exc:
+                self._battle.poison_performance_interval(
+                    performance_transaction,
+                    reason=(f"production tactical interval failed: {type(exc).__name__}"),
+                )
+                raise
+            else:
+                self._battle.commit_performance_interval(
+                    performance_transaction,
+                )
 
         if (
             logistics_runtime is not None
@@ -1609,13 +1769,18 @@ class SimulationEngine:
                 raise RuntimeError(
                     "A null morale runtime cannot checkpoint aggregates",
                 )
+        battle_state = self._battle.get_state()
         context_state = self._ctx.get_state()
+        self._ctx.validate_fow_cadence_checkpoint_bindings(
+            observer_unit_ids=battle_state["fow_observer_unit_ids"],
+            lod_tiers=battle_state["lod_tiers"],
+        )
         state: dict[str, Any] = {
             "checkpoint_version": _CHECKPOINT_VERSION,
             "resolution": self._resolution.value,
             "context": context_state,
             "campaign": self._campaign.get_state(),
-            "battle": self._battle.get_state(),
+            "battle": battle_state,
             # Phase 72c: proper checkpoint of _last_ato_day
             "last_ato_day": self._last_ato_day,
             "last_victory": {
@@ -1630,6 +1795,11 @@ class SimulationEngine:
             state["victory"] = self._victory.get_state()
         if self._recorder is not None:
             state["recorder"] = self._recorder.get_state()
+        _validate_performance_checkpoint_integrity(
+            context_state=context_state,
+            performance_receipt=state["battle"]["performance_execution_receipt"],
+            fog_of_war_enabled=(self._ctx.calibration.get("enable_fog_of_war", False) is True),
+        )
         return state
 
     def set_state(self, state: dict[str, Any]) -> None:
@@ -1696,6 +1866,20 @@ class SimulationEngine:
         context_state = state.get("context")
         if not isinstance(context_state, dict):
             raise ValueError("Checkpoint context must be a mapping")
+        raw_checkpoint_config = context_state.get("config")
+        if isinstance(raw_checkpoint_config, dict):
+            raw_calibration_overrides = raw_checkpoint_config.get(
+                "calibration_overrides",
+            )
+            if isinstance(raw_calibration_overrides, dict):
+                resolve_supported_runtime_performance_flags(
+                    raw_calibration_overrides,
+                )
+        raw_checkpoint_calibration = context_state.get("calibration")
+        if isinstance(raw_checkpoint_calibration, dict):
+            resolve_supported_runtime_performance_flags(
+                raw_checkpoint_calibration,
+            )
         declared_sides = {
             side.side
             for side in self._ctx.config.sides
@@ -1928,6 +2112,17 @@ class SimulationEngine:
                 "Checkpoint clock tick count and logical time are "
                 "inconsistent",
             )
+        effective_performance_flags = resolve_supported_runtime_performance_flags(
+            self._ctx.calibration,
+        )
+        if (
+            allow_legacy_checkpoint
+            and checkpoint_tick > 0
+            and (effective_performance_flags.enable_scan_scheduling or effective_performance_flags.enable_lod)
+        ):
+            raise ValueError(
+                "Versionless checkpoints cannot reconstruct Phase 118 scan or LOD cadence after simulation start",
+            )
         self._campaign.validate_checkpoint_roster(
             campaign_state,
             context_state,
@@ -1962,11 +2157,6 @@ class SimulationEngine:
             targeting_memberships = None
             require_current_targeting_interval = False
         else:
-            if allow_legacy_checkpoint:
-                raise ValueError(
-                    "Versionless checkpoints cannot contain format-115 "
-                    "tactical_targeting state",
-                )
             (
                 targeting_memberships,
                 require_current_targeting_interval,
@@ -1980,9 +2170,33 @@ class SimulationEngine:
             context_state,
             allow_legacy_morale=allow_legacy_checkpoint,
             targeting_battle_memberships=targeting_memberships,
-            require_current_targeting_interval=(
-                require_current_targeting_interval
-            ),
+            require_current_targeting_interval=(require_current_targeting_interval),
+            fow_observer_unit_ids=battle_plan.fow_observer_unit_ids,
+            battle_lod_tiers=battle_plan.lod_tiers,
+        )
+        performance_evidence_state = context_plan.state
+        if allow_legacy_checkpoint:
+            performance_evidence_state = {
+                "fog_of_war": {
+                    "cadence": {
+                        "complete_from_tick_zero": False,
+                        "committed_ordinal": 0,
+                    },
+                },
+                "rng": {
+                    "indexed_fow": {
+                        "complete_from_tick_zero": False,
+                        "transcript": {
+                            "committed_interval_count": 0,
+                            "committed_entry_count": 0,
+                        },
+                    },
+                },
+            }
+        _validate_performance_checkpoint_integrity(
+            context_state=performance_evidence_state,
+            performance_receipt=(battle_plan.performance_execution_receipt.receipt),
+            fog_of_war_enabled=(self._ctx.calibration.get("enable_fog_of_war", False) is True),
         )
         victory_plan = (
             self._victory.stage_state(
@@ -2029,9 +2243,19 @@ class SimulationEngine:
     def checkpoint(self) -> bytes:
         """Serialize engine state to bytes."""
         state = self.get_state()
-        return json.dumps(state, cls=NumpyEncoder).encode("utf-8")
+        return json.dumps(
+            state,
+            cls=NumpyEncoder,
+            allow_nan=False,
+            ensure_ascii=False,
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode("utf-8")
 
     def restore(self, data: bytes) -> None:
         """Restore engine state from serialized bytes."""
-        state = json.loads(data.decode("utf-8"), object_hook=_numpy_object_hook)
+        state = decode_checkpoint_json(
+            data,
+            allow_versionless_weapon_sentinels=True,
+        )
         self.set_state(state)

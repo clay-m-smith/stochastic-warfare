@@ -6,6 +6,7 @@ returns a delay, ``decide()`` is deferred until the delay matures.
 
 from __future__ import annotations
 
+import pytest
 
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.simulation.battle import BattleManager
@@ -66,13 +67,17 @@ class TestCheckpointState:
         mgr.set_state(state)
         assert mgr._pending_decisions == {"u1": 100.0, "u2": 200.0}
 
-    def test_set_state_backward_compat(self):
-        """Old states without pending_decisions → empty dict."""
+    def test_incomplete_state_rejects_atomically(self):
+        """Strict restore rejects incomplete state without clearing decisions."""
         mgr = BattleManager(EventBus())
         mgr._pending_decisions["old"] = 99.0
+        before = mgr.get_state()
         state = {"next_battle_id": 0, "battles": {}}
-        mgr.set_state(state)
-        assert mgr._pending_decisions == {}
+
+        with pytest.raises(ValueError, match="key topology"):
+            mgr.set_state(state)
+
+        assert mgr.get_state() == before
 
 
 class TestDelayLogic:

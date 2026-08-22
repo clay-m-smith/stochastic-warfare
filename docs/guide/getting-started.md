@@ -181,12 +181,13 @@ production-validated scenarios.
 ### Running a Historical Outcome-Envelope Study
 
 Use the checked-in runner for a declared study; send exploratory output to a
-new evidence path so the stable artifact is not overwritten:
+path under the ignored `artifacts/` tree so generated evidence does not enter
+`main`:
 
 ```bash
 uv run --no-sync python scripts/run_historical_backtest.py \
   --plan data/validation/historical_studies/73_easting_phase117.yaml \
-  --output docs/evidence/local/73-easting.json
+  --output artifacts/evidence/phase-117/73-easting.json
 ```
 
 The route loads and audits the complete historical-claim ledger, validates the
@@ -201,9 +202,14 @@ ledger/artifact/Git bindings.
 
 The retained Phase 117 73 Easting artifact is `FAIL`, with 0/20 joint successes
 and a one-sided lower confidence bound of 0.0. It is not promotion-eligible, so
-73 Easting remains unsupported for historical validation. See the
-[study contract](../specs/historical-outcome-envelope-integrity.md) and
-[retained artifact](../evidence/phase-117/73-easting-phase117.json).
+73 Easting remains unsupported for historical validation. Its artifact
+SHA-256 is
+`57bfe7d89575e721d9cee30c213505c760da3cede642624c7ed7532051e524f4`,
+and its off-main locator is
+`branch=evidence/full; path=docs/evidence/phase-117/73-easting-phase117.json`.
+That branch is currently local and unpublished pending a separate
+evidence-remote or Git LFS decision. See the
+[study contract](../specs/historical-outcome-envelope-integrity.md).
 
 ## Using the Web UI
 

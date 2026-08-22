@@ -128,6 +128,7 @@ def _successful_detection(
         range_m=math.hypot(dx, dy),
         sensor_type=sensor.sensor_type,
         bearing_deg=math.degrees(math.atan2(dx, dy)) % 360.0,
+        horizontal_range_m=math.hypot(dx, dy),
     )
 
 
@@ -295,14 +296,29 @@ def _assert_valid_restore(state: dict[str, Any], *, elapsed: float) -> None:
     assert target.get_state() == state
 
 
-def test_format_116_state_has_exact_nested_envelope() -> None:
+def test_current_state_has_exact_nested_envelope() -> None:
     state = _valid_state()
 
     assert set(state) == {
         "world_views",
         "current_detection_witnesses",
+        "observer_track_supports",
         "rng_state",
         "intel_fusion",
+        "scan_counts",
+        "cadence",
+    }
+    assert state["observer_track_supports"] == []
+    assert state["scan_counts"] == {}
+    assert state["cadence"] == {
+        "schema_version": 2,
+        "committed_ordinal": 0,
+        "complete_from_tick_zero": True,
+        "attachments": [],
+        "native_phase_assignments": [],
+        "native_phase_assignments_sha256": (
+            "07e1061e806688ca185002ae49978fb2aafe1a5bc9971afc52b6ecb88949a4b2"
+        ),
     }
     assert list(state["world_views"]) == ["blue"]
     view = state["world_views"]["blue"]
@@ -1450,8 +1466,8 @@ def test_three_key_legacy_empty_state_requires_explicit_bounded_route() -> None:
     assert restored["intel_fusion"] == legacy["intel_fusion"]
 
 
-def test_three_key_legacy_rejects_fow_track_history_atomically() -> None:
-    """Versionless fusion cannot acquire side-local ordinary-track history."""
+def test_three_key_legacy_restores_fusion_only_history_as_incomplete() -> None:
+    """The explicit legacy route preserves coherent fusion-only history."""
     current = _valid_state()
     legacy = {
         "world_views": copy.deepcopy(current["world_views"]),
@@ -1468,17 +1484,17 @@ def test_three_key_legacy_rejects_fow_track_history_atomically() -> None:
         sensor_id="red-eye",
         current_time=3.0,
     )
-    before = target.get_state()
+    target.set_state(legacy)
 
-    with pytest.raises(ValueError, match="Versionless.*FOW track history"):
-        target.set_state(legacy)
-    assert target.get_state() == before
+    restored = target.get_state()
+    assert restored["world_views"] == legacy["world_views"]
+    assert restored["current_detection_witnesses"] == {}
+    assert restored["intel_fusion"] == legacy["intel_fusion"]
+    assert restored["scan_counts"] == {}
+    assert restored["cadence"]["complete_from_tick_zero"] is False
 
 
-@pytest.mark.parametrize("shape", ("two_key", "three_key"))
-def test_legacy_state_cannot_acquire_nonempty_contact_semantics(
-    shape: str,
-) -> None:
+def test_two_key_legacy_state_cannot_acquire_nonempty_contact_semantics() -> None:
     valid = _valid_state()
     legacy = {
         "world_views": copy.deepcopy(valid["world_views"]),
@@ -1488,13 +1504,31 @@ def test_legacy_state_cannot_acquire_nonempty_contact_semantics(
     before = target.get_state()
 
     with pytest.raises(ValueError):
-        if shape == "two_key":
-            target.set_state(legacy)
-        else:
-            legacy["intel_fusion"] = copy.deepcopy(valid["intel_fusion"])
-            target.stage_state(legacy, allow_legacy_state=True)
+        target.set_state(legacy)
 
     assert target.get_state() == before
+
+
+def test_three_key_legacy_restores_coherent_contact_semantics_as_incomplete() -> None:
+    valid = _valid_state()
+    legacy = {
+        "world_views": copy.deepcopy(valid["world_views"]),
+        "rng_state": copy.deepcopy(valid["rng_state"]),
+        "intel_fusion": copy.deepcopy(valid["intel_fusion"]),
+    }
+    target = _manager(116_003)
+
+    target.set_state(legacy)
+
+    restored = target.get_state()
+    assert restored["world_views"] == legacy["world_views"]
+    assert restored["current_detection_witnesses"] == {}
+    assert restored["intel_fusion"] == legacy["intel_fusion"]
+    assert restored["scan_counts"] == {}
+    assert restored["cadence"]["complete_from_tick_zero"] is False
+    contact = target.get_contact("blue", "red-target")
+    assert contact is not None
+    assert contact.track is target.intel_fusion.get_tracks("blue")[contact.track.track_id]
 
 
 @pytest.mark.parametrize(

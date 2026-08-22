@@ -624,6 +624,12 @@
       "node_id": "tests/unit/test_phase117_historical_integrity.py::test_scanner_v1_ledger_is_rejected_after_v2_migration",
       "rationale": "The read_text call mutates a serialized temporary ledger rather than implementation source. Recomputing the ledger digest after changing only the scanner version controls for checksum failure, and the real claim-ledger loader specifically rejects the obsolete version-one contract.",
       "strongest_oracle": "claim-ledger loading rejects scanner-version-one evidence after the scanner-v2 migration"
+    },
+    {
+      "classification": "behavioral_oracle",
+      "node_id": "tests/unit/test_phase53_c2_ai.py::TestFogOfWarWiring::test_fow_without_targeting_owner_rejects_before_mutation",
+      "rationale": "The mock non-call is a secondary pre-mutation check. The stronger exception and exact battle-state oracles prove that enabling fog of war without the receipt-bearing TacticalTargetingRuntime owner fails before either battle clock advances; this test does not claim that a mock proves normal production FOW wiring.",
+      "strongest_oracle": "an enabled orphan FOW owner raises at the battle boundary before battle time mutates"
     }
   ],
   "kind": "reviewed_behavioral_oracles",

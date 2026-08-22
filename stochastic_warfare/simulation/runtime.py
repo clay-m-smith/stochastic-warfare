@@ -38,6 +38,7 @@ from stochastic_warfare.core.types import Position
 from stochastic_warfare.core.era import EraConfig, get_era_config
 from stochastic_warfare.simulation.battle import BattleConfig
 from stochastic_warfare.simulation.calibration import CalibrationSchema
+from stochastic_warfare.core.indexed_rng import FOWIndexedIntervalRecord
 from stochastic_warfare.simulation.campaign import CampaignConfig
 from stochastic_warfare.simulation.engine import (
     EngineConfig,
@@ -45,6 +46,9 @@ from stochastic_warfare.simulation.engine import (
     SimulationRunResult,
 )
 from stochastic_warfare.simulation.era_runtime import EraRuntimeContract
+from stochastic_warfare.simulation.performance_flags import (
+    PerformanceExecutionReceipt,
+)
 from stochastic_warfare.simulation.recorder import SimulationRecorder
 from stochastic_warfare.simulation.scenario import (
     CampaignScenarioConfig,
@@ -705,6 +709,16 @@ class RuntimeSession:
     def finalize(self) -> SimulationRunResult:
         """Return a result only after :meth:`step` reports termination."""
         return self.engine.finalize()
+
+    def performance_execution_receipt(self) -> PerformanceExecutionReceipt:
+        """Return committed production performance-flag execution evidence."""
+        return self.engine.performance_execution_receipt()
+
+    def fow_indexed_interval_record(
+        self,
+    ) -> FOWIndexedIntervalRecord | None:
+        """Return the latest committed raw FOW indexed-decision record."""
+        return self.context.rng_manager.latest_fow_detection_interval_record
 
     def provenance(self) -> RuntimeProvenance:
         """Capture exact production assignments, including arrivals so far."""

@@ -294,6 +294,17 @@ traversal, noncanonical spellings, and symlink components are rejected.
 Publication never resolves an output alias to its referent, so a failed or
 malicious alias cannot overwrite another evidence file.
 
+The repository runner writes generated output beneath the ignored
+`artifacts/evidence/phase-117/` tree by default. Raw vectors and terminal
+publications do not enter `main`; an owner-retained publication is copied
+byte-for-byte into an evidence-only commit and cited by branch,
+repository-relative path, digest, verdict, and qualifications. Storage does not alter
+eligibility. In particular, the current accepted-evidence loader contract still
+requires its canonical artifact path and committed Git identities, so an
+off-main archival copy cannot populate `accepted_evidence` or promote a claim.
+The current ledger has no accepted evidence; REM-048 / Phase 135 remains
+responsible for any future package-bound accepted-evidence attestation.
+
 Each observation receipt identifies the seed, side, exact unit ID and authored
 unit type considered by scoped extractors, observed status, observation time,
 boundary/censoring state, and source/config/provenance identities. Artifact
@@ -344,7 +355,13 @@ zero scoped Iraqi tanks, zero scoped Iraqi personnel carriers, and
 cutoff-censored duration, so joint coverage was 0/20 with lower bound 0.0. The
 American-loss gate was in range for all 20.
 This leaves 73 Easting `unsupported`; a clean hosted reproduction binds the
-final phase commit without converting the failure into a pass.
+final phase commit without converting the failure into a pass. The retained
+artifact SHA-256 is
+`57bfe7d89575e721d9cee30c213505c760da3cede642624c7ed7532051e524f4`,
+with locator
+`branch=evidence/full; path=docs/evidence/phase-117/73-easting-phase117.json`.
+That evidence branch is currently local and unpublished pending a separate
+evidence-remote or Git LFS decision.
 
 The real plan also declares that its Army outcome source informed the shipped
 scenario's legacy metadata. Even a hypothetical `PASS` would therefore remain

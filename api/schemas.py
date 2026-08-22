@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 from enum import Enum
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import (
     BaseModel,
@@ -21,6 +21,13 @@ from stochastic_warfare.simulation.calibration import CalibrationSchema
 from stochastic_warfare.simulation.loadouts import (
     SensorModeledRole,
     WeaponModeledRole,
+)
+from stochastic_warfare.simulation.performance_flags import (
+    GovernedPerformanceFlag,
+    PerformanceFlagClassification,
+    PerformanceFlagSupportDisposition,
+    RetainedSemanticVerdict,
+    validate_supported_runtime_performance_parameter_name,
 )
 from stochastic_warfare.simulation.tactical_targeting import (
     ContactSource,
@@ -313,6 +320,52 @@ class MapUnitFrame(BaseModel):
     engaged: bool = False
 
 
+class PrivilegedObserverTrackSupportIdentity(BaseModel):
+    """Exact observer-attachment identity for privileged support evidence."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    reporting_side: str
+    observer_unit_id: str
+    source_equipment_index: int
+    sensor_id: str
+    modeled_role: Literal[
+        "airborne_fire_control_radar",
+        "airborne_ground_fire_control_radar",
+        "airborne_multi_domain_fire_control_radar",
+        "fire_control_radar",
+        "ground_air_defense_fire_control_radar",
+        "naval_fire_control_radar",
+        "naval_air_defense_fire_control_radar",
+    ]
+    target_id: str
+
+
+class PrivilegedObserverTrackSupportEvidence(BaseModel):
+    """Lossless projected observer-track support for privileged consumers."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    identity: PrivilegedObserverTrackSupportIdentity
+    fusion_track_id: str
+    sensor_type: Literal["RADAR"]
+    observation_ordinal: int
+    observation_time_s: float
+    native_period: int
+    native_phase_residue: int
+    native_due_ordinal: int
+    position_m: tuple[float, float]
+    velocity_mps: tuple[float, float]
+    covariance: tuple[
+        tuple[float, float, float, float],
+        tuple[float, float, float, float],
+        tuple[float, float, float, float],
+        tuple[float, float, float, float],
+    ]
+    projection_ordinal: int
+    projection_time_s: float
+
+
 class PrivilegedTargetingDecision(BaseModel):
     """Exact engine/evaluator targeting evidence for one shooter."""
 
@@ -361,6 +414,7 @@ class PrivilegedTargetingDecision(BaseModel):
     sensing_aware_standoff_enabled: bool
     fog_of_war_enabled: bool
     consumable: bool
+    observer_track_support: PrivilegedObserverTrackSupportEvidence | None
 
 
 class PrivilegedEngagementRevalidationOutcome(BaseModel):
@@ -734,6 +788,7 @@ class SweepRequest(BaseModel):
             raise ValueError(
                 "parameter_name must be a non-empty trimmed string",
             )
+        validate_supported_runtime_performance_parameter_name(value)
         CalibrationSchema.model_validate(
             {value: 0.0},
             strict=True,
@@ -960,6 +1015,20 @@ class EraInfo(BaseModel):
     name: str
     value: str
     disabled_modules: list[str] = Field(default_factory=list)
+
+
+class PerformanceFlagSupportInfo(BaseModel):
+    """Canonical production support and retained-evidence status for one flag."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    flag: GovernedPerformanceFlag
+    classification: PerformanceFlagClassification
+    support_disposition: PerformanceFlagSupportDisposition
+    required_meaning: str
+    evidence_plan_id: str
+    evidence_manifest_artifact_sha256: str
+    retained_shard_status: RetainedSemanticVerdict
 
 
 # ---------------------------------------------------------------------------

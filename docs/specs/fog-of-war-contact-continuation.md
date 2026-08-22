@@ -4,6 +4,14 @@
 
 **Owner:** Phase 116 / REM-029
 
+> **Current-format note:** This document records the accepted Phase 116
+> format-116 boundary. Phase 118's current format 118 preserves the complete
+> contact/fusion/witness/targeting topology while adding bounded radar observer-
+> track supports, correlation-safe detached fusion prediction, performance
+> receipts, scan counts/cadence state, observer topology, and indexed FOW
+> randomness; explicit format 116 now rejects. References below to format 116
+> describe the historical Phase 116 contract, not the current engine version.
+
 ## Purpose and production boundary
 
 At the Phase 116 baseline, `FogOfWarManager.get_state()` serialized every
@@ -169,6 +177,35 @@ therefore applies the stronger roster and hostility checks.
   modeled role, logical time, and range. Contact records cannot stand in for
   this observer-local evidence.
 
+### Current format-118 observer support overlay
+
+Format 118 adds `observer_track_supports` beside, not inside, the bounded
+current-witness cache. One support record binds the complete reporting-side /
+observer / source-index / sensor / modeled-role / target identity to the exact
+live fusion-track generation. Only radar sensors in the closed seven-role fire-
+control set qualify. The record retains the successful observation ordinal and
+logical time, native period/residue and exact next deadline, position,
+velocity, and 4x4 covariance. A targeting decision may carry a deterministic
+projection only after the observation and strictly before that deadline.
+
+The support is removed when the native attachment becomes due, the contact or
+track is lost/replaced, or the roster/loadout/attachment binding is no longer
+valid. A later redetection or reappearance creates a new record bound to the
+new fusion generation; restore cannot extend or transplant the old support.
+Current decisions using `FOW_OBSERVER_TRACK_SUPPORT` must bind this exact state,
+the current contact and fusion alias, cadence, and privileged exposure
+association. SIDE_FOW exposes only that distinct source and the already opaque
+track ID. Missing, stale, reordered, cross-owner, or covariance-invalid support
+rejects before publication.
+
+This topology is retained for strict format-118 evidence and stored-exposure
+decoding, not advertised as a currently activatable runtime path. The terminal
+Phase 118 v7 study failed the frozen scan-scheduling and LOD semantic budgets,
+so new production configuration, API/analysis requests, manual runtime state,
+and current checkpoint restore reject both controls when enabled. With those
+deferral controls false, a new live run does not create
+`FOW_OBSERVER_TRACK_SUPPORT`; REM-054 / Phase 141 owns any future re-enablement.
+
 ### Contact information and track state
 
 - Both contact-info dictionaries have their exact key topology. Contact levels
@@ -333,12 +370,14 @@ capability.
 
 ## Non-goals and tracked boundaries
 
-- Phase 116 does not change detection probability, identification thresholds,
+- Phase 116 did not change detection probability, identification thresholds,
   estimator dynamics, measurement covariance, prediction timing, or track
-  association. Sensor-specific covariance/predictive estimation remains
-  REM-044 / Phase 131.
+  association. Phase 118 later added generic detached prediction and
+  correlation-safe same-epoch association without changing the unsourced
+  isotropic uncertainty model. Sourced per-sensor range/bearing/correlation
+  covariance and provenance remain REM-044 / Phase 131.
 - It does not turn current observer witnesses into an unbounded history.
-  Explicit old format 115 remains unsupported; current format 116 preserves
+  Explicit old format 115 remains unsupported; Phase 116 format 116 preserves
   and cross-validates only the cache supporting its bounded current interval.
 - It does not create data-link membership or wire `share_cop()` into production;
   production communications topology remains REM-036 / Phase 123.

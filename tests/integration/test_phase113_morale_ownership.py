@@ -136,6 +136,8 @@ def test_factory_loaded_zero_blend_retreat_preserves_morale_and_rng() -> None:
     )
     guerrilla.position = Position(1_000.0, 1_000.0, 0.0)
     enemy.position = Position(500.0, 1_000.0, 0.0)
+    ctx.unit_weapons[guerrilla.entity_id] = ()
+    ctx.unit_weapons[enemy.entity_id] = ()
 
     assert getattr(ctx, "population_engine", None) is None
     assert ctx.population_manager is not None
@@ -171,7 +173,6 @@ def test_factory_loaded_zero_blend_retreat_preserves_morale_and_rng() -> None:
             guerrilla.entity_id: guerrilla,
             enemy.entity_id: enemy,
         },
-        _lod_full_update=set(),
     )
 
     assert pending == []

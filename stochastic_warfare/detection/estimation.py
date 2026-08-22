@@ -24,6 +24,39 @@ logger = get_logger(__name__)
 _H = np.array([[1, 0, 0, 0], [0, 1, 0, 0]], dtype=np.float64)
 _EYE4 = np.eye(4, dtype=np.float64)
 
+
+def constant_velocity_projection_matrices(
+    dt_s: float,
+    process_noise_std_mps2: float,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Return the shared constant-velocity transition and process covariance."""
+    dt2 = dt_s * dt_s
+    dt3_over_2 = dt2 * dt_s / 2.0
+    dt4_over_4 = dt2 * dt2 / 4.0
+    transition = np.array(
+        [
+            [1.0, 0.0, dt_s, 0.0],
+            [0.0, 1.0, 0.0, dt_s],
+            [0.0, 0.0, 1.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ],
+        dtype=np.float64,
+    )
+    process_covariance = (
+        process_noise_std_mps2
+        * process_noise_std_mps2
+        * np.array(
+            [
+                [dt4_over_4, 0.0, dt3_over_2, 0.0],
+                [0.0, dt4_over_4, 0.0, dt3_over_2],
+                [dt3_over_2, 0.0, dt2, 0.0],
+                [0.0, dt3_over_2, 0.0, dt2],
+            ],
+            dtype=np.float64,
+        )
+    )
+    return transition, process_covariance
+
 # ---------------------------------------------------------------------------
 # Data types
 # ---------------------------------------------------------------------------
@@ -187,22 +220,10 @@ class StateEstimator:
         where all tracks share the same tick duration.
         """
         if dt != self._cached_dt:
-            q = self._config.process_noise_std
-            dt2 = dt * dt
-            dt3 = dt2 * dt / 2.0
-            dt4 = dt2 * dt2 / 4.0
-            self._cached_F = np.array([
-                [1, 0, dt, 0],
-                [0, 1, 0, dt],
-                [0, 0, 1, 0],
-                [0, 0, 0, 1],
-            ])
-            self._cached_Q = q * q * np.array([
-                [dt4, 0, dt3, 0],
-                [0, dt4, 0, dt3],
-                [dt3, 0, dt2, 0],
-                [0, dt3, 0, dt2],
-            ])
+            self._cached_F, self._cached_Q = constant_velocity_projection_matrices(
+                dt,
+                self._config.process_noise_std,
+            )
             self._cached_dt = dt
 
         F = self._cached_F
@@ -213,6 +234,7 @@ class StateEstimator:
 
         x_pred = F @ x
         P_pred = F @ P @ F.T + Q
+        P_pred = (P_pred + P_pred.T) * 0.5
 
         track.state = TrackState(
             position=x_pred[:2],
@@ -265,7 +287,14 @@ class StateEstimator:
 
         # Updated state
         x_new = x + K @ y
-        P_new = (_EYE4 - K @ _H) @ P
+        # Joseph's stabilized covariance form is algebraically equivalent to
+        # the compact update in exact arithmetic, while retaining the two
+        # positive-semidefinite contributions under floating-point rounding.
+        # Canonicalize the final matrix because covariance symmetry is a
+        # persisted production invariant, not merely a tolerant comparison.
+        residual = _EYE4 - K @ _H
+        P_new = residual @ P @ residual.T + K @ R @ K.T
+        P_new = (P_new + P_new.T) * 0.5
 
         track.state = TrackState(
             position=x_new[:2],

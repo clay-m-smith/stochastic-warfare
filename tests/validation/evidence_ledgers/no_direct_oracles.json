@@ -39,25 +39,25 @@
     },
     {
       "classification": "helper_assertion",
-      "node_id": "tests/integration/test_phase_111_time_on_target_checkpoint.py::test_corrupt_never_fired_boundary_is_rejected_atomically[weapon--1.0-Weapon last_fire_time_s must be the never-fired sentinel]",
+      "node_id": "tests/integration/test_phase_111_time_on_target_checkpoint.py::test_corrupt_never_fired_boundary_is_rejected_atomically[weapon--1.0-Weapon last_fire_time_s must be null]",
       "rationale": "A traced local helper contains the direct oracle.",
       "strongest_oracle": "called helper: _advance, _assert_atomic_rejection, _resource_record, _weapon_state"
     },
     {
       "classification": "helper_assertion",
-      "node_id": "tests/integration/test_phase_111_time_on_target_checkpoint.py::test_corrupt_never_fired_boundary_is_rejected_atomically[weapon-None-Weapon last_fire_time_s must be the never-fired sentinel]",
+      "node_id": "tests/integration/test_phase_111_time_on_target_checkpoint.py::test_corrupt_never_fired_boundary_is_rejected_atomically[weapon--inf-Weapon last_fire_time_s must be null]",
       "rationale": "A traced local helper contains the direct oracle.",
       "strongest_oracle": "called helper: _advance, _assert_atomic_rejection, _resource_record, _weapon_state"
     },
     {
       "classification": "helper_assertion",
-      "node_id": "tests/integration/test_phase_111_time_on_target_checkpoint.py::test_corrupt_never_fired_boundary_is_rejected_atomically[weapon-inf-Weapon last_fire_time_s must be the never-fired sentinel]",
+      "node_id": "tests/integration/test_phase_111_time_on_target_checkpoint.py::test_corrupt_never_fired_boundary_is_rejected_atomically[weapon-inf-Weapon last_fire_time_s must be null]",
       "rationale": "A traced local helper contains the direct oracle.",
       "strongest_oracle": "called helper: _advance, _assert_atomic_rejection, _resource_record, _weapon_state"
     },
     {
       "classification": "helper_assertion",
-      "node_id": "tests/integration/test_phase_111_time_on_target_checkpoint.py::test_corrupt_never_fired_boundary_is_rejected_atomically[weapon-nan-Weapon last_fire_time_s must be the never-fired sentinel]",
+      "node_id": "tests/integration/test_phase_111_time_on_target_checkpoint.py::test_corrupt_never_fired_boundary_is_rejected_atomically[weapon-nan-Weapon last_fire_time_s must be null]",
       "rationale": "A traced local helper contains the direct oracle.",
       "strongest_oracle": "called helper: _advance, _assert_atomic_rejection, _resource_record, _weapon_state"
     },
@@ -190,12 +190,6 @@
     {
       "classification": "structural_only",
       "node_id": "tests/unit/test_phase53_c2_ai.py::TestEscalationSubEngines::test_missing_political_engine_does_not_raise_structural_diagnostic",
-      "rationale": "The exact @pytest.mark.structural marker and absence of a direct assertion identify this as a reviewed compatibility diagnostic; it cannot support a behavioral capability or closure claim.",
-      "strongest_oracle": "explicit structural marker with successful completion but no direct assertion"
-    },
-    {
-      "classification": "structural_only",
-      "node_id": "tests/unit/test_phase53_c2_ai.py::TestFogOfWarWiring::test_missing_fow_does_not_raise_structural_diagnostic",
       "rationale": "The exact @pytest.mark.structural marker and absence of a direct assertion identify this as a reviewed compatibility diagnostic; it cannot support a behavioral capability or closure claim.",
       "strongest_oracle": "explicit structural marker with successful completion but no direct assertion"
     },

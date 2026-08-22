@@ -33,6 +33,7 @@ class _MockPosition:
 
 class _MockPosture:
     """Simulates an IntEnum posture."""
+
     def __init__(self, name: str):
         self.name = name
         self.value = 0
@@ -74,18 +75,13 @@ def _targeting_runtime(
 ) -> TacticalTargetingRuntime:
     return TacticalTargetingRuntime(
         sensing_aware_standoff_enabled=False,
-        unit_sides={
-            unit.entity_id: side
-            for side, units in units_by_side.items()
-            for unit in units
-        },
+        unit_sides={unit.entity_id: side for side, units in units_by_side.items() for unit in units},
     )
 
 
 def test_capture_frame_enriched_fields():
     """_capture_frame returns enriched fields when state dicts provided."""
-    unit = _MockUnit(entity_id="u1", posture_name="DEFENSIVE", fuel=0.6,
-                     personnel_eff=[True, True, False])
+    unit = _MockUnit(entity_id="u1", posture_name="DEFENSIVE", fuel=0.6, personnel_eff=[True, True, False])
     ctx = SimpleNamespace(
         units_by_side={"blue": [unit]},
         unit_sensors={},
@@ -100,7 +96,8 @@ def test_capture_frame_enriched_fields():
     engaged_ids = {"u1"}
 
     frame = RunManager._capture_frame(
-        tick=10, ctx=ctx,
+        tick=10,
+        ctx=ctx,
         morale_states=morale_states,
         suppression_states=suppression_states,
         engaged_ids=engaged_ids,
@@ -149,7 +146,8 @@ def test_capture_frame_no_personnel():
     )
 
     frame = RunManager._capture_frame(
-        tick=1, ctx=ctx,
+        tick=1,
+        ctx=ctx,
         morale_states={},
         suppression_states={},
         engaged_ids=set(),
@@ -174,11 +172,7 @@ def test_capture_frame_exposes_scenario_loader_ammunition_consumption():
         ctx=ctx,
         unit_weapons=ctx.unit_weapons,
     )
-    initial_entry = next(
-        entry
-        for entry in initial_frame["units"]
-        if entry["id"] == unit.entity_id
-    )
+    initial_entry = next(entry for entry in initial_frame["units"] if entry["id"] == unit.entity_id)
     assert initial_entry["ap"] == 1.0
 
     attachment = max(
@@ -192,24 +186,14 @@ def test_capture_frame_exposes_scenario_loader_ammunition_consumption():
     consumed = max(1, available // 2)
     assert attachment.weapon.ammo_state.consume(ammo_id, consumed)
 
-    total_remaining = sum(
-        sum(item.weapon.ammo_state.rounds_by_type.values())
-        for item in attachments
-    )
-    total_fired = sum(
-        item.weapon.ammo_state.total_rounds_fired
-        for item in attachments
-    )
+    total_remaining = sum(sum(item.weapon.ammo_state.rounds_by_type.values()) for item in attachments)
+    total_fired = sum(item.weapon.ammo_state.total_rounds_fired for item in attachments)
     consumed_frame = RunManager._capture_frame(
         tick=1,
         ctx=ctx,
         unit_weapons=ctx.unit_weapons,
     )
-    consumed_entry = next(
-        entry
-        for entry in consumed_frame["units"]
-        if entry["id"] == unit.entity_id
-    )
+    consumed_entry = next(entry for entry in consumed_frame["units"] if entry["id"] == unit.entity_id)
 
     assert consumed_entry["ap"] == round(
         total_remaining / (total_remaining + total_fired),
@@ -232,14 +216,18 @@ def settings() -> ApiSettings:
 async def client(settings: ApiSettings):
     app = create_app(settings)
     from api.dependencies import get_settings
+
     app.dependency_overrides[get_settings] = lambda: settings
 
     db = Database(settings.db_path)
     await db.initialize()
     app.state.db = db
     app.state.run_manager = RunManager(
-        db, data_dir=settings.data_dir,
-        max_concurrent=1, max_stored_events=50000, default_max_ticks=10000,
+        db,
+        data_dir=settings.data_dir,
+        max_concurrent=1,
+        max_stored_events=50000,
+        default_max_ticks=10000,
     )
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as c:
@@ -249,18 +237,36 @@ async def client(settings: ApiSettings):
 
 @pytest.mark.asyncio
 async def test_old_frames_deserialize_with_defaults(client: AsyncClient):
-    """Old runs without enriched fields should deserialize with defaults."""
+    """Paired legacy runs without enriched fields deserialize with defaults."""
     db = client._transport.app.state.db  # type: ignore[attr-defined]
     # Insert a run with old-style frames (no enriched fields)
     old_frames = [
-        {"tick": 0, "units": [
-            {"id": "u1", "side": "blue", "x": 100, "y": 200,
-             "d": 0, "s": 0, "h": 0, "t": "tank"},
-        ]},
+        {
+            "tick": 0,
+            "scope": "PRIVILEGED_ENGINE",
+            "units": [
+                {
+                    "id": "u1",
+                    "side": "blue",
+                    "x": 100,
+                    "y": 200,
+                    "d": 0,
+                    "s": 0,
+                    "h": 0,
+                    "t": "tank",
+                },
+            ],
+            "targeting": [],
+            "targeting_outcomes": [],
+            "side_fow_available": False,
+            "side_fow": {},
+            "side_fow_associations": {},
+        },
     ]
     await db.create_run("old_run", "test", "path", 42, 100)
     await db.update_run_status(
-        "old_run", "completed",
+        "old_run",
+        "completed",
         frames_json=json.dumps(old_frames),
         events_json="[]",
     )
@@ -285,16 +291,41 @@ async def test_enriched_frames_deserialize(client: AsyncClient):
     """New runs with enriched fields should deserialize correctly."""
     db = client._transport.app.state.db  # type: ignore[attr-defined]
     enriched_frames = [
-        {"tick": 5, "units": [
-            {"id": "u1", "side": "blue", "x": 100, "y": 200,
-             "d": 0, "s": 0, "h": 45, "t": "tank",
-             "mo": 2, "po": "DUG_IN", "hp": 0.75,
-             "fp": 0.5, "ap": 0.3, "su": 3, "eg": True},
-        ]},
+        {
+            "tick": 5,
+            "targeting_exposure_schema_version": 118,
+            "fog_of_war_enabled": False,
+            "scope": "PRIVILEGED_ENGINE",
+            "units": [
+                {
+                    "id": "u1",
+                    "side": "blue",
+                    "x": 100,
+                    "y": 200,
+                    "d": 0,
+                    "s": 0,
+                    "h": 45,
+                    "t": "tank",
+                    "mo": 2,
+                    "po": "DUG_IN",
+                    "hp": 0.75,
+                    "fp": 0.5,
+                    "ap": 0.3,
+                    "su": 3,
+                    "eg": True,
+                },
+            ],
+            "targeting": [],
+            "targeting_outcomes": [],
+            "side_fow_available": False,
+            "side_fow": {},
+            "side_fow_associations": {},
+        },
     ]
     await db.create_run("new_run", "test", "path", 42, 100)
     await db.update_run_status(
-        "new_run", "completed",
+        "new_run",
+        "completed",
         frames_json=json.dumps(enriched_frames),
         events_json="[]",
     )

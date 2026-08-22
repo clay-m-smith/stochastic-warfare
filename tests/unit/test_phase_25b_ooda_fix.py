@@ -7,9 +7,12 @@ plus real commander personality.
 
 from __future__ import annotations
 
+import json
 from datetime import datetime, timedelta, timezone
 from typing import Any
 from unittest.mock import MagicMock
+
+import pytest
 
 from stochastic_warfare.c2.ai.assessment import (
     AssessmentRating,
@@ -143,12 +146,17 @@ def _make_bm() -> BattleManager:
     return BattleManager(EventBus())
 
 
-def _assessment(unit_id: str = "u1") -> SituationAssessment:
+def _assessment(
+    unit_id: str = "u1",
+    *,
+    force_ratio: float = 2.0,
+    force_ratio_rating: AssessmentRating = AssessmentRating.FAVORABLE,
+) -> SituationAssessment:
     return SituationAssessment(
         unit_id=unit_id,
         timestamp=TS,
-        force_ratio=2.0,
-        force_ratio_rating=AssessmentRating.FAVORABLE,
+        force_ratio=force_ratio,
+        force_ratio_rating=force_ratio_rating,
         terrain_advantage=0.25,
         terrain_rating=AssessmentRating.FAVORABLE,
         supply_level=0.8,
@@ -272,6 +280,43 @@ class TestAssessmentCache:
 
         assert restored._cached_assessments == {"u1": _assessment()}
         assert restored.get_state() == state_before
+
+    def test_unbounded_force_ratio_round_trips_through_finite_json(self) -> None:
+        bm = _make_bm()
+        bm._cached_assessments["u1"] = _assessment(
+            force_ratio=float("inf"),
+            force_ratio_rating=AssessmentRating.VERY_FAVORABLE,
+        )
+
+        state_before = bm.get_state()
+        assert state_before["cached_assessments"]["u1"]["force_ratio"] is None
+        json.dumps(state_before, allow_nan=False)
+
+        restored = _make_bm()
+        restored.set_state(state_before)
+
+        restored_assessment = restored._cached_assessments["u1"]
+        assert restored_assessment.force_ratio == float("inf")
+        assert restored_assessment.force_ratio_rating is AssessmentRating.VERY_FAVORABLE
+        assert restored.get_state() == state_before
+
+    def test_unbounded_force_ratio_rejects_inconsistent_rating(self) -> None:
+        bm = _make_bm()
+        state = bm.get_state()
+        state["cached_assessments"] = {
+            "u1": BattleManager._assessment_state(_assessment()),
+        }
+        state["cached_assessments"]["u1"]["force_ratio"] = None
+
+        with pytest.raises(ValueError, match="VERY_FAVORABLE"):
+            bm.set_state(state)
+
+        bm._cached_assessments["u1"] = _assessment(
+            force_ratio=float("inf"),
+            force_ratio_rating=AssessmentRating.FAVORABLE,
+        )
+        with pytest.raises(ValueError, match="VERY_FAVORABLE"):
+            bm.get_state()
 
     def test_multiple_units_cached_independently(self) -> None:
         from stochastic_warfare.c2.ai.ooda import OODAPhase
@@ -876,12 +921,16 @@ class TestBackwardCompat:
         call_args = mock_assessor.assess.call_args
         assert call_args[1]["morale_level"] == 0.5  # BROKEN
 
-    def test_set_state_clears_assessment_cache(self) -> None:
-        """Checkpoint restore must clear transient assessment cache."""
+    def test_incomplete_state_rejects_without_clearing_assessment_cache(
+        self,
+    ) -> None:
+        """Strict restore rejects incomplete state without clearing the cache."""
         bm = _make_bm()
-        bm._cached_assessments["u1"] = MagicMock()
-        bm._cached_assessments["u2"] = MagicMock()
-        assert len(bm._cached_assessments) == 2
+        bm._cached_assessments["u1"] = _assessment("u1")
+        bm._cached_assessments["u2"] = _assessment("u2")
+        before = bm.get_state()
 
-        bm.set_state({"battles": {}, "next_battle_id": 0})
-        assert len(bm._cached_assessments) == 0
+        with pytest.raises(ValueError, match="key topology"):
+            bm.set_state({"battles": {}, "next_battle_id": 0})
+
+        assert bm.get_state() == before

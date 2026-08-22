@@ -136,6 +136,7 @@ def _successful_result(
         math.hypot(dx, dy),
         sensor.sensor_type,
         math.degrees(math.atan2(dx, dy)) % 360.0,
+        horizontal_range_m=math.hypot(dx, dy),
     )
 
 
@@ -461,21 +462,20 @@ def test_witnesses_and_contacts_restore_exactly_with_fusion_alias(
     assert set(state) == {
         "world_views",
         "current_detection_witnesses",
+        "observer_track_supports",
         "rng_state",
         "intel_fusion",
+        "scan_counts",
+        "cadence",
     }
-    assert state["current_detection_witnesses"]["blue"] == [
-        witness.get_state() for witness in expected_witnesses
-    ]
+    assert state["current_detection_witnesses"]["blue"] == [witness.get_state() for witness in expected_witnesses]
 
     manager.set_state(state)
     assert manager.get_state() == state
     assert manager.get_current_detection_witnesses("blue") == expected_witnesses
     in_place_contact = manager.get_contact("blue", "target")
     assert in_place_contact is not None
-    assert in_place_contact.track is manager.intel_fusion.get_tracks("blue")[
-        in_place_contact.track.track_id
-    ]
+    assert in_place_contact.track is manager.intel_fusion.get_tracks("blue")[in_place_contact.track.track_id]
     assert in_place_contact.track is not source_track
 
     restored = _manager(seed=800)
@@ -484,9 +484,7 @@ def test_witnesses_and_contacts_restore_exactly_with_fusion_alias(
     assert restored.get_current_detection_witnesses("blue") == expected_witnesses
     fresh_contact = restored.get_contact("blue", "target")
     assert fresh_contact is not None
-    assert fresh_contact.track is restored.intel_fusion.get_tracks("blue")[
-        fresh_contact.track.track_id
-    ]
+    assert fresh_contact.track is restored.intel_fusion.get_tracks("blue")[fresh_contact.track.track_id]
 
 
 def test_legacy_sensor_projection_detects_without_fabricating_witness() -> None:
@@ -766,10 +764,7 @@ def test_three_side_catalog_sensor_parallel_matches_sequential_exactly() -> None
     restored_state = restored.get_state()
     assert restored_state == expected["fow_state"]
     assert restored_state["world_views"] == expected["world_views"]
-    assert [
-        asdict(witness)
-        for witness in restored.get_current_detection_witnesses()
-    ] == expected["witnesses"]
+    assert [asdict(witness) for witness in restored.get_current_detection_witnesses()] == expected["witnesses"]
     for side in canonical_order:
         fusion_tracks = restored.intel_fusion.get_tracks(side)
         for contact in restored.get_world_view(side).contacts.values():

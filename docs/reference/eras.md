@@ -56,8 +56,12 @@ wiring or outcome effects.
     `current_engine_regression_only` or `unsupported`. The current ledger has
     zero production-validated scenarios. The retained 73 Easting study is a
     completed, non-promotable `FAIL`; see the
-    [contract](../specs/historical-outcome-envelope-integrity.md) and
-    [artifact](../evidence/phase-117/73-easting-phase117.json).
+    [contract](../specs/historical-outcome-envelope-integrity.md). Its artifact
+    SHA-256 is
+    `57bfe7d89575e721d9cee30c213505c760da3cede642624c7ed7532051e524f4`;
+    the local, unpublished off-main locator is
+    `branch=evidence/full; path=docs/evidence/phase-117/73-easting-phase117.json`,
+    pending a separate evidence-remote or Git LFS decision.
 
 ---
 
@@ -529,7 +533,7 @@ historical calibration.
 
 The effective values construct `SimulationClock`, `SimulationEngine`,
 `MedicalEngine`, and `MaintenanceEngine`, contribute to runtime/API config
-fingerprints, and persist in checkpoint format 116. Automatic casualty
+fingerprints, and persist in checkpoint format 118. Automatic casualty
 admission, medical-facility topology, equipment registration and repair-spares
 initiation, communications topology, and scheduled nuclear employment remain
 separate remediations. See the

@@ -451,7 +451,7 @@ class IndirectFireEngine:
     ) -> dict[str, Any]:
         """Canonicalize one persisted ``WeaponInstance`` authority snapshot."""
         last_fire_time_s = state["last_fire_time_s"]
-        if last_fire_time_s == float("-inf"):
+        if last_fire_time_s is None:
             canonical_last_fire: float | None = None
         elif (
             isinstance(last_fire_time_s, bool)
@@ -460,7 +460,7 @@ class IndirectFireEngine:
             or float(last_fire_time_s) < 0.0
         ):
             raise ValueError(
-                "Weapon last_fire_time_s must be the never-fired sentinel or "
+                "Weapon last_fire_time_s must be null or "
                 "a finite non-negative number",
             )
         else:

@@ -51,6 +51,10 @@ REFERENCE_COMMIT = "0460ac70be86784bcc6e359ae4202f4bcb938c60"
 POLICY_VERSION = 4
 RUNTIME_INPUT_POLICY_VERSION = 3
 WORKER_RECORDER_MAX_EVENTS = 5_000_000
+_LEGACY_FALSE_RECORDER_FIELDS = (
+    "strict_extraction_errors",
+    "strict_overflow",
+)
 DEFAULT_MAX_TICKS = 20_000
 PAIR_ORDERS: list[list[Literal["reference", "candidate"]]] = [
     ["reference", "candidate"],
@@ -2085,7 +2089,9 @@ def _runtime_input_manifest(
         "dependency_lock_sha256": _file_sha256(repo_root / "uv.lock"),
         "seed": seed,
         "max_ticks": max_ticks,
-        "recorder_config": recorder_config,
+        "recorder_config": _normalize_recorder_config_identity(
+            recorder_config,
+        ),
         "effective_inputs": effective_inputs,
         "sources": [source.model_dump(mode="python") for source in sources],
     }
@@ -2093,6 +2099,23 @@ def _runtime_input_manifest(
         **payload,
         fingerprint=canonical_sha256(payload),
     )
+
+
+def _normalize_recorder_config_identity(
+    recorder_config: dict[str, Any],
+) -> dict[str, Any]:
+    """Unify only new false strictness fields with legacy recorder behavior.
+
+    Older benchmark revisions predate these fields.  Their absence means the
+    same silent-overflow and extraction-fallback behavior now represented by
+    an exact ``False``.  A true or otherwise non-false value remains in the
+    manifest and therefore changes its fingerprint.
+    """
+    normalized = dict(recorder_config)
+    for field_name in _LEGACY_FALSE_RECORDER_FIELDS:
+        if normalized.get(field_name) is False:
+            normalized.pop(field_name)
+    return normalized
 
 
 def _strict_recorder(context: Any) -> Any:

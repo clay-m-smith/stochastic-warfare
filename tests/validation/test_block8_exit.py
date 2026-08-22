@@ -190,8 +190,8 @@ class TestEC5_TerminalDeclarations:
         )
 
     def test_authored_force_destroyed_does_not_imply_terminal_condition(self):
-        """Three authored force conditions currently terminate by time expiry."""
-        for scenario_dir in ["73_easting", "bekaa_valley_1982", "golan_heights"]:
+        """Two authored force conditions currently terminate by time expiry."""
+        for scenario_dir in ["73_easting", "golan_heights"]:
             path = _DATA / "scenarios" / scenario_dir / "scenario.yaml"
             assert path.is_file()
             with open(path) as f:

@@ -364,7 +364,7 @@ def test_checkpoint_exposes_effective_format_116_contract(
     )
     state = SimulationEngine(context).get_state()
 
-    assert state["checkpoint_version"] == 116
+    assert state["checkpoint_version"] == 118
     assert set(state["context"]["era_runtime_contract"]) == {
         "selected_registry_id",
         "era",

@@ -1,16 +1,12 @@
-"""Phase 89a: Per-side parallel detection threading.
+"""Phase 89a compatibility tests for side-local FOW updates.
 
-Tests for ThreadPoolExecutor-based per-side FOW detection dispatch,
-RNG stream forking for determinism, and backward compatibility.
+Phase 118 production dispatch and indexed-RNG behavior are covered by the
+receipt, determinism, and production semantic-execution suites.
 """
 
 from __future__ import annotations
 
-import inspect
-import time
-
 import numpy as np
-import pytest
 
 from stochastic_warfare.core.types import Position
 from stochastic_warfare.detection.detection import DetectionEngine
@@ -21,7 +17,6 @@ from stochastic_warfare.detection.intel_fusion import IntelFusionEngine
 from stochastic_warfare.detection.deception import DeceptionEngine
 from stochastic_warfare.detection.sensors import SensorDefinition, SensorInstance
 from stochastic_warfare.detection.signatures import SignatureProfile, VisualSignature
-from stochastic_warfare.simulation.battle import BattleManager
 from stochastic_warfare.simulation.calibration import CalibrationSchema
 
 
@@ -299,27 +294,3 @@ class TestBackwardCompatibility:
         enemy = [_enemy_unit("t1", 100.0, 0.0, signature=_profile(10000.0))]
         wv = fow.update("blue", own, enemy, dt=1.0)  # No rng param
         assert isinstance(wv, SideWorldView)
-
-
-class TestStructural:
-    """Source-level verification of Phase 89 wiring."""
-
-    def test_parallel_detection_consumed_in_battle(self) -> None:
-        """enable_parallel_detection read in execute_tick source."""
-        src = inspect.getsource(BattleManager.execute_tick)
-        assert "enable_parallel_detection" in src
-
-    def test_thread_pool_in_battle(self) -> None:
-        """ThreadPoolExecutor used in execute_tick for parallel dispatch."""
-        src = inspect.getsource(BattleManager.execute_tick)
-        assert "ThreadPoolExecutor" in src
-
-    def test_rng_param_in_fow_update(self) -> None:
-        """FogOfWarManager.update accepts rng parameter."""
-        src = inspect.getsource(FogOfWarManager.update)
-        assert "rng" in src
-
-    def test_rng_param_in_check_detection(self) -> None:
-        """DetectionEngine.check_detection accepts rng parameter."""
-        src = inspect.getsource(DetectionEngine.check_detection)
-        assert "rng" in src

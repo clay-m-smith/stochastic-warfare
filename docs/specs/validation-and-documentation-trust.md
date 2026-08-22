@@ -10,6 +10,32 @@ REM-025, REM-026, and REM-027
 > **Subsequent status:** Phase 116 promoted the clean Phase 115 73 Easting
 > endpoint to the ordinary version-4 paired gate and implemented exact nonempty
 > ordinary-contact continuation; its accepted postmortem closed REM-029.
+> Phase 117 closed REM-030 with a typed claim ledger and truthful failed study.
+> Phase 118's current implementation advances checkpointing to format 118 and
+> adds typed performance classifications/receipts and indexed FOW randomness;
+> immutable v6 remains a terminal `ERROR`, not accepted evidence, retained at
+> `branch=evidence/full; path=docs/evidence/phase-118/v6-terminal/`. The
+> owner-approved schema-2 `phase118-performance-semantics-v7` study completed
+> all 96 pairs / 396 attempts and independently reloaded as
+> an eligible terminal `FAIL` under `EXTERNALLY_CONTENDED`, with manifest
+> artifact SHA-256
+> `bf9e00ce4a7774af29b5657c49bbbe4481b407a966d9922e48970022f5c6ad86`.
+> Detection culling, SoA selection, and parallel detection retain exact support;
+> scan scheduling, LOD, and nondefault LOD tuning are explicitly unsupported.
+> The v7 bytes remain at
+> `branch=evidence/full; path=docs/evidence/phase-118/v7-terminal/`; ordinary
+> `main` validation does not fetch or reinterpret them. Every execution entry
+> point in the retained evidence harness rejects the terminal plan ID or any
+> burned v7 seed before construction.
+> The canonical runtime handoff reconstructs execution
+> snapshot `2f10ab7c...e9a8` into retirement snapshot
+> `0a6b32a4...bf07` through fifteen modified paths, with handoff self-digest
+> `b505edc4...746d`. These locators currently name a local, unpublished branch
+> pending a separate evidence-remote or Git LFS decision; storage there does
+> not require future phases to equal the retirement tree.
+> The accepted qualified-negative postmortem closed Phase 118 / REM-031.
+> REM-055 / Phase 142 owns the separately measured transactional-FOW runtime
+> regression, and no speed claim follows.
 > Phase 112's empty-world-view Space ISR fixtures and the historical future-work
 > statements below remain scoped evidence rather than current limitations.
 
@@ -90,8 +116,9 @@ CI enforces this cadence:
   path, terrain dependency profile, and strict documentation on every pull
   request and push to `main`;
 - the refactored `slow-only`, `benchmark-only`, and `slow-benchmark`
-  partitions on a declared weekly schedule and manual dispatch, sharded with
-  measured job timeouts that do not conceal a timeout as a skip; and
+  partitions on a declared weekly schedule and manual dispatch: slow-only uses
+  fifteen shards, benchmark-only uses three, and slow-benchmark uses one, all
+  with measured job timeouts that do not conceal a timeout as a skip; and
 - the routine 73 Easting benchmark workflow on every pull request and push,
   using the ordinary paired performance gate when its workload identity is
   stable and the strict non-timing transition path during a reviewed workload
@@ -1623,18 +1650,56 @@ Phase 112 is complete only when:
   movement or combat physics; Phase 115 supplied the accepted production,
   checkpoint/exposure, qualified broad-run, documentation, and postmortem
   evidence.
-- REM-029 owns exact restoration of nonempty ordinary fog-of-war contacts,
-  is assigned to planned Phase 116, and addresses what current
-  `FogOfWarManager.set_state()` discards. REM-027 proves fusion
-  queue/track/receipt continuation only under an explicitly empty ordinary
-  world-view topology.
+- REM-029 is closed by completed Phase 116, which restores exact nonempty
+  ordinary fog-of-war contacts. Phase 118's current format 118 preserves that
+  topology while adding performance receipts, cadence state, observer topology,
+  and indexed FOW randomness. REM-027's original proof remains scoped to an
+  explicitly empty ordinary world-view topology.
 - Phase 117 completed the repository-wide typed claim inventory and
   fail-closed production study boundary, classifies zero claims as
   production-validated, and closed REM-030 with a truthful failed study. The
   Phase 112 relabeling did not itself establish catalog-wide validity.
-- REM-031 owns per-flag semantic classification and common-seed production
-  off/on evidence and remains assigned to planned Phase 118. Battalion and
-  brigade runs remain `measurement_only`, not performance-regression evidence.
+- REM-031 owned per-flag semantic classification and common-seed production
+  off/on evidence and is closed by completed Phase 118. The immutable v7 plan
+  `phase118-performance-semantics-v7` completed all 96 pairs / 396 attempts and
+  independently reloaded as an eligible terminal `FAIL` under
+  `EXTERNALLY_CONTENDED`; manifest artifact SHA-256
+  `bf9e00ce4a7774af29b5657c49bbbe4481b407a966d9922e48970022f5c6ad86`.
+  Detection culling, SoA selection, and parallel detection retain exact `PASS`
+  support. Scan scheduling and sensing-only LOD retain model-fidelity
+  classifications but are `unsupported_failed_semantic_validation`; current
+  YAML, API, analysis, runtime, and checkpoint boundaries also reject
+  nondefault LOD tuning. Authored configuration, typed calibration, flattened
+  calibration, and committed receipt flags are cross-bound before work and
+  receipt exposure. `GET /api/meta/performance-flags` exposes the canonical
+  status. The immutable v6 terminal `ERROR` is retained at
+  `branch=evidence/full; path=docs/evidence/phase-118/v6-terminal/` (manifest
+  artifact SHA-256
+  `eb8e12f147c14ee4e83e7f5e80e4b1e50aa2bfe847d5e5e681b2462f7850051a`), and
+  the v7 terminal `FAIL` is retained at
+  `branch=evidence/full; path=docs/evidence/phase-118/v7-terminal/` (manifest
+  artifact SHA-256
+  `bf9e00ce4a7774af29b5657c49bbbe4481b407a966d9922e48970022f5c6ad86`).
+  The typed execution-to-retirement handoff remains at
+  `branch=evidence/full; path=docs/evidence/phase-118/runtime-manifest-handoff.json`
+  with SHA-256
+  `b505edc418f87ffdf659bed52b502cef043df472c8a04696d0fda8d99d4e746d`.
+  Those locators currently name a local, unpublished branch pending a separate
+  evidence-remote or Git LFS decision. Main validation does not require the
+  archives to be fetched and cannot rerun or reinterpret them. The handoff
+  reconstructs the exact 1,408-entry execution snapshot into the reviewed
+  1,408-entry retirement snapshot through fifteen content-addressed
+  modifications; historical mode remains durable after later phases, while the
+  Phase 118 closure run additionally required an exact current-tree match.
+  Every execution entry point in the retained evidence harness rejects the
+  terminal plan ID or any burned v7 seed before construction. The current
+  runtime
+  cannot emit non-null observer-track support; the dormant algorithm and codec
+  contract remain, while REM-054 / Phase 141 owns a supported reachable path.
+  The accepted qualified-negative postmortem closed Phase 118 / REM-031;
+  REM-055 / Phase 142 owns the separately measured runtime regression.
+  Battalion and brigade semantic-study runs remain `measurement_only`, and no
+  speed claim follows from that study.
 - Phase 112 does not recalibrate commander traits, unit skills, weapons,
   sensors, scenario outcomes, or performance workloads.
 - Direct Space ISR injection into ordinary fog-of-war contacts remains

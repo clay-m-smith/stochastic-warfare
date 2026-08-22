@@ -835,16 +835,24 @@ class RunManager:
             raise ValueError(
                 "frame capture requires a TacticalTargetingRuntime owner",
             )
+        fog_of_war_enabled = cal_flat.get("enable_fog_of_war", False)
+        if type(fog_of_war_enabled) is not bool:
+            raise ValueError(
+                "runtime enable_fog_of_war must be a boolean",
+            )
         exposure = capture_targeting_exposure(
             engine_tick=tick,
             runtime=targeting_runtime,
             fog_of_war=fow,
-            fog_of_war_enabled=bool(
-                cal_flat.get("enable_fog_of_war", False),
-            ),
+            fog_of_war_enabled=fog_of_war_enabled,
             viewer_sides=tuple(ctx.units_by_side),
         )
-        result.update(exposure.to_wire(unit_frames=units))
+        result.update(
+            exposure.to_wire(
+                unit_frames=units,
+                fog_of_war_enabled=fog_of_war_enabled,
+            ),
+        )
         return result
 
     # ── Batch ────────────────────────────────────────────────────────

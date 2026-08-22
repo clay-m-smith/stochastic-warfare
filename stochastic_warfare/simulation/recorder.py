@@ -15,7 +15,7 @@ from dataclasses import asdict, dataclass
 from datetime import datetime
 from typing import Any, Callable
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, StrictBool
 
 from stochastic_warfare.core.events import Event, EventBus
 from stochastic_warfare.core.logging import get_logger
@@ -31,9 +31,13 @@ logger = get_logger(__name__)
 class RecorderConfig(BaseModel):
     """Configuration for the simulation event recorder."""
 
+    model_config = ConfigDict(extra="forbid")
+
     max_events: int = 1_000_000
     snapshot_interval_ticks: int = 100
     enabled: bool = True
+    strict_overflow: StrictBool = False
+    strict_extraction_errors: StrictBool = False
 
 
 # ---------------------------------------------------------------------------
@@ -122,6 +126,11 @@ class SimulationRecorder:
         if not self._config.enabled:
             return
         if len(self._events) >= self._config.max_events:
+            if self._config.strict_overflow:
+                raise RuntimeError(
+                    "Simulation recorder event limit exceeded before "
+                    "recording the complete event stream",
+                )
             return  # silently drop if at capacity
 
         recorded = RecordedEvent(
@@ -133,8 +142,7 @@ class SimulationRecorder:
         )
         self._events.append(recorded)
 
-    @staticmethod
-    def _extract_event_data(event: Event) -> dict[str, Any]:
+    def _extract_event_data(self, event: Event) -> dict[str, Any]:
         """Extract event fields into a serializable dict.
 
         Removes base ``Event`` fields (timestamp, source) that are already
@@ -151,7 +159,12 @@ class SimulationRecorder:
                 k: (v.value if hasattr(v, "value") else v)
                 for k, v in d.items()
             }
-        except Exception:
+        except Exception as exc:
+            if self._config.strict_extraction_errors:
+                raise RuntimeError(
+                    "Simulation recorder could not extract complete event "
+                    "data",
+                ) from exc
             return {}
 
     # ── Tick tracking ─────────────────────────────────────────────────

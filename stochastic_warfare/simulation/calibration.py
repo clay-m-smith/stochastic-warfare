@@ -18,7 +18,18 @@ import copy
 import math
 from typing import Any, ClassVar, Literal
 
-from pydantic import BaseModel, ConfigDict, StrictBool, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StrictBool,
+    StrictInt,
+    model_validator,
+)
+
+from stochastic_warfare.simulation.performance_flags import (
+    resolve_supported_runtime_performance_flags,
+)
 
 
 class SideCalibration(BaseModel):
@@ -227,21 +238,21 @@ class CalibrationSchema(BaseModel):
     human_shield_pk_reduction: float = 0.5
 
     # -- Spatial culling & scan scheduling (Phase 84) --------------------
-    enable_detection_culling: bool = True
-    enable_scan_scheduling: bool = False
+    enable_detection_culling: StrictBool = True
+    enable_scan_scheduling: StrictBool = False
 
     # -- LOD tiering (Phase 85) -------------------------------------------
-    enable_lod: bool = False
+    enable_lod: StrictBool = False
 
     # -- SoA data layer (Phase 88) ----------------------------------------
-    enable_soa: bool = False
+    enable_soa: StrictBool = False
 
     # -- Per-side parallelism (Phase 89) -----------------------------------
-    enable_parallel_detection: bool = False
+    enable_parallel_detection: StrictBool = False
 
-    lod_nearby_interval: int = 5
-    lod_distant_interval: int = 20
-    lod_hysteresis_ticks: int = 3
+    lod_nearby_interval: StrictInt = Field(default=5, ge=1)
+    lod_distant_interval: StrictInt = Field(default=20, ge=1)
+    lod_hysteresis_ticks: StrictInt = Field(default=3, ge=1)
 
     # -- Meta-flag (Phase 80) ---------------------------------------------
     enable_all_modern: bool = False
@@ -452,6 +463,12 @@ class CalibrationSchema(BaseModel):
     @model_validator(mode="after")
     def _reject_nonfinite_values(self) -> CalibrationSchema:
         """Synchronize the compatibility mirror and reject non-finite data."""
+        resolve_supported_runtime_performance_flags(self)
+        if self.lod_distant_interval < self.lod_nearby_interval:
+            raise ValueError(
+                "lod_distant_interval must be greater than or equal to "
+                "lod_nearby_interval",
+            )
         if (
             "morale" in self.model_fields_set
             and "degrade_rate_modifier"

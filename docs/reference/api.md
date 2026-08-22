@@ -22,9 +22,12 @@ OpenAPI docs are available at `/api/docs` (Swagger UI) and `/api/redoc`.
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/api/health` | Service health check (version, scenario/unit counts) |
+| GET | `/api/health/live` | Process liveness probe |
+| GET | `/api/health/ready` | Dependency and catalog readiness probe |
 | GET | `/api/meta/eras` | Available eras with disabled modules |
 | GET | `/api/meta/doctrines` | Doctrine templates |
 | GET | `/api/meta/terrain-types` | Terrain type list |
+| GET | `/api/meta/performance-flags` | Canonical governed-flag classifications, current support dispositions, and retained v7 evidence identity |
 | GET | `/api/scenarios` | List all scenarios (base + era), each with typed historical-validation status |
 | GET | `/api/scenarios/{name}` | Public scenario config, force summary, and typed historical-validation status |
 | POST | `/api/scenarios/validate` | Validate a scenario config against pydantic schema |
@@ -50,14 +53,48 @@ OpenAPI docs are available at `/api/docs` (Swagger UI) and `/api/redoc`.
 | GET | `/api/runs/{id}/analytics/morale` | Morale state distribution by tick |
 | GET | `/api/runs/{id}/analytics/engagements` | Engagement summary with hit rates by type |
 | GET | `/api/runs/{id}/analytics/summary` | Combined analytics (all 4 above) |
-| GET | `/api/meta/schools` | Doctrinal schools (9) with OODA multiplier |
-| GET | `/api/meta/commanders` | 13 base/global commander profiles with personality traits; 13 era-specific profiles remain omitted (REM-049) |
+| GET | `/api/meta/schools` | Base/global doctrinal schools with OODA multiplier |
+| GET | `/api/meta/commanders` | Base/global commander profiles with personality traits; era-specific profiles remain omitted (REM-049) |
 | GET | `/api/meta/weapons` | Weapon catalog (all eras) |
 | GET | `/api/meta/weapons/{id}` | Full weapon definition |
 | POST | `/api/analysis/compare` | A/B configuration comparison |
 | POST | `/api/analysis/sweep` | Parameter sensitivity sweep |
 | POST | `/api/analysis/doctrine-compare` | Common-seed doctrinal-policy comparison |
 | GET | `/api/analysis/tempo/{id}` | Operational tempo analysis |
+
+### Performance-flag support contract
+
+`GET /api/meta/performance-flags` returns the immutable registry in canonical
+order. Each row contains `flag`, `classification`, `support_disposition`,
+`required_meaning`, `evidence_plan_id`,
+`evidence_manifest_artifact_sha256`, and `retained_shard_status`.
+
+The retained plan is `phase118-performance-semantics-v7`. It completed all 96
+pairs / 396 attempts and independently reloaded as an eligible terminal
+`FAIL` under `EXTERNALLY_CONTENDED`; the immutable manifest artifact SHA-256
+is `bf9e00ce4a7774af29b5657c49bbbe4481b407a966d9922e48970022f5c6ad86`.
+Detection culling, SoA selection, and parallel detection are
+`supported_exact_validated` with retained `PASS`. Scan scheduling and LOD are
+`unsupported_failed_semantic_validation` with retained `FAIL`.
+
+Run, inline-scenario, comparison, and sensitivity request boundaries reject a
+retired flag enabled or any nondefault LOD tuning value with HTTP 422 before a
+run/batch row or background task is created. The same fail-closed disposition
+applies to scenario YAML, direct analysis/runtime construction, live owner
+drift, and current-checkpoint restore. The v7 result and its externally
+contended qualification support no speed claim. The accepted
+qualified-negative postmortem closed Phase 118 / REM-031. The terminal v6
+`ERROR` remains negative evidence at
+`branch=evidence/full; path=docs/evidence/phase-118/v6-terminal/` (manifest
+artifact SHA-256
+`eb8e12f147c14ee4e83e7f5e80e4b1e50aa2bfe847d5e5e681b2462f7850051a`), and
+the v7 `FAIL` remains at
+`branch=evidence/full; path=docs/evidence/phase-118/v7-terminal/` (manifest
+artifact SHA-256
+`bf9e00ce4a7774af29b5657c49bbbe4481b407a966d9922e48970022f5c6ad86`).
+Those locators currently name a local, unpublished branch pending a separate
+evidence-remote or Git LFS decision. Ordinary `main` validation neither fetches
+nor reinterprets either study.
 
 ### Scenario historical-validation contract
 
@@ -96,34 +133,78 @@ a completed `FAIL` rather than accepted evidence.
 ### Frame targeting exposure
 
 Completed runs store the paired targeting projections introduced with format
-115 at each captured map frame. Current checkpoint format 116 additionally
-preserves the contact/witness evidence behind a current consumable projection;
-the REST schema itself is unchanged:
+115 at each captured map frame. Format 118 adds the strict root discriminator
+`targeting_exposure_schema_version=118`, a required runtime-owned
+`fog_of_war_enabled` mode, a required-nullable
+`observer_track_support` field to each privileged targeting decision and the
+`FOW_OBSERVER_TRACK_SUPPORT` contact-source value. A non-null support record is
+exact engine evidence: it identifies the reporting side, observer, source
+equipment index, sensor, one of the seven supported fire-control-radar roles,
+and target; binds the exact fusion track; and exposes observation/native-
+deadline chronology plus the projected position, velocity, and 4x4 covariance.
+It is not a historical sensor-accuracy claim.
+
+The support field remains required-nullable so immutable format-118 evidence
+and the dormant scan-deferral algorithm decode strictly. Current supported
+production cannot emit a non-null support because scan scheduling and LOD
+activation are rejected after the terminal semantic `FAIL`; REM-054 / Phase
+141 owns restoring a supported production-reachable emission path.
 
 - `scope=PRIVILEGED_ENGINE` returns exact engine/evaluator evidence, including
-  ground-truth target and source-attachment identity. It is the current default
-  when `scope` is omitted and rejects a `side` parameter.
+  ground-truth target and source-attachment identity and, when used, the full
+  observer-track support record. It is the current default when `scope` is
+  omitted and rejects a `side` parameter.
 - `scope=SIDE_FOW&side=<side-id>` returns only that side's frame roster and
   opaque current owner-side track evidence. Track IDs are target-independent,
   side-local ordinals allocated in canonical first-detection order; hidden
-  target/entity and attachment identity is omitted. The stored payload's exact
-  `viewer_side` must match the requested side, including for an empty side.
-  Missing `side` returns 422; a side absent from the captured projection
-  returns 409.
+  target/entity and attachment identity is omitted. A supported decision may
+  expose `contact_source=FOW_OBSERVER_TRACK_SUPPORT` and its opaque
+  `target_track_id`, but never the nested support identity, target ID, source
+  index, sensor ID/role, covariance, or observation/native-deadline chronology.
+  The stored payload's exact `viewer_side` must match the requested side,
+  including for an empty side. Missing `side` returns 422; a side absent from
+  the captured projection returns 409.
 
 Targeting-decision ordinals in `SIDE_FOW` are separately recomputed from zero
 per battle and viewer side; they are not the privileged all-sides picture
 ordinal and therefore do not reveal how many opposing shooters sort ahead of
-the viewer. The decoder re-derives and compares every public decision and
-revalidation field against the privileged source plus the root-only
-association. An internally valid but altered standoff, logical time,
-disposition, or outcome is rejected rather than trusted as stored public data.
+the viewer. One atomic stored-frame decoder validates the privileged decisions
+and outcomes, root roster, complete set of side views and side rosters, and
+every root target-to-track association before either API scope or replay
+returns. It re-derives and compares every public decision and revalidation
+field against the privileged source plus the root-only association. An
+internally valid but altered standoff, logical time, disposition, support
+track, or outcome is rejected rather than trusted as stored public data. A
+frame that declares SIDE_FOW unavailable must have empty side and association
+envelopes; a current FOW frame must contain exactly one view for every root-
+roster side. The strict root FOW mode must equal both SIDE_FOW availability
+and every nonempty decision interval, so an empty FOW interval cannot be
+downgraded merely by clearing its side envelopes. Current capture rejects a
+nonboolean effective runtime mode instead of coercing it.
 
 The stored root frame carries a privileged-only exact target-to-track
 association map so the decoder can prove that each opaque track identifier is
 the same contact used by the engine decision. Missing associations or same-side
 track rebinding reject; this map is never returned in `SIDE_FOW`, replay, or
 frontend payloads.
+
+Tick-range filters are applied only after every stored frame has passed the
+shared strict decoder. A malformed stored tick therefore returns 409 instead
+of bypassing validation or escaping as a server error; standalone replay also
+validates every tick before sorting.
+
+The stored-frame boundary accepts exactly one older decision topology: all
+nonempty decisions in a pre-118 frame may uniformly omit only
+`observer_track_support`, which is re-emitted as explicit `null`. A complete
+unversioned Phase 115--117 paired frame remains readable even when its decision
+list is empty, but every scope, availability, side view, root roster, and
+association must validate. A bare unversioned empty privileged frame is
+unsupported because it is indistinguishable from a stripped current frame.
+Mixed current and pre-118 decisions, a deleted marker that leaves the
+current-only FOW mode, any other missing/extra decision field, or a legacy
+decision that claims `FOW_OBSERVER_TRACK_SUPPORT` rejects. Live runtime and
+checkpoint decoders remain format-118 strict. These checks establish internal
+semantic consistency; stored frames are not cryptographically authenticated.
 
 The route does not yet authenticate the caller or derive an authorized side.
 Consequently these query parameters are evidence-projection controls, not an
@@ -261,6 +342,8 @@ a new preparation observes the replacement.
 | `RuntimeSession.run_to_completion()` | `SimulationRunResult` | Run until a public terminal result or reject |
 | `RuntimeSession.step()` | `bool` | Advance one tick; `True` means the session is terminal and `False` means it can continue |
 | `RuntimeSession.finalize()` | `SimulationRunResult` | Return the result only after `step()` reports terminal |
+| `RuntimeSession.performance_execution_receipt()` | `PerformanceExecutionReceipt` | Cross-bind authored, typed, flattened, and committed flag owners, then return the committed typed receipt for supported effective flags and controlled production work |
+| `RuntimeSession.fow_indexed_interval_record()` | `FOWIndexedIntervalRecord \| None` | Return the latest committed raw identity-addressed FOW decision record |
 | `RuntimeSession.provenance()` | `RuntimeProvenance` | Capture code/data/catalog/doctrine/loadout identity and initial/arriving assignments |
 
 ```python
@@ -318,8 +401,10 @@ commit and clean code-revision result. It also checks that docs and tests are
 absent, loads the historical claim ledger through `load_scenario_catalog()`,
 audits every API-published scenario claim, and verifies the expected
 unsupported/current-engine-regression status for 73 Easting. Phase 117's local
-packaged-loader tests exercise the same ledger boundary, but the hosted image
-smoke remains pending until this phase is pushed and its workflow completes.
+packaged-loader tests exercise the same ledger boundary. The Phase 117 push
+prerequisite is satisfied at `84cf4c4`, but no successful hosted image result
+is recorded in the repository; the smoke remains unverified pending a
+successful workflow run.
 The current ledger has zero accepted artifacts, so neither check proves future
 nonempty accepted-evidence support in a no-`.git` image. REM-048 / Phase 135
 owns the build-time attestation and package receipt required for that case.
@@ -604,11 +689,15 @@ ancestry, and unchanged runtime source/data identities. `FAIL` is completed
 negative evidence. `ERROR` is not a verdict and is never promotable. An invalid
 plan rejects before an artifact is produced.
 
-The repository runner is `scripts/run_historical_backtest.py`. Its checked-in
-73 Easting result is `FAIL` with 0/20 joint successes, lower confidence bound
-0.0, and no promotion eligibility; see the
-[contract](../specs/historical-outcome-envelope-integrity.md) and
-[artifact](../evidence/phase-117/73-easting-phase117.json).
+The repository runner is `scripts/run_historical_backtest.py`; generated output
+belongs under ignored `artifacts/evidence/phase-117/`. The retained 73 Easting
+result is `FAIL` with 0/20 joint successes, lower confidence bound 0.0, and no
+promotion eligibility. Its artifact SHA-256 is
+`57bfe7d89575e721d9cee30c213505c760da3cede642624c7ed7532051e524f4`,
+and its local, unpublished locator is
+`branch=evidence/full; path=docs/evidence/phase-117/73-easting-phase117.json`,
+pending a separate evidence-remote or Git LFS decision. See the
+[contract](../specs/historical-outcome-envelope-integrity.md).
 
 ### MonteCarloHarness
 
@@ -674,7 +763,10 @@ typed historical backtest boundary above for historical verdicts.
 from stochastic_warfare.core.rng import RNGManager
 ```
 
-Central PRNG management. Creates independent per-module random number generator streams from a single seed.
+Central stochastic authority. It creates independent conventional per-module
+generators and owns the typed identity-addressed FOW allocation/commit
+lifecycle used when parallel completion order must not select a different
+decision.
 
 **Constructor:**
 
@@ -687,12 +779,20 @@ Central PRNG management. Creates independent per-module random number generator 
 | Method | Parameters | Returns | Description |
 |--------|-----------|---------|-------------|
 | `get_stream()` | `module_id: ModuleId` | `np.random.Generator` | Independent PRNG stream for a module |
+| `begin_fow_detection_interval()` | `engine_tick, reporting_sides, module=DETECTION` | `FOWIndexedAllocation` | Begin one strict ordered-side indexed decision transaction |
+| `prepare_fow_detection_interval_commit()` | `allocation` | `FOWIndexedCommitPlan` | Stage the canonical transcript record without publication |
+| `commit_fow_detection_interval()` | `allocation` | `FOWIndexedIntervalRecord` | Validate and publish a complete indexed interval |
+| `abort_fow_detection_interval()` | `allocation` | `None` | Poison and abort an incomplete indexed interval |
 
 **PRNG Discipline:**
 
-- Every module gets its own stream via `get_stream(ModuleId.COMBAT)`, `get_stream(ModuleId.DETECTION)`, etc.
+- Each conventional `ModuleId` gets its own stream via
+  `get_stream(ModuleId.COMBAT)`, `get_stream(ModuleId.DETECTION)`, etc.
 - Streams are independent -- adding randomness in one module doesn't affect others
-- Same seed always produces the same sequence per module
+- Indexed FOW values bind to strict semantic identities and a canonical
+  transcript rather than worker draw order
+- Same seed, code/data/configuration, and runtime topology reproduce the same
+  conventional streams and indexed decisions
 
 ---
 
@@ -937,14 +1037,40 @@ non-morale concealment lifecycle.
 | `enable_bridge_capacity` | `bool` | `False` | Bridges enforce weight limits |
 | `enable_environmental_fatigue` | `bool` | `False` | Heat/cold stress from WBGT/wind-chill degrades performance |
 
-**LOD Tuning (Phase 85):**
+**LOD compatibility fields (retired from tuning):**
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `enable_lod` | `bool` | `False` | Enable level-of-detail unit resolution tiering (ACTIVE/NEARBY/DISTANT) |
-| `lod_nearby_interval` | `int` | `5` | Update frequency (ticks) for NEARBY-tier units |
-| `lod_distant_interval` | `int` | `20` | Update frequency (ticks) for DISTANT-tier units |
-| `lod_hysteresis_ticks` | `int` | `3` | Ticks before downgrade from higher tier (immediate promotion) |
+| `enable_lod` | `bool` | `False` | Must remain `False`; the sensing-only approximation is explicitly unsupported after failed semantic validation |
+| `lod_nearby_interval` | `int` | `5` | Compatibility value must remain exactly `5` |
+| `lod_distant_interval` | `int` | `20` | Compatibility value must remain exactly `20` |
+| `lod_hysteresis_ticks` | `int` | `3` | Compatibility value must remain exactly `3` |
+
+**Performance semantic classifications (Phase 118):**
+
+| Field | Default | Classification | Current support | Retained v7 verdict |
+|-------|---------|----------------|-----------------|---------------------|
+| `enable_detection_culling` | `True` | Semantics-preserving execution optimization | `supported_exact_validated` | `PASS` |
+| `enable_scan_scheduling` | `False` | Model-fidelity approximation | `unsupported_failed_semantic_validation` | `FAIL` |
+| `enable_lod` | `False` | Model-fidelity approximation (sensing cadence only) | `unsupported_failed_semantic_validation` | `FAIL` |
+| `enable_soa` | `False` | Semantics-preserving execution optimization | `supported_exact_validated` | `PASS` |
+| `enable_parallel_detection` | `False` | Semantics-preserving execution optimization | `supported_exact_validated` | `PASS` |
+
+The runtime receipt proves which branch executed and how much work it admitted,
+deferred, selected, or dispatched. These classifications are semantic
+contracts, not historical calibration or speed evidence. The immutable
+schema-2 v7 study completed all 96 pairs / 396 attempts and independently
+reloaded as a terminal `FAIL` under `EXTERNALLY_CONTENDED`, with manifest
+artifact SHA-256
+`bf9e00ce4a7774af29b5657c49bbbe4481b407a966d9922e48970022f5c6ad86`.
+Current YAML, API, comparison/sensitivity, live runtime, and current-checkpoint
+boundaries reject either unsupported flag enabled and reject nondefault LOD
+compatibility values. Authored configuration, typed calibration, flattened
+calibration, and the committed receipt must agree before work or receipt
+exposure. Use `GET /api/meta/performance-flags` for the canonical registry and
+retained evidence identity. The accepted qualified-negative postmortem closed
+Phase 118 / REM-031; REM-055 / Phase 142 tracks the separately measured
+transactional-FOW runtime regression without changing this API contract.
 
 **Targeting Integrity (Phase 115):**
 
@@ -1077,7 +1203,7 @@ mutating the target. See the
 [checkpoint state contract](../specs/checkpoint-state.md) for the canonical
 schema and bounded legacy-migration rules.
 
-The current engine checkpoint schema is version 116. In addition to force,
+The current engine checkpoint schema is version 118. In addition to force,
 loadout, logistics, space/ASAT, and time-on-target state, it preserves one
 `morale_runtime` envelope, one fully effective `era_runtime_contract`, and one
 strict tactical-targeting interval/picture/decision/revalidation envelope. One
@@ -1086,6 +1212,10 @@ bounded current observer witnesses, fusion state, exact contact-to-fusion track
 object identity, and the cross-validated DETECTION RNG mirror. Current FOW
 targeting decisions keep their exact consumability only when that contact,
 witness, interval, roster, and loadout evidence agrees.
+Format 118 additionally preserves the performance execution receipt, sensing
+cadence, FOW observer topology, detection scan counts, and the complete
+`RNGManager`-owned indexed FOW transcript. Cross-owner completeness, interval,
+entry, cadence, and effective-flag disagreements reject before mutation.
 The private publication plan is exact-owner-, content-, type-, shape-, and
 alias-bound. Disabled runtimes may retain explicitly allocated empty side views
 and non-FOW Space tracks, while ordinary contacts/witnesses/FOW IDs reject.
@@ -1098,7 +1228,7 @@ Commander/OODA assignments, bounded movement diagnostics, and typed Space ISR
 pending reports, delivery receipts, and owner/target IMINT associations remain
 included. Current-format restore is atomic and validates exact topology,
 status/route consistency, chronology, owner/RNG bindings, selected era
-identity, and clock/current-resolution agreement. Explicit version 115 and
+identity, and clock/current-resolution agreement. Explicit version 116 and
 every other non-current version reject.
 
 Phase 112's typed Space ISR proof uses an explicit empty ordinary-contact

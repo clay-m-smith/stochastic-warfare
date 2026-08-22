@@ -266,8 +266,10 @@ checks that docs and tests are absent, loads the historical ledger through
 `load_scenario_catalog()`, audits all API-published scenario claims in the
 current zero-accepted ledger, and verifies that 73 Easting remains unsupported
 with regression evidence but no accepted claim IDs. Phase 117's local
-packaged-loader tests exercise the ledger boundary; the hosted image result is
-pending until the phase is pushed and the workflow completes. REM-048 / Phase
+packaged-loader tests exercise the ledger boundary. The Phase 117 push
+prerequisite is satisfied at `84cf4c4`, but no successful hosted image result
+is recorded in the repository; the smoke remains unverified pending a
+successful workflow run. REM-048 / Phase
 135 owns the build-time attestation and package receipt needed before a future
 nonempty accepted claim can be verified without Git.
 
@@ -354,11 +356,31 @@ unchanged. Stored root-only target-to-track associations cross-bind privileged
 targeting evidence to the side-safe ordinal and are validated by one shared
 API/replay decoder without entering the side payload. Sensor-derived fusion
 uncertainty is finite and strictly positive, with a generic one-metre minimum
-at zero range. That minimum is numerical safety, not sensor accuracy;
-sensor-specific covariance and atomic elapsed-time prediction remain REM-044.
-Parallel FOW dispatch owns one RNG stream per side for both detection and any
-configured stochastic identification; classification cannot draw from a
-shared identification-engine stream.
+at zero range. Detector reports carry horizontal ENU range for position
+reconstruction while slant range remains the generic uncertainty input.
+Fusion predicts existing tracks on detached state, validates each complete
+same-side/same-target/same-epoch group before mutation, selects one canonical
+best-variance representative, and then atomically updates or replaces the
+track. This prevents correlated duplicate reports from being counted as
+independent measurements. During scan-scheduling deferral, one bounded typed
+support record may project an existing fusion track for exactly seven radar
+fire-control roles until the attachment's next native deadline; targeting
+revalidates its live attachment, track generation, reach, LOS, FOV, chronology,
+and covariance before using it. The exact support is privileged evidence;
+SIDE_FOW receives only the distinct contact source and opaque track.
+That codec, projection algorithm, and checkpoint topology remain valid for
+archived/dormant state, but current supported production cannot enter the
+deferral branch: scan scheduling and LOD activation are rejected after the
+terminal Phase 118 semantic `FAIL`. Current runs therefore cannot emit a
+non-null observer-track support. REM-054 / Phase 141 owns restoring a supported
+production-reachable emission path.
+
+Parallel and sequential FOW dispatch use `RNGManager`-owned indexed decisions
+keyed by complete observer/target/sensor/interval identity, so worker
+completion order cannot select a different stochastic result. The generic
+one-metre/five-percent uncertainty model is numerical safety, not sensor
+accuracy; sourced per-sensor range/bearing/correlation models and their
+provenance remain REM-044.
 
 Declared time-on-target missions pass through one simulation-layer resolver
 after initial loadouts exist. It binds each declaration to the exact initial
@@ -395,7 +417,7 @@ transactionally creates an exact
 reports, receipts, associations, cadence, and reference integrity participate
 in atomic checkpoint preflight. This does not inject reports directly into
 ordinary fog-of-war contacts. Phase 112's Space ISR evidence used an explicit
-empty ordinary-contact topology; format 116 independently restores nonempty
+empty ordinary-contact topology; format 118 independently restores nonempty
 roster-backed `SideWorldView.contacts` without turning ISR receipts into FOW
 contacts.
 
@@ -463,7 +485,7 @@ Each era is defined by an `EraConfig` that specifies:
 - Strict sparse tick overrides for strategic, operational, and tactical
   cadence, plus medical treatment and maintenance repair durations. One
   frozen effective `EraRuntimeContract` constructs the clock and domain
-  configs, participates in runtime fingerprints, and persists in format-116
+  configs, participates in runtime fingerprints, and persists in format-118
   checkpoints. Unsupported C2/nuclear keys reject instead of acting as
   metadata proxies.
 - Era-specific engine extensions
@@ -483,8 +505,12 @@ identical:
 
 ### PRNG Discipline
 
-- All randomness flows through `RNGManager`, which creates per-module `np.random.Generator` streams
-- Each module gets its own independent PRNG stream via `RNGManager.get_stream(ModuleId)`
+- All stochastic decisions use `RNGManager`-owned seeded authority
+- Conventional subsystems receive independent generators through
+  `RNGManager.get_stream(ModuleId)`
+- FOW decisions that may execute in parallel use typed identity-addressed
+  indexed allocation/commit, so worker completion order cannot select a value
+  or transcript order
 - No bare `random` module or `np.random` module-level calls anywhere in the codebase
 - The same seed alone is insufficient when code, data, configuration, or
   runtime topology differs
@@ -599,8 +625,41 @@ and concealment replacement.
 
 The `enable_all_modern` meta-flag activates all 21 non-deferred flags at once
 for convenience. Individual flag control is preferred when a scenario does not
-need every consequence. No general performance multiplier is claimed without
-the controlled semantic-equivalence evidence queued under REM-031.
+need every consequence. Phase 118 classifies detection culling, SoA selection,
+and parallel per-side detection as semantics-preserving execution
+optimizations. Native scan scheduling and LOD are explicit model-fidelity
+approximations; LOD changes sensing cadence only, not movement, engagement,
+morale, damage, or other non-sensing resolution. The immutable schema-2
+`phase118-performance-semantics-v7` study completed all 96 pairs / 396
+attempts and independently reloaded as an eligible terminal `FAIL` under
+`EXTERNALLY_CONTENDED`, with manifest artifact SHA-256
+`bf9e00ce4a7774af29b5657c49bbbe4481b407a966d9922e48970022f5c6ad86`.
+Detection culling, SoA selection, and parallel detection retain exact `PASS`
+support. Scan scheduling and LOD retain their model-fidelity classifications
+but have support disposition `unsupported_failed_semantic_validation`.
+
+Current YAML, API, comparison/sensitivity, live runtime, and current-checkpoint
+boundaries reject either retired control enabled and reject nondefault
+`lod_nearby_interval`, `lod_distant_interval`, or `lod_hysteresis_ticks`.
+Before work and before receipt exposure, the runtime cross-binds authored
+configuration, typed calibration, flattened hot-path calibration, and the
+committed execution receipt. `GET /api/meta/performance-flags` exposes the
+canonical registry disposition and retained v7 evidence identity. The terminal
+v6 `ERROR` is retained at
+`branch=evidence/full; path=docs/evidence/phase-118/v6-terminal/` (manifest
+artifact SHA-256
+`eb8e12f147c14ee4e83e7f5e80e4b1e50aa2bfe847d5e5e681b2462f7850051a`), and
+the terminal v7 `FAIL` is retained at
+`branch=evidence/full; path=docs/evidence/phase-118/v7-terminal/` (manifest
+artifact SHA-256
+`bf9e00ce4a7774af29b5657c49bbbe4481b407a966d9922e48970022f5c6ad86`).
+Those locators currently name a local, unpublished branch pending a separate
+evidence-remote or Git LFS decision. The off-main archives preserve negative
+evidence but are not required by ordinary `main` validation and cannot be
+rerun, resumed, or reinterpreted. The accepted qualified-negative postmortem
+closed Phase 118 / REM-031. Neither semantic evidence nor externally contended
+execution establishes a speed improvement; REM-055 / Phase 142 owns the
+separately measured transactional-FOW runtime regression.
 
 ## Checkpointing
 
@@ -623,24 +682,31 @@ This enables:
 - **Branching** -- checkpoint, run two different decisions, compare outcomes
 - **Debugging** -- reproduce any simulation state from a checkpoint + seed
 
-The current `SimulationEngine` checkpoint schema is version 116. In addition
+The current `SimulationEngine` checkpoint schema is version 118. In addition
 to exact force/loadout/logistics/time-on-target state and the single
 `morale_runtime` envelope, it stores one fully effective
 `era_runtime_contract` plus the tactical-targeting interval, battle
 memberships, decisions, post-movement revalidations, enablement, default
 visibility, and exact source bindings. It also stores one strict fog-of-war
 envelope containing complete roster-backed ordinary side views, bounded
-current observer witnesses, the fusion topology, and a DETECTION RNG mirror.
+current observer witnesses, bounded radar observer-track supports, the fusion
+topology, scan counts/cadence, and a DETECTION RNG mirror.
+Format 118 also preserves the exact performance execution receipt, sensing
+cadence, observer topology, detection scan counts, and `RNGManager`-owned
+indexed FOW transcript. Receipt/cadence/indexed completeness and interval /
+decision counts must agree before capture or restore; active or poisoned
+transactions reject rather than serializing a prefix.
 Restore reconstructs each contact's exact fusion-owned track-object alias and
-cross-validates consumable current targeting evidence against its witness,
-contact, roster, loadout, and interval. The staged owner is protected by both
+cross-validates consumable current targeting evidence against its current
+witness or bounded support, contact/fusion generation, roster, loadout,
+cadence, and interval. The staged owner is protected by both
 content and exact runtime type/shape/alias fingerprints, so equal serialized
 values cannot replace enums, arrays, containers, or shared track/receipt
 objects with behaviorally different structures. Explicit empty side views and
 between-interval dynamic-roster checkpoints remain supported; disabled FOW
 still rejects actual ordinary-contact state. The current resolution, clock
 duration, selected registry identity, captured scenario cadence/horizon inputs, and frozen
-medical/maintenance consumers must agree before mutation; format 115 and every
+medical/maintenance consumers must agree before mutation; format 118 and every
 other explicit non-current version reject. There is no current-format morale
 context map or state-machine copy, and `RNGManager` alone persists the MORALE
 stream. Commander/OODA assignments, bounded movement diagnostics, and typed

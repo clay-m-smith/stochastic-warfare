@@ -29,16 +29,19 @@ do not establish determinism in the production runtime path.
 
 ## Trace Randomness
 
-For every stochastic draw in scope:
+For every stochastic decision in scope:
 
-1. Identify the `numpy.random.Generator` instance.
-2. Trace it to an injected
-   `RNGManager.get_stream(ModuleId.<SUBSYSTEM>)` stream.
-3. Confirm the `ModuleId` matches the subsystem consuming the draw.
-4. Confirm stateful subsystems do not share a generator accidentally.
+1. Identify its `RNGManager`-owned authority.
+2. For conventional draws, trace the injected `numpy.random.Generator` to
+   `RNGManager.get_stream(ModuleId.<SUBSYSTEM>)` and confirm the module ID.
+3. For indexed decisions, trace the typed allocation/commit lifecycle through
+   `RNGManager`, verify the stable semantic identity and decision domain, and
+   prove that worker completion order cannot change values or transcript order.
+4. Confirm stateful subsystems do not share a conventional generator or reuse
+   an indexed identity accidentally.
 5. Flag Python `random`, module-level `np.random` draws, `RandomState`, hidden
-   generator construction, or an unseeded generator in production simulation
-   logic.
+   generator construction, direct production construction of indexed RNG
+   owners, or an unseeded generator in simulation logic.
 
 Direct generator construction is expected inside the central RNG implementation
 and may be appropriate in isolated tests or tooling. It is not evidence that
