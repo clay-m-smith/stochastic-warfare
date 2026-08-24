@@ -2,8 +2,9 @@
 
 ## Status
 
-Current through the Phase 118 performance-semantic implementation. The current
-engine format is 118. The immutable schema-2
+Current through the Phase 118 performance-semantic implementation and the
+2026-08-23 tiered modular-monolith consolidation. The current engine format is
+118. The immutable schema-2
 `phase118-performance-semantics-v7` study completed all 96 pairs / 396 attempts
 and independently reloaded as an eligible terminal `FAIL` under
 `EXTERNALLY_CONTENDED`; its manifest artifact SHA-256 is
@@ -11,6 +12,38 @@ and independently reloaded as an eligible terminal `FAIL` under
 The accepted qualified-negative postmortem closed Phase 118 / REM-031. The
 semantic evidence supports no speed claim; REM-055 / Phase 142 owns the
 separately measured transactional-FOW runtime regression.
+
+### Consolidation closure note
+
+The tiered modular-monolith consolidation preserves format 118 while moving
+context persistence behind `simulation.context_checkpoint`. One frozen
+`ContextCheckpointSnapshot` is the context-level product. Each participant has
+a typed disposition: atomic checkpoint owner, bounded legacy clone owner, or
+explicitly stateless. Planning remains non-mutating and commit remains
+all-or-nothing; the `scenario` compatibility facade delegates to the focused
+configuration, runtime-context, checkpoint, and loader owners.
+
+Authored calibration is compiled once into recursively immutable
+`ResolvedCalibration`; checkpoint comparison cannot adopt mutable
+`ctx.cal_flat` input. Initial, reinforcement, and restore loadouts reuse the
+same retained builder and registry identity. Strict execution remains the
+authority for checkpoint creation and restore. An explicitly degraded runtime,
+or one with suppressed runtime/recorder/event failures, cannot create or
+restore an authoritative checkpoint.
+
+The consolidation also shares one current targeting/FOW snapshot across its
+tick consumers. The accepted consolidation postmortem closes REM-053 on this
+verified boundary; it does not change checkpoint format 118. Planned Phase 140
+is retired before start.
+
+Dedicated matched checkpoint-capture evidence used five interleaved blocks per
+revision, each with two warmups and seven measured captures (35 observations
+per revision). The consolidation-base median was 11.288641 ms and the current
+median was 4.506367 ms, a 0.399195 ratio, while restored state, continuation,
+replay, recorder output, and RNG state remained exact. This is a workload-
+specific measurement of this checkpoint path, not a universal speed claim.
+The closure is valid only for a revision whose final exact frozen-revision
+release gate is green.
 
 ## Purpose
 

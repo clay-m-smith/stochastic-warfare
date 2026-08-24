@@ -1,15 +1,12 @@
 // Types for the scenario editor (Phase 36)
+import type {
+  OpenApiMaterializedSchema,
+  OpenApiSchema,
+} from './openapi.generated'
 
-export interface RunFromConfigRequest {
-  config: Record<string, unknown>
-  seed?: number
-  max_ticks?: number
-}
-
-export interface ValidateConfigResponse {
-  valid: boolean
-  errors: string[]
-}
+export type RunFromConfigRequest = OpenApiSchema<'RunFromConfigRequest'>
+export type ValidateConfigResponse =
+  OpenApiMaterializedSchema<'ValidateConfigResponse'>
 
 export interface EditorUnitEntry {
   unit_type: string

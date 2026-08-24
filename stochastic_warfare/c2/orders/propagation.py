@@ -75,6 +75,25 @@ class PropagationResult:
     degraded: bool  # True if sender C2 was degraded
 
 
+@dataclass(frozen=True, slots=True)
+class PropagationOverrides:
+    """Per-call C2-friction values that never mutate engine configuration."""
+
+    delay_sigma: float
+    base_misinterpretation: float
+
+    def __post_init__(self) -> None:
+        if not np.isfinite(self.delay_sigma) or self.delay_sigma < 0.0:
+            raise ValueError("delay_sigma must be finite and non-negative")
+        if (
+            not np.isfinite(self.base_misinterpretation)
+            or not 0.0 <= self.base_misinterpretation <= 1.0
+        ):
+            raise ValueError(
+                "base_misinterpretation must be finite and within [0, 1]",
+            )
+
+
 # ---------------------------------------------------------------------------
 # Config
 # ---------------------------------------------------------------------------
@@ -148,6 +167,8 @@ class OrderPropagationEngine:
         sender_pos: Position,
         recipient_pos: Position,
         timestamp: datetime,
+        *,
+        overrides: PropagationOverrides | None = None,
     ) -> PropagationResult:
         """Attempt to propagate an order from issuer to recipient.
 
@@ -184,7 +205,12 @@ class OrderPropagationEngine:
 
         # Compute delay
         staff_eff = self._command.get_effectiveness(order.recipient_id) if self._command is not None else 1.0
-        delay = self.compute_delay(order.echelon_level, staff_eff, order)
+        delay = self.compute_delay(
+            order.echelon_level,
+            staff_eff,
+            order,
+            delay_sigma=(None if overrides is None else overrides.delay_sigma),
+        )
 
         # Check C2 degradation of sender
         sender_degraded = False
@@ -202,7 +228,14 @@ class OrderPropagationEngine:
 
         # Check for misinterpretation
         misinterpret_prob = self.compute_misinterpretation_probability(
-            order, staff_eff, comms_quality,
+            order,
+            staff_eff,
+            comms_quality,
+            base_misinterpretation=(
+                None
+                if overrides is None
+                else overrides.base_misinterpretation
+            ),
         )
         was_misinterpreted = bool(self._rng.random() < misinterpret_prob)
         misinterpret_type = ""
@@ -250,6 +283,8 @@ class OrderPropagationEngine:
         echelon_level: int,
         staff_effectiveness: float,
         order: Order | None = None,
+        *,
+        delay_sigma: float | None = None,
     ) -> float:
         """Compute processing delay for an order at a given echelon.
 
@@ -283,7 +318,8 @@ class OrderPropagationEngine:
 
         # Stochastic component (log-normal variation)
         if deterministic > 0:
-            variation = float(self._rng.lognormal(0, self._config.delay_sigma))
+            sigma = self._config.delay_sigma if delay_sigma is None else delay_sigma
+            variation = float(self._rng.lognormal(0, sigma))
             return deterministic * variation
         return 0.0
 
@@ -292,12 +328,18 @@ class OrderPropagationEngine:
         order: Order,
         staff_effectiveness: float,
         comms_quality: float,
+        *,
+        base_misinterpretation: float | None = None,
     ) -> float:
         """Compute probability that an order is misinterpreted.
 
         P = base × (1 - staff_eff) × (1 - comms_quality)
         """
-        base = self._config.base_misinterpretation
+        base = (
+            self._config.base_misinterpretation
+            if base_misinterpretation is None
+            else base_misinterpretation
+        )
         staff_factor = 1.0 - max(0.0, min(1.0, staff_effectiveness))
         comms_factor = 1.0 - max(0.0, min(1.0, comms_quality))
         # Minimum risk even with perfect conditions

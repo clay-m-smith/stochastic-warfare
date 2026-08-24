@@ -16,6 +16,9 @@ from __future__ import annotations
 
 import copy
 import math
+from collections.abc import Iterator, Mapping
+from dataclasses import dataclass
+from types import MappingProxyType
 from typing import Any, ClassVar, Literal
 
 from pydantic import (
@@ -30,6 +33,97 @@ from pydantic import (
 from stochastic_warfare.simulation.performance_flags import (
     resolve_supported_runtime_performance_flags,
 )
+
+
+def _freeze_calibration_value(value: Any) -> Any:
+    """Return a recursively immutable calibration value."""
+    if isinstance(value, Mapping):
+        return MappingProxyType(
+            {
+                key: _freeze_calibration_value(nested)
+                for key, nested in value.items()
+            },
+        )
+    if isinstance(value, (list, tuple)):
+        return tuple(_freeze_calibration_value(nested) for nested in value)
+    if isinstance(value, (set, frozenset)):
+        return frozenset(
+            _freeze_calibration_value(nested) for nested in value
+        )
+    return value
+
+
+def _thaw_calibration_value(value: Any) -> Any:
+    """Return a detached compatibility copy of an immutable value."""
+    if isinstance(value, Mapping):
+        return {
+            key: _thaw_calibration_value(nested)
+            for key, nested in value.items()
+        }
+    if isinstance(value, tuple):
+        return [_thaw_calibration_value(nested) for nested in value]
+    if isinstance(value, frozenset):
+        return {
+            _thaw_calibration_value(nested) for nested in value
+        }
+    return value
+
+
+@dataclass(frozen=True, slots=True)
+class ResolvedCalibration(Mapping[str, Any]):
+    """Immutable, side-resolved calibration compiled for one runtime.
+
+    The mapping interface deliberately preserves the historical ``cal_flat``
+    read API while preventing in-session configuration mutation.  Nested
+    collections are immutable as well, so callers cannot change effective
+    behavior through a value returned by :meth:`get`.
+    """
+
+    _values: Mapping[str, Any]
+    sides: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        if any(
+            type(side) is not str or not side or side != side.strip()
+            for side in self.sides
+        ):
+            raise ValueError(
+                "resolved calibration sides must be non-empty trimmed strings",
+            )
+        if len(set(self.sides)) != len(self.sides):
+            raise ValueError("resolved calibration sides must be unique")
+        if not isinstance(self._values, Mapping):
+            raise TypeError("resolved calibration values must be a mapping")
+        if any(type(key) is not str or not key for key in self._values):
+            raise ValueError(
+                "resolved calibration keys must be non-empty strings",
+            )
+        object.__setattr__(
+            self,
+            "_values",
+            MappingProxyType(
+                {
+                    key: _freeze_calibration_value(value)
+                    for key, value in self._values.items()
+                },
+            ),
+        )
+
+    def __getitem__(self, key: str) -> Any:
+        return self._values[key]
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self._values)
+
+    def __len__(self) -> int:
+        return len(self._values)
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return a detached mutable copy for legacy non-runtime callers."""
+        return {
+            key: _thaw_calibration_value(value)
+            for key, value in self._values.items()
+        }
 
 
 class SideCalibration(BaseModel):
@@ -552,12 +646,15 @@ class CalibrationSchema(BaseModel):
             if field_name in patch
         }
 
-    def to_flat_dict(self, sides: list[str]) -> dict[str, Any]:
-        """Expand all fields into a flat ``dict[str, Any]`` for O(1) lookup.
+    def resolve(
+        self,
+        sides: list[str] | tuple[str, ...],
+    ) -> ResolvedCalibration:
+        """Compile the immutable O(1) runtime calibration projection.
 
         Flattens nested morale fields and expands side overrides for each
-        side name.  Called once at scenario load time.  The resulting dict
-        is used by :class:`BattleManager` as a fast replacement for
+        side name.  The resulting mapping is used by :class:`BattleManager`
+        as a fast replacement for
         repeated ``.get()`` calls during the tick loop.
 
         For side-overridable fields the resolution order is:
@@ -590,8 +687,19 @@ class CalibrationSchema(BaseModel):
                     val = d.get(prefix)
                 d[f"{prefix}_{side}"] = val
 
-        # Strip None values — callers use dict.get(key, default)
-        return {k: v for k, v in d.items() if v is not None}
+        # Strip None values — callers use Mapping.get(key, default).
+        return ResolvedCalibration(
+            {key: value for key, value in d.items() if value is not None},
+            tuple(sides),
+        )
+
+    def to_flat_dict(self, sides: list[str]) -> dict[str, Any]:
+        """Return a detached mutable copy for legacy compatibility callers.
+
+        Production runtime construction uses :meth:`resolve` so the effective
+        calibration has one stable immutable owner for the whole session.
+        """
+        return self.resolve(sides).to_dict()
 
     def get(self, key: str, default: Any = None) -> Any:
         """Dict-compatible accessor for backward compatibility.

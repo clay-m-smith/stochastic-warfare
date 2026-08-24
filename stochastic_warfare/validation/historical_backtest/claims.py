@@ -1,4 +1,4 @@
-"""Strict repository-wide historical-claim disposition ledger.
+"""Strict current-truth historical-claim disposition ledger.
 
 The ledger inventories claims; it does not execute simulations or infer a
 historical verdict from legacy metadata.  Every inventoried surface is bound
@@ -78,8 +78,9 @@ _SCENARIO_STATUS_PATTERN = re.compile(
     re.IGNORECASE,
 )
 _LEGACY_CLAIM_API_PATTERN = re.compile(
-    r"\b(?:documented_outcomes|HistoricalMetric|compare_to_historical|"
-    r"ComparisonReport)\b",
+    r"\b(?:documented[-_ ]outcomes|Historical[-_ ]?Metric|"
+    r"compare[-_ ]to[-_ ]historical|Comparison[-_ ]?Report)\b",
+    re.IGNORECASE,
 )
 _LEGACY_BOOLEAN_API_PATTERN = re.compile(
     r"\bcheck_(?:winner|duration|casualty)_envelope\b",
@@ -110,14 +111,11 @@ class ClaimSurface(str, Enum):
 
     SCENARIO_DOCUMENTED_OUTCOMES = "scenario_documented_outcomes"
     SCENARIO_HISTORICAL_PROSE = "scenario_historical_prose"
-    PYTHON_DOCUMENTED_OUTCOMES_TEST = "python_documented_outcomes_test"
     PYTHON_HISTORICAL_CLAIM_TEST = "python_historical_claim_test"
     CURRENT_ENGINE_REGRESSION_SNAPSHOT = "current_engine_regression_snapshot"
-    DUPLICATED_REGRESSION_TABLE = "duplicated_regression_table"
     DOCUMENTATION_CLAIM = "documentation_claim"
     API_CLAIM_SURFACE = "api_claim_surface"
     FRONTEND_CLAIM_SURFACE = "frontend_claim_surface"
-    FRONTEND_HISTORICAL_CLAIM_TEST = "frontend_historical_claim_test"
 
 
 class ClaimSourceKind(str, Enum):
@@ -125,7 +123,6 @@ class ClaimSourceKind(str, Enum):
 
     API_PYTHON = "api_python"
     FRONTEND_PUBLIC_SOURCE = "frontend_public_source"
-    FRONTEND_TEST = "frontend_test"
     PYTHON_TEST = "python_test"
     PUBLIC_DOCUMENT = "public_document"
     SCENARIO_YAML = "scenario_yaml"
@@ -162,8 +159,6 @@ class ClaimSourceExclusionReason(str, Enum):
 _PYTHON_TEST_CLAIM_SURFACES = frozenset(
     {
         ClaimSurface.CURRENT_ENGINE_REGRESSION_SNAPSHOT,
-        ClaimSurface.DUPLICATED_REGRESSION_TABLE,
-        ClaimSurface.PYTHON_DOCUMENTED_OUTCOMES_TEST,
         ClaimSurface.PYTHON_HISTORICAL_CLAIM_TEST,
     },
 )
@@ -174,9 +169,6 @@ _CLAIM_SURFACES_BY_SOURCE_KIND: Mapping[
     ClaimSourceKind.API_PYTHON: frozenset({ClaimSurface.API_CLAIM_SURFACE}),
     ClaimSourceKind.FRONTEND_PUBLIC_SOURCE: frozenset(
         {ClaimSurface.FRONTEND_CLAIM_SURFACE},
-    ),
-    ClaimSourceKind.FRONTEND_TEST: frozenset(
-        {ClaimSurface.FRONTEND_HISTORICAL_CLAIM_TEST},
     ),
     ClaimSourceKind.PYTHON_TEST: _PYTHON_TEST_CLAIM_SURFACES,
     ClaimSourceKind.PUBLIC_DOCUMENT: frozenset(
@@ -201,6 +193,25 @@ _PACKAGED_CLAIM_SOURCE_KINDS = frozenset(
         ClaimSourceKind.API_PYTHON,
         ClaimSourceKind.SCENARIO_YAML,
     },
+)
+_EXPLICIT_CLAIM_TEST_PATHS = frozenset(
+    {
+        "tests/validation/historical/test_accuracy.py",
+    },
+)
+_CURRENT_PUBLIC_DOCUMENT_PATHS = frozenset(
+    {
+        "README.md",
+        "docs/index.md",
+        "docs/remediation-backlog.md",
+        "docs/skills-and-hooks.md",
+    },
+)
+_CURRENT_PUBLIC_DOCUMENT_PREFIXES = (
+    "docs/concepts/",
+    "docs/guide/",
+    "docs/reference/",
+    "docs/specs/",
 )
 
 
@@ -249,24 +260,20 @@ def _claim_source_path_matches_kind(
         return repository_path.startswith("api/") and repository_path.endswith(
             ".py",
         )
-    if source_kind in {
-        ClaimSourceKind.FRONTEND_PUBLIC_SOURCE,
-        ClaimSourceKind.FRONTEND_TEST,
-    }:
+    if source_kind is ClaimSourceKind.FRONTEND_PUBLIC_SOURCE:
         is_frontend_source = repository_path.startswith(
             "frontend/src/",
         ) and repository_path.endswith((".ts", ".tsx"))
         if _is_frontend_declaration_source(repository_path):
             return False
-        is_test = _is_frontend_test_source(repository_path)
-        return is_frontend_source and (is_test if source_kind is ClaimSourceKind.FRONTEND_TEST else not is_test)
-    if source_kind is ClaimSourceKind.PYTHON_TEST:
-        return repository_path.startswith("tests/") and repository_path.endswith(
-            ".py",
+        return is_frontend_source and not _is_frontend_test_source(
+            repository_path,
         )
+    if source_kind is ClaimSourceKind.PYTHON_TEST:
+        return repository_path in _EXPLICIT_CLAIM_TEST_PATHS
     if source_kind is ClaimSourceKind.PUBLIC_DOCUMENT:
-        return repository_path in {"README.md", "CLAUDE.md"} or (
-            repository_path.startswith("docs/") and repository_path.endswith(".md")
+        return repository_path in _CURRENT_PUBLIC_DOCUMENT_PATHS or (
+            repository_path.endswith(".md") and repository_path.startswith(_CURRENT_PUBLIC_DOCUMENT_PREFIXES)
         )
     if source_kind is ClaimSourceKind.SCENARIO_YAML:
         return repository_path.startswith("data/") and repository_path.endswith(
@@ -275,7 +282,7 @@ def _claim_source_path_matches_kind(
     if source_kind is ClaimSourceKind.WORKFLOW_DOCUMENT:
         return bool(
             re.fullmatch(
-                r"\.(?:agents|claude)/skills/(?:[^/]+/)*SKILL\.md",
+                r"\.github/workflows/[^/]+\.ya?ml",
                 repository_path,
             ),
         )
@@ -283,9 +290,10 @@ def _claim_source_path_matches_kind(
 
 
 class ClaimSourceRuleMatch(_StrictFrozenModel):
-    """One scanner rule and its exact occurrence count in a source file."""
+    """One rule bound to exact normalized semantic spans in a source."""
 
     rule_id: ClaimSourceRule
+    semantic_span_sha256: str
     occurrences: int
 
     @field_validator("rule_id", mode="before")
@@ -299,6 +307,19 @@ class ClaimSourceRuleMatch(_StrictFrozenModel):
             return ClaimSourceRule(value)
         except ValueError as exc:
             raise ValueError(f"unsupported claim-source rule {value!r}") from exc
+
+    @field_validator("semantic_span_sha256", mode="before")
+    @classmethod
+    def _valid_semantic_span_digest(cls, value: Any) -> str:
+        digest = _sha256(
+            value,
+            field_name="claim-source semantic_span_sha256",
+        )
+        if len(set(digest)) == 1:
+            raise ValueError(
+                "claim-source semantic_span_sha256 must not be a sentinel digest",
+            )
+        return digest
 
     @field_validator("occurrences", mode="before")
     @classmethod
@@ -336,19 +357,13 @@ class ReviewedClaimSourceExclusion(_StrictFrozenModel):
 
 
 class ReviewedClaimSource(_StrictFrozenModel):
-    """Exact review of one freshly discovered claim-candidate source file."""
+    """Path-independent review of one semantic claim-candidate identity."""
 
-    repository_path: str
     source_kind: ClaimSourceKind
-    source_sha256: str
+    source_occurrences: int
     matches: tuple[ClaimSourceRuleMatch, ...]
     claim_ids: tuple[str, ...]
     exclusion: ReviewedClaimSourceExclusion | None
-
-    @field_validator("repository_path", mode="before")
-    @classmethod
-    def _valid_repository_path(cls, value: Any) -> str:
-        return _repository_relative_path(value, field_name="claim-source repository_path")
 
     @field_validator("source_kind", mode="before")
     @classmethod
@@ -362,13 +377,14 @@ class ReviewedClaimSource(_StrictFrozenModel):
         except ValueError as exc:
             raise ValueError(f"unsupported claim-source kind {value!r}") from exc
 
-    @field_validator("source_sha256", mode="before")
+    @field_validator("source_occurrences", mode="before")
     @classmethod
-    def _valid_source_digest(cls, value: Any) -> str:
-        digest = _sha256(value, field_name="claim-source source_sha256")
-        if len(set(digest)) == 1:
-            raise ValueError("claim-source source_sha256 must not be a sentinel digest")
-        return digest
+    def _valid_source_occurrences(cls, value: Any) -> int:
+        if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+            raise ValueError(
+                "claim-source source_occurrences must be a positive integer",
+            )
+        return value
 
     @field_validator("matches", "claim_ids", mode="before")
     @classmethod
@@ -388,20 +404,14 @@ class ReviewedClaimSource(_StrictFrozenModel):
     def _consistent_review(self) -> Self:
         if not self.matches:
             raise ValueError("claim-source review needs at least one scanner match")
-        rule_ids = tuple(match.rule_id.value for match in self.matches)
-        if rule_ids != tuple(sorted(set(rule_ids))):
-            raise ValueError("claim-source matches must be sorted and duplicate-free")
+        match_keys = tuple((match.rule_id.value, match.semantic_span_sha256) for match in self.matches)
+        if match_keys != tuple(sorted(set(match_keys))):
+            raise ValueError(
+                "claim-source semantic matches must be sorted and duplicate-free",
+            )
         if bool(self.claim_ids) == (self.exclusion is not None):
             raise ValueError(
                 "claim-source review requires either claim_ids or one reviewed exclusion",
-            )
-        if not _claim_source_path_matches_kind(
-            self.repository_path,
-            self.source_kind,
-        ):
-            raise ValueError(
-                "claim-source path is incompatible with its source_kind: "
-                f"{self.repository_path!r} / {self.source_kind.value!r}",
             )
         return self
 
@@ -411,7 +421,6 @@ class HistoricalClaimSourceCandidate(_StrictFrozenModel):
 
     repository_path: str
     source_kind: ClaimSourceKind
-    source_sha256: str
     matches: tuple[ClaimSourceRuleMatch, ...]
 
 
@@ -420,9 +429,9 @@ def _normalized_source_text(source: str) -> str:
     return source.replace("\r\n", "\n").replace("\r", "\n")
 
 
-def _source_sha256(source: str) -> str:
+def _semantic_span_sha256(source: str) -> str:
     return hashlib.sha256(
-        _normalized_source_text(source).encode("utf-8"),
+        _searchable_unit(_normalized_source_text(source)).encode("utf-8"),
     ).hexdigest()
 
 
@@ -452,6 +461,12 @@ def _python_semantic_units(source: str, *, repository_path: str) -> tuple[str, .
     symbols = tuple(
         node.name for node in ast.walk(tree) if isinstance(node, (ast.AsyncFunctionDef, ast.ClassDef, ast.FunctionDef))
     )
+    referenced_symbols = tuple(node.attr for node in ast.walk(tree) if isinstance(node, ast.Attribute)) + tuple(
+        alias.asname or alias.name.rsplit(".", maxsplit=1)[-1]
+        for node in ast.walk(tree)
+        if isinstance(node, (ast.Import, ast.ImportFrom))
+        for alias in node.names
+    )
 
     def target_names(target: ast.expr) -> tuple[str, ...]:
         if isinstance(target, ast.Name):
@@ -470,7 +485,15 @@ def _python_semantic_units(source: str, *, repository_path: str) -> tuple[str, .
         elif isinstance(node, (ast.AnnAssign, ast.NamedExpr)):
             assigned_symbols.extend(target_names(node.target))
     return tuple(
-        unit for value in (*strings, *comments, *symbols, *assigned_symbols) if (unit := _searchable_unit(value))
+        unit
+        for value in (
+            *strings,
+            *comments,
+            *symbols,
+            *assigned_symbols,
+            *referenced_symbols,
+        )
+        if (unit := _searchable_unit(value))
     )
 
 
@@ -502,29 +525,75 @@ def _markdown_semantic_units(source: str) -> tuple[str, ...]:
 
 def _typescript_semantic_units(source: str) -> tuple[str, ...]:
     """Expose authored identifiers, comments, strings, and JSX prose."""
-    return _markdown_semantic_units(source)
+    units: list[str] = []
+    lexical_patterns = (
+        re.compile(r"//[^\n]*|/\*[\s\S]*?\*/"),
+        re.compile(r"(?P<quote>['\"`])(?:\\.|(?!\1)[\s\S])*?(?P=quote)"),
+        re.compile(r">([^<>{}]+)<"),
+        re.compile(r"\b[A-Za-z_$][A-Za-z0-9_$]*\b"),
+    )
+    for pattern in lexical_patterns:
+        for match in pattern.finditer(source):
+            value = match.group(1) if pattern is lexical_patterns[2] else match.group(0)
+            value = value.strip("'\"`").strip()
+            if unit := _searchable_unit(value):
+                units.append(unit)
+    return tuple(units)
 
 
-def _scenario_yaml_semantic_units(
+def _yaml_semantic_units(
     source: str,
     *,
     repository_path: str,
 ) -> tuple[str, ...]:
-    """Validate strict YAML while retaining authored comments as claim prose."""
+    """Validate strict YAML and expose keys, strings, and authored comments."""
     try:
-        load_yaml_unique(source)
+        raw = load_yaml_unique(source)
     except (TypeError, ValueError, yaml.YAMLError) as exc:
         raise ValueError(
-            f"cannot scan scenario YAML historical-claim source {repository_path!r}",
+            f"cannot scan YAML historical-claim source {repository_path!r}",
         ) from exc
-    return _markdown_semantic_units(source)
+
+    units: list[str] = []
+
+    def visit(value: Any) -> None:
+        if isinstance(value, Mapping):
+            for key, child in value.items():
+                if isinstance(key, str) and (unit := _searchable_unit(key)):
+                    units.append(unit)
+                visit(child)
+        elif isinstance(value, (list, tuple)):
+            for child in value:
+                visit(child)
+        elif isinstance(value, str) and (unit := _searchable_unit(value)):
+            units.append(unit)
+
+    visit(raw)
+    units.extend(
+        unit
+        for line in source.splitlines()
+        if "#" in line and (unit := _searchable_unit(line.split("#", maxsplit=1)[1]))
+    )
+    return tuple(units)
 
 
-def _pattern_occurrences(
-    pattern: re.Pattern[str],
-    values: tuple[str, ...],
-) -> int:
-    return sum(len(tuple(pattern.finditer(value))) for value in values)
+def _matched_semantic_span(
+    semantic_unit: str,
+    *,
+    start: int,
+    end: int,
+) -> str:
+    """Return the exact sentence-like context that gives a match meaning."""
+    boundaries = tuple(match.start() for match in re.finditer(r"[!?;]|\.(?=\s|$)", semantic_unit))
+    left = max((position for position in boundaries if position < start), default=-1)
+    right = (
+        min(
+            (position for position in boundaries if position >= end),
+            default=len(semantic_unit) - 1,
+        )
+        + 1
+    )
+    return semantic_unit[left + 1 : right].strip()
 
 
 def _claim_source_rule_matches(
@@ -542,66 +611,49 @@ def _claim_source_rule_matches(
             normalized,
             repository_path=repository_path,
         )
-    elif source_kind in {
-        ClaimSourceKind.FRONTEND_PUBLIC_SOURCE,
-        ClaimSourceKind.FRONTEND_TEST,
-    }:
+    elif source_kind is ClaimSourceKind.FRONTEND_PUBLIC_SOURCE:
         semantic_units = _typescript_semantic_units(normalized)
-    elif source_kind is ClaimSourceKind.SCENARIO_YAML:
-        semantic_units = _scenario_yaml_semantic_units(
+    elif source_kind in {
+        ClaimSourceKind.SCENARIO_YAML,
+        ClaimSourceKind.WORKFLOW_DOCUMENT,
+    }:
+        semantic_units = _yaml_semantic_units(
             normalized,
             repository_path=repository_path,
         )
     else:
         semantic_units = _markdown_semantic_units(normalized)
 
-    counts: dict[ClaimSourceRule, int] = {
-        ClaimSourceRule.HISTORICAL_OUTCOME_COOCCURRENCE: _pattern_occurrences(
-            _HISTORICAL_OUTCOME_PATTERN,
-            semantic_units,
-        ),
-        ClaimSourceRule.HISTORICAL_STATUS_VOCABULARY: len(
-            tuple(
-                _HISTORICAL_STATUS_PATTERN.finditer(
-                    _searchable_unit(normalized),
-                ),
-            ),
-        ),
-        ClaimSourceRule.LEGACY_BOOLEAN_API: len(
-            tuple(_LEGACY_BOOLEAN_API_PATTERN.finditer(normalized)),
-        ),
-        ClaimSourceRule.LEGACY_CLAIM_API: len(
-            tuple(_LEGACY_CLAIM_API_PATTERN.finditer(normalized)),
-        ),
-        ClaimSourceRule.OUTCOME_ENVELOPE: _pattern_occurrences(
-            _OUTCOME_ENVELOPE_PATTERN,
-            semantic_units,
-        ),
-        ClaimSourceRule.REGRESSION_SNAPSHOT: len(
-            tuple(_REGRESSION_SNAPSHOT_PATTERN.finditer(normalized)),
-        ),
-        ClaimSourceRule.SCENARIO_STATUS_ALIAS: (
-            _pattern_occurrences(_SCENARIO_STATUS_PATTERN, semantic_units)
-            if source_kind
-            in {
-                ClaimSourceKind.API_PYTHON,
-                ClaimSourceKind.FRONTEND_PUBLIC_SOURCE,
-                ClaimSourceKind.FRONTEND_TEST,
-                ClaimSourceKind.PUBLIC_DOCUMENT,
-                ClaimSourceKind.SCENARIO_YAML,
-                ClaimSourceKind.WORKFLOW_DOCUMENT,
-            }
-            or repository_path.startswith("tests/validation/")
-            else len(tuple(re.finditer(r"\bHISTORICAL_WINNERS\b", normalized)))
-        ),
+    patterns: dict[ClaimSourceRule, re.Pattern[str]] = {
+        ClaimSourceRule.HISTORICAL_OUTCOME_COOCCURRENCE: _HISTORICAL_OUTCOME_PATTERN,
+        ClaimSourceRule.HISTORICAL_STATUS_VOCABULARY: _HISTORICAL_STATUS_PATTERN,
+        ClaimSourceRule.LEGACY_BOOLEAN_API: _LEGACY_BOOLEAN_API_PATTERN,
+        ClaimSourceRule.LEGACY_CLAIM_API: _LEGACY_CLAIM_API_PATTERN,
+        ClaimSourceRule.OUTCOME_ENVELOPE: _OUTCOME_ENVELOPE_PATTERN,
+        ClaimSourceRule.REGRESSION_SNAPSHOT: _REGRESSION_SNAPSHOT_PATTERN,
+        ClaimSourceRule.SCENARIO_STATUS_ALIAS: _SCENARIO_STATUS_PATTERN,
     }
+    matches: dict[tuple[ClaimSourceRule, str], int] = {}
+    for semantic_unit in semantic_units:
+        for rule_id, pattern in patterns.items():
+            for raw_match in pattern.finditer(semantic_unit):
+                semantic_span = _matched_semantic_span(
+                    semantic_unit,
+                    start=raw_match.start(),
+                    end=raw_match.end(),
+                )
+                key = (rule_id, _semantic_span_sha256(semantic_span))
+                matches[key] = matches.get(key, 0) + 1
     return tuple(
         ClaimSourceRuleMatch(
             rule_id=rule_id,
-            occurrences=counts[rule_id],
+            semantic_span_sha256=span_digest,
+            occurrences=occurrences,
         )
-        for rule_id in sorted(counts, key=lambda item: item.value)
-        if counts[rule_id]
+        for (rule_id, span_digest), occurrences in sorted(
+            matches.items(),
+            key=lambda item: (item[0][0].value, item[0][1]),
+        )
     )
 
 
@@ -630,18 +682,20 @@ def scan_historical_claim_sources(
             )
         discovered[repository_path] = source_kind
 
-    tests_root = root / "tests"
-    if tests_root.is_dir():
-        for path in tests_root.rglob("*.py"):
+    for relative in sorted(_EXPLICIT_CLAIM_TEST_PATHS):
+        path = root / relative
+        if path.is_file():
             register(path, ClaimSourceKind.PYTHON_TEST)
 
-    for root_document in ("README.md", "CLAUDE.md"):
-        if (root / root_document).exists():
-            register(root / root_document, ClaimSourceKind.PUBLIC_DOCUMENT)
-    docs_root = root / "docs"
-    if docs_root.is_dir():
-        for path in docs_root.rglob("*.md"):
+    for relative in sorted(_CURRENT_PUBLIC_DOCUMENT_PATHS):
+        path = root / relative
+        if path.is_file():
             register(path, ClaimSourceKind.PUBLIC_DOCUMENT)
+    for prefix in _CURRENT_PUBLIC_DOCUMENT_PREFIXES:
+        docs_root = root / prefix
+        if docs_root.is_dir():
+            for path in docs_root.rglob("*.md"):
+                register(path, ClaimSourceKind.PUBLIC_DOCUMENT)
 
     api_root = root / "api"
     if api_root.is_dir():
@@ -656,23 +710,18 @@ def scan_historical_claim_sources(
             relative = path.relative_to(root).as_posix()
             if _is_frontend_declaration_source(relative):
                 continue
-            register(
-                path,
-                (
-                    ClaimSourceKind.FRONTEND_TEST
-                    if _is_frontend_test_source(relative)
-                    else ClaimSourceKind.FRONTEND_PUBLIC_SOURCE
-                ),
-            )
+            if not _is_frontend_test_source(relative):
+                register(path, ClaimSourceKind.FRONTEND_PUBLIC_SOURCE)
 
     data_root = root / "data"
     if data_root.is_dir():
         for path in data_root.rglob("scenario.yaml"):
             register(path, ClaimSourceKind.SCENARIO_YAML)
 
-    for workflow_root in (root / ".agents/skills", root / ".claude/skills"):
-        if workflow_root.is_dir():
-            for path in workflow_root.rglob("SKILL.md"):
+    workflow_root = root / ".github/workflows"
+    if workflow_root.is_dir():
+        for pattern in ("*.yml", "*.yaml"):
+            for path in workflow_root.glob(pattern):
                 register(path, ClaimSourceKind.WORKFLOW_DOCUMENT)
 
     candidates: list[HistoricalClaimSourceCandidate] = []
@@ -707,7 +756,6 @@ def scan_historical_claim_sources(
             HistoricalClaimSourceCandidate(
                 repository_path=repository_path,
                 source_kind=source_kind,
-                source_sha256=_source_sha256(source),
                 matches=matches,
             ),
         )
@@ -1075,7 +1123,6 @@ class ClaimLedgerAudit(_StrictFrozenModel):
     missing_scenario_collections: tuple[str, ...]
     unreviewed_claim_source_paths: tuple[str, ...]
     stale_claim_source_reviews: tuple[str, ...]
-    claim_source_digest_mismatches: tuple[str, ...]
     claim_source_rule_mismatches: tuple[str, ...]
     claim_source_binding_errors: tuple[str, ...]
     forbidden_boolean_historical_apis: tuple[str, ...]
@@ -1107,12 +1154,24 @@ class ScenarioHistoricalValidationSummary(_StrictFrozenModel):
     ledger_sha256: str
 
 
+def _claim_source_identity(
+    source_kind: ClaimSourceKind,
+    matches: tuple[ClaimSourceRuleMatch, ...],
+) -> tuple[str, str]:
+    return (
+        source_kind.value,
+        _canonical_sha256(
+            [match.model_dump(mode="json") for match in matches],
+        ),
+    )
+
+
 class HistoricalClaimLedger(_StrictFrozenModel):
     """Strict loaded ledger bound to one repository tree."""
 
-    schema_version: Literal[1]
+    schema_version: Literal[2]
     ledger_id: str
-    claim_source_scanner_version: Literal[2]
+    claim_source_scanner_version: Literal[3]
     claim_source_reviews: tuple[ReviewedClaimSource, ...]
     claims: tuple[HistoricalClaim, ...]
     ledger_sha256: str
@@ -1124,8 +1183,8 @@ class HistoricalClaimLedger(_StrictFrozenModel):
     @field_validator("schema_version", mode="before")
     @classmethod
     def _schema_version(cls, value: Any) -> int:
-        if type(value) is not int or value != 1:
-            raise ValueError("schema_version must be the strict integer 1")
+        if type(value) is not int or value != 2:
+            raise ValueError("schema_version must be the strict integer 2")
         return value
 
     @field_validator("ledger_id", mode="before")
@@ -1136,8 +1195,8 @@ class HistoricalClaimLedger(_StrictFrozenModel):
     @field_validator("claim_source_scanner_version", mode="before")
     @classmethod
     def _claim_source_scanner_version(cls, value: Any) -> int:
-        if type(value) is not int or value != 2:
-            raise ValueError("claim_source_scanner_version must be the strict integer 2")
+        if type(value) is not int or value != 3:
+            raise ValueError("claim_source_scanner_version must be the strict integer 3")
         return value
 
     @field_validator("claim_source_reviews", "claims", mode="before")
@@ -1169,10 +1228,12 @@ class HistoricalClaimLedger(_StrictFrozenModel):
         if len(locator_keys) != len(set(locator_keys)):
             raise ValueError("claim path/locator identities must be unique")
 
-        review_keys = [(review.source_kind.value, review.repository_path) for review in self.claim_source_reviews]
+        review_keys = [
+            _claim_source_identity(review.source_kind, review.matches) for review in self.claim_source_reviews
+        ]
         if review_keys != sorted(set(review_keys)):
             raise ValueError(
-                "claim-source reviews must be sorted and path-unique",
+                "claim-source reviews must be sorted and semantic-identity unique",
             )
         claims_by_id = {claim.claim_id: claim for claim in self.claims}
         relevant_claim_ids: set[str] = set()
@@ -1188,26 +1249,16 @@ class HistoricalClaimLedger(_StrictFrozenModel):
                     raise ValueError(
                         f"claim-source review references unknown claim {claim_id!r}",
                     )
-                if claim.repository_path != review.repository_path or claim.surface not in allowed_surfaces:
+                if claim.surface not in allowed_surfaces:
                     raise ValueError(
                         f"claim-source review has incompatible claim {claim_id!r}",
                     )
-            compatible_ids = tuple(
-                sorted(
-                    claim.claim_id
-                    for claim in self.claims
-                    if claim.repository_path == review.repository_path and claim.surface in allowed_surfaces
-                ),
-            )
             if review.exclusion is not None:
-                if compatible_ids:
-                    raise ValueError(
-                        f"claim-source exclusion cannot conceal compatible ledger claims: {review.repository_path!r}",
-                    )
                 continue
-            if review.claim_ids != compatible_ids:
+            overlap = bound_claim_ids.intersection(review.claim_ids)
+            if overlap:
                 raise ValueError(
-                    f"claim-source review must bind every compatible claim on its path: {review.repository_path!r}",
+                    f"claim-source claim IDs must be bound by one semantic review: {tuple(sorted(overlap))!r}",
                 )
             bound_claim_ids.update(review.claim_ids)
         if bound_claim_ids != relevant_claim_ids:
@@ -1750,59 +1801,64 @@ class HistoricalClaimLedger(_StrictFrozenModel):
             self._repository_root,
             source_kinds=claim_source_kinds,
         )
-        candidate_by_path = {candidate.repository_path: candidate for candidate in candidates}
+        candidate_groups: dict[
+            tuple[str, str],
+            list[HistoricalClaimSourceCandidate],
+        ] = {}
+        for candidate in candidates:
+            candidate_groups.setdefault(
+                _claim_source_identity(candidate.source_kind, candidate.matches),
+                [],
+            ).append(candidate)
         selected_reviews = tuple(
             review for review in self.claim_source_reviews if review.source_kind in claim_source_kinds
         )
-        review_by_path = {review.repository_path: review for review in selected_reviews}
+        review_by_identity = {
+            _claim_source_identity(review.source_kind, review.matches): review for review in selected_reviews
+        }
         unreviewed_sources = tuple(
-            sorted(set(candidate_by_path) - set(review_by_path)),
+            sorted(
+                candidate.repository_path
+                for identity, grouped_candidates in candidate_groups.items()
+                if identity not in review_by_identity
+                for candidate in grouped_candidates
+            ),
         )
         stale_reviews = tuple(
-            sorted(set(review_by_path) - set(candidate_by_path)),
-        )
-        common_paths = tuple(
-            sorted(set(candidate_by_path) & set(review_by_path)),
-        )
-        source_digest_mismatches = tuple(
-            path for path in common_paths if candidate_by_path[path].source_sha256 != review_by_path[path].source_sha256
+            f"{source_kind}:{semantic_identity}"
+            for source_kind, semantic_identity in sorted(
+                set(review_by_identity) - set(candidate_groups),
+            )
         )
         source_rule_mismatches = tuple(
-            path
-            for path in common_paths
-            if candidate_by_path[path].source_kind is not review_by_path[path].source_kind
-            or candidate_by_path[path].matches != review_by_path[path].matches
+            f"{identity[0]}:{identity[1]}"
+            for identity in sorted(set(candidate_groups) & set(review_by_identity))
+            if len(candidate_groups[identity]) != review_by_identity[identity].source_occurrences
         )
 
         binding_errors: list[str] = []
         for review in selected_reviews:
+            identity = _claim_source_identity(review.source_kind, review.matches)
+            grouped_candidates = candidate_groups.get(identity, ())
+            candidate_paths = {candidate.repository_path for candidate in grouped_candidates}
             allowed = _CLAIM_SURFACES_BY_SOURCE_KIND[review.source_kind]
             compatible_ids = tuple(
                 sorted(
                     claim.claim_id
                     for claim in self.claims
-                    if claim.repository_path == review.repository_path and claim.surface in allowed
+                    if claim.repository_path in candidate_paths and claim.surface in allowed
                 ),
             )
             if review.exclusion is None and review.claim_ids != compatible_ids:
-                binding_errors.append(review.repository_path)
+                binding_errors.extend(sorted(candidate_paths) or [f"{identity[0]}:{identity[1]}"])
             if review.exclusion is not None and compatible_ids:
-                binding_errors.append(review.repository_path)
+                binding_errors.extend(sorted(candidate_paths))
 
         return ClaimLedgerAudit(
             scenario_collections=len(actual_collections),
             scenario_metrics=sum(actual_collections.values()),
-            python_test_surfaces=sum(
-                claim.surface
-                in {
-                    ClaimSurface.PYTHON_DOCUMENTED_OUTCOMES_TEST,
-                    ClaimSurface.PYTHON_HISTORICAL_CLAIM_TEST,
-                }
-                for claim in self.claims
-            ),
-            frontend_test_surfaces=sum(
-                claim.surface is ClaimSurface.FRONTEND_HISTORICAL_CLAIM_TEST for claim in self.claims
-            ),
+            python_test_surfaces=sum(claim.surface in _PYTHON_TEST_CLAIM_SURFACES for claim in self.claims),
+            frontend_test_surfaces=0,
             documentation_claims=sum(claim.surface is ClaimSurface.DOCUMENTATION_CLAIM for claim in self.claims),
             documentation_claim_paths=len(
                 {claim.repository_path for claim in self.claims if claim.surface is ClaimSurface.DOCUMENTATION_CLAIM},
@@ -1813,9 +1869,7 @@ class HistoricalClaimLedger(_StrictFrozenModel):
             frontend_public_candidate_paths=sum(
                 candidate.source_kind is ClaimSourceKind.FRONTEND_PUBLIC_SOURCE for candidate in candidates
             ),
-            frontend_test_candidate_paths=sum(
-                candidate.source_kind is ClaimSourceKind.FRONTEND_TEST for candidate in candidates
-            ),
+            frontend_test_candidate_paths=0,
             python_test_candidate_paths=sum(
                 candidate.source_kind is ClaimSourceKind.PYTHON_TEST for candidate in candidates
             ),
@@ -1837,7 +1891,6 @@ class HistoricalClaimLedger(_StrictFrozenModel):
             missing_scenario_collections=missing,
             unreviewed_claim_source_paths=unreviewed_sources,
             stale_claim_source_reviews=stale_reviews,
-            claim_source_digest_mismatches=source_digest_mismatches,
             claim_source_rule_mismatches=source_rule_mismatches,
             claim_source_binding_errors=tuple(sorted(set(binding_errors))),
             forbidden_boolean_historical_apis=(_obsolete_boolean_historical_apis(self._repository_root)),
@@ -1993,16 +2046,46 @@ class HistoricalClaimLedgerLoader:
         path: str | Path,
         *,
         scenario_catalog_only: bool,
+        package_layout: bool = False,
     ) -> tuple[HistoricalClaimLedger, ClaimLedgerAudit]:
         ledger_path = self._ledger_path(path)
         raw = load_yaml_unique(ledger_path.read_text(encoding="utf-8"))
         if not isinstance(raw, Mapping):
             raise ValueError("historical claim ledger root must be a mapping")
-        ledger = HistoricalClaimLedger.model_validate(raw, strict=True)
         payload = dict(raw)
         persisted_digest = payload.pop("ledger_sha256", None)
         if persisted_digest != _canonical_sha256(payload):
             raise ValueError("historical claim ledger digest does not match")
+        if package_layout:
+            claims = raw.get("claims")
+            reviews = raw.get("claim_source_reviews")
+            if not isinstance(claims, (list, tuple)) or not isinstance(
+                reviews,
+                (list, tuple),
+            ):
+                raise ValueError(
+                    "historical claim ledger must contain ordered claims and reviews",
+                )
+            package_payload: dict[str, Any] = {
+                "schema_version": raw.get("schema_version"),
+                "ledger_id": "historical_claim_dispositions.packaged.v2",
+                "claim_source_scanner_version": raw.get(
+                    "claim_source_scanner_version",
+                ),
+                "claim_source_reviews": [
+                    review
+                    for review in reviews
+                    if isinstance(review, Mapping) and review.get("source_kind") == ClaimSourceKind.SCENARIO_YAML.value
+                ],
+                "claims": [
+                    claim for claim in claims if isinstance(claim, Mapping) and claim.get("scenario_path") is not None
+                ],
+            }
+            package_payload["ledger_sha256"] = _canonical_sha256(
+                package_payload,
+            )
+            raw = package_payload
+        ledger = HistoricalClaimLedger.model_validate(raw, strict=True)
         object.__setattr__(ledger, "_repository_root", self._repository_root)
         object.__setattr__(ledger, "_ledger_path", ledger_path)
         audited_claims = (
@@ -2023,7 +2106,6 @@ class HistoricalClaimLedgerLoader:
             "missing_scenario_collections": audit.missing_scenario_collections,
             "unreviewed_claim_source_paths": audit.unreviewed_claim_source_paths,
             "stale_claim_source_reviews": audit.stale_claim_source_reviews,
-            "claim_source_digest_mismatches": audit.claim_source_digest_mismatches,
             "claim_source_rule_mismatches": audit.claim_source_rule_mismatches,
             "claim_source_binding_errors": audit.claim_source_binding_errors,
             "forbidden_boolean_historical_apis": audit.forbidden_boolean_historical_apis,
@@ -2055,6 +2137,23 @@ class HistoricalClaimLedgerLoader:
     ) -> HistoricalClaimLedger:
         """Load the exact ledger while auditing every API-published claim."""
         ledger, _audit = self._load(path, scenario_catalog_only=True)
+        return ledger
+
+    def load_packaged_scenario_catalog(
+        self,
+        path: str | Path,
+    ) -> HistoricalClaimLedger:
+        """Audit the scenario-only projection available in a base wheel.
+
+        The full receipt digest is verified before absent repository-only
+        source surfaces are projected away. Checkout loading remains a full
+        repository audit.
+        """
+        ledger, _audit = self._load(
+            path,
+            scenario_catalog_only=True,
+            package_layout=True,
+        )
         return ledger
 
 

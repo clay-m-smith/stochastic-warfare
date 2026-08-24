@@ -873,6 +873,7 @@ def test_fow_direct_visual_requires_current_visual_witness() -> None:
         )
 
 
+@pytest.mark.test_evidence("behavioral_oracle")
 def test_fow_witness_implements_import_neutral_targeting_protocol() -> None:
     witness = ObserverDetectionWitness(
         side="blue",

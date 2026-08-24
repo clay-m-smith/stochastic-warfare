@@ -196,9 +196,7 @@ def load_srtm_heightmap(
         Elevation grid in ENU coordinates with [0,0] = SW corner.
     """
     try:
-        import rasterio
-        from rasterio.transform import from_bounds
-        from rasterio.warp import Resampling, reproject
+        import rasterio  # noqa: F401  # Verify the optional terrain dependency before file work.
     except ImportError:
         raise ImportError(
             "rasterio is required for SRTM loading. "

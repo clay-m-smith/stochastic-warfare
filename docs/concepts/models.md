@@ -106,7 +106,8 @@ calculation can be reproduced.
 
 ### Where Used
 
-- `validation/monte_carlo.py` -- legacy `MonteCarloHarness` diagnostics
+- `stochastic_warfare.legacy.validation.monte_carlo` -- quarantined legacy
+  `MonteCarloHarness` diagnostics; no production or acceptance authority
 - `validation/campaign_runner.py` and `validation/campaign_metrics.py` --
   campaign execution and metric extraction
 - `tools/_run_helpers.py` with `simulation/runtime.py` -- Phase 112
@@ -517,7 +518,9 @@ unsupported rather than being labeled validated.
 - `CampaignScenarioConfig.calibration_overrides` (typed defaults apply when a
   scenario YAML omits the field)
 - `simulation/calibration.py` — `CalibrationSchema` pydantic model
-- `simulation/battle.py` — applied during engagement resolution
+- `simulation/battle.py` — public tactical facade; the injected engagement
+  executor owns direct engagement execution through a least-privilege runtime
+  view
 
 ---
 

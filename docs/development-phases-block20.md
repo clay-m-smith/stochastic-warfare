@@ -2,16 +2,18 @@
 
 **Phase range:** 138--140
 
-**Status:** Planned follow-up handoff; Phase 138 is the first phase in this
-block and has not started
+**Status:** Phase 138 remains planned and has not started; Phases 139 and 140
+were retired before start on 2026-08-23
 
-Block 20 owns three production-state and duplication deficits surfaced while
-Phase 118 consolidated performance-flag semantics. The terminal v7 study is
-already complete and retained as immutable qualified negative evidence; these
-phases neither reinterpret that `FAIL` nor reopen Phase 118's support decision.
-They follow the numbered remediation sequence and may not start before every
-earlier phase prerequisite has passed its own postmortem and coherent commit.
-Block 21 separately owns any future scan-scheduling or LOD re-enablement.
+Block 20 originally assigned three production-state and duplication deficits
+surfaced while Phase 118 consolidated performance-flag semantics. The terminal
+v7 study remains immutable qualified negative evidence; this roadmap neither
+reinterprets that `FAIL` nor reopens Phase 118's support decision. The
+tiered modular-monolith consolidation closed REM-052 and REM-053 through its
+[accepted postmortem](devlog/consolidation-tiered-modular-monolith.md#postmortem),
+so Phases 139 and 140 are retired without starting. Their planned bodies remain
+below as historical handoff context. Phase 138 and Block 21 retain their
+existing ordering.
 
 ## Phase 138 - Detection Scan-State Lifecycle Integrity
 
@@ -40,7 +42,9 @@ is not completion evidence.
 
 ## Phase 139 - Fog-of-War Update Boundary Consolidation
 
-Status: **Not started**. REM-052 (P2) remains queued.
+Status: **Retired before start**. REM-052 closed on 2026-08-23 through the
+[consolidation postmortem](devlog/consolidation-tiered-modular-monolith.md#postmortem).
+The planned body below is retained unchanged as historical handoff context.
 
 Eliminate the independently maintained legacy body behind
 `FogOfWarManager.update()`. Every supported FOW cycle must route through one
@@ -64,7 +68,9 @@ different behavior; source deduplication alone is not behavioral evidence.
 
 ## Phase 140 - Single-Snapshot FOW Checkpoint Integrity
 
-Status: **Not started**. REM-053 (P2) remains queued.
+Status: **Retired before start**. REM-053 closed on 2026-08-23 through the
+[consolidation postmortem](devlog/consolidation-tiered-modular-monolith.md#postmortem).
+The planned body below is retained unchanged as historical handoff context.
 
 Replace repeated `FogOfWarManager.get_state()` serialization during one
 `SimulationContext` checkpoint capture with one typed, immutable owner-issued

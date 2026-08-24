@@ -17,7 +17,7 @@ import stat
 import subprocess
 from dataclasses import dataclass, fields, is_dataclass
 from enum import Enum
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any, Callable, Mapping, Sequence
 
 from pydantic import (
@@ -42,8 +42,10 @@ from stochastic_warfare.core.indexed_rng import FOWIndexedIntervalRecord
 from stochastic_warfare.simulation.campaign import CampaignConfig
 from stochastic_warfare.simulation.engine import (
     EngineConfig,
+    RuntimeExecutionMode,
     SimulationEngine,
     SimulationRunResult,
+    SuppressedRuntimeFailure,
 )
 from stochastic_warfare.simulation.era_runtime import EraRuntimeContract
 from stochastic_warfare.simulation.performance_flags import (
@@ -133,32 +135,519 @@ class RuntimeProvenance:
     final_roster_loadout_fingerprint: str
     initial_unit_assignments: tuple[UnitCommandAssignment, ...]
     arriving_unit_assignments: tuple[UnitCommandAssignment, ...]
+    execution_mode: RuntimeExecutionMode = RuntimeExecutionMode.STRICT
+    suppressed_failures: tuple[SuppressedRuntimeFailure, ...] = ()
+
+    @property
+    def authoritative(self) -> bool:
+        """Whether this provenance is eligible for acceptance evidence."""
+        return (
+            self.execution_mode is RuntimeExecutionMode.STRICT
+            and not self.suppressed_failures
+        )
 
 
-def _run_git(repo: Path, *arguments: str) -> bytes:
+def _run_git(
+    repo: Path,
+    *arguments: str,
+    input_payload: bytes | None = None,
+) -> bytes:
     return subprocess.run(
         ["git", "-C", str(repo), *arguments],
         check=True,
         capture_output=True,
+        input=input_payload,
     ).stdout
 
 
-def _untracked_entry_identity(
+_RUNTIME_SOURCE_ROOTS = ("api", "stochastic_warfare")
+_RUNTIME_STARTUP_MODULE_NAMES = ("sitecustomize", "usercustomize")
+_ROOT_RUNTIME_MODULE_SUFFIXES = (".py", ".pyc", ".so", ".pyd")
+_ALLOWED_CHECKOUT_ROOT_PACKAGES = frozenset(
+    {"api", "stochastic_warfare", "tests"},
+)
+_ALLOWED_CHECKOUT_ROOT_MODULES = frozenset(
+    {"build_hooks.py"},
+)
+_ROOT_IMPORT_MODULE_PATHSPECS = (
+    ":(top,glob)*.py",
+    ":(top,glob)*.pyc",
+    ":(top,glob)*.so",
+    ":(top,glob)*.pyd",
+)
+_ROOT_IMPORT_PACKAGE_PATHSPECS = (
+    ":(top,glob)*/__init__.py",
+    ":(top,glob)*/__init__.pyc",
+    ":(top,glob)*/__init__*.so",
+    ":(top,glob)*/__init__*.pyd",
+)
+_RUNTIME_STARTUP_PATHSPECS = tuple(
+    f":(top,glob)**/{module_name}{suffix_pattern}"
+    for module_name in _RUNTIME_STARTUP_MODULE_NAMES
+    for suffix_pattern in (".py", ".pyc", "*.so", "*.pyd")
+)
+_RUNTIME_STARTUP_PACKAGE_PATHSPECS = tuple(
+    f":(top,glob)**/{module_name}/__init__{suffix_pattern}"
+    for module_name in _RUNTIME_STARTUP_MODULE_NAMES
+    for suffix_pattern in (".py", ".pyc", "*.so", "*.pyd")
+)
+_RUNTIME_SCRIPT_PATHSPECS = tuple(
+    f":(top,glob)scripts/**/*{suffix}"
+    for suffix in _ROOT_RUNTIME_MODULE_SUFFIXES
+)
+_RUNTIME_TRACKED_PATHSPECS = (
+    *_RUNTIME_SOURCE_ROOTS,
+    *_ROOT_IMPORT_MODULE_PATHSPECS,
+    *_RUNTIME_STARTUP_PATHSPECS,
+    *_RUNTIME_STARTUP_PACKAGE_PATHSPECS,
+    *_RUNTIME_SCRIPT_PATHSPECS,
+)
+_RUNTIME_IGNORED_PATHSPECS = (
+    *_RUNTIME_TRACKED_PATHSPECS,
+    *_ROOT_IMPORT_PACKAGE_PATHSPECS,
+)
+_CHECKOUT_IMPORT_POLICY_PATHSPECS = (
+    *_ROOT_IMPORT_MODULE_PATHSPECS,
+    *_ROOT_IMPORT_PACKAGE_PATHSPECS,
+)
+_REGULAR_GIT_MODES = frozenset({"100644", "100755"})
+
+
+def _decode_git_relative_path(payload: bytes) -> str:
+    """Decode one safe repository-relative path emitted by Git."""
+    relative = payload.decode("utf-8")
+    path = PurePosixPath(relative)
+    if (
+        not relative
+        or "\\" in relative
+        or "\n" in relative
+        or "\r" in relative
+        or path.is_absolute()
+        or path.as_posix() != relative
+        or any(part in {"", ".", ".."} for part in path.parts)
+    ):
+        raise RuntimeError(
+            f"worktree provenance received an unsupported Git path: {relative!r}",
+        )
+    return relative
+
+
+def _is_runtime_path(relative: str) -> bool:
+    parts = PurePosixPath(relative).parts
+    return (
+        _is_runtime_startup_path(relative)
+        or _is_runtime_script_path(relative)
+        or (
+            len(parts) == 1
+            and relative.endswith(_ROOT_RUNTIME_MODULE_SUFFIXES)
+        )
+        or (
+            len(parts) > 1 and parts[0] in _RUNTIME_SOURCE_ROOTS
+        )
+    )
+
+
+def _is_runtime_script_path(relative: str) -> bool:
+    """Return whether direct script launch can execute or import this path."""
+    parts = PurePosixPath(relative).parts
+    return (
+        len(parts) > 1
+        and parts[0] == "scripts"
+        and "__pycache__" not in parts
+        and relative.endswith(_ROOT_RUNTIME_MODULE_SUFFIXES)
+    )
+
+
+def _is_import_package_initializer(filename: str) -> bool:
+    """Return whether one filename can initialize a regular Python package."""
+    return (
+        filename in {"__init__.py", "__init__.pyc"}
+        or (
+            filename.startswith("__init__.")
+            and filename.endswith((".so", ".pyd"))
+        )
+    )
+
+
+def _is_root_import_package(relative: str) -> bool:
+    parts = PurePosixPath(relative).parts
+    return (
+        len(parts) == 2
+        and parts[0].isidentifier()
+        and _is_import_package_initializer(parts[1])
+    )
+
+
+def _import_module_name(filename: str) -> str | None:
+    """Return the Python import name represented by one module filename."""
+    for suffix in _ROOT_RUNTIME_MODULE_SUFFIXES:
+        if not filename.endswith(suffix):
+            continue
+        stem = filename[: -len(suffix)]
+        if suffix in {".so", ".pyd"}:
+            stem = stem.split(".", 1)[0]
+        return stem if stem.isidentifier() else None
+    return None
+
+
+def _is_runtime_startup_path(relative: str) -> bool:
+    """Return whether one path can provide Python's startup customization."""
+    parts = PurePosixPath(relative).parts
+    module_name = _import_module_name(parts[-1]) if parts else None
+    return module_name in _RUNTIME_STARTUP_MODULE_NAMES or (
+        len(parts) > 1
+        and parts[-2] in _RUNTIME_STARTUP_MODULE_NAMES
+        and _is_import_package_initializer(parts[-1])
+    )
+
+
+def _root_import_module_name(relative: str) -> str | None:
+    """Return the import name for one direct checkout-root module candidate."""
+    parts = PurePosixPath(relative).parts
+    return _import_module_name(relative) if len(parts) == 1 else None
+
+
+def _is_unknown_checkout_import_candidate(relative: str) -> bool:
+    """Return whether ``relative`` introduces an unowned root import name."""
+    module_name = _root_import_module_name(relative)
+    if module_name is not None:
+        return (
+            relative not in _ALLOWED_CHECKOUT_ROOT_MODULES
+            and module_name not in _RUNTIME_STARTUP_MODULE_NAMES
+        )
+    if not _is_root_import_package(relative):
+        return False
+    package_name = PurePosixPath(relative).parts[0]
+    return package_name not in _ALLOWED_CHECKOUT_ROOT_PACKAGES
+
+
+def _is_allowed_ignored_runtime_output(relative: str) -> bool:
+    parts = PurePosixPath(relative).parts
+    if "__pycache__" in parts:
+        return True
+    if parts and parts[0] in {".venv", "artifacts", "build"}:
+        return True
+    return len(parts) > 1 and parts[:2] == ("data", "terrain_cache")
+
+
+def _is_ignored_runtime_source(relative: str) -> bool:
+    if _is_allowed_ignored_runtime_output(relative):
+        return False
+    return _is_runtime_path(relative) or _is_root_import_package(relative)
+
+
+def _head_tree_entries(
+    repo: Path,
+    commit: str,
+) -> dict[str, tuple[str, str, str]]:
+    """Return mode, object type, and ID for every path at ``commit``."""
+    output = _run_git(repo, "ls-tree", "-r", "-z", commit, "--")
+    entries: dict[str, tuple[str, str, str]] = {}
+    for record in output.split(b"\0"):
+        if not record:
+            continue
+        try:
+            metadata, raw_path = record.split(b"\t", 1)
+            mode, object_type, object_id = metadata.decode("ascii").split()
+        except (UnicodeDecodeError, ValueError) as exc:
+            raise RuntimeError(
+                "worktree provenance received a malformed Git tree entry",
+            ) from exc
+        relative = _decode_git_relative_path(raw_path)
+        if relative in entries:
+            raise RuntimeError(
+                f"worktree provenance received duplicate Git path {relative!r}",
+            )
+        entries[relative] = (mode, object_type, object_id)
+    return entries
+
+
+def _runtime_head_entries(
+    head_tree: Mapping[str, tuple[str, str, str]],
+) -> dict[str, tuple[str, str]]:
+    """Return every runtime blob path, executable mode, and ID at ``commit``."""
+    entries: dict[str, tuple[str, str]] = {}
+    for relative, (mode, object_type, object_id) in head_tree.items():
+        if not _is_runtime_path(relative):
+            continue
+        if mode not in _REGULAR_GIT_MODES or object_type != "blob":
+            raise RuntimeError(
+                "worktree provenance requires regular tracked blobs: "
+                f"{relative!r}",
+            )
+        entries[relative] = (mode, object_id)
+    if not entries:
+        raise RuntimeError("worktree provenance received an empty Git tree")
+    return entries
+
+
+def _tracked_index_entries(
+    repo: Path,
+    *pathspecs: str,
+) -> dict[str, tuple[str, str, str]]:
+    """Return Git index flag, mode, and blob ID for every stage-zero path."""
+    arguments = ["ls-files", "--stage", "-v", "-z"]
+    if pathspecs:
+        arguments.extend(("--", *pathspecs))
+    output = _run_git(repo, *arguments)
+    entries: dict[str, tuple[str, str, str]] = {}
+    for record in output.split(b"\0"):
+        if not record:
+            continue
+        try:
+            flag_payload, remainder = record.split(b" ", 1)
+            metadata, raw_path = remainder.split(b"\t", 1)
+            mode, object_id, stage = metadata.decode("ascii").split()
+        except (UnicodeDecodeError, ValueError) as exc:
+            raise RuntimeError(
+                "worktree provenance received a malformed Git index entry",
+            ) from exc
+        if len(flag_payload) != 1 or stage != "0":
+            raise RuntimeError(
+                "worktree provenance requires a stage-zero Git index",
+            )
+        relative = _decode_git_relative_path(raw_path)
+        if relative in entries:
+            raise RuntimeError(
+                f"worktree provenance received duplicate Git path {relative!r}",
+            )
+        entries[relative] = (
+            flag_payload.decode("ascii"),
+            mode,
+            object_id,
+        )
+    return entries
+
+
+def _reject_unknown_checkout_import_candidates(
+    repo: Path,
+    head_tree: Mapping[str, tuple[str, str, str]],
+) -> None:
+    """Reject root import names outside the explicit checkout ownership set."""
+    observed: dict[str, set[str]] = {}
+    for relative, (mode, object_type, _object_id) in head_tree.items():
+        if (
+            mode in _REGULAR_GIT_MODES
+            and object_type == "blob"
+            and _is_unknown_checkout_import_candidate(relative)
+        ):
+            observed.setdefault(relative, set()).add("HEAD")
+
+    for relative, (_flag, mode, _object_id) in _tracked_index_entries(
+        repo,
+        *_CHECKOUT_IMPORT_POLICY_PATHSPECS,
+    ).items():
+        if (
+            mode in _REGULAR_GIT_MODES
+            and _is_unknown_checkout_import_candidate(relative)
+        ):
+            observed.setdefault(relative, set()).add("index")
+
+    output = _run_git(
+        repo,
+        "ls-files",
+        "--others",
+        "--exclude-standard",
+        "-z",
+        "--",
+        *_CHECKOUT_IMPORT_POLICY_PATHSPECS,
+    )
+    for raw_relative in (item for item in output.split(b"\0") if item):
+        relative = _decode_git_relative_path(raw_relative)
+        if _is_unknown_checkout_import_candidate(relative):
+            observed.setdefault(relative, set()).add("untracked")
+
+    if observed:
+        unsupported = [
+            (relative, tuple(sorted(sources)))
+            for relative, sources in sorted(observed.items())
+        ]
+        raise RuntimeError(
+            "checkout contains unsupported root import candidates: "
+            f"{unsupported[:5]!r}",
+        )
+
+
+def _reject_unsupported_runtime_index_flags(repo: Path) -> None:
+    """Reject flags that can hide changes to importable runtime paths."""
+    entries = _tracked_index_entries(
+        repo,
+        *_RUNTIME_TRACKED_PATHSPECS,
+    )
+    unsupported = sorted(
+        (flag, relative)
+        for relative, (flag, _mode, _object_id) in entries.items()
+        if _is_runtime_path(relative) and flag != "H"
+    )
+    if unsupported:
+        raise RuntimeError(
+            "runtime code paths use unsupported Git index flags: "
+            f"{unsupported[:5]!r}",
+        )
+
+
+def _reject_ignored_runtime_sources(repo: Path) -> None:
+    """Reject ignored package inputs and root modules before attribution."""
+    output = _run_git(
+        repo,
+        "ls-files",
+        "--others",
+        "--ignored",
+        "--exclude-standard",
+        "-z",
+        "--",
+        *_RUNTIME_IGNORED_PATHSPECS,
+    )
+    for raw_relative in sorted(item for item in output.split(b"\0") if item):
+        relative = _decode_git_relative_path(raw_relative)
+        if not _is_ignored_runtime_source(relative):
+            continue
+        path = repo.joinpath(*PurePosixPath(relative).parts)
+        metadata = path.lstat()
+        if stat.S_ISLNK(metadata.st_mode):
+            raise ValueError(
+                f"worktree provenance does not permit symlinks: {relative!r}",
+            )
+        if not stat.S_ISREG(metadata.st_mode):
+            raise ValueError(
+                f"worktree provenance entry must be a regular file: {relative!r}",
+            )
+        raise RuntimeError(
+            "worktree provenance does not permit ignored runtime source: "
+            f"{relative!r}",
+        )
+
+
+def _verify_clean_git_attribution(
+    repo: Path,
+    commit: str,
+    head_tree: Mapping[str, tuple[str, str, str]],
+) -> None:
+    """Bind a nominally clean worktree's exact paths, bytes, and modes to HEAD."""
+    head_entries = _runtime_head_entries(head_tree)
+    index_entries = _tracked_index_entries(
+        repo,
+        *_RUNTIME_TRACKED_PATHSPECS,
+    )
+    if set(index_entries) != set(head_entries):
+        missing = sorted(set(head_entries) - set(index_entries))
+        added = sorted(set(index_entries) - set(head_entries))
+        raise RuntimeError(
+            "clean Git index paths differ from Git HEAD: "
+            f"missing={missing[:5]!r}, added={added[:5]!r}",
+        )
+
+    unsupported_flags = sorted(
+        (flag, relative)
+        for relative, (flag, _mode, _object_id) in index_entries.items()
+        if flag != "H"
+    )
+    if unsupported_flags:
+        raise RuntimeError(
+            "clean Git index uses unsupported Git index flags: "
+            f"{unsupported_flags[:5]!r}",
+        )
+
+    mismatched_index = sorted(
+        relative
+        for relative, (_flag, mode, object_id) in index_entries.items()
+        if (mode, object_id) != head_entries[relative]
+    )
+    if mismatched_index:
+        raise RuntimeError(
+            "clean Git index differs from Git HEAD: "
+            f"{mismatched_index[:5]!r}",
+        )
+
+    mismatched_modes: list[str] = []
+    ordered_paths = tuple(sorted(head_entries))
+    for relative in ordered_paths:
+        path = repo.joinpath(*PurePosixPath(relative).parts)
+        metadata = path.lstat()
+        if stat.S_ISLNK(metadata.st_mode) or not stat.S_ISREG(metadata.st_mode):
+            raise RuntimeError(
+                "clean tracked worktree entry is not a regular file: "
+                f"{relative!r}",
+            )
+        current_mode = "100755" if metadata.st_mode & 0o111 else "100644"
+        if current_mode != head_entries[relative][0]:
+            mismatched_modes.append(relative)
+    if mismatched_modes:
+        raise RuntimeError(
+            "clean tracked worktree modes differ from Git HEAD: "
+            f"{mismatched_modes[:5]!r}",
+        )
+
+    hash_input = ("\n".join(ordered_paths) + "\n").encode("utf-8")
+    hash_output = _run_git(
+        repo,
+        "hash-object",
+        "--no-filters",
+        "--stdin-paths",
+        input_payload=hash_input,
+    )
+    current_hashes = hash_output.decode("ascii").splitlines()
+    if len(current_hashes) != len(ordered_paths):
+        raise RuntimeError(
+            "Git did not hash every clean tracked worktree entry",
+        )
+    mismatched_bytes = [
+        relative
+        for relative, object_id in zip(
+            ordered_paths,
+            current_hashes,
+            strict=True,
+        )
+        if object_id != head_entries[relative][1]
+    ]
+    if mismatched_bytes:
+        raise RuntimeError(
+            "clean tracked worktree bytes differ from Git HEAD: "
+            f"{mismatched_bytes[:5]!r}",
+        )
+
+    final_status = _run_git(
+        repo,
+        "status",
+        "--porcelain=v1",
+        "-z",
+        "--untracked-files=all",
+    )
+    if final_status:
+        raise RuntimeError(
+            "Git worktree changed during clean provenance attribution",
+        )
+    _reject_special_worktree_entries(repo)
+    _reject_unknown_checkout_import_candidates(repo, head_tree)
+    _reject_ignored_runtime_sources(repo)
+    if (
+        _tracked_index_entries(repo, *_RUNTIME_TRACKED_PATHSPECS)
+        != index_entries
+    ):
+        raise RuntimeError(
+            "Git index changed during clean provenance attribution",
+        )
+    final_commit = _run_git(repo, "rev-parse", "HEAD").decode("ascii").strip()
+    if final_commit != commit:
+        raise RuntimeError(
+            "Git HEAD changed during clean provenance attribution",
+        )
+
+
+def _worktree_entry_identity(
     repo: Path,
     relative: str,
 ) -> dict[str, Any]:
-    """Identify an untracked regular file without following indirection."""
+    """Identify one regular worktree file without following indirection."""
     path = repo / relative
     metadata = path.lstat()
-    executable_bits = stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
-    mode = "100755" if metadata.st_mode & executable_bits else "100644"
     if stat.S_ISLNK(metadata.st_mode):
         raise ValueError(
             f"worktree provenance does not permit symlinks: {relative!r}",
         )
     if not stat.S_ISREG(metadata.st_mode):
         raise ValueError(
-            f"untracked provenance entry must be a regular file: {relative!r}",
+            f"worktree provenance entry must be a regular file: {relative!r}",
         )
 
     flags = os.O_RDONLY
@@ -169,25 +658,157 @@ def _untracked_entry_identity(
     size = 0
     try:
         opened_metadata = os.fstat(descriptor)
-        if (
-            not stat.S_ISREG(opened_metadata.st_mode)
-            or opened_metadata.st_dev != metadata.st_dev
-            or opened_metadata.st_ino != metadata.st_ino
+        stable_fields = (
+            "st_dev",
+            "st_ino",
+            "st_mode",
+            "st_size",
+            "st_mtime_ns",
+            "st_ctime_ns",
+        )
+        if not stat.S_ISREG(opened_metadata.st_mode) or any(
+            getattr(opened_metadata, field) != getattr(metadata, field)
+            for field in stable_fields
         ):
             raise ValueError(
-                f"untracked provenance entry changed during capture: {relative!r}",
+                "worktree provenance entry changed during capture: "
+                f"{relative!r}",
             )
         while payload := os.read(descriptor, 1024 * 1024):
             digest.update(payload)
             size += len(payload)
+        final_opened_metadata = os.fstat(descriptor)
+        final_path_metadata = path.lstat()
     finally:
         os.close(descriptor)
+    if any(
+        getattr(candidate, field) != getattr(opened_metadata, field)
+        for candidate in (final_opened_metadata, final_path_metadata)
+        for field in stable_fields
+    ) or size != final_opened_metadata.st_size:
+        raise ValueError(
+            f"worktree provenance entry changed during capture: {relative!r}",
+        )
+    executable_bits = stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+    mode = "100755" if opened_metadata.st_mode & executable_bits else "100644"
     return {
         "path": relative,
         "kind": "regular",
         "mode": mode,
         "size": size,
         "sha256": digest.hexdigest(),
+    }
+
+
+def _runtime_worktree_manifest_sha256(
+    repo: Path,
+    head_tree: Mapping[str, tuple[str, str, str]],
+    untracked_paths: Sequence[str],
+) -> str:
+    """Fingerprint raw executable inputs even when Git filters hide changes."""
+    head_paths = set(_runtime_head_entries(head_tree))
+    index_paths = set(
+        _tracked_index_entries(repo, *_RUNTIME_TRACKED_PATHSPECS),
+    )
+    runtime_untracked = {
+        relative
+        for relative in untracked_paths
+        if _is_runtime_path(relative) or _is_root_import_package(relative)
+    }
+    manifest: list[dict[str, Any]] = []
+    for relative in sorted(head_paths | index_paths | runtime_untracked):
+        path = repo.joinpath(*PurePosixPath(relative).parts)
+        try:
+            path.lstat()
+        except FileNotFoundError:
+            manifest.append(
+                {
+                    "path": relative,
+                    "kind": "missing",
+                },
+            )
+            continue
+        manifest.append(_worktree_entry_identity(repo, relative))
+    if not manifest:
+        raise RuntimeError(
+            "worktree provenance received an empty runtime source manifest",
+        )
+    return _canonical_digest(manifest)
+
+
+def _capture_dirty_git_attribution(
+    repo: Path,
+    head_tree: Mapping[str, tuple[str, str, str]],
+) -> dict[str, Any]:
+    """Capture one complete, equality-comparable dirty Git attribution."""
+    commit = _run_git(repo, "rev-parse", "HEAD").decode("ascii").strip()
+    _reject_special_worktree_entries(repo)
+    _reject_unknown_checkout_import_candidates(repo, head_tree)
+    _reject_unsupported_runtime_index_flags(repo)
+    _reject_ignored_runtime_sources(repo)
+
+    status = _run_git(
+        repo,
+        "status",
+        "--porcelain=v1",
+        "-z",
+        "--untracked-files=all",
+    )
+    if not status:
+        raise RuntimeError(
+            "Git worktree changed during dirty provenance attribution",
+        )
+    index_manifest = [
+        {
+            "path": relative,
+            "flag": flag,
+            "mode": mode,
+            "object_id": object_id,
+        }
+        for relative, (flag, mode, object_id) in sorted(
+            _tracked_index_entries(repo).items(),
+        )
+    ]
+    tracked_diff = _run_git(
+        repo,
+        "diff",
+        "--binary",
+        "--full-index",
+        "HEAD",
+        "--",
+    )
+    untracked_raw = _run_git(
+        repo,
+        "ls-files",
+        "--others",
+        "--exclude-standard",
+        "-z",
+    )
+    untracked_paths = [
+        _decode_git_relative_path(raw_relative)
+        for raw_relative in sorted(
+            item for item in untracked_raw.split(b"\0") if item
+        )
+    ]
+    if len(untracked_paths) != len(set(untracked_paths)):
+        raise RuntimeError(
+            "worktree provenance received duplicate untracked paths",
+        )
+    untracked_manifest = [
+        _worktree_entry_identity(repo, relative)
+        for relative in untracked_paths
+    ]
+    return {
+        "commit": commit,
+        "index_sha256": _canonical_digest(index_manifest),
+        "runtime_source_sha256": _runtime_worktree_manifest_sha256(
+            repo,
+            head_tree,
+            untracked_paths,
+        ),
+        "status_sha256": hashlib.sha256(status).hexdigest(),
+        "tracked_diff_sha256": hashlib.sha256(tracked_diff).hexdigest(),
+        "untracked": untracked_manifest,
     }
 
 
@@ -216,11 +837,12 @@ def _reject_special_worktree_entries(repo: Path) -> None:
         for child_name in child_directories:
             child_path = directory_path / child_name
             relative = (relative_directory / child_name).as_posix()
-            if relative == ".git" or relative in ignored_directories:
+            if relative == ".git":
                 continue
             metadata = child_path.lstat()
             if stat.S_ISDIR(metadata.st_mode):
-                retained_directories.append(child_name)
+                if relative not in ignored_directories:
+                    retained_directories.append(child_name)
             elif stat.S_ISLNK(metadata.st_mode):
                 raise ValueError(
                     f"worktree provenance does not permit symlinks: {relative!r}",
@@ -250,6 +872,7 @@ def _has_git_control_marker(start: Path) -> bool:
     candidate = start.absolute()
     if candidate.is_file():
         candidate = candidate.parent
+    identity_root = _nearest_build_identity_root(candidate)
     try:
         start_device = candidate.stat().st_dev
     except OSError as exc:
@@ -282,9 +905,20 @@ def _has_git_control_marker(start: Path) -> bool:
             return True
 
         # A packaged identity defines the application-root ceiling for Git
-        # marker discovery. Git still wins at or below that root, but an
+        # marker discovery. Git wins only at that exact root, while an
         # unrelated corrupt marker in a parent deployment directory cannot
         # reclassify the verified nested package as its worktree.
+        if identity_root is not None and directory.resolve() == identity_root:
+            return False
+    return False
+
+
+def _nearest_build_identity_root(start: Path) -> Path | None:
+    """Return the nearest application root containing a build identity marker."""
+    candidate = start.absolute()
+    if candidate.is_file():
+        candidate = candidate.parent
+    for directory in (candidate, *candidate.parents):
         identity_marker = directory / BUILD_IDENTITY_RELATIVE_PATH
         try:
             identity_marker.lstat()
@@ -294,22 +928,26 @@ def _has_git_control_marker(start: Path) -> bool:
             raise RuntimeError(
                 "Authoritative analysis cannot inspect build identity metadata",
             ) from exc
-        return False
-    return False
+        return directory.resolve()
+    return None
 
 
 def _discover_git_worktree(start: Path) -> Path | None:
-    """Return the Git root, falling back only when no worktree can exist."""
+    """Return the exact owning Git root or defer to packaged identity."""
+    location = start.resolve()
+    if location.is_file():
+        location = location.parent
+    identity_root = _nearest_build_identity_root(location)
     try:
-        root_payload = _run_git(start, "rev-parse", "--show-toplevel")
+        root_payload = _run_git(location, "rev-parse", "--show-toplevel")
     except FileNotFoundError as exc:
-        if _has_git_control_marker(start):
+        if _has_git_control_marker(location):
             raise RuntimeError(
                 "Authoritative analysis requires Git to verify this worktree",
             ) from exc
         return None
     except subprocess.CalledProcessError as exc:
-        if _has_git_control_marker(start):
+        if _has_git_control_marker(location):
             raise RuntimeError(
                 "Authoritative analysis cannot verify this Git worktree",
             ) from exc
@@ -328,14 +966,34 @@ def _discover_git_worktree(start: Path) -> Path | None:
         raise RuntimeError(
             "Authoritative analysis received an empty Git worktree root",
         )
-    return Path(decoded_root).resolve()
+    root = Path(decoded_root).resolve()
+    if not location.is_relative_to(root):
+        raise RuntimeError(
+            "Authoritative analysis received an unrelated Git worktree root",
+        )
+    if identity_root is None:
+        return root
+    if root == identity_root:
+        return root
+    if (
+        root.is_relative_to(identity_root)
+        or identity_root.is_relative_to(root)
+    ):
+        return None
+    raise RuntimeError(
+        "Authoritative analysis found inconsistent Git and build identity roots",
+    )
 
 
 def _resolve_git_code_revision(repo: Path) -> CodeRevision:
     """Resolve the existing content-sensitive Git worktree identity."""
     try:
         commit = _run_git(repo, "rev-parse", "HEAD").decode("ascii").strip()
+        head_tree = _head_tree_entries(repo, commit)
         _reject_special_worktree_entries(repo)
+        _reject_unknown_checkout_import_candidates(repo, head_tree)
+        _reject_unsupported_runtime_index_flags(repo)
+        _reject_ignored_runtime_sources(repo)
         status = _run_git(
             repo,
             "status",
@@ -345,40 +1003,30 @@ def _resolve_git_code_revision(repo: Path) -> CodeRevision:
         )
         dirty = bool(status)
         if not dirty:
+            _verify_clean_git_attribution(repo, commit, head_tree)
             worktree_fingerprint = _canonical_digest(
                 {"commit": commit, "dirty": False},
             )
         else:
-            tracked_diff = _run_git(
+            initial_attribution = _capture_dirty_git_attribution(
                 repo,
-                "diff",
-                "--binary",
-                "--full-index",
-                "HEAD",
-                "--",
+                head_tree,
             )
-            untracked_raw = _run_git(
+            final_attribution = _capture_dirty_git_attribution(
                 repo,
-                "ls-files",
-                "--others",
-                "--exclude-standard",
-                "-z",
+                head_tree,
             )
-            untracked_manifest = []
-            for raw_relative in sorted(item for item in untracked_raw.split(b"\0") if item):
-                relative = raw_relative.decode("utf-8")
-                untracked_manifest.append(
-                    _untracked_entry_identity(repo, relative),
+            if (
+                initial_attribution != final_attribution
+                or initial_attribution["commit"] != commit
+            ):
+                raise RuntimeError(
+                    "Git worktree changed during dirty provenance attribution",
                 )
             worktree_fingerprint = _canonical_digest(
                 {
-                    "commit": commit,
                     "dirty": True,
-                    "status_sha256": hashlib.sha256(status).hexdigest(),
-                    "tracked_diff_sha256": hashlib.sha256(
-                        tracked_diff,
-                    ).hexdigest(),
-                    "untracked": untracked_manifest,
+                    **initial_attribution,
                 },
             )
         return CodeRevision(
@@ -422,6 +1070,20 @@ def _resolve_code_revision(start: Path) -> CodeRevision:
             },
         ),
     )
+
+
+def _runtime_code_revision() -> CodeRevision:
+    """Resolve code provenance from the imported runtime, never the catalog."""
+    runtime_source = Path(__file__).resolve()
+    identity_root = _nearest_build_identity_root(runtime_source)
+    if identity_root is not None:
+        package_root = (identity_root / "stochastic_warfare").resolve()
+        if not runtime_source.is_relative_to(package_root):
+            raise RuntimeError(
+                "Authoritative analysis imported runtime code outside the "
+                "build identity package tree",
+            )
+    return _resolve_code_revision(runtime_source)
 
 
 def _data_tree_revision(
@@ -722,6 +1384,7 @@ class RuntimeSession:
 
     def provenance(self) -> RuntimeProvenance:
         """Capture exact production assignments, including arrivals so far."""
+        self.engine.assert_evidence_healthy()
         current_assignments = _runtime_unit_assignments(self.context)
         current_by_id = {assignment.unit_id: assignment for assignment in current_assignments}
         initial_ids = {assignment.unit_id for assignment in self.initial_unit_assignments}
@@ -750,6 +1413,8 @@ class RuntimeSession:
             final_roster_loadout_fingerprint=(_roster_loadout_fingerprint(self.context)),
             initial_unit_assignments=self.initial_unit_assignments,
             arriving_unit_assignments=arriving_assignments,
+            execution_mode=self.engine.execution_mode,
+            suppressed_failures=self.engine.suppressed_failures,
         )
 
 
@@ -795,7 +1460,7 @@ class PreparedScenario:
             self.data_root,
             excluded_relative_paths=self.data_revision_exclusions,
         )
-        current_code_revision = _resolve_code_revision(self.data_root)
+        current_code_revision = _runtime_code_revision()
         if current_data_revision != self.data_revision or current_data_file_count != self.data_file_count:
             raise RuntimeError(
                 f"Prepared scenario data changed {stage}: "
@@ -823,7 +1488,8 @@ class PreparedScenario:
         engine_config: EngineConfig | None = None,
         campaign_config: CampaignConfig | None = None,
         battle_config: BattleConfig | None = None,
-        strict_mode: bool = False,
+        strict_mode: bool | None = None,
+        execution_mode: RuntimeExecutionMode | None = None,
     ) -> RuntimeSession:
         """Construct a fresh, independently revalidated production runtime."""
         if not isinstance(seed, int) or isinstance(seed, bool) or seed < 0:
@@ -937,6 +1603,7 @@ class PreparedScenario:
             victory_evaluator=victory_evaluator,
             recorder=runtime_recorder,
             strict_mode=strict_mode,
+            execution_mode=execution_mode,
         )
         self.assert_source_identity(stage="during runtime construction")
         return RuntimeSession(
@@ -1212,7 +1879,7 @@ class SimulationRuntimeFactory:
             source_fingerprint=source_fingerprint,
             variants=tuple(prepared_variants),
             authored_roster=authored_roster,
-            code_revision=_resolve_code_revision(data_root),
+            code_revision=_runtime_code_revision(),
             data_revision=data_revision,
             data_file_count=data_file_count,
             data_revision_exclusions=data_revision_exclusions,

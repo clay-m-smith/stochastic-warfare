@@ -231,12 +231,6 @@ class AmphibiousAssaultEngine:
         # Effective defender strength with terrain advantage
         effective_defender = defender_strength * terrain_advantage * cfg.terrain_defense_multiplier
 
-        # Force ratio
-        if effective_defender > 0:
-            ratio = assaulter_strength / effective_defender
-        else:
-            ratio = float("inf")
-
         # Attrition computation (Lanchester linear law variant)
         # Attacker casualties proportional to defender strength
         attacker_attrition_base = min(1.0, effective_defender / max(assaulter_strength, 0.01)) * 0.3
@@ -375,13 +369,6 @@ class AmphibiousAssaultEngine:
         # Craft capacity limits how many troops can go in one lift
         total_capacity = sum(c.capacity_troops for c in usable_craft)
         effective_wave = min(wave_size, total_capacity)
-
-        # Compute throughput modifier (affects landing success)
-        fire_factor = max(0.0, 1.0 - defense_strength)
-        obstacle_factor = 1.0  # can be extended later
-        throughput = self.compute_throughput(
-            usable_craft, beach_gradient, obstacle_factor, fire_factor,
-        )
 
         # Naval support — not separately specified here, use 0.0 default
         naval_support_factor = 0.0

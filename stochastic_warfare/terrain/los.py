@@ -11,7 +11,7 @@ Phase 13a-5: Vectorized viewshed computation using numpy broadcasting.
 from __future__ import annotations
 
 import math
-from typing import NamedTuple
+from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
 
@@ -19,6 +19,9 @@ from stochastic_warfare.core.numba_utils import optional_jit
 from stochastic_warfare.core.types import Meters, Position
 from stochastic_warfare.terrain.heightmap import Heightmap
 from stochastic_warfare.terrain.infrastructure import InfrastructureManager
+
+if TYPE_CHECKING:
+    from stochastic_warfare.terrain.classification import TerrainClassification
 
 
 # ---------------------------------------------------------------------------
@@ -132,7 +135,7 @@ class LOSEngine:
         self,
         heightmap: Heightmap,
         infrastructure: InfrastructureManager | None = None,
-        classification: "TerrainClassification | None" = None,
+        classification: TerrainClassification | None = None,
     ) -> None:
         self._hm = heightmap
         self._infra = infrastructure

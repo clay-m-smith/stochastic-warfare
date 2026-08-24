@@ -153,12 +153,7 @@ class ConditionsEngine:
         """Aviation conditions at *altitude* above *pos*."""
         wx = self._weather.current
         temp_alt = self._weather.temperature_at_altitude(altitude)
-        density = self._weather.atmospheric_density(altitude)
-        pressure = self._weather.pressure_at_altitude(altitude)
-
-        # ISA standard density at altitude
         isa_temp = 15.0 - 0.0065 * altitude
-        isa_density = 1.225 * ((isa_temp + 273.15) / 288.15) ** 4.2561
 
         # Density altitude: altitude where ISA density matches actual
         # Approximation: DA = altitude + 120 * (temp - isa_temp)

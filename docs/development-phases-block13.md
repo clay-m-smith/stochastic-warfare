@@ -195,10 +195,12 @@ failed controls require explicit rejection at every current production input
 and restore boundary. Every required validation job must fit its declared
 timeout without discarding unexamined catalog runs.
 
-Phase 118 also surfaced five separately scoped follow-ups: REM-051 / Phase
-138 owns battle-scoped detection scan-history lifecycle, REM-052 / Phase 139
-owns removal of the duplicate legacy FOW update algorithm, and REM-053 / Phase
-140 owns single-snapshot checkpoint capture. They are planned in Block 20.
+Phase 118 also surfaced five separately scoped follow-ups. REM-051 / Phase 138
+still owns the planned battle-scoped detection scan-history lifecycle. The
+2026-08-23 tiered modular-monolith consolidation closed REM-052 and REM-053 and
+retired their planned Phases 139 and 140 before start after establishing one
+FOW update owner and one checkpoint snapshot boundary. Block 20 preserves
+those planned bodies as historical handoff context.
 REM-054 / Phase 141 in Block 21 owns any future scan-scheduling or LOD
 re-enablement, including the track-lifecycle and sourced-covariance
 prerequisites exposed by the terminal v7 study. REM-055 / Phase 142 in the

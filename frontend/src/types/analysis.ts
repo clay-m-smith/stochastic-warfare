@@ -125,31 +125,23 @@ export interface SweepResult {
   data_root: string
 }
 
-export interface DoctrineSideAssignment {
-  side: string
-  school_id: string
-}
+export type DoctrineSideAssignment =
+  OpenApiSchema<'DoctrineSideAssignmentRequest'>
+export type DoctrineMetricResult = OpenApiSchema<'DoctrineMetricResult'>
 
-export interface DoctrineMetricResult {
-  metric: string
-  mean: number
-  std: number
-  values: number[]
-}
-
-export interface DoctrineVariantResult {
-  variant_id: string
-  assignments: DoctrineSideAssignment[]
-  metrics: DoctrineMetricResult[]
+/** Semantic batch evidence validated beyond the OpenAPI object shape. */
+export type DoctrineVariantResult = Omit<
+  OpenApiSchema<'DoctrineVariantResult'>,
+  'batch'
+> & {
   batch: AnalysisBatchResult
 }
 
-export interface DoctrineCompareResult {
-  scenario: string
-  num_iterations: number
-  base_seed: number
-  max_ticks: number
-  ordered_metrics: string[]
-  seeds: number[]
+/** Doctrine results after the handwritten evidence validator succeeds. */
+export type DoctrineCompareResult = Omit<
+  OpenApiSchema<'DoctrineCompareResult'>,
+  'results'
+> & {
   results: DoctrineVariantResult[]
 }
+import type { OpenApiSchema } from './openapi.generated'

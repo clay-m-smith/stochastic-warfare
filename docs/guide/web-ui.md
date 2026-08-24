@@ -8,8 +8,8 @@ This guide covers the Stochastic Warfare web application -- how to start it, bro
 
 - **Python >= 3.12** with `uv` installed
 - **Node.js >= 18** (v22 recommended)
-- API dependencies: `uv sync --extra api`
-- Frontend dependencies: `cd frontend && npm install`
+- API dependencies: `uv sync --locked --extra api`
+- Frontend dependencies: `npm --prefix frontend ci`
 
 ## Starting the Application
 
@@ -17,11 +17,12 @@ The web app consists of two servers: a Python API backend and a React frontend.
 
 ```bash
 # Terminal 1: Start the API server
-uv sync --extra api
-uv run uvicorn api.main:app --reload    # http://localhost:8000
+uv sync --locked --extra api
+uv run --no-sync uvicorn api.main:app --reload    # http://localhost:8000
 
 # Terminal 2: Start the frontend dev server
-cd frontend && npm install && npm run dev   # http://localhost:5173
+npm --prefix frontend ci
+npm --prefix frontend run dev   # http://localhost:5173
 ```
 
 Open **http://localhost:5173** in your browser. The frontend proxies all `/api` requests to the backend automatically.
@@ -513,14 +514,28 @@ The API server is configured via environment variables (prefix `SW_API_`):
 |----------|---------|-------------|
 | `SW_API_HOST` | `127.0.0.1` | Bind address |
 | `SW_API_PORT` | `8000` | Port |
-| `SW_API_DB_PATH` | `data/api_runs.db` | SQLite database path |
+| `SW_API_DB_PATH` | mode-dependent | SQLite database path |
 | `SW_API_MAX_CONCURRENT_RUNS` | `4` | Max parallel simulation runs |
 | `SW_API_CORS_ORIGINS` | `["http://localhost:5173"]` | Allowed CORS origins |
-| `SW_API_DATA_DIR` | `data` | Scenario/catalog data root |
+| `SW_API_DATA_DIR` | discovered | External scenario/catalog data root |
+| `SW_API_FRONTEND_DIR` | discovered | Optional built frontend bundle |
+| `SW_API_ARTIFACT_DIR` | mode-dependent | Generated application artifacts |
 | `SW_API_MAX_STORED_EVENTS` | `50000` | Maximum retained events per run |
 | `SW_API_DEFAULT_MAX_TICKS` | `10000` | Server default tick limit |
 
-Run history is stored in the SQLite database and persists across server restarts.
+`ApiSettings` delegates these locations to the shared `ApplicationPaths`
+resolver. `SW_API_*` values take precedence for the API process. The lower
+application variables are `STOCHASTIC_WARFARE_DATA_ROOT`,
+`STOCHASTIC_WARFARE_DB_PATH`, `STOCHASTIC_WARFARE_FRONTEND_ROOT`,
+`STOCHASTIC_WARFARE_ARTIFACT_ROOT`, and
+`STOCHASTIC_WARFARE_STATE_ROOT`. Relative configured roots are anchored to the
+application layout, not the process CWD.
+
+Checkout mode defaults to the repository catalog, `data/api_runs.db`, and
+`artifacts/`. Package/external modes put mutable defaults beneath
+`XDG_STATE_HOME/stochastic-warfare` or
+`~/.local/state/stochastic-warfare`. Run history persists in the selected
+SQLite database.
 
 ---
 
@@ -533,4 +548,24 @@ cd frontend
 npm run build     # TypeScript check + Vite production bundle
 ```
 
-The built files are output to `frontend/dist/` and can be served by any static file server. In production, configure the static server to proxy `/api` requests to the Python API server.
+The built files are output to `frontend/dist/`. The API serves a discovered or
+configured bundle when present; a separate static server may instead proxy
+`/api`. Checkout/container deployments can supply the bundle. The Python wheel
+and sdist deliberately exclude frontend sources and built assets.
+
+## Generated API Transport Types
+
+FastAPI's production `create_app().openapi()` document is the transport-shape
+authority. The deterministic generator writes the tracked
+`frontend/src/types/openapi.generated.ts` file:
+
+```bash
+uv run --no-sync python scripts/generate_openapi_types.py
+uv run --no-sync python scripts/generate_openapi_types.py --check
+```
+
+CI runs the drift check before the Python partitions. Frontend API, map,
+editor, analytics, and analysis modules use generated schema aliases for DTO
+shape. Handwritten validators remain authoritative for semantic constraints,
+discriminated unions, cross-field checks, and conservative rejection of
+malformed persisted data; generation does not replace those checks.

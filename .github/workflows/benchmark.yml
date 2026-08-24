@@ -6,9 +6,13 @@ on:
   pull_request:
     branches: [main]
   schedule:
-    - cron: "31 7 * * 1"
+    - cron: "17 6 * * *"
   workflow_dispatch:
     inputs:
+      run_easting:
+        description: Run the 73 Easting paired gate outside the nightly schedule
+        type: boolean
+        default: false
       run_golan:
         description: Run the manual full Golan paired comparison
         type: boolean
@@ -57,6 +61,9 @@ jobs:
 
   easting:
     name: 73 Easting paired gate
+    if: >-
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && inputs.run_easting)
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:

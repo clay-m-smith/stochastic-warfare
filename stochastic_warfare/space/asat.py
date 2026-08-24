@@ -27,6 +27,10 @@ import numpy as np
 
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.logging import get_logger
+from stochastic_warfare.core.runtime_failure import (
+    RuntimeFailureHandler,
+    RuntimeFailurePolicyBinding,
+)
 from stochastic_warfare.core.types import ModuleId
 from stochastic_warfare.space.config import (
     ASATAssetConfig,
@@ -116,6 +120,7 @@ class ASATEngine:
         self._event_bus = event_bus
         self._rng = rng
         self._clock = clock
+        self._runtime_failure_handler: RuntimeFailurePolicyBinding | None = None
 
         definitions = dict(weapon_definitions or {})
         asset_configs = tuple(assets)
@@ -151,6 +156,39 @@ class ASATEngine:
             )
         else:
             self._configuration_fingerprint = configuration_fingerprint
+
+    def bind_runtime_failure_handler(
+        self,
+        handler: RuntimeFailureHandler,
+    ) -> None:
+        """Bind the production strict/degraded failure-policy owner."""
+        binding = RuntimeFailurePolicyBinding(handler)
+        existing = (
+            self._runtime_failure_handler.resolve()
+            if self._runtime_failure_handler is not None
+            else None
+        )
+        if existing is not None and existing != handler:
+            raise RuntimeError(
+                "ASATEngine already has a different runtime failure-policy "
+                "owner",
+            )
+        self._runtime_failure_handler = binding
+
+    def validate_runtime_failure_handler(
+        self,
+        handler: RuntimeFailureHandler,
+    ) -> None:
+        """Reject failure-policy owner drift after runtime construction."""
+        bound = (
+            self._runtime_failure_handler.resolve()
+            if self._runtime_failure_handler is not None
+            else None
+        )
+        if bound != handler:
+            raise RuntimeError(
+                "ASATEngine runtime failure-policy binding changed",
+            )
 
     def _validate_topology(
         self,
@@ -480,17 +518,10 @@ class ASATEngine:
             **result,
         )
         failures = [*prior_failures, *self._event_bus.publish_collecting(event)]
-        for failure in failures:
-            logger.error(
-                "ASAT observer failed after committed order %s: %s",
-                order_id,
-                failure,
-                exc_info=(
-                    type(failure),
-                    failure,
-                    failure.__traceback__,
-                ),
-            )
+        self._handle_observer_failures(
+            f"order {order_id}",
+            failures,
+        )
 
     def update_debris(
         self,
@@ -537,7 +568,7 @@ class ASATEngine:
                 debris_count=count,
                 collision_probability_per_orbit=collision_probability,
             )
-            self._log_observer_failures(
+            self._handle_observer_failures(
                 "debris cascade risk event",
                 self._event_bus.publish_collecting(cascade_event),
             )
@@ -576,7 +607,7 @@ class ASATEngine:
                     new_debris,
                 ),
             )
-            self._log_observer_failures(
+            self._handle_observer_failures(
                 f"debris degradation of {target.satellite_id}",
                 observer_failures,
             )
@@ -586,8 +617,8 @@ class ASATEngine:
                 self._satellite_altitude_km(target),
             )
 
-    @staticmethod
-    def _log_observer_failures(
+    def _handle_observer_failures(
+        self,
         context: str,
         failures: Sequence[Exception],
     ) -> None:
@@ -602,6 +633,22 @@ class ASATEngine:
                     failure.__traceback__,
                 ),
             )
+            binding = getattr(
+                self,
+                "_runtime_failure_handler",
+                None,
+            )
+            handler = (
+                binding.resolve()
+                if binding is not None
+                else None
+            )
+            if handler is None or not handler(
+                "space.asat",
+                "publish_committed_event",
+                failure,
+            ):
+                raise failure
 
     def update(
         self,

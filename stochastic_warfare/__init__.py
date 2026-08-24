@@ -1,3 +1,5 @@
 """Stochastic Warfare — High-fidelity stochastic wargame simulator."""
 
-__version__ = "0.1.0"
+from stochastic_warfare.version import __version__
+
+__all__ = ["__version__"]

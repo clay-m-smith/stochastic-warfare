@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import shutil
 
 from httpx import ASGITransport, AsyncClient
 import pytest
@@ -115,10 +116,14 @@ async def test_external_catalog_symlink_does_not_inherit_canonical_claim(
     tmp_path: Path,
 ) -> None:
     external_data = tmp_path / "renamed-catalog"
+    shutil.copytree(Path(__file__).resolve().parents[2] / "data", external_data)
+    shutil.rmtree(external_data / "scenarios")
+    shutil.rmtree(external_data / "validation")
     source = Path("data/scenarios/73_easting").resolve()
     destination = external_data / "scenarios/73_easting"
     destination.parent.mkdir(parents=True)
     destination.symlink_to(source, target_is_directory=True)
+    (external_data / "validation").mkdir()
     settings = ApiSettings(
         db_path=":memory:",
         data_dir=str(external_data),

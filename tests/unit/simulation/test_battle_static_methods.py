@@ -74,6 +74,7 @@ class TestApplyDeferredDamage:
         BattleManager._apply_deferred_damage(pending, event_bus=bus, timestamp=ts)
         assert len(events) == 1
 
+    @pytest.mark.test_evidence("invariant_only")
     def test_empty_noop(self):
         BattleManager._apply_deferred_damage([])
 

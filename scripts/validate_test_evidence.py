@@ -1,28 +1,51 @@
-"""Audit Phase 112 structural and weak-oracle test evidence ledgers."""
+"""Audit source-local test-evidence annotations at definition scope."""
 
 from __future__ import annotations
 
-import argparse
 import ast
 import json
-import os
 import re
 import subprocess
 import sys
+import tempfile
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+
+if __package__:
+    from scripts.run_pytest_partition import (
+        _pytest_command,
+        _subprocess_environment,
+    )
+else:
+    from run_pytest_partition import (
+        _pytest_command,
+        _subprocess_environment,
+    )
 
 
 ROOT = Path(__file__).resolve().parents[1]
-EVIDENCE_ROOT = ROOT / "tests" / "validation" / "evidence_ledgers"
-NO_DIRECT_PATH = EVIDENCE_ROOT / "no_direct_oracles.json"
-WEAK_PATH = EVIDENCE_ROOT / "weak_oracles.json"
-REVIEWED_BEHAVIORAL_PATH = EVIDENCE_ROOT / "reviewed_behavioral_oracles.json"
-HISTORY_PATH = EVIDENCE_ROOT / "phase112_remediations.json"
-PHASE_START_COMMIT = "0460ac70be86784bcc6e359ae4202f4bcb938c60"
-
+EVIDENCE_MARKER = "test_evidence"
 _NODE_PATTERN = re.compile(r"^(tests/[^:\s]+\.py)(?:::.*)$")
+_PHASE_OWNED_TEST_PATTERN = re.compile(r"^test_(?:phase_?\d|block_?\d)")
+_ROOT_TEST_DIRECTORIES = frozenset(
+    {
+        "tests/integration",
+        "tests/unit",
+        "tests/validation",
+    },
+)
+_SUPPORTED_TEST_DIRECTORIES = frozenset(
+    {
+        "tests/api",
+        "tests/benchmarks",
+        "tests/contracts",
+        "tests/e2e",
+        "tests/integration",
+        "tests/unit",
+        "tests/validation",
+    },
+)
 _SOURCE_CALLS = {
     "getsource",
     "getsourcelines",
@@ -70,30 +93,37 @@ _SHAPE_ATTRIBUTES = {
     "shape",
     "size",
 }
-_STRUCTURAL_FILES = {
-    "tests/unit/test_phase78_structural.py",
-    "tests/unit/test_phase_60_structural.py",
-    "tests/unit/test_phase_61_structural.py",
-    "tests/unit/test_phase_62_structural.py",
-    "tests/unit/test_phase_63_structural.py",
-    "tests/unit/test_phase_64_structural.py",
-    "tests/unit/test_phase_65_structural.py",
-    "tests/unit/test_phase_66_structural.py",
-    "tests/validation/test_block8_exit.py",
-    "tests/validation/test_calibration_coverage.py",
-    "tests/validation/test_deficit_closure.py",
-    "tests/validation/test_phase_67_structural.py",
-    "tests/validation/test_phase112_ci_contract.py",
-    "tests/validation/test_structural_audit.py",
-}
-_CLASSIFICATIONS = {
-    "helper_assertion",
-    "exception_contract",
-    "invariant_only",
-    "structural_only",
-}
-_HISTORY_ACTIONS = {"removed", "renamed", "repaired_behavioral"}
-_REVIEWED_BEHAVIORAL_CLASSIFICATIONS = {"behavioral_oracle"}
+_CLASSIFICATIONS = frozenset(
+    {
+        "behavioral_oracle",
+        "helper_assertion",
+        "invariant_only",
+        "structural_only",
+    },
+)
+_NO_DIRECT_CLASSIFICATIONS = frozenset(
+    {
+        "helper_assertion",
+        "invariant_only",
+        "structural_only",
+    },
+)
+_WEAK_CLASSIFICATIONS = frozenset(
+    {
+        "behavioral_oracle",
+        "structural_only",
+    },
+)
+_GENERIC_TEST_NAMES = frozenset(
+    {
+        "test_case",
+        "test_it",
+        "test_placeholder",
+        "test_something",
+        "test_todo",
+        "test_works",
+    },
+)
 _INVARIANT_CONTRACT_PATTERNS = (
     re.compile(r"\bno[\s-]*ops?\b"),
     re.compile(r"\bnoop\b"),
@@ -118,22 +148,16 @@ _BEHAVIORAL_CLAIM_PATTERNS = {
     "closure": re.compile(r"\bclosure\b"),
     "exit": re.compile(r"\bexits?\b"),
 }
-_REQUIRED_PHASE_START_REMEDIATIONS = {
-    "tests/api/test_concurrency.py::test_batch_semaphore_limits_concurrency",
-    ("tests/integration/test_phase1_integration.py::TestFullTerrainStack::test_coordinate_consistency"),
-    ("tests/unit/simulation/test_calibration_schema.py::TestCalibrationSchemaEdgeCases::test_dead_key_dropped"),
-    ("tests/unit/test_phase_12a_c2_depth.py::TestNetworkDegradation::test_mid_load_increases_latency"),
-    ("tests/unit/test_phase_17c_isr_ew.py::TestISROverpass::test_timing_gap"),
-    ("tests/unit/test_phase49_calibration_schema.py::TestSchemaConstruction::test_dead_key_advance_speed_dropped"),
-    ("tests/unit/test_phase50_combat_fidelity.py::TestAirPosture::test_on_station_aircraft_engages"),
-    ("tests/unit/test_phase_27c_naval.py::TestNavalGun::test_event_published"),
-    ("tests/unit/test_phase_64d_stratagem_activation.py::TestStratagemConcentration::test_activate_stratagem_called"),
-    ("tests/unit/test_phase78_structural.py::TestFatigueTemperatureStress::test_parameter_accepted"),
-    ("tests/unit/test_phase87_morale_jit.py::TestMoraleEngineIntegration::test_check_transition_uses_kernel"),
-    ("tests/unit/test_phase87_morale_jit.py::TestMoraleEngineIntegration::test_continuous_mode_uses_kernel"),
-    ("tests/unit/test_simulation_engine.py::TestStrategicTick::test_strategic_runs_campaign_update"),
-    ("tests/unit/test_simulation_engine.py::TestEdgeCases::test_multiple_battles_simultaneously"),
-}
+
+
+@dataclass(frozen=True)
+class EvidenceAnnotation:
+    """One literal source-local evidence classification."""
+
+    classification: str
+    scope: str
+    scope_id: str
+    lineno: int
 
 
 @dataclass(frozen=True)
@@ -144,7 +168,14 @@ class TestDefinition:
     module_definitions: dict[str, ast.FunctionDef | ast.AsyncFunctionDef]
     class_definitions: dict[str, ast.FunctionDef | ast.AsyncFunctionDef]
     local_definitions: dict[str, ast.FunctionDef | ast.AsyncFunctionDef]
-    enclosing_structural: bool = False
+    annotation: EvidenceAnnotation | None = None
+    annotation_chain: tuple[EvidenceAnnotation, ...] = ()
+    structural_context: bool = False
+
+    @property
+    def definition_id(self) -> str:
+        """Return the source identity shared by every parametrized case."""
+        return f"{self.path}::{self.qualified_name}"
 
     @property
     def direct_signal(self) -> bool:
@@ -173,16 +204,10 @@ class TestDefinition:
     @property
     def weak_reasons(self) -> tuple[str, ...]:
         reasons: set[str] = set()
-        phase_start_node_id = f"{self.path}::{self.qualified_name}"
-        if (
-            self.enclosing_structural
-            or _has_explicit_structural_marker(self.node)
-        ):
-            reasons.add("explicit structural marker")
-        if self.path in _STRUCTURAL_FILES and phase_start_node_id not in _REQUIRED_PHASE_START_REMEDIATIONS:
-            reasons.add("declared structural cluster")
+        if self.structural_context or _has_explicit_structural_marker(self.node):
+            reasons.add("declared structural scope")
         leaves = set(_call_leaves(self.node))
-        source_calls = sorted(leaves & _SOURCE_CALLS)
+        source_calls = _source_call_labels(self.node)
         if source_calls:
             reasons.add(f"source/signature/import call: {', '.join(source_calls)}")
         mock_calls = sorted(leaf for leaf in leaves if leaf.startswith(_MOCK_ASSERTION_PREFIXES))
@@ -217,11 +242,146 @@ def _expression_path(node: ast.expr) -> tuple[str, ...]:
     return tuple(reversed(parts))
 
 
+_EVIDENCE_MARKER_PATH = ("pytest", "mark", EVIDENCE_MARKER)
+_STRUCTURAL_MARKER_PATH = ("pytest", "mark", "structural")
+
+
+def _annotation_from_call(
+    call: ast.Call,
+    *,
+    scope: str,
+    scope_id: str,
+) -> EvidenceAnnotation:
+    """Parse one exact literal marker call or reject ambiguous metadata."""
+
+    if _expression_path(call.func) != _EVIDENCE_MARKER_PATH:
+        raise ValueError(f"{scope_id}: unsupported test-evidence annotation")
+    if len(call.args) != 1 or call.keywords:
+        raise ValueError(
+            f"{scope_id}: test-evidence annotation requires one literal classification",
+        )
+    classification_node = call.args[0]
+    if not (
+        isinstance(classification_node, ast.Constant)
+        and isinstance(classification_node.value, str)
+    ):
+        raise ValueError(
+            f"{scope_id}: test-evidence classification must be a literal string",
+        )
+    classification = classification_node.value
+    if not classification.strip():
+        raise ValueError(f"{scope_id}: test-evidence classification must not be empty")
+    if classification != classification.strip():
+        raise ValueError(
+            f"{scope_id}: test-evidence classification must not contain surrounding whitespace",
+        )
+    if classification not in _CLASSIFICATIONS:
+        raise ValueError(
+            f"{scope_id}: unknown test-evidence classification {classification!r}",
+        )
+    if scope != "function" and classification != "structural_only":
+        raise ValueError(
+            f"{scope_id}: {classification!r} is definition-local and cannot classify a {scope}",
+        )
+    return EvidenceAnnotation(
+        classification=classification,
+        scope=scope,
+        scope_id=scope_id,
+        lineno=call.lineno,
+    )
+
+
+def _decorator_annotation(
+    node: ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef,
+    *,
+    scope: str,
+    scope_id: str,
+) -> EvidenceAnnotation | None:
+    annotations: list[EvidenceAnnotation] = []
+    for decorator in node.decorator_list:
+        if _expression_path(decorator) != _EVIDENCE_MARKER_PATH:
+            continue
+        if not isinstance(decorator, ast.Call):
+            raise ValueError(
+                f"{scope_id}: test-evidence marker must be called with literal metadata",
+            )
+        annotations.append(
+            _annotation_from_call(
+                decorator,
+                scope=scope,
+                scope_id=scope_id,
+            ),
+        )
+    if len(annotations) > 1:
+        raise ValueError(f"{scope_id}: conflicting test-evidence annotations")
+    return annotations[0] if annotations else None
+
+
+def _pytestmark_values(expression: ast.expr, *, scope_id: str) -> tuple[ast.expr, ...]:
+    if isinstance(expression, (ast.List, ast.Tuple)):
+        return tuple(expression.elts)
+    if any(
+        _expression_path(child) == _EVIDENCE_MARKER_PATH
+        for child in ast.walk(expression)
+        if isinstance(child, ast.expr)
+    ) and _expression_path(expression) != _EVIDENCE_MARKER_PATH:
+        raise ValueError(
+            f"{scope_id}: test-evidence marker must be a direct pytestmark value",
+        )
+    return (expression,)
+
+
+def _module_annotation(
+    tree: ast.Module,
+    *,
+    relative: str,
+) -> EvidenceAnnotation | None:
+    annotations: list[EvidenceAnnotation] = []
+    scope_id = f"{relative}::<module>"
+    for statement in tree.body:
+        value: ast.expr | None = None
+        targets: tuple[ast.expr, ...] = ()
+        if isinstance(statement, ast.Assign):
+            value = statement.value
+            targets = tuple(statement.targets)
+        elif isinstance(statement, ast.AnnAssign):
+            value = statement.value
+            targets = (statement.target,)
+        elif isinstance(statement, ast.AugAssign):
+            value = statement.value
+            targets = (statement.target,)
+        if value is None or not any(
+            isinstance(target, ast.Name) and target.id == "pytestmark"
+            for target in targets
+        ):
+            continue
+        for marker_value in _pytestmark_values(value, scope_id=scope_id):
+            if _expression_path(marker_value) != _EVIDENCE_MARKER_PATH:
+                continue
+            if not isinstance(marker_value, ast.Call):
+                raise ValueError(
+                    f"{scope_id}: test-evidence marker must be called with literal metadata",
+                )
+            annotations.append(
+                _annotation_from_call(
+                    marker_value,
+                    scope="module",
+                    scope_id=scope_id,
+                ),
+            )
+    if len(annotations) > 1:
+        raise ValueError(f"{scope_id}: conflicting test-evidence annotations")
+    return annotations[0] if annotations else None
+
+
 def _has_explicit_structural_marker(
     node: ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef,
 ) -> bool:
     """Recognize only the repository's exact pytest structural decorator."""
-    return any(_expression_path(decorator) == ("pytest", "mark", "structural") for decorator in node.decorator_list)
+    return any(
+        _expression_path(decorator) == _STRUCTURAL_MARKER_PATH
+        for decorator in node.decorator_list
+    )
 
 
 def _call_leaf(call: ast.Call) -> str:
@@ -237,10 +397,168 @@ def _call_leaves(node: ast.AST) -> tuple[str, ...]:
     return tuple(leaf for child in _runtime_walk(node) if isinstance(child, ast.Call) and (leaf := _call_leaf(child)))
 
 
+def _is_python_source_open(call: ast.Call) -> bool:
+    """Recognize read-only built-in ``open`` calls targeting Python source."""
+    if not isinstance(call.func, ast.Name) or call.func.id != "open":
+        return False
+
+    path: ast.AST | None = call.args[0] if call.args else None
+    mode: ast.AST | None = call.args[1] if len(call.args) > 1 else None
+    for keyword in call.keywords:
+        if keyword.arg == "file" and path is None:
+            path = keyword.value
+        elif keyword.arg == "mode" and mode is None:
+            mode = keyword.value
+    if path is None:
+        return False
+
+    if mode is not None:
+        if not (
+            isinstance(mode, ast.Constant)
+            and isinstance(mode.value, str)
+            and "r" in mode.value
+            and not set(mode.value) & {"a", "w", "x", "+"}
+        ):
+            return False
+
+    def is_dunder_file_reference(node: ast.AST) -> bool:
+        return (isinstance(node, ast.Name) and node.id == "__file__") or (
+            isinstance(node, ast.Attribute) and node.attr == "__file__"
+        )
+
+    if is_dunder_file_reference(path):
+        return True
+    if (
+        isinstance(path, ast.Call)
+        and _call_leaf(path) == "Path"
+        and len(path.args) == 1
+        and not path.keywords
+        and is_dunder_file_reference(path.args[0])
+    ):
+        return True
+
+    for part in ast.walk(path):
+        if (
+            isinstance(part, ast.Constant)
+            and isinstance(part.value, str)
+            and part.value.lower().endswith((".py", ".pyi"))
+        ):
+            return True
+    return False
+
+
+def _source_call_labels(node: ast.AST) -> tuple[str, ...]:
+    """Return narrow labels for source and introspection calls in ``node``."""
+    labels: set[str] = set()
+    for child in _runtime_walk(node):
+        if not isinstance(child, ast.Call):
+            continue
+        leaf = _call_leaf(child)
+        if leaf in _SOURCE_CALLS:
+            labels.add(leaf)
+        if _is_python_source_open(child):
+            labels.add("open-python-source")
+    return tuple(sorted(labels))
+
+
 def _has_direct_signal(node: ast.AST) -> bool:
     if any(isinstance(child, ast.Assert) for child in _runtime_walk(node)):
         return True
     return any(leaf in _DIRECT_CONTEXTS or leaf.startswith("assert") for leaf in _call_leaves(node))
+
+
+def _assigned_names(target: ast.AST) -> set[str]:
+    """Return simple names stored by an assignment target."""
+    if isinstance(target, ast.Name):
+        return {target.id}
+    if isinstance(target, (ast.List, ast.Tuple)):
+        return set().union(*(_assigned_names(item) for item in target.elts))
+    return set()
+
+
+def _source_tainted_names(
+    node: ast.FunctionDef | ast.AsyncFunctionDef,
+) -> set[str]:
+    """Trace values assigned directly from source/introspection calls."""
+    assignments: list[tuple[set[str], ast.AST]] = []
+    for child in _runtime_walk(node):
+        if isinstance(child, ast.Assign):
+            names = set().union(*(_assigned_names(target) for target in child.targets))
+            assignments.append((names, child.value))
+        elif isinstance(child, ast.AnnAssign) and child.value is not None:
+            assignments.append((_assigned_names(child.target), child.value))
+        elif isinstance(child, ast.NamedExpr):
+            assignments.append((_assigned_names(child.target), child.value))
+
+    return set().union(
+        *(
+            assigned
+            for assigned, value in assignments
+            if _source_call_labels(value)
+        ),
+    )
+
+
+def _behavioral_signal_reasons(definition: TestDefinition) -> tuple[str, ...]:
+    """Return direct runtime oracles beyond source/mock/shape diagnostics."""
+    reasons: set[str] = set()
+    leaves = set(_call_leaves(definition.node))
+    source_labels = set(_source_call_labels(definition.node))
+    runtime_leaves = {
+        leaf
+        for leaf in leaves
+        if leaf
+        and leaf not in _DIRECT_CONTEXTS
+        and leaf not in _SHAPE_CALLS
+        and leaf not in _SOURCE_CALLS
+        and not leaf.startswith("assert")
+    }
+    if "open-python-source" in source_labels:
+        runtime_leaves.discard("open")
+    contexts = sorted(leaves & _DIRECT_CONTEXTS)
+    if contexts:
+        reasons.add(f"runtime exception/warning contract: {', '.join(contexts)}")
+
+    tainted = _source_tainted_names(definition.node)
+    for assertion in (
+        child
+        for child in _runtime_walk(definition.node)
+        if isinstance(child, ast.Assert)
+    ):
+        assertion_leaves = set(_call_leaves(assertion.test))
+        assertion_names = {
+            child.id
+            for child in ast.walk(assertion.test)
+            if isinstance(child, ast.Name)
+        }
+        assertion_attributes = {
+            child.attr
+            for child in ast.walk(assertion.test)
+            if isinstance(child, ast.Attribute)
+        }
+        if _source_call_labels(assertion.test) or assertion_names & tainted:
+            continue
+        if (
+            assertion_attributes & _MOCK_STATE_ATTRIBUTES
+            or any(
+                leaf.startswith(_MOCK_ASSERTION_PREFIXES)
+                for leaf in assertion_leaves
+            )
+        ):
+            continue
+        if _is_shape_or_nonnull_assertion(assertion.test):
+            if runtime_leaves:
+                reasons.add("runtime-produced shape or presence assertion")
+            continue
+        reasons.add("runtime value assertion")
+
+    if any(
+        leaf.startswith("assert")
+        and not leaf.startswith(_MOCK_ASSERTION_PREFIXES)
+        for leaf in leaves
+    ):
+        reasons.add("runtime assertion API")
+    return tuple(sorted(reasons))
 
 
 def _runtime_walk(node: ast.AST) -> tuple[ast.AST, ...]:
@@ -262,7 +580,17 @@ def _runtime_walk(node: ast.AST) -> tuple[ast.AST, ...]:
                 continue
             visit(child)
 
-    visit(node)
+    if isinstance(node, (ast.AsyncFunctionDef, ast.FunctionDef)):
+        walked.append(node)
+        for statement in node.body:
+            if isinstance(
+                statement,
+                (ast.AsyncFunctionDef, ast.ClassDef, ast.FunctionDef),
+            ):
+                continue
+            visit(statement)
+    else:
+        visit(node)
     return tuple(walked)
 
 
@@ -345,9 +673,14 @@ def _definitions_from_tree(
     relative: str,
     tree: ast.Module,
 ) -> dict[tuple[str, str], TestDefinition]:
-    """Index test definitions and exact inherited structural decorators."""
+    """Index tests and their nearest literal source-local classification."""
     index: dict[tuple[str, str], TestDefinition] = {}
     module_definitions = _direct_definitions(tree.body)
+    module_annotation = _module_annotation(tree, relative=relative)
+    declared_annotations: dict[str, EvidenceAnnotation] = {}
+    used_annotation_scopes: set[str] = set()
+    if module_annotation is not None:
+        declared_annotations[module_annotation.scope_id] = module_annotation
 
     def visit(
         nodes: list[ast.stmt],
@@ -355,22 +688,75 @@ def _definitions_from_tree(
         class_definitions: (
             dict[str, ast.FunctionDef | ast.AsyncFunctionDef] | None
         ) = None,
-        enclosing_structural: bool = False,
+        annotation_chain: tuple[EvidenceAnnotation, ...] = (),
     ) -> None:
         for node in nodes:
             if isinstance(node, ast.ClassDef):
+                qualified = "::".join((*parents, node.name))
+                scope_id = f"{relative}::{qualified}"
+                if _has_explicit_structural_marker(node):
+                    raise ValueError(
+                        f"{scope_id}: legacy structural marker must use "
+                        f"pytest.mark.{EVIDENCE_MARKER}('structural_only')",
+                    )
+                annotation = _decorator_annotation(
+                    node,
+                    scope="class",
+                    scope_id=scope_id,
+                )
+                if annotation is not None:
+                    if (
+                        annotation_chain
+                        and annotation_chain[-1].classification
+                        == annotation.classification
+                    ):
+                        raise ValueError(
+                            f"{scope_id}: redundant inherited test-evidence annotation",
+                        )
+                    declared_annotations[scope_id] = annotation
+                nested_chain = (
+                    (*annotation_chain, annotation)
+                    if annotation is not None
+                    else annotation_chain
+                )
                 visit(
                     node.body,
                     (*parents, node.name),
                     _direct_definitions(node.body),
-                    (
-                        enclosing_structural
-                        or _has_explicit_structural_marker(node)
-                    ),
+                    nested_chain,
                 )
             elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 qualified = "::".join((*parents, node.name))
+                scope_id = f"{relative}::{qualified}"
+                if _has_explicit_structural_marker(node):
+                    raise ValueError(
+                        f"{scope_id}: legacy structural marker must use "
+                        f"pytest.mark.{EVIDENCE_MARKER}('structural_only')",
+                    )
+                annotation = _decorator_annotation(
+                    node,
+                    scope="function",
+                    scope_id=scope_id,
+                )
+                if annotation is not None:
+                    if (
+                        annotation_chain
+                        and annotation_chain[-1].classification
+                        == annotation.classification
+                    ):
+                        raise ValueError(
+                            f"{scope_id}: redundant inherited test-evidence annotation",
+                        )
+                    declared_annotations[scope_id] = annotation
+                effective_chain = (
+                    (*annotation_chain, annotation)
+                    if annotation is not None
+                    else annotation_chain
+                )
                 if node.name.startswith("test"):
+                    used_annotation_scopes.update(
+                        item.scope_id for item in effective_chain
+                    )
                     index[(relative, qualified)] = TestDefinition(
                         path=relative,
                         qualified_name=qualified,
@@ -378,49 +764,103 @@ def _definitions_from_tree(
                         module_definitions=module_definitions,
                         class_definitions=class_definitions or {},
                         local_definitions=_local_definitions(node),
-                        enclosing_structural=enclosing_structural,
+                        annotation=(
+                            effective_chain[-1]
+                            if effective_chain
+                            else None
+                        ),
+                        annotation_chain=effective_chain,
+                        structural_context=any(
+                            item.classification == "structural_only"
+                            for item in effective_chain
+                        ),
                     )
 
-    visit(tree.body)
+    initial_chain = (
+        (module_annotation,) if module_annotation is not None else ()
+    )
+    visit(tree.body, annotation_chain=initial_chain)
+    unused = sorted(set(declared_annotations) - used_annotation_scopes)
+    if unused:
+        raise ValueError(
+            "stale test-evidence annotations do not classify a test "
+            f"definition: {unused[:20]}",
+        )
     return index
 
 
 def _definition_index() -> dict[tuple[str, str], TestDefinition]:
     index: dict[tuple[str, str], TestDefinition] = {}
-    for path in sorted((ROOT / "tests").rglob("test_*.py")):
+    paths = sorted((ROOT / "tests").rglob("test_*.py"))
+    _validate_durable_test_paths(paths)
+    for path in paths:
         relative = path.relative_to(ROOT).as_posix()
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=relative)
         index.update(_definitions_from_tree(relative, tree))
     return index
 
 
+def _validate_durable_test_paths(paths: list[Path]) -> None:
+    """Reject active tests without a durable subsystem owner."""
+    relative_paths = [
+        path.relative_to(ROOT) if path.is_absolute() else path
+        for path in paths
+    ]
+    unsupported = sorted(
+        path.as_posix()
+        for path in relative_paths
+        if (
+            len(path.parts) < 2
+            or "/".join(path.parts[:2])
+            not in _SUPPORTED_TEST_DIRECTORIES
+        )
+    )
+    if unsupported:
+        raise ValueError(
+            "active tests must live under a supported top-level test "
+            f"boundary: {unsupported[:20]}",
+        )
+    phase_owned = sorted(
+        path.as_posix()
+        for path in relative_paths
+        if _PHASE_OWNED_TEST_PATTERN.match(path.name)
+    )
+    if phase_owned:
+        raise ValueError(
+            "active tests must be owned by a durable product boundary, not a "
+            f"phase or block number: {phase_owned[:20]}",
+        )
+    root_owned = sorted(
+        path.as_posix()
+        for path in relative_paths
+        if path.parent.as_posix() in _ROOT_TEST_DIRECTORIES
+    )
+    if root_owned:
+        raise ValueError(
+            "unit, integration, and validation tests must live below a "
+            f"durable subsystem directory: {root_owned[:20]}",
+        )
+
+
 def _collect_node_ids(
     *,
     marker: str | None = None,
 ) -> tuple[list[str], str]:
-    command = [
-        sys.executable,
-        "-m",
-        "pytest",
-        "--collect-only",
-        "-q",
-        "-p",
-        "no:cacheprovider",
-        "-o",
-        "addopts=",
-    ]
+    arguments = ["--collect-only", "-q"]
     if marker is not None:
-        command.extend(["-m", marker])
-    environment = dict(os.environ)
-    environment["PYTHONDONTWRITEBYTECODE"] = "1"
-    result = subprocess.run(
-        command,
-        cwd=ROOT,
-        env=environment,
-        check=False,
-        capture_output=True,
-        text=True,
-    )
+        arguments.extend(["-m", marker])
+    command = _pytest_command(*arguments)
+    with tempfile.TemporaryDirectory(
+        prefix="stochastic-warfare-evidence-pycache-",
+    ) as pycache_prefix:
+        result = subprocess.run(
+            command,
+            cwd=ROOT,
+            env=_subprocess_environment(pycache_prefix),
+            check=False,
+            capture_output=True,
+            text=True,
+        )
     if result.returncode != 0:
         raise RuntimeError(
             f"pytest collection failed ({result.returncode})\n"
@@ -432,35 +872,30 @@ def _collect_node_ids(
     return node_ids, " ".join(command)
 
 
-def _node_definition(
-    node_id: str,
+def definition_id_from_node_id(node_id: str) -> str:
+    """Collapse one collected pytest node ID to its source definition ID."""
+    definition_id = node_id.split("[", 1)[0]
+    parts = definition_id.split("::")
+    if len(parts) < 2:
+        raise ValueError(f"invalid pytest node ID: {node_id}")
+    return "::".join(parts)
+
+
+def _definition_for_id(
+    identifier: str,
     index: dict[tuple[str, str], TestDefinition],
 ) -> TestDefinition:
-    parts = node_id.split("::")
+    definition_id = definition_id_from_node_id(identifier)
+    parts = definition_id.split("::")
     path = parts[0]
     qualified_parts = parts[1:]
-    qualified_parts[-1] = qualified_parts[-1].split("[", 1)[0]
     key = (path, "::".join(qualified_parts))
     try:
         return index[key]
     except KeyError as error:
-        raise ValueError(f"no source test definition found for {node_id}") from error
-
-
-def _entry(
-    node_id: str,
-    definition: TestDefinition,
-) -> dict[str, str]:
-    """Describe a no-direct-signal review candidate without classifying it."""
-    helpers = definition.called_helpers_with_signal
-    return {
-        "node_id": node_id,
-        "review_context": (
-            f"local helpers with assertions: {', '.join(helpers)}"
-            if helpers
-            else "no local helper with a direct assertion was found"
-        ),
-    }
+        raise ValueError(
+            f"no source test definition found for {definition_id}",
+        ) from error
 
 
 def _normalized_contract_text(definition: TestDefinition) -> str:
@@ -476,6 +911,18 @@ def _normalized_contract_text(definition: TestDefinition) -> str:
         " ",
         f"{qualified_name} {docstring}",
     ).lower()
+
+
+def _has_meaningful_review_intent(definition: TestDefinition) -> bool:
+    """Require an informative test name or an explicit contract docstring."""
+    function_name = definition.qualified_name.rsplit("::", 1)[-1].lower()
+    docstring = (ast.get_docstring(definition.node) or "").strip()
+    if docstring:
+        return True
+    if function_name in _GENERIC_TEST_NAMES:
+        return False
+    intent = function_name.removeprefix("test_")
+    return any(character.isalnum() for character in intent)
 
 
 def _invariant_contract_violations(
@@ -497,228 +944,160 @@ def _invariant_contract_violations(
     return tuple(violations)
 
 
-def _derived_ledgers() -> tuple[
-    list[dict[str, str]],
-    list[dict[str, str]],
+def _derived_candidates() -> tuple[
+    list[TestDefinition],
+    list[TestDefinition],
     str,
     dict[tuple[str, str], TestDefinition],
+    list[str],
 ]:
     node_ids, command = _collect_node_ids()
     index = _definition_index()
-    no_direct: list[dict[str, str]] = []
-    weak: list[dict[str, str]] = []
-    for node_id in node_ids:
-        definition = _node_definition(node_id, index)
-        if not definition.direct_signal:
-            no_direct.append(_entry(node_id, definition))
-        if definition.weak_reasons:
-            weak.append(
-                {
-                    "node_id": node_id,
-                    "heuristic_reasons": "; ".join(
-                        definition.weak_reasons,
-                    ),
-                }
-            )
-    return no_direct, weak, command, index
-
-
-def _write_json(path: Path, payload: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(payload, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
+    no_direct: list[TestDefinition] = []
+    weak: list[TestDefinition] = []
+    collected_definition_ids = sorted(
+        {definition_id_from_node_id(node_id) for node_id in node_ids},
     )
+    for definition_id in collected_definition_ids:
+        definition = _definition_for_id(definition_id, index)
+        if not definition.direct_signal:
+            no_direct.append(definition)
+        if definition.weak_reasons:
+            weak.append(definition)
+    return no_direct, weak, command, index, node_ids
 
 
-def _ledger_payload(
+def _validate_source_annotations(
     *,
-    kind: str,
-    command: str,
-    entries: list[dict[str, str]],
-) -> dict[str, Any]:
-    return {
-        "schema_version": 1,
-        "kind": kind,
-        "derivation_command": command,
-        "entries": entries,
-    }
-
-
-def _load_ledger(path: Path) -> dict[str, Any]:
-    try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except FileNotFoundError as error:
-        raise ValueError(f"missing evidence ledger: {path.relative_to(ROOT)}") from error
-    if payload.get("schema_version") != 1:
-        raise ValueError(f"{path.name}: unsupported schema_version")
-    entries = payload.get("entries")
-    if not isinstance(entries, list):
-        raise ValueError(f"{path.name}: entries must be a list")
-    seen: set[str] = set()
-    for entry in entries:
-        if set(entry) != {
-            "classification",
-            "node_id",
-            "rationale",
-            "strongest_oracle",
-        }:
-            raise ValueError(f"{path.name}: malformed entry keys: {entry}")
-        node_id = entry["node_id"]
-        if node_id in seen:
-            raise ValueError(f"{path.name}: duplicate node ID: {node_id}")
-        seen.add(node_id)
-        if path == HISTORY_PATH:
-            allowed_classifications = _HISTORY_ACTIONS
-        elif path == REVIEWED_BEHAVIORAL_PATH:
-            allowed_classifications = _REVIEWED_BEHAVIORAL_CLASSIFICATIONS
-        else:
-            allowed_classifications = _CLASSIFICATIONS
-        if entry["classification"] not in allowed_classifications:
-            raise ValueError(f"{path.name}: invalid classification for {node_id}: {entry['classification']}")
-        if not entry["strongest_oracle"].strip() or not entry["rationale"].strip():
-            raise ValueError(f"{path.name}: empty evidence context for {node_id}")
-    return payload
-
-
-def _validate_history() -> None:
-    payload = _load_ledger(HISTORY_PATH)
-    if payload.get("kind") != "phase112_remediations":
-        raise ValueError("phase112_remediations.json: invalid kind")
-    if payload.get("phase_start_commit") != PHASE_START_COMMIT:
-        raise ValueError("phase112_remediations.json: wrong phase-start commit")
-    recorded_nodes = {entry["node_id"] for entry in payload["entries"]}
-    missing = sorted(_REQUIRED_PHASE_START_REMEDIATIONS - recorded_nodes)
-    extra = sorted(recorded_nodes - _REQUIRED_PHASE_START_REMEDIATIONS)
-    if missing or extra:
-        raise ValueError(
-            f"phase112_remediations.json: mandatory phase-start review set disagrees; missing={missing} extra={extra}"
-        )
-    for entry in payload["entries"]:
-        if entry["classification"] not in _HISTORY_ACTIONS:
-            raise ValueError(
-                f"phase112_remediations.json: classification must record a historical action: {entry['node_id']}"
-            )
-
-
-def _validate_current(
-    path: Path,
-    *,
-    kind: str,
-    derived: list[dict[str, str]],
+    no_direct: list[TestDefinition],
+    weak: list[TestDefinition],
     definitions: dict[tuple[str, str], TestDefinition],
-) -> set[str]:
-    payload = _load_ledger(path)
-    if payload.get("kind") != kind:
-        raise ValueError(f"{path.name}: invalid kind")
-    expected_ids = {entry["node_id"] for entry in derived}
-    actual_ids = {entry["node_id"] for entry in payload["entries"]}
-    if expected_ids != actual_ids:
-        missing = sorted(expected_ids - actual_ids)
-        stale = sorted(actual_ids - expected_ids)
-        raise ValueError(f"{path.name}: unreviewed evidence drift; missing={missing[:20]} stale={stale[:20]}")
+    collected_definition_ids: set[str],
+) -> tuple[set[str], int, int, int]:
+    """Require exactly one applicable annotation for every review candidate."""
 
-    invariant_violations: list[str] = []
-    for entry in payload["entries"]:
-        if entry["classification"] != "invariant_only":
-            continue
-        node_id = entry["node_id"]
-        violations = _invariant_contract_violations(
-            _node_definition(node_id, definitions),
-        )
-        if violations:
-            invariant_violations.append(
-                f"{node_id}: {'; '.join(violations)}",
-            )
-    if invariant_violations:
-        raise ValueError(
-            f"{path.name}: invalid invariant_only classifications "
-            f"({len(invariant_violations)}):\n" + "\n".join(invariant_violations),
-        )
-    return {entry["node_id"] for entry in payload["entries"] if entry["classification"] == "structural_only"}
-
-
-def _validate_reviewed_weak_candidates(
-    derived: list[dict[str, str]],
-) -> tuple[set[str], int]:
-    """Require a preserved human disposition for every heuristic candidate."""
-    weak_payload = _load_ledger(WEAK_PATH)
-    if weak_payload.get("kind") != "weak_oracles":
-        raise ValueError("weak_oracles.json: invalid kind")
-    behavioral_payload = _load_ledger(REVIEWED_BEHAVIORAL_PATH)
-    if behavioral_payload.get("kind") != "reviewed_behavioral_oracles":
-        raise ValueError(
-            "reviewed_behavioral_oracles.json: invalid kind",
-        )
-
-    candidate_ids = {entry["node_id"] for entry in derived}
-    weak_ids = {entry["node_id"] for entry in weak_payload["entries"]}
-    behavioral_ids = {entry["node_id"] for entry in behavioral_payload["entries"]}
-    overlap = sorted(weak_ids & behavioral_ids)
-    missing = sorted(candidate_ids - weak_ids - behavioral_ids)
-    stale = sorted((weak_ids | behavioral_ids) - candidate_ids)
-    if overlap or missing or stale:
-        raise ValueError(
-            "heuristic evidence candidates lack one exact reviewed "
-            "disposition; "
-            f"overlap={overlap[:20]} missing={missing[:20]} "
-            f"stale={stale[:20]}",
-        )
-
-    structural_ids = {
-        entry["node_id"] for entry in weak_payload["entries"] if entry["classification"] == "structural_only"
+    no_direct_ids = {item.definition_id for item in no_direct}
+    weak_ids = {item.definition_id for item in weak}
+    candidate_ids = no_direct_ids | weak_ids
+    annotated = {
+        definition.definition_id: definition
+        for definition in definitions.values()
+        if definition.annotation is not None
     }
-    return structural_ids, len(behavioral_ids)
+    missing = sorted(candidate_ids - set(annotated))
+    stale = sorted(set(annotated) - candidate_ids)
+    uncollected = sorted(set(annotated) - collected_definition_ids)
+    if missing or stale or uncollected:
+        raise ValueError(
+            "source-local evidence annotations disagree with current "
+            f"candidates; missing={missing[:20]} stale={stale[:20]} "
+            f"uncollected={uncollected[:20]}",
+        )
 
-
-def _refresh_derivation_command(path: Path, command: str) -> None:
-    """Refresh machine metadata without overwriting reviewed entries."""
-    payload = _load_ledger(path)
-    payload["derivation_command"] = command
-    _write_json(path, payload)
+    errors: list[str] = []
+    structural_ids: set[str] = set()
+    behavioral_count = 0
+    annotation_scopes: set[str] = set()
+    for definition_id in sorted(candidate_ids):
+        definition = annotated[definition_id]
+        annotation = definition.annotation
+        if annotation is None:  # pragma: no cover - guarded above.
+            continue
+        classification = annotation.classification
+        annotation_scopes.update(item.scope_id for item in definition.annotation_chain)
+        if not _has_meaningful_review_intent(definition):
+            errors.append(
+                f"{definition_id}: annotated test needs a meaningful name or docstring",
+            )
+        if definition_id in no_direct_ids and classification not in _NO_DIRECT_CLASSIFICATIONS:
+            errors.append(
+                f"{definition_id}: {classification!r} cannot classify a no-direct test",
+            )
+        if definition_id in weak_ids and classification not in _WEAK_CLASSIFICATIONS:
+            errors.append(
+                f"{definition_id}: {classification!r} cannot classify a weak-oracle candidate",
+            )
+        if classification == "helper_assertion" and not definition.called_helpers_with_signal:
+            errors.append(
+                f"{definition_id}: helper_assertion has no called local assertion helper",
+            )
+        if classification == "behavioral_oracle":
+            if not definition.direct_signal:
+                errors.append(
+                    f"{definition_id}: behavioral_oracle has no direct runtime signal",
+                )
+            elif not _behavioral_signal_reasons(definition):
+                errors.append(
+                    f"{definition_id}: behavioral_oracle is only source, mock, or shape evidence",
+                )
+        if classification == "invariant_only":
+            violations = _invariant_contract_violations(definition)
+            if violations:
+                errors.append(
+                    f"{definition_id}: invalid invariant_only classification: "
+                    f"{'; '.join(violations)}",
+                )
+        if classification == "structural_only":
+            if not definition.weak_reasons:
+                errors.append(
+                    f"{definition_id}: structural_only has no derived weak or structural reason",
+                )
+            structural_ids.add(definition_id)
+        elif classification == "behavioral_oracle":
+            behavioral_count += 1
+    if errors:
+        raise ValueError(
+            f"invalid source-local evidence classifications ({len(errors)}):\n"
+            + "\n".join(errors),
+        )
+    return structural_ids, behavioral_count, len(annotated), len(annotation_scopes)
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--write",
-        action="store_true",
-        help=(
-            "refresh derivation metadata only after every candidate has an "
-            "exact reviewed disposition; never overwrite review text"
-        ),
-    )
-    args = parser.parse_args()
-
     try:
-        no_direct, weak, command, definitions = _derived_ledgers()
-
-        structural_ids = _validate_current(
-            NO_DIRECT_PATH,
-            kind="no_direct_oracles",
-            derived=no_direct,
-            definitions=definitions,
+        no_direct, weak, command, definitions, collected_nodes = (
+            _derived_candidates()
         )
-        reviewed_weak_structural, reviewed_behavioral_count = _validate_reviewed_weak_candidates(weak)
-        structural_ids.update(reviewed_weak_structural)
-        _validate_history()
+        collected_definition_ids = {
+            definition_id_from_node_id(node_id)
+            for node_id in collected_nodes
+        }
+        (
+            structural_definition_ids,
+            reviewed_behavioral_count,
+            annotated_definition_count,
+            annotation_scope_count,
+        ) = _validate_source_annotations(
+            no_direct=no_direct,
+            weak=weak,
+            definitions=definitions,
+            collected_definition_ids=collected_definition_ids,
+        )
+        classification_counts = Counter(
+            definition.annotation.classification
+            for definition in definitions.values()
+            if definition.annotation is not None
+        )
 
-        if args.write:
-            for path in (
-                NO_DIRECT_PATH,
-                WEAK_PATH,
-                REVIEWED_BEHAVIORAL_PATH,
-            ):
-                _refresh_derivation_command(path, command)
-
+        expected_structural_nodes = {
+            node_id
+            for node_id in collected_nodes
+            if definition_id_from_node_id(node_id)
+            in structural_definition_ids
+        }
         collected_structural, structural_command = _collect_node_ids(
             marker="structural",
         )
-        if set(collected_structural) != structural_ids:
-            missing = sorted(structural_ids - set(collected_structural))
-            extra = sorted(set(collected_structural) - structural_ids)
+        if set(collected_structural) != expected_structural_nodes:
+            missing = sorted(
+                expected_structural_nodes - set(collected_structural),
+            )
+            extra = sorted(
+                set(collected_structural) - expected_structural_nodes,
+            )
             raise ValueError(
-                f"structural marker selection disagrees with ledgers; missing={missing[:20]} extra={extra[:20]}"
+                "structural marker selection disagrees with source-local "
+                f"annotations; missing={missing[:20]} extra={extra[:20]}"
             )
     except (RuntimeError, ValueError) as error:
         print(f"ERROR: {error}", file=sys.stderr)
@@ -728,11 +1107,21 @@ def main() -> int:
         json.dumps(
             {
                 "collection_command": command,
-                "no_direct_oracles": len(no_direct),
-                "reviewed_behavioral_oracles": (reviewed_behavioral_count),
+                "annotated_definitions": annotated_definition_count,
+                "annotation_scopes": annotation_scope_count,
+                "classification_counts": dict(
+                    sorted(classification_counts.items()),
+                ),
+                "no_direct_definitions": len(no_direct),
+                "reviewed_behavioral_definitions": (
+                    reviewed_behavioral_count
+                ),
                 "structural_command": structural_command,
-                "structural_nodes": len(structural_ids),
-                "weak_oracles": len(weak),
+                "structural_definitions": len(
+                    structural_definition_ids,
+                ),
+                "structural_nodes": len(expected_structural_nodes),
+                "weak_definitions": len(weak),
             },
             sort_keys=True,
         )

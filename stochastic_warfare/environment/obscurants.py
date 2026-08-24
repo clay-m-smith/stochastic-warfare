@@ -167,7 +167,6 @@ class ObscurantsEngine:
             cloud.age_seconds += dt_seconds
 
             # Drift with wind
-            dt_hours = dt_seconds / 3600.0
             cloud.center_e += wind.speed * math.sin(wind.direction) * dt_seconds
             cloud.center_n += wind.speed * math.cos(wind.direction) * dt_seconds
 

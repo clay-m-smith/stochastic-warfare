@@ -8,10 +8,9 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-
+import pytest
 
 from .conftest import _make_unit
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -85,11 +84,13 @@ class TestHandleReturnToDuty:
         engine._handle_return_to_duty(event)
         assert "p0" in restored
 
+    @pytest.mark.test_evidence("invariant_only")
     def test_missing_unit_noop(self):
         engine = _make_engine_with_ctx({"blue": []})
         event = SimpleNamespace(unit_id="missing", member_id="p0")
         engine._handle_return_to_duty(event)  # no error
 
+    @pytest.mark.test_evidence("invariant_only")
     def test_no_method_noop(self):
         u = _make_unit("u1")
         # No restore_crew_member method
@@ -134,6 +135,7 @@ class TestHandleEquipmentBreakdown:
         # All equipment should still be operational
         assert all(e.operational for e in u.equipment)
 
+    @pytest.mark.test_evidence("invariant_only")
     def test_missing_unit_noop(self):
         engine = _make_engine_with_ctx({"blue": []})
         event = SimpleNamespace(unit_id="missing", equipment_id="eq1")
@@ -173,12 +175,14 @@ class TestHandleMaintenanceCompleted:
         engine._handle_maintenance_completed(event)
         assert u.equipment[0].operational is True
 
+    @pytest.mark.test_evidence("invariant_only")
     def test_missing_equip_noop(self):
         u = _make_unit("u1")
         engine = _make_engine_with_ctx({"blue": [u]})
         event = SimpleNamespace(unit_id="u1", equipment_id="nonexistent")
         engine._handle_maintenance_completed(event)
 
+    @pytest.mark.test_evidence("invariant_only")
     def test_missing_unit_noop(self):
         engine = _make_engine_with_ctx({"blue": []})
         event = SimpleNamespace(unit_id="missing", equipment_id="eq1")

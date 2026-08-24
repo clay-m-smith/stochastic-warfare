@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import enum
 import math
+import numbers
 from dataclasses import dataclass
 from typing import Any
 
@@ -131,6 +132,7 @@ class AirCombatEngine:
         ew_decoy_engine: Any | None = None,
         jamming_engine: Any | None = None,
         countermeasure_types: list[str] | None = None,
+        effective_bvr_range_modifier: float = 1.0,
     ) -> AirCombatResult:
         """Resolve an air-to-air engagement, auto-selecting mode if not given.
 
@@ -164,17 +166,33 @@ class AirCombatEngine:
             Attacker energy state (altitude + speed) for E-M modifier.
         defender_energy:
             Defender energy state (altitude + speed) for E-M modifier.
+        effective_bvr_range_modifier:
+            Positive finite divisor applied only to BVR range eligibility and
+            BVR range-dependent resolution.  The reported range remains the
+            geometric attacker-to-defender distance.
         """
+        if (
+            isinstance(effective_bvr_range_modifier, bool)
+            or not isinstance(effective_bvr_range_modifier, numbers.Real)
+            or not math.isfinite(float(effective_bvr_range_modifier))
+            or effective_bvr_range_modifier <= 0.0
+        ):
+            raise ValueError("effective_bvr_range_modifier must be finite and positive")
+
         dx = defender_pos.easting - attacker_pos.easting
         dy = defender_pos.northing - attacker_pos.northing
         dz = defender_pos.altitude - attacker_pos.altitude
         range_m = math.sqrt(dx * dx + dy * dy + dz * dz)
+        effective_bvr_range_m = range_m / float(effective_bvr_range_modifier)
 
         cfg = self._config
 
         # Auto-select mode based on range
         if mode is None:
-            if range_m >= cfg.bvr_min_range_m and range_m <= cfg.bvr_max_range_m:
+            if (
+                effective_bvr_range_m >= cfg.bvr_min_range_m
+                and effective_bvr_range_m <= cfg.bvr_max_range_m
+            ):
                 mode = AirCombatMode.BVR
             elif range_m <= cfg.wvr_max_range_m and range_m >= cfg.wvr_min_range_m:
                 mode = AirCombatMode.WVR
@@ -202,8 +220,13 @@ class AirCombatEngine:
 
         if mode == AirCombatMode.BVR:
             result = self.bvr_engagement(
-                attacker_id, defender_id, range_m, missile_pk, ew_cm,
+                attacker_id,
+                defender_id,
+                effective_bvr_range_m,
+                missile_pk,
+                ew_cm,
             )
+            result.range_m = range_m
         elif mode == AirCombatMode.WVR:
             result = self.wvr_engagement(
                 attacker_id, defender_id, range_m, missile_pk, aspect_angle_deg,

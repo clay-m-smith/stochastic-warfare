@@ -174,8 +174,6 @@ class EMEnvironment:
     def gps_accuracy(self) -> Meters:
         """GPS position accuracy (metres)."""
         base = self._constellation_accuracy_m if self._constellation_accuracy_m > 0 else 5.0
-        # Ionospheric delay worse at night (but dual-freq corrects)
-        hour = self._clock.hour_utc
         # Storm interference
         if self._weather.current.state.name == "STORM":
             base += 3.0

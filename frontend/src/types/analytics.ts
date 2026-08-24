@@ -1,53 +1,46 @@
-/** Phase 92 analytics response types — mirrors api/schemas.py */
+/** Analytics response DTOs derived from FastAPI OpenAPI. */
+import type { OpenApiMaterializedSchema } from './openapi.generated'
 
-export interface CasualtyGroup {
-  label: string
-  count: number
-  side: string
-}
-
-export interface CasualtyAnalytics {
+export type CasualtyGroup = OpenApiMaterializedSchema<'CasualtyGroup'>
+export type CasualtyAnalytics = Omit<
+  OpenApiMaterializedSchema<'CasualtyAnalytics'>,
+  'groups'
+> & {
   groups: CasualtyGroup[]
-  total: number
 }
 
-export interface SuppressionTimelinePoint {
-  tick: number
-  count: number
-}
-
-export interface SuppressionAnalytics {
-  peak_suppressed: number
-  peak_tick: number
-  rout_cascades: number
+export type SuppressionTimelinePoint =
+  OpenApiMaterializedSchema<'SuppressionTimelinePoint'>
+export type SuppressionAnalytics = Omit<
+  OpenApiMaterializedSchema<'SuppressionAnalytics'>,
+  'timeline'
+> & {
   timeline: SuppressionTimelinePoint[]
 }
 
-export interface MoraleTimelinePoint {
-  tick: number
-  steady: number
-  shaken: number
-  broken: number
-  routed: number
-  surrendered: number
-}
-
-export interface MoraleAnalytics {
+export type MoraleTimelinePoint =
+  OpenApiMaterializedSchema<'MoraleTimelinePoint'>
+export type MoraleAnalytics = Omit<
+  OpenApiMaterializedSchema<'MoraleAnalytics'>,
+  'timeline'
+> & {
   timeline: MoraleTimelinePoint[]
 }
 
-export interface EngagementTypeGroup {
-  type: string
-  count: number
-  hit_rate: number
-}
-
-export interface EngagementAnalytics {
+export type EngagementTypeGroup =
+  OpenApiMaterializedSchema<'EngagementTypeGroup'>
+export type EngagementAnalytics = Omit<
+  OpenApiMaterializedSchema<'EngagementAnalytics'>,
+  'by_type'
+> & {
   by_type: EngagementTypeGroup[]
-  total: number
 }
 
-export interface AnalyticsSummary {
+/** Nested defaults are present after FastAPI response serialization. */
+export type AnalyticsSummary = Omit<
+  OpenApiMaterializedSchema<'AnalyticsSummary'>,
+  'casualties' | 'suppression' | 'morale' | 'engagements'
+> & {
   casualties: CasualtyAnalytics
   suppression: SuppressionAnalytics
   morale: MoraleAnalytics

@@ -15,13 +15,16 @@ from dataclasses import asdict, dataclass
 from datetime import datetime
 from typing import Any, Callable
 
-from pydantic import BaseModel, ConfigDict, StrictBool
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt
 
 from stochastic_warfare.core.events import Event, EventBus
 from stochastic_warfare.core.logging import get_logger
+from stochastic_warfare.core.runtime_failure import (
+    RuntimeFailureHandler,
+    RuntimeFailurePolicyBinding,
+)
 
 logger = get_logger(__name__)
-
 
 # ---------------------------------------------------------------------------
 # Pydantic configuration
@@ -33,9 +36,9 @@ class RecorderConfig(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    max_events: int = 1_000_000
-    snapshot_interval_ticks: int = 100
-    enabled: bool = True
+    max_events: StrictInt = Field(default=1_000_000, gt=0)
+    snapshot_interval_ticks: StrictInt = Field(default=100, ge=0)
+    enabled: StrictBool = True
     strict_overflow: StrictBool = False
     strict_extraction_errors: StrictBool = False
 
@@ -102,6 +105,102 @@ class SimulationRecorder:
         self._snapshots: list[StateSnapshot] = []
         self._current_tick: int = 0
         self._subscribed: bool = False
+        self._runtime_failure_handler: RuntimeFailurePolicyBinding | None = None
+        self._unreported_integrity_failure: Exception | None = None
+        self._overflow_failure: RuntimeError | None = None
+        self._overflow_fallback_active = False
+
+    def _validate_runtime_config(self) -> None:
+        """Validate recorder settings used by an authoritative runtime."""
+        if not self._config.enabled:
+            raise ValueError("A runtime-bound recorder must be enabled")
+        if (
+            isinstance(self._config.max_events, bool)
+            or not isinstance(self._config.max_events, int)
+            or self._config.max_events <= 0
+        ):
+            raise ValueError(
+                "A runtime-bound recorder requires a positive max_events",
+            )
+        if (
+            isinstance(self._config.snapshot_interval_ticks, bool)
+            or not isinstance(self._config.snapshot_interval_ticks, int)
+            or self._config.snapshot_interval_ticks < 0
+        ):
+            raise ValueError(
+                "A runtime-bound recorder requires a non-negative "
+                "snapshot_interval_ticks",
+            )
+
+    def bind_runtime_failure_handler(
+        self,
+        handler: RuntimeFailureHandler,
+        *,
+        event_bus: EventBus,
+    ) -> None:
+        """Bind and validate the production owner of recorder integrity."""
+        binding = RuntimeFailurePolicyBinding(handler)
+        if event_bus is not self._bus:
+            raise ValueError(
+                "Runtime recorder must use the SimulationContext event bus",
+            )
+        self._validate_runtime_config()
+        if self._unreported_integrity_failure is not None:
+            raise self._unreported_integrity_failure
+        existing = (
+            self._runtime_failure_handler.resolve()
+            if self._runtime_failure_handler is not None
+            else None
+        )
+        if existing is not None and existing != handler:
+            raise RuntimeError(
+                "SimulationRecorder already has a different runtime "
+                "failure-policy owner",
+            )
+        self._runtime_failure_handler = binding
+
+    def validate_runtime_integrity(
+        self,
+        handler: RuntimeFailureHandler,
+        *,
+        event_bus: EventBus,
+    ) -> None:
+        """Reject recorder owner/config drift or pre-binding evidence loss."""
+        if event_bus is not self._bus:
+            raise RuntimeError(
+                "Runtime recorder event-bus binding changed",
+            )
+        self._validate_runtime_config()
+        bound = (
+            self._runtime_failure_handler.resolve()
+            if self._runtime_failure_handler is not None
+            else None
+        )
+        if bound != handler:
+            raise RuntimeError(
+                "Runtime recorder failure-policy binding changed",
+            )
+        if self._unreported_integrity_failure is not None:
+            raise self._unreported_integrity_failure
+
+    def _apply_runtime_integrity_policy(
+        self,
+        operation: str,
+        exception: Exception,
+    ) -> bool:
+        """Report one integrity fault, or mark an unbound recorder unhealthy."""
+        handler = (
+            self._runtime_failure_handler.resolve()
+            if self._runtime_failure_handler is not None
+            else None
+        )
+        if handler is None:
+            if self._unreported_integrity_failure is None:
+                self._unreported_integrity_failure = exception
+            return False
+        if not handler("simulation.recorder", operation, exception):
+            raise exception
+        return True
 
     # ── Lifecycle ─────────────────────────────────────────────────────
 
@@ -126,12 +225,27 @@ class SimulationRecorder:
         if not self._config.enabled:
             return
         if len(self._events) >= self._config.max_events:
+            if self._overflow_fallback_active:
+                return
+            if self._overflow_failure is not None:
+                raise self._overflow_failure
+            failure = RuntimeError(
+                "Simulation recorder event limit exceeded before recording "
+                "the complete event stream",
+            )
+            self._overflow_failure = failure
+            if self._apply_runtime_integrity_policy(
+                "record_event_overflow",
+                failure,
+            ):
+                self._overflow_fallback_active = True
+                return
             if self._config.strict_overflow:
-                raise RuntimeError(
-                    "Simulation recorder event limit exceeded before "
-                    "recording the complete event stream",
-                )
-            return  # silently drop if at capacity
+                raise failure
+            # Standalone recorders retain the legacy bounded-capacity mode;
+            # the integrity latch prevents later authoritative binding.
+            self._overflow_fallback_active = True
+            return
 
         recorded = RecordedEvent(
             tick=self._current_tick,
@@ -160,11 +274,26 @@ class SimulationRecorder:
                 for k, v in d.items()
             }
         except Exception as exc:
+            if self._apply_runtime_integrity_policy(
+                "extract_event_data",
+                exc,
+            ):
+                return {
+                    "recorder_integrity_error": {
+                        "exception_type": (
+                            f"{type(exc).__module__}."
+                            f"{type(exc).__qualname__}"
+                        ),
+                        "message": str(exc),
+                    },
+                }
             if self._config.strict_extraction_errors:
                 raise RuntimeError(
                     "Simulation recorder could not extract complete event "
                     "data",
                 ) from exc
+            # Standalone legacy mode only; the integrity latch prevents this
+            # recorder from later entering an authoritative runtime.
             return {}
 
     # ── Tick tracking ─────────────────────────────────────────────────

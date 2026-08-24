@@ -18,6 +18,12 @@ YAML or typed config -> SimulationRuntimeFactory -> PreparedScenario
 3. `PreparedScenario.build()` uses `ScenarioLoader` to load definitions and wire engines
 4. `RuntimeSession` advances the resulting `SimulationEngine`
 
+`stochastic_warfare.simulation.scenario` remains the compatibility import
+surface. Configuration, live context, checkpoint orchestration, and loading
+are owned by `scenario_config.py`, `runtime_context.py`,
+`context_checkpoint.py`, and `scenario_loader.py`. Existing facade imports
+remain supported while new implementation code uses the narrower owners.
+
 ## Scenario YAML Format
 
 ### Identity Fields
@@ -320,6 +326,25 @@ calibration_overrides:
   red_cohesion: 0.5
 ```
 
+The loader resolves this schema once into an immutable,
+recursively frozen `ResolvedCalibration`. `SimulationContext.cal_flat` is its
+stable read-only hot-path view; `CalibrationSchema.to_flat_dict()` returns a
+detached mutable compatibility copy rather than another runtime owner.
+
+Two environment gates have exact range semantics:
+
+- With `enable_air_combat_environment: true`, the production air-to-air route
+  derives a finite positive headwind/tailwind modifier and passes it to
+  `AirCombatEngine`. The modifier changes only BVR range eligibility and
+  BVR range-dependent resolution; WVR/guns selection and the reported
+  geometric range are unchanged. Disabled/default behavior is exactly `1.0`.
+- With `enable_acoustic_layers: true`, sonar candidate discovery uses a
+  conservative 6x ceiling covering the supported 3x surface-duct and 2x
+  convergence-zone benefits. The exact acoustic resolver still decides final
+  eligibility and applies thermocline, shadow-zone, and disabled controls.
+  The wider prefilter may admit extra candidates but may not cull a candidate
+  that the exact positive-layer path can acquire.
+
 `enable_sensing_aware_standoff` is a strict boolean calibration field and
 defaults to `true`. In the default mode, automatic tactical movement holds only
 when the runtime has a current owner-side contact plus an exact live
@@ -620,27 +645,30 @@ The editor validates your configuration against the engine's pydantic schema and
 
 See the [Web UI Guide](web-ui.md#scenario-editor-clone-tweak) for a detailed walkthrough.
 
-### Using the CLI Skill
+### Repository Scenario Skill
 
-The `/scenario` CLI skill provides an interactive walkthrough for creating new scenarios from scratch. It handles YAML formatting and validation automatically.
+The repository-agent `$scenario` route (or the generated Claude `/scenario`
+projection) provides an interactive workflow for creating sourced scenario
+YAML. It is distinct from the `stochastic-warfare run` product CLI.
 
 ### Manual YAML Editing
 
 1. Copy an existing scenario as a template
 2. Modify forces, terrain, objectives, and victory conditions
-3. Validate against the pydantic schema by loading with `ScenarioLoader`:
+3. Validate the file through the repository data boundary:
 
-```python
-from pathlib import Path
-from stochastic_warfare.simulation.scenario import ScenarioLoader
-
-loader = ScenarioLoader(Path("data"))
-try:
-    ctx = loader.load(Path("my_scenario.yaml"))
-    print("Valid scenario!")
-except Exception as e:
-    print(f"Validation error: {e}")
+```bash
+uv run --no-sync python scripts/validate_scenario_data.py \
+  --file path/to/scenario.yaml
+uv run --no-sync stochastic-warfare run path/to/scenario.yaml \
+  --seed 42 --max-ticks 10
 ```
+
+The second command uses the production factory/session path. Direct
+`ScenarioLoader` construction remains a supported lower-level subsystem
+boundary, not the product runner. Catalog names resolve below the selected
+catalog; relative explicit paths resolve from the invocation working
+directory.
 
 ### Tips
 

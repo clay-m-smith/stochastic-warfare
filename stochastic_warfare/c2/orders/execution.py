@@ -8,6 +8,9 @@ Tracks deviation, supersession, and publishes completion events.
 
 from __future__ import annotations
 
+import copy
+from collections.abc import Collection
+from dataclasses import dataclass
 from datetime import datetime
 
 import numpy as np
@@ -29,6 +32,19 @@ from stochastic_warfare.c2.orders.types import (
 )
 
 logger = get_logger(__name__)
+
+
+@dataclass(frozen=True, slots=True)
+class OrderExecutionRecordSnapshot:
+    """Owner-bound rollback snapshot of execution-record topology.
+
+    Record identity is deliberate: aggregation changes only which records are
+    installed, while callers may hold the mutable domain records returned by
+    :meth:`OrderExecutionEngine.get_record`.
+    """
+
+    owner_id: int
+    records: tuple[tuple[str, OrderExecutionRecord], ...]
 
 
 # ---------------------------------------------------------------------------
@@ -82,6 +98,31 @@ class OrderExecutionEngine:
         self._records: dict[str, OrderExecutionRecord] = {}
         self._orders: dict[str, Order] = {}
         self._sim_time: float = 0.0
+
+    def __deepcopy__(
+        self,
+        memo: dict[int, object],
+    ) -> OrderExecutionEngine:
+        """Clone owned state without traversing injected runtime owners.
+
+        Checkpoint preflight deep-copies this legacy owner before applying a
+        candidate state.  Its propagation engine, event bus, and RNG are
+        injected collaborators rather than execution-owned checkpoint state;
+        traversing them reaches runtime policy weak bindings and immutable
+        definition views.  Keep those references (honoring an explicit event
+        bus replacement in ``memo``) and isolate only this owner's mutable
+        state.
+        """
+        clone = object.__new__(type(self))
+        memo[id(self)] = clone
+        clone._propagation = self._propagation
+        clone._event_bus = memo.get(id(self._event_bus), self._event_bus)
+        clone._rng = self._rng
+        clone._config = copy.deepcopy(self._config, memo)
+        clone._records = copy.deepcopy(self._records, memo)
+        clone._orders = copy.deepcopy(self._orders, memo)
+        clone._sim_time = self._sim_time
+        return clone
 
     def issue_order(
         self,
@@ -146,7 +187,6 @@ class OrderExecutionEngine:
 
         if status in (OrderStatus.COMPLETED, OrderStatus.FAILED):
             record.completion_time = self._sim_time
-            order = self._orders.get(order_id)
             self._event_bus.publish(OrderCompletedEvent(
                 timestamp=datetime.min,  # Placeholder — caller should provide
                 source=ModuleId.C2,
@@ -178,6 +218,49 @@ class OrderExecutionEngine:
     def get_record(self, order_id: str) -> OrderExecutionRecord:
         """Return the execution record for an order."""
         return self._records[order_id]
+
+    def capture_record_snapshot(self) -> OrderExecutionRecordSnapshot:
+        """Capture immutable record topology for an atomic owner rollback."""
+        return OrderExecutionRecordSnapshot(
+            owner_id=id(self),
+            records=tuple(self._records.items()),
+        )
+
+    def install_records(
+        self,
+        records: Collection[OrderExecutionRecord],
+    ) -> None:
+        """Atomically install validated records in caller-provided order."""
+        staged: list[tuple[str, OrderExecutionRecord]] = []
+        seen: set[str] = set()
+        for record in records:
+            if not isinstance(record, OrderExecutionRecord):
+                raise TypeError(
+                    "Order execution installation requires "
+                    "OrderExecutionRecord values",
+                )
+            order_id = record.order_id
+            if not order_id:
+                raise ValueError("Order execution records require an order_id")
+            if order_id in seen:
+                raise ValueError(
+                    f"Duplicate order execution record {order_id!r}",
+                )
+            seen.add(order_id)
+            staged.append((order_id, record))
+        self._records.update(staged)
+
+    def restore_record_snapshot(
+        self,
+        snapshot: OrderExecutionRecordSnapshot,
+    ) -> None:
+        """Restore a snapshot captured from this execution owner."""
+        if snapshot.owner_id != id(self):
+            raise ValueError(
+                "Order execution record snapshot belongs to another engine",
+            )
+        self._records.clear()
+        self._records.update(snapshot.records)
 
     def supersede_order(
         self,

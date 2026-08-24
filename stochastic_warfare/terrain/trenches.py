@@ -259,7 +259,6 @@ class TrenchSystemEngine:
             return 1.0
 
         # Determine if moving along or across the trench
-        seg = self._segments[result.trench_id]  # type: ignore[arg-type]
         geom = self._geometries[result.trench_id]  # type: ignore[arg-type]
 
         # Approximate trench bearing at nearest point

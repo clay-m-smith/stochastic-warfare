@@ -188,6 +188,8 @@ _RUNTIME_PROVENANCE_FIELDS = frozenset(
         "final_roster_loadout_fingerprint",
         "initial_unit_assignments",
         "arriving_unit_assignments",
+        "execution_mode",
+        "suppressed_failures",
     },
 )
 _CODE_REVISION_FIELDS = frozenset(
@@ -742,6 +744,14 @@ def validate_serialized_batch_evidence(
             fields=_RUNTIME_PROVENANCE_FIELDS,
             path=f"{run_path}.runtime_provenance",
         )
+        if runtime["execution_mode"] != "strict":
+            raise ValueError(
+                f"{run_path}.runtime_provenance.execution_mode must be strict",
+            )
+        if runtime["suppressed_failures"] not in ((), []):
+            raise ValueError(
+                f"{run_path}.runtime_provenance cannot contain suppressed failures",
+            )
         if (
             _validated_code_revision(
                 runtime["code_revision"],
@@ -1053,6 +1063,11 @@ class AnalysisRunner:
             result = session.run_to_completion()
             metrics = _extract_metrics(result, session, self._metric_names)
             runtime_provenance = session.provenance()
+            if not result.authoritative or not runtime_provenance.authoritative:
+                raise RuntimeError(
+                    "Analysis evidence requires strict execution without "
+                    "suppressed subsystem failures",
+                )
             if cancellation_check is not None:
                 cancellation_check()
             for metric in self._metric_names:

@@ -530,8 +530,6 @@ class NuclearEffectsEngine:
         # Modify heightmap if available
         if heightmap is not None:
             cell_size = getattr(heightmap, "cell_size", None)
-            rows = getattr(heightmap, "rows", None)
-            cols = getattr(heightmap, "cols", None)
             data = getattr(heightmap, "_data", None)
             origin_e = getattr(heightmap, "_config", None)
 

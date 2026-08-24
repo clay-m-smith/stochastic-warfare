@@ -1,16 +1,27 @@
 # Stochastic Warfare — Repository Skills & Hooks
 
-The phase workflows are maintained on both supported agent surfaces:
+The phase workflows are authored once and projected to both supported agent
+surfaces:
 
 - Codex discovers the maintained repository routes in `.agents/skills/`;
   invoke them as `$skill-name`.
-- Claude Code discovers exact maintained mirrors in `.claude/skills/`; invoke
+- Claude Code discovers generated regular-file projections in
+  `.claude/skills/`; invoke
   them as `/skill-name`.
 
 `CODEX.md` defines where each Codex skill belongs in the phase workflow. The
-canonical route bodies live in `.agents/skills/`; every `.claude` `SKILL.md`
-must remain byte-identical so neither provider can retain stale completion or
-production-path rules.
+canonical route bodies and Codex UI metadata live in `.agents/skills/`.
+`scripts/sync_repository_skills.py` checks every provider projection by
+default; an explicit `--write` refreshes regular files. Symlinks, external
+targets, stale content, and incomplete metadata reject policy validation.
+
+```bash
+# Read-only audit (default)
+uv run --no-sync python scripts/sync_repository_skills.py
+
+# Explicitly refresh provider projections
+uv run --no-sync python scripts/sync_repository_skills.py --write
+```
 
 ## Codex Phase Routing
 
@@ -25,7 +36,8 @@ production-path rules.
 
 The route details and applicability rules in `CODEX.md` are authoritative.
 Skills augment that contract; they do not replace production-path behavioral
-evidence. `tests/unit/test_repository_skills.py` verifies the exact route set,
+evidence.
+`tests/contracts/repository_policy/test_repository_skills.py` verifies the exact route set,
 portable canonical frontmatter, Codex UI metadata, absence of obsolete prompt
 aliases, and byte-identical Claude mirrors.
 
@@ -58,22 +70,21 @@ aliases, and byte-identical Claude mirrors.
 - Reports violations with file, line, and suggested fix
 
 ### /update-docs
-- When a design decision is made or a module is completed, updates the relevant documentation:
-  - `docs/brainstorm.md` — architecture decisions (MVP)
-  - `docs/brainstorm-post-mvp.md` — design thinking (post-MVP domains)
-  - `docs/development-phases-post-mvp.md` — phase status + deficit mapping (post-MVP)
-  - `docs/specs/<module>.md` — module specifications
-  - `docs/devlog/index.md` — phase status + deficit inventory
-  - `CODEX.md` and `AGENTS.md` — durable repository workflow when it changes
-  - `docs/remediation-backlog.md` — current implementation gaps and evidence
-  - **User-facing docs** (Phase 31+) — `docs/index.md`, `docs/guide/`, `docs/concepts/`, `docs/reference/`, `mkdocs.yml`
+- Synchronizes affected living surfaces: README/CODEX, current guides,
+  concepts, references, specifications, roadmap/backlog, navigation, and the
+  current phase or engineering-program log.
+- Treats closed phase plans, devlog bodies, and brainstorm history as immutable
+  records. Current corrections go in living documentation or a new current
+  log rather than rewriting historical narrative.
 - Discovers the current block roadmap instead of assuming the original
   post-MVP document owns later phases
-- Updates only affected documents, using fresh verification for status and test
-  counts
+- Updates only affected documents, using fresh verification for status and
+  relational suite claims; exact dated counts belong in compact receipts
 - New deficits are recorded in the remediation backlog and assigned to a
   roadmap phase
-- **User-facing doc rules** (Phase 31+): new modules update architecture.md; new scenarios update scenarios.md + eras.md; new units update units.md; API changes update api.md; new devlogs require mkdocs.yml nav entry; test count changes update index.md
+- New modules update architecture/spec ownership, new scenarios update the
+  scenario/era references, API changes update `reference/api.md`, and public
+  transport changes regenerate/check OpenAPI-derived types
 - Keeps documentation in sync with implementation
 
 ### /spec

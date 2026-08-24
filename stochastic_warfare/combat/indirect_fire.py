@@ -35,6 +35,10 @@ from stochastic_warfare.combat.events import (
 )
 from stochastic_warfare.core.events import Event, EventBus
 from stochastic_warfare.core.logging import get_logger
+from stochastic_warfare.core.runtime_failure import (
+    RuntimeFailureHandler,
+    RuntimeFailurePolicyBinding,
+)
 from stochastic_warfare.core.types import ModuleId, Position
 from stochastic_warfare.entities.base import UnitStatus
 from stochastic_warfare.entities.events import (
@@ -204,6 +208,7 @@ class IndirectFireEngine:
         self._time_on_target_missions = time_on_target_missions
         self._destruction_threshold = destruction_threshold
         self._disable_threshold = disable_threshold
+        self._runtime_failure_handler: RuntimeFailurePolicyBinding | None = None
         self._topology_fingerprint = self._fingerprint_time_on_target_topology()
         initial_status = "pending" if time_on_target_enabled else "dormant"
         self._time_on_target_state: list[dict[str, Any]] = [
@@ -234,6 +239,39 @@ class IndirectFireEngine:
             key: self._resource_observation(weapon)
             for key, weapon in self._planned_weapons().items()
         }
+
+    def bind_runtime_failure_handler(
+        self,
+        handler: RuntimeFailureHandler,
+    ) -> None:
+        """Bind the production strict/degraded failure-policy owner."""
+        binding = RuntimeFailurePolicyBinding(handler)
+        existing = (
+            self._runtime_failure_handler.resolve()
+            if self._runtime_failure_handler is not None
+            else None
+        )
+        if existing is not None and existing != handler:
+            raise RuntimeError(
+                "IndirectFireEngine already has a different runtime "
+                "failure-policy owner",
+            )
+        self._runtime_failure_handler = binding
+
+    def validate_runtime_failure_handler(
+        self,
+        handler: RuntimeFailureHandler,
+    ) -> None:
+        """Reject failure-policy owner drift after runtime construction."""
+        bound = (
+            self._runtime_failure_handler.resolve()
+            if self._runtime_failure_handler is not None
+            else None
+        )
+        if bound != handler:
+            raise RuntimeError(
+                "IndirectFireEngine runtime failure-policy binding changed",
+            )
 
     def fire_mission(
         self,
@@ -944,6 +982,22 @@ class IndirectFireEngine:
                     error.__traceback__,
                 ),
             )
+            binding = getattr(
+                self,
+                "_runtime_failure_handler",
+                None,
+            )
+            handler = (
+                binding.resolve()
+                if binding is not None
+                else None
+            )
+            if handler is None or not handler(
+                "combat.indirect_fire",
+                "publish_committed_event",
+                error,
+            ):
+                raise error
 
     def get_state(self) -> dict[str, Any]:
         """Capture scheduled lifecycle plus the shared COMBAT RNG mirror."""

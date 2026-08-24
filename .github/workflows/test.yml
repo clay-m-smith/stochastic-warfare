@@ -8,6 +8,15 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      run_phase117_diagnostic:
+        description: >-
+          Rerun the published Phase 117 failed study as a diagnostic. This is
+          not fresh held-out evidence and cannot promote a historical claim.
+        required: true
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -51,10 +60,12 @@ jobs:
         run: >-
           uv sync --locked --extra dev --extra api --extra terrain --extra mcp
 
-      - name: Audit historical claim inventory
+      - name: Audit repository data and historical claims
+        run: uv run --no-sync python scripts/validate_scenario_data.py
+
+      - name: Check generated OpenAPI frontend transport types
         run: >-
-          uv run --no-sync python scripts/validate_scenario_data.py
-          --historical-claims-only
+          uv run --no-sync python scripts/generate_openapi_types.py --check
 
       - name: Audit exact disjoint partition union
         run: >-
@@ -71,6 +82,7 @@ jobs:
 
   python:
     name: Python ${{ matrix.partition }}
+    needs: partition-audit
     runs-on: ubuntu-latest
     timeout-minutes: 50
     strategy:
@@ -82,6 +94,12 @@ jobs:
           - e2e
     steps:
       - uses: actions/checkout@v4
+
+      - name: Download revision-bound partition audit
+        uses: actions/download-artifact@v4
+        with:
+          name: partition-audit-${{ github.run_id }}
+          path: artifacts/partition-audit
 
       - uses: actions/setup-python@v5
         with:
@@ -100,6 +118,7 @@ jobs:
         run: >-
           uv run --no-sync python scripts/run_pytest_partition.py
           "${{ matrix.partition }}"
+          --audit-manifest artifacts/partition-audit/manifest.json
           --manifest "artifacts/${{ matrix.partition }}/manifest.json"
           --junit "artifacts/${{ matrix.partition }}/junit.xml"
           --forbid-skips
@@ -119,23 +138,73 @@ jobs:
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Decide terrain relevance for checked-out revision
+        id: terrain-relevance
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          REVISION: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          checked_out_revision="$(git rev-parse HEAD)"
+          if [[ "${checked_out_revision}" != "${REVISION}" ]]; then
+            printf 'checkout revision %s does not match event revision %s\n' \
+              "${checked_out_revision}" "${REVISION}" >&2
+            exit 1
+          fi
+
+          run_terrain=true
+          if [[ "${EVENT_NAME}" == "pull_request" ]]; then
+            git cat-file -e "${BASE_SHA}^{commit}"
+            run_terrain=false
+            changed_paths="$(
+              git diff --name-only --diff-filter=ACMRD \
+                "${BASE_SHA}" "${REVISION}"
+            )"
+            while IFS= read -r changed_path; do
+              case "${changed_path}" in
+                .github/workflows/test.yml|.python-version|pyproject.toml|uv.lock|data/*|scripts/run_pytest_partition.py|scripts/validate_test_partitions.py|stochastic_warfare/*|tests/conftest.py|tests/unit/conftest.py|tests/unit/terrain/*)
+                  run_terrain=true
+                  break
+                  ;;
+              esac
+            done <<< "${changed_paths}"
+          fi
+
+          printf 'revision=%s\n' "${REVISION}" >> "${GITHUB_OUTPUT}"
+          printf 'run=%s\n' "${run_terrain}" >> "${GITHUB_OUTPUT}"
+
+      - name: Record non-relevant terrain decision
+        if: steps.terrain-relevance.outputs.run != 'true'
+        run: >-
+          echo "Terrain profile is not relevant to revision
+          ${{ steps.terrain-relevance.outputs.revision }}."
 
       - uses: actions/setup-python@v5
+        if: steps.terrain-relevance.outputs.run == 'true'
         with:
           python-version: '3.12'
 
       - name: Install uv
+        if: steps.terrain-relevance.outputs.run == 'true'
         uses: astral-sh/setup-uv@v4
         with:
           enable-cache: true
 
       - name: Install locked terrain dependencies
+        if: steps.terrain-relevance.outputs.run == 'true'
         run: uv sync --locked --extra dev --extra terrain
 
       # The runner's terrain contract is exactly these four dependency-profile
-      # files, beginning with test_phase_15a_pipeline_heightmap.py and ending
-      # with test_phase_15d_integration.py.
+      # files: test_heightmap_pipeline.py,
+      # test_classification_infrastructure.py, test_bathymetry_pipeline.py,
+      # and test_pipeline_integration.py.
       - name: Run explicit terrain dependency profile
+        if: steps.terrain-relevance.outputs.run == 'true'
         run: >-
           uv run --no-sync python scripts/run_pytest_partition.py terrain
           --manifest artifacts/terrain/manifest.json
@@ -144,15 +213,20 @@ jobs:
           --timeout-seconds 2100
 
       - name: Upload terrain evidence
-        if: always()
+        if: >-
+          always() &&
+          steps.terrain-relevance.outputs.run == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: pytest-terrain-${{ github.run_id }}
           path: artifacts/terrain/
           if-no-files-found: error
 
-  historical-backtest:
-    name: Phase 117 historical backtest
+  phase117-diagnostic:
+    name: Published Phase 117 failed-study diagnostic (not held-out)
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      inputs.run_phase117_diagnostic
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -170,22 +244,22 @@ jobs:
       - name: Install locked dependencies
         run: uv sync --locked --extra dev
 
-      - name: Run clean-revision held-out study
+      - name: Rerun published failed study as a diagnostic
         run: >-
           uv run --no-sync python scripts/run_historical_backtest.py
-          --output artifacts/evidence/phase-117/hosted-73-easting-phase117.json
+          --output artifacts/evidence/phase-117/diagnostic-73-easting-phase117.json
 
-      - name: Verify expected clean completed failure
+      - name: Verify published failure remains reproducible
         run: >-
           uv run --no-sync python -c
-          "from pathlib import Path; from stochastic_warfare.validation.historical_backtest import load_historical_artifact; a = load_historical_artifact(Path('artifacts/evidence/phase-117/hosted-73-easting-phase117.json')); assert a.status == 'FAIL'; assert len(a.execution.runs) == 20; assert a.evaluation.joint_successes == 0; assert a.execution.code_revision.dirty is False; assert a.eligibility.reason_codes == ('study_failed', 'validation_source_reused', 'plan_not_immutably_predeclared')"
+          "from pathlib import Path; from stochastic_warfare.validation.historical_backtest import load_historical_artifact; a = load_historical_artifact(Path('artifacts/evidence/phase-117/diagnostic-73-easting-phase117.json')); assert a.status == 'FAIL'; assert len(a.execution.runs) == 20; assert a.evaluation.joint_successes == 0; assert a.execution.code_revision.dirty is False; assert a.eligibility.reason_codes == ('study_failed', 'validation_source_reused', 'plan_not_immutably_predeclared')"
 
-      - name: Upload historical backtest evidence
+      - name: Upload failed-study diagnostic artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: phase117-historical-backtest-${{ github.run_id }}
-          path: artifacts/evidence/phase-117/hosted-73-easting-phase117.json
+          name: phase117-failed-study-diagnostic-${{ github.run_id }}
+          path: artifacts/evidence/phase-117/diagnostic-73-easting-phase117.json
           if-no-files-found: error
 
   frontend:

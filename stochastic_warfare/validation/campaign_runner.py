@@ -139,6 +139,11 @@ class CampaignRunner:
             battle_config=self._config.battle_config,
         )
         run_result = session.run_to_completion()
+        if not run_result.authoritative:
+            raise RuntimeError(
+                "Campaign validation requires strict execution without "
+                "suppressed subsystem failures",
+            )
         ctx = session.context
         terminated_by = run_result.victory_result.condition_type or "completed"
 

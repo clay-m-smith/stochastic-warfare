@@ -342,12 +342,37 @@ class OODALoopEngine:
 
         return completed
 
+    def expired_phases(self) -> tuple[tuple[str, OODAPhase], ...]:
+        """Return started phases that remain expired and unacknowledged.
+
+        The orchestrator normally acknowledges a completion immediately by
+        advancing the commander to its next phase.  A DECIDE phase may instead
+        be deferred while planning or order propagation completes.  Such a
+        phase deliberately keeps its expired timer so it can be polled on a
+        later logical interval without recomputing a duration or consuming an
+        additional RNG draw.
+
+        Registration/reset sentinels have ``phase_duration == 0`` and are not
+        completions.  Sorting by commander identity makes the retry order
+        independent of insertion history and checkpoint reconstruction.
+        """
+        return tuple(
+            (unit_id, state.phase)
+            for unit_id, state in sorted(self._commanders.items())
+            if state.phase_duration > 0.0 and state.phase_timer <= 0.0
+        )
+
     # -- Properties ---------------------------------------------------------
 
     @property
     def tactical_acceleration(self) -> float:
         """Tactical OODA acceleration multiplier (< 1.0 = faster)."""
         return self._config.tactical_acceleration
+
+    @property
+    def commander_ids(self) -> tuple[str, ...]:
+        """Return registered commander identities in update order."""
+        return tuple(self._commanders)
 
     # -- Queries ------------------------------------------------------------
 

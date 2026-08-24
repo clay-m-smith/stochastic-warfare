@@ -1,5 +1,24 @@
 # Equipment Mapping and Runtime Loadout Contract
 
+## Current ownership note
+
+The tiered modular-monolith consolidation preserves this Phase 109 contract and
+its public imports while assigning implementation ownership to focused modules:
+
+- `simulation.loadout_contracts` owns the frozen request, resolution, and
+  attachment products;
+- `simulation.loadout_registry` owns catalog lookup and mapping validation;
+- `simulation.runtime_attachments` owns live attachment construction; and
+- `simulation.loadout_builder` owns initial, reinforcement, and restore
+  orchestration.
+
+`simulation.loadouts` remains the compatibility facade. `ScenarioLoader`
+retains one builder/registry identity for all three construction paths, and
+`simulation.scenario_loader` is the focused scenario-wiring owner behind the
+`simulation.scenario` facade. These moves do not alter mapping disposition,
+ordering, multiplicity, RNG, checkpoint fingerprints, or live equipment
+identity.
+
 ## Purpose and scope
 
 Phase 109 closes REM-010 by making equipment-name resolution a strict,
@@ -86,8 +105,10 @@ This contract covers:
 
 ### Runtime loadout ownership
 
-1. `stochastic_warfare.simulation` owns a public, typed
-   `RuntimeLoadoutBuilder` and typed result/attachment structures. The builder
+1. `stochastic_warfare.simulation.loadout_builder` owns the public, typed
+   `RuntimeLoadoutBuilder`; `loadout_contracts` owns its typed result and
+   attachment structures. The `simulation.loadouts` facade re-exports the
+   compatibility API. The builder
    receives concrete `WeaponLoader`, `AmmoLoader`, `SensorLoader`, an immutable
    mapping of effective `UnitDefinition` objects, effective `EraConfig`, typed
    assignment overrides, the reachable initial/reinforcement unit types, and

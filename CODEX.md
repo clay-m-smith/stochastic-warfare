@@ -30,9 +30,11 @@ The core dependency direction is:
 
 Dependencies flow one way. Entities hold state; engines implement behavior.
 
-`stochastic_warfare/validation/scenario_runner.py` is a separate simplified
-simulator. A test that exercises it does not prove that the production
-`SimulationEngine` path behaves correctly.
+`stochastic_warfare/legacy/validation/scenario_runner.py` is a quarantined
+simplified simulator. The legacy validation, Monte Carlo, historical-data, and
+pickle-conversion modules have no production or acceptance authority. A test
+that exercises them does not prove that the production `SimulationEngine`
+path behaves correctly.
 
 ## Non-Negotiable Invariants
 
@@ -56,10 +58,10 @@ simulator. A test that exercises it does not prove that the production
   must preserve the equipment's actual semantics.
 - Authoritative runtime source identity is Git-first. A checkout records its
   commit and content-sensitive dirty-tree identity and must not fall back from
-  a broken Git worktree. A no-`.git` production package requires a verified
-  generated application-source identity; Docker builds supply an explicit
-  `SOURCE_REVISION`, and missing, malformed, or tampered package source fails
-  closed.
+  a broken Git worktree. A no-`.git` container, wheel, or sdist-built package
+  requires a verified generated application-source identity; immutable builds
+  carry an explicit source revision, and missing, malformed, or tampered
+  package source fails closed.
 - Simulation-core logging uses the project logging framework, not `print()`.
 - Public APIs require type hints.
 - Every affected stateful component must serialize and restore its complete
@@ -166,10 +168,11 @@ approval and a documented modeling rationale.
 ## Evidence Storage
 
 Generated run evidence -- including raw result vectors, shard bundles, JUnit,
-traces, profiles, and archive manifests -- belongs under the ignored
-`artifacts/` tree and must not be committed to `main`. Main may retain
-reproducibility inputs, curated validation and test ledgers, behavioral
-fixtures, and compact verdict or provenance summaries.
+traces, profiles, collection manifests, and archive manifests -- belongs under
+the ignored `artifacts/` tree and must not be committed to `main`. Main may
+retain reproducibility inputs, behavioral fixtures, source-local
+`test_evidence` annotations, compact typed claim receipts, and compact verdict
+or provenance summaries. Do not restore expanded exact-node evidence ledgers.
 
 Full retained publications belong in evidence-only commits on `evidence/full`
 or in an explicitly documented external evidence store. The evidence branch
@@ -248,16 +251,25 @@ runner:
 
 ```powershell
 uv run --no-sync python scripts/validate_test_partitions.py --output artifacts/partition-audit/manifest.json
-uv run --no-sync python scripts/run_pytest_partition.py standard --manifest artifacts/standard/manifest.json --junit artifacts/standard/junit.xml --forbid-skips --timeout-seconds 2700
+uv run --no-sync python scripts/run_pytest_partition.py standard --audit-manifest artifacts/partition-audit/manifest.json --manifest artifacts/standard/manifest.json --junit artifacts/standard/junit.xml --forbid-skips --timeout-seconds 2700
 ```
 
-PR/main CI runs the audit plus `standard`, `api`, `e2e`, and the `terrain`
-dependency profile. Weekly/manual extended CI runs `slow-only` in 15 shards,
-`benchmark-only` in three shards, and `slow-benchmark` in one shard. Sharding
-is deterministic and module-affine. `terrain` (the four Phase 15 terrain
-files) and `benchmark-policy` are intentionally overlapping dependency/policy
-profiles, not additional members of the disjoint union. The 73 Easting paired
-benchmark is routine; Golan is manual.
+PR/main CI runs the audit plus `standard`, `api`, and `e2e`; main and relevant
+pull requests also run the `terrain` dependency profile. Nightly/manual
+extended CI runs `slow-only` in 15 shards, `benchmark-only` in three shards,
+and `slow-benchmark` in one shard from one revision-bound audit manifest.
+Sharding is deterministic and module-affine. `terrain` (the four files below)
+and `benchmark-policy` are intentionally overlapping dependency/policy
+profiles, not additional members of the disjoint union:
+
+- `tests/unit/terrain/test_heightmap_pipeline.py`
+- `tests/unit/terrain/test_classification_infrastructure.py`
+- `tests/unit/terrain/test_bathymetry_pipeline.py`
+- `tests/unit/terrain/test_pipeline_integration.py`
+
+The benchmark policy contract runs on pull requests and `main`; the 73 Easting
+paired comparison runs nightly or by explicit dispatch, and Golan remains
+manual. Historical studies and calibration are separate manual evidence work.
 
 Raw `pytest` marker commands are diagnostics only. They must not be reported as
 the authoritative partition evidence because `slow` and `benchmark` overlap.
@@ -322,6 +334,10 @@ other scenarios.
 
 Specifications define contracts; devlogs record work; the remediation backlog
 records unresolved truth; user-facing guides describe verified behavior.
+Current-truth guides, concepts, references, living specifications, roadmaps,
+and the backlog are maintained as behavior changes. Closed phase and devlog
+bodies are immutable history; supersede them through a current document or a
+new append-only engineering-program log rather than rewriting them.
 
 Update the relevant documents together:
 

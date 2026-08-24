@@ -206,7 +206,6 @@ def _print_historical_claim_audit(audit: ClaimLedgerAudit) -> None:
         f"{len(audit.missing_scenario_collections)} missing, "
         f"{len(audit.unreviewed_claim_source_paths)} unreviewed sources, "
         f"{len(audit.stale_claim_source_reviews)} stale reviews, "
-        f"{len(audit.claim_source_digest_mismatches)} source-digest mismatches, "
         f"{len(audit.claim_source_rule_mismatches)} rule mismatches, "
         f"{len(audit.claim_source_binding_errors)} binding errors, "
         f"{len(audit.forbidden_boolean_historical_apis)} forbidden boolean APIs, "

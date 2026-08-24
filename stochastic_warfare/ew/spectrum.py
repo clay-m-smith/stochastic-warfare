@@ -85,8 +85,6 @@ class SpectrumManager:
     ) -> list[FrequencyAllocation]:
         """Return existing allocations that overlap with *allocation*."""
         conflicts: list[FrequencyAllocation] = []
-        a_lo = allocation.center_frequency_ghz - allocation.bandwidth_ghz / 2.0
-        a_hi = allocation.center_frequency_ghz + allocation.bandwidth_ghz / 2.0
         for existing in self._allocations.values():
             if existing.emitter_id == allocation.emitter_id:
                 continue

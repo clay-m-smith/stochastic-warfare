@@ -16,7 +16,7 @@ import json
 import math
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from enum import IntEnum
+from enum import Enum, IntEnum
 from types import MappingProxyType
 from typing import Any
 
@@ -245,9 +245,29 @@ class TickResolution(IntEnum):
     TACTICAL = 2     # 5s default
 
 
+class RuntimeExecutionMode(str, Enum):
+    """Failure policy for production subsystem execution."""
+
+    STRICT = "strict"
+    DEGRADED = "degraded"
+
+
 # ---------------------------------------------------------------------------
 # Results
 # ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True, slots=True)
+class SuppressedRuntimeFailure:
+    """Deterministic evidence for one failure suppressed in degraded mode."""
+
+    sequence: int
+    tick: int
+    logical_time_s: float
+    subsystem: str
+    operation: str
+    exception_type: str
+    message: str
 
 
 @dataclass(frozen=True)
@@ -258,6 +278,41 @@ class SimulationRunResult:
     duration_s: float
     victory_result: VictoryResult
     campaign_summary: Any = None  # CampaignSummary or None
+    execution_mode: RuntimeExecutionMode = RuntimeExecutionMode.STRICT
+    suppressed_failures: tuple[SuppressedRuntimeFailure, ...] = ()
+
+    @property
+    def authoritative(self) -> bool:
+        """Whether the run is eligible for authoritative acceptance use."""
+        return (
+            self.execution_mode is RuntimeExecutionMode.STRICT
+            and not self.suppressed_failures
+        )
+
+
+def _resolve_execution_mode(
+    *,
+    strict_mode: bool | None,
+    execution_mode: RuntimeExecutionMode | None,
+) -> RuntimeExecutionMode:
+    """Resolve the typed policy while retaining the legacy boolean keyword."""
+    if (
+        execution_mode is not None
+        and type(execution_mode) is not RuntimeExecutionMode
+    ):
+        raise TypeError("execution_mode must be a RuntimeExecutionMode")
+    if strict_mode is None:
+        return execution_mode or RuntimeExecutionMode.STRICT
+    if type(strict_mode) is not bool:
+        raise TypeError("strict_mode must be a strict boolean when provided")
+    legacy_mode = (
+        RuntimeExecutionMode.STRICT
+        if strict_mode
+        else RuntimeExecutionMode.DEGRADED
+    )
+    if execution_mode is not None and execution_mode is not legacy_mode:
+        raise ValueError("strict_mode and execution_mode disagree")
+    return legacy_mode
 
 
 # ---------------------------------------------------------------------------
@@ -296,8 +351,14 @@ class SimulationEngine:
         battle_config: BattleConfig | None = None,
         victory_evaluator: VictoryEvaluator | None = None,
         recorder: SimulationRecorder | None = None,
-        strict_mode: bool = False,
+        strict_mode: bool | None = None,
+        *,
+        execution_mode: RuntimeExecutionMode | None = None,
     ) -> None:
+        resolved_execution_mode = _resolve_execution_mode(
+            strict_mode=strict_mode,
+            execution_mode=execution_mode,
+        )
         effective_performance_flags = resolve_cross_bound_runtime_performance_flags(
             authored_configuration=ctx.config.calibration_overrides,
             typed_calibration=ctx.calibration,
@@ -305,7 +366,11 @@ class SimulationEngine:
         )
         self._ctx = ctx
         self._config = config or EngineConfig()
-        self._strict_mode = strict_mode
+        self._strict_mode = (
+            resolved_execution_mode is RuntimeExecutionMode.STRICT
+        )
+        self._suppressed_failures: list[SuppressedRuntimeFailure] = []
+        self._fatal_runtime_failure: BaseException | None = None
         self._targeting_runtime_owner = ctx.tactical_targeting
         if not isinstance(
             self._targeting_runtime_owner,
@@ -340,6 +405,7 @@ class SimulationEngine:
             movement_diagnostics=ctx.movement_diagnostics,
             effective_performance_flags=effective_performance_flags,
             tactical_interval_seconds=era_contract.tactical_s,
+            failure_handler=self._suppress_runtime_failure,
         )
         self._targeting_default_visibility_m = targeting_visibility_bound_m(
             calibration={},
@@ -350,7 +416,13 @@ class SimulationEngine:
             self._targeting_default_visibility_m
         )
         self._victory = victory_evaluator
+        if recorder is not None and not isinstance(
+            recorder,
+            SimulationRecorder,
+        ):
+            raise TypeError("recorder must be a SimulationRecorder")
         self._recorder = recorder
+        self._bind_runtime_failure_policies()
 
         # Tick resolution state
         self._resolution = TickResolution.STRATEGIC
@@ -417,13 +489,144 @@ class SimulationEngine:
         """The event recorder, if any."""
         return self._recorder
 
+    @property
+    def execution_mode(self) -> RuntimeExecutionMode:
+        """Return the typed subsystem-failure policy."""
+        return (
+            RuntimeExecutionMode.STRICT
+            if self._strict_mode
+            else RuntimeExecutionMode.DEGRADED
+        )
+
+    @property
+    def strict_mode(self) -> bool:
+        """Whether enabled subsystem failures propagate immediately."""
+        return self._strict_mode
+
+    @property
+    def suppressed_failures(self) -> tuple[SuppressedRuntimeFailure, ...]:
+        """Return immutable degraded-mode failure evidence in occurrence order."""
+        return tuple(getattr(self, "_suppressed_failures", ()))
+
+    def _suppress_runtime_failure(
+        self,
+        subsystem: str,
+        operation: str,
+        exception: Exception,
+    ) -> bool:
+        """Record a degraded failure, or tell the caller to re-raise it."""
+        if self._strict_mode:
+            self._latch_runtime_failure(exception)
+            return False
+        failures = getattr(self, "_suppressed_failures", None)
+        if failures is None:
+            # Compatibility for lightweight test/tool fixtures that bind the
+            # engine methods without invoking the production constructor.
+            failures = []
+            self._suppressed_failures = failures
+        failure = SuppressedRuntimeFailure(
+            sequence=len(failures),
+            tick=self._ctx.clock.tick_count,
+            logical_time_s=self._ctx.clock.elapsed.total_seconds(),
+            subsystem=subsystem,
+            operation=operation,
+            exception_type=(
+                f"{type(exception).__module__}.{type(exception).__qualname__}"
+            ),
+            message=str(exception),
+        )
+        failures.append(failure)
+        logger.error(
+            "Suppressed %s.%s failure in degraded mode: %s",
+            subsystem,
+            operation,
+            failure.exception_type,
+            exc_info=(
+                type(exception),
+                exception,
+                exception.__traceback__,
+            ),
+        )
+        return True
+
+    def _latch_runtime_failure(self, failure: BaseException) -> None:
+        """Preserve the first root failure for every later evidence gate."""
+        if self._fatal_runtime_failure is None:
+            self._fatal_runtime_failure = failure
+
+    def _raise_if_runtime_failed(self) -> None:
+        """Prevent a strict subsystem failure from publishing success."""
+        failure = getattr(self, "_fatal_runtime_failure", None)
+        if failure is not None:
+            raise failure
+
+    def _bind_runtime_failure_policies(self) -> None:
+        """Bind enabled nested owners to this engine's failure policy."""
+        owners: list[tuple[str, Any]] = []
+        for attribute_name in (
+            "comms_engine",
+            "indirect_fire_engine",
+            "space_engine",
+        ):
+            owner = getattr(self._ctx, attribute_name, None)
+            owners.append((attribute_name, owner))
+            if owner is None:
+                continue
+            bind = getattr(owner, "bind_runtime_failure_handler", None)
+            if callable(bind):
+                bind(self._suppress_runtime_failure)
+        self._runtime_failure_policy_owners = tuple(owners)
+        if self._recorder is not None:
+            self._recorder.bind_runtime_failure_handler(
+                self._suppress_runtime_failure,
+                event_bus=self._ctx.event_bus,
+            )
+
+    def _validate_runtime_failure_policies(self) -> None:
+        """Reject nested-owner or recorder policy drift before evidence work."""
+        for attribute_name, owner in getattr(
+            self,
+            "_runtime_failure_policy_owners",
+            (),
+        ):
+            if getattr(self._ctx, attribute_name, None) is not owner:
+                raise RuntimeError(
+                    f"SimulationContext {attribute_name} owner changed after "
+                    "engine construction",
+                )
+            if owner is None:
+                continue
+            validate = getattr(
+                owner,
+                "validate_runtime_failure_handler",
+                None,
+            )
+            if callable(validate):
+                validate(self._suppress_runtime_failure)
+        if self._recorder is not None:
+            self._recorder.validate_runtime_integrity(
+                self._suppress_runtime_failure,
+                event_bus=self._ctx.event_bus,
+            )
+
     def performance_execution_receipt(self) -> PerformanceExecutionReceipt:
         """Return committed evidence after revalidating every runtime owner."""
         self._validate_runtime_bindings()
-        return self._battle.performance_execution_receipt()
+        receipt = self._battle.performance_execution_receipt()
+        # The tactical receipt owner gets first refusal so its bounded poison
+        # diagnostic is not masked by the engine's broader failure latch.
+        self._raise_if_runtime_failed()
+        return receipt
+
+    def assert_evidence_healthy(self) -> None:
+        """Reject evidence exposure after binding, receipt, or runtime failure."""
+        self._validate_runtime_bindings()
+        self._battle.performance_execution_receipt()
+        self._raise_if_runtime_failed()
 
     def _validate_runtime_bindings(self) -> None:
         """Reject owner, cadence, or domain-config drift before all work."""
+        self._validate_runtime_failure_policies()
         self._ctx.validate_era_runtime_bindings()
         self._validate_clock_resolution_binding()
         if self._ctx.tactical_targeting is not self._targeting_runtime_owner:
@@ -584,6 +787,7 @@ class SimulationEngine:
         SimulationRunResult
             Final result with ticks executed, duration, and victory info.
         """
+        self._raise_if_runtime_failed()
         self._validate_runtime_bindings()
         run_error: BaseException | None = None
         try:
@@ -596,13 +800,15 @@ class SimulationEngine:
             return self.finalize()
         except BaseException as exc:
             run_error = exc
+            self._latch_runtime_failure(exc)
             raise
         finally:
             if self._recorder is not None:
                 try:
                     self._recorder.stop()
-                except BaseException:
+                except BaseException as cleanup_exc:
                     if run_error is None:
+                        self._latch_runtime_failure(cleanup_exc)
                         raise
                     logger.exception(
                         "Recorder cleanup failed after simulation run failure",
@@ -615,7 +821,7 @@ class SimulationEngine:
         engine state.  Cancellation or a local consumer loop limit is not a
         terminal simulation result and therefore cannot be finalized.
         """
-        self._validate_runtime_bindings()
+        self.assert_evidence_healthy()
         victory = self._last_victory
         if victory is None or not victory.game_over:
             raise RuntimeError(
@@ -626,19 +832,38 @@ class SimulationEngine:
             ticks_executed=self._ctx.clock.tick_count,
             duration_s=self._ctx.clock.elapsed.total_seconds(),
             victory_result=victory,
+            execution_mode=self.execution_mode,
+            suppressed_failures=self.suppressed_failures,
         )
 
     # ── Single step ──────────────────────────────────────────────────
 
     def step(self) -> bool:
-        """Advance the simulation by one tick.
+        """Advance one interval and latch any failure after state commitment."""
+        self._raise_if_runtime_failed()
+        self._validate_runtime_bindings()
+        initial_tick = self._ctx.clock.tick_count
+        initial_resolution = self._resolution
+        initial_tick_duration = self._ctx.clock.tick_duration
+        try:
+            return self._step_interval()
+        except BaseException as exc:
+            if (
+                self._ctx.clock.tick_count != initial_tick
+                or self._resolution is not initial_resolution
+                or self._ctx.clock.tick_duration != initial_tick_duration
+            ):
+                self._latch_runtime_failure(exc)
+            raise
+
+    def _step_interval(self) -> bool:
+        """Advance the prevalidated interval.
 
         Returns
         -------
         bool
             ``True`` if the simulation is over (victory or max ticks).
         """
-        self._validate_runtime_bindings()
         if self._last_victory.game_over:
             return True
 
@@ -729,8 +954,13 @@ class SimulationEngine:
             if _seasons_los is not None:
                 try:
                     ctx.los_engine.set_vegetation_density(_seasons_los.current.vegetation_density)
-                except Exception:
-                    pass
+                except Exception as exc:
+                    if not self._suppress_runtime_failure(
+                        subsystem="terrain.los",
+                        operation="set_vegetation_density",
+                        exception=exc,
+                    ):
+                        raise
 
         # Record pre-move grid cells for selective LOS invalidation
         pre_move_cells: dict[str, tuple[int, int]] | None = None
@@ -784,9 +1014,18 @@ class SimulationEngine:
         #     trigger planned moments (mosque seizure, HBIED detonation).
         try:
             _elapsed = ctx.clock.elapsed.total_seconds()
-            self._campaign.check_scripted_events(ctx, _elapsed)
-        except Exception:
-            logger.debug("Scripted events check failed", exc_info=True)
+            self._campaign.check_scripted_events(
+                ctx,
+                _elapsed,
+                failure_handler=self._suppress_runtime_failure,
+            )
+        except Exception as exc:
+            if not self._suppress_runtime_failure(
+                subsystem="simulation.campaign",
+                operation="check_scripted_events",
+                exception=exc,
+            ):
+                raise
 
         # Phase 111: scheduled indirect fire observes every already-committed
         # boundary transition before movement, detection, or autonomous
@@ -804,32 +1043,60 @@ class SimulationEngine:
                 ctx,
                 dt,
                 stage=MovementStage.STRATEGIC,
+                failure_handler=self._suppress_runtime_failure,
             )
 
             # Phase 24: Escalation update
             if ctx.escalation_engine is not None:
                 self._update_escalation(dt)
 
-            # Phase 64b: Planning process update — tick timers + auto-advance
-            if ctx.planning_engine is not None:
-                _cal_64b = getattr(ctx, "calibration", None)
-                _c2_on = _cal_64b is not None and _cal_64b.get("enable_c2_friction", False)
-                try:
-                    _plan_completions = ctx.planning_engine.update(dt, ts=timestamp)
-                    if _plan_completions:
-                        logger.debug("Planning completions: %d", len(_plan_completions))
-                        if _c2_on:
-                            from stochastic_warfare.c2.planning.process import PlanningPhase as _PP64e
-                            for _pid, _phase in _plan_completions:
-                                try:
-                                    _next = ctx.planning_engine.advance_phase(_pid)
-                                    if _next == _PP64e.ISSUING_ORDERS:
-                                        ctx.planning_engine.complete_planning(_pid, timestamp)
-                                except Exception:
-                                    logger.debug("Planning advance failed for %s", _pid, exc_info=True)
-                except Exception:
-                    logger.debug("Planning engine update failed", exc_info=True)
+        # Planning timers use elapsed logical time, so advance them exactly
+        # once at every resolution before tactical OODA work.
+        if ctx.planning_engine is not None:
+            _cal_64b = getattr(ctx, "calibration", None)
+            _c2_on = (
+                _cal_64b is not None
+                and _cal_64b.get("enable_c2_friction", False)
+            )
+            try:
+                _plan_completions = ctx.planning_engine.update(
+                    dt,
+                    ts=timestamp,
+                )
+                if _plan_completions:
+                    logger.debug(
+                        "Planning completions: %d",
+                        len(_plan_completions),
+                    )
+                    if _c2_on:
+                        from stochastic_warfare.c2.planning.process import (
+                            PlanningPhase as _PP64e,
+                        )
 
+                        for _pid, _phase in _plan_completions:
+                            try:
+                                _next = ctx.planning_engine.advance_phase(_pid)
+                                if _next == _PP64e.ISSUING_ORDERS:
+                                    ctx.planning_engine.complete_planning(
+                                        _pid,
+                                        timestamp,
+                                    )
+                            except Exception as exc:
+                                if not self._suppress_runtime_failure(
+                                    subsystem="c2.planning",
+                                    operation="advance_phase",
+                                    exception=exc,
+                                ):
+                                    raise
+            except Exception as exc:
+                if not self._suppress_runtime_failure(
+                    subsystem="c2.planning",
+                    operation="update",
+                    exception=exc,
+                ):
+                    raise
+
+        if interval_resolution == TickResolution.STRATEGIC:
             # Phase 71a: compute sim time early — needed by sortie reset below
             _sim_time_s = ctx.clock.elapsed.total_seconds()
 
@@ -850,13 +1117,21 @@ class SimulationEngine:
                     # Lazy aircraft registration (every strategic tick for simplicity)
                     for _side_units in ctx.units_by_side.values():
                         for _u in _side_units:
-                            if getattr(_u, "domain", None) == Domain.AIR and _u.status == UnitStatus.ACTIVE:
+                            if (
+                                getattr(_u, "domain", None) == Domain.AERIAL
+                                and _u.status == UnitStatus.ACTIVE
+                            ):
                                 try:
                                     ctx.ato_engine.register_aircraft(
                                         AircraftAvailability(unit_id=_u.entity_id),
                                     )
-                                except Exception:
-                                    pass  # already registered or invalid
+                                except Exception as exc:
+                                    if not self._suppress_runtime_failure(
+                                        subsystem="c2.ato",
+                                        operation="register_aircraft",
+                                        exception=exc,
+                                    ):
+                                        raise
                     if _ato_c2:
                         _available = ctx.ato_engine.get_available_sorties(_sim_time_s)
                         logger.debug("ATO: %d sorties available at t=%.0fs", _available, _sim_time_s)
@@ -866,8 +1141,13 @@ class SimulationEngine:
                     )
                     if _ato_entries:
                         logger.debug("ATO generated %d entries", len(_ato_entries))
-                except Exception:
-                    logger.debug("ATO generation failed", exc_info=True)
+                except Exception as exc:
+                    if not self._suppress_runtime_failure(
+                        subsystem="c2.ato",
+                        operation="generate",
+                        exception=exc,
+                    ):
+                        raise
 
             # Phase 13 postmortem: aggregation/disaggregation
             if (ctx.aggregation_engine is not None
@@ -877,12 +1157,20 @@ class SimulationEngine:
                 for agg_id in ctx.aggregation_engine.check_disaggregation_triggers(
                     ctx, battle_positions,
                 ):
-                    ctx.aggregation_engine.disaggregate(agg_id, ctx)
+                    ctx.aggregation_engine.disaggregate(
+                        agg_id,
+                        ctx,
+                        failure_handler=self._suppress_runtime_failure,
+                    )
                 # Then aggregate (distant units can be merged)
                 for group in ctx.aggregation_engine.check_aggregation_candidates(
                     ctx, battle_positions,
                 ):
-                    ctx.aggregation_engine.aggregate(group, ctx)
+                    ctx.aggregation_engine.aggregate(
+                        group,
+                        ctx,
+                        failure_handler=self._suppress_runtime_failure,
+                    )
 
             # Detect new engagements
             new_battles = self._campaign.detect_engagements(ctx, self._battle)
@@ -931,6 +1219,7 @@ class SimulationEngine:
                 ctx,
                 dt,
                 stage=MovementStage.OPERATIONAL,
+                failure_handler=self._suppress_runtime_failure,
             )
             new_battles = self._campaign.detect_engagements(ctx, self._battle)
             if new_battles:
@@ -981,6 +1270,7 @@ class SimulationEngine:
                     dt,
                 )
                 logistics_activity_unit_ids.update(unit_id for battle in active for unit_id in battle.unit_ids)
+                self._battle.execute_ooda_interval(ctx, active, dt)
                 for battle in active:
                     self._battle.execute_tick(ctx, battle, dt)
                     if self._battle.check_battle_termination(
@@ -990,6 +1280,7 @@ class SimulationEngine:
                         self._battle.resolve_battle(
                             battle,
                             ctx.units_by_side,
+                            ctx=ctx,
                         )
                         # Clear integration gain scan counts so they don't
                         # bleed across battles.
@@ -1105,9 +1396,12 @@ class SimulationEngine:
         if ctx.weather_engine is not None:
             try:
                 ctx.weather_engine.update(dt)
-            except Exception:
-                logger.error("Weather engine update failed", exc_info=True)
-                if self._strict_mode:
+            except Exception as exc:
+                if not self._suppress_runtime_failure(
+                    subsystem="environment.weather",
+                    operation="update",
+                    exception=exc,
+                ):
                     raise
 
         # TimeOfDayEngine is query-only — no per-tick update needed.
@@ -1115,17 +1409,23 @@ class SimulationEngine:
         if ctx.sea_state_engine is not None:
             try:
                 ctx.sea_state_engine.update(dt)
-            except Exception:
-                logger.error("Sea state engine update failed", exc_info=True)
-                if self._strict_mode:
+            except Exception as exc:
+                if not self._suppress_runtime_failure(
+                    subsystem="environment.sea_state",
+                    operation="update",
+                    exception=exc,
+                ):
                     raise
 
         if ctx.seasons_engine is not None and hasattr(ctx.seasons_engine, "update"):
             try:
                 ctx.seasons_engine.update(dt)
-            except Exception:
-                logger.error("Seasons engine update failed", exc_info=True)
-                if self._strict_mode:
+            except Exception as exc:
+                if not self._suppress_runtime_failure(
+                    subsystem="environment.seasons",
+                    operation="update",
+                    exception=exc,
+                ):
                     raise
 
         # Phase 61: Underwater acoustics engine (future-proofs per-tick update)
@@ -1133,18 +1433,24 @@ class SimulationEngine:
         if _ua is not None:
             try:
                 _ua.update(dt)
-            except Exception:
-                logger.error("Underwater acoustics engine update failed", exc_info=True)
-                if self._strict_mode:
+            except Exception as exc:
+                if not self._suppress_runtime_failure(
+                    subsystem="environment.underwater_acoustics",
+                    operation="update",
+                    exception=exc,
+                ):
                     raise
 
         # Phase 60: Obscurants engine (smoke/dust/fog drift + decay)
         if getattr(ctx, "obscurants_engine", None) is not None:
             try:
                 ctx.obscurants_engine.update(dt)
-            except Exception:
-                logger.error("Obscurants engine update failed", exc_info=True)
-                if self._strict_mode:
+            except Exception as exc:
+                if not self._suppress_runtime_failure(
+                    subsystem="environment.obscurants",
+                    operation="update",
+                    exception=exc,
+                ):
                     raise
 
         # Phase 17: Space domain
@@ -1168,9 +1474,12 @@ class SimulationEngine:
                 )
             except SpaceISRIntegrityError:
                 raise
-            except Exception:
-                logger.error("Space engine update failed", exc_info=True)
-                if self._strict_mode:
+            except Exception as exc:
+                if not self._suppress_runtime_failure(
+                    subsystem="space",
+                    operation="update",
+                    exception=exc,
+                ):
                     raise
 
         # Phase 18: CBRN domain
@@ -1200,9 +1509,12 @@ class SimulationEngine:
                     timestamp=clock.current_time,
                     **_cbrn_kw,
                 )
-            except Exception:
-                logger.error("CBRN engine update failed", exc_info=True)
-                if self._strict_mode:
+            except Exception as exc:
+                if not self._suppress_runtime_failure(
+                    subsystem="combat.cbrn",
+                    operation="update",
+                    exception=exc,
+                ):
                     raise
 
         # Phase 25: EW domain
@@ -1224,8 +1536,13 @@ class SimulationEngine:
                 try:
                     trench_eng = getattr(ctx, "trench_engine", None)
                     barrage_eng.update(dt, trench_engine=trench_eng)
-                except Exception:
-                    logger.debug("Barrage engine update failed", exc_info=True)
+                except Exception as exc:
+                    if not self._suppress_runtime_failure(
+                        subsystem="combat.barrage",
+                        operation="update",
+                        exception=exc,
+                    ):
+                        raise
 
         # Phase 54c: Napoleonic courier delivery
         if era == "napoleonic":
@@ -1236,8 +1553,13 @@ class SimulationEngine:
                     delivered = courier_eng.update(sim_time)
                     if delivered:
                         logger.debug("Courier: %d messages delivered", len(delivered))
-                except Exception:
-                    logger.debug("Courier update failed", exc_info=True)
+                except Exception as exc:
+                    if not self._suppress_runtime_failure(
+                        subsystem="c2.courier",
+                        operation="update",
+                        exception=exc,
+                    ):
+                        raise
 
         # Phase 54d: Ancient formation transitions + naval oar fatigue + visual signals
         if era == "ancient_medieval":
@@ -1247,15 +1569,25 @@ class SimulationEngine:
                     completed = af_eng.update(dt)
                     if completed:
                         logger.debug("Formation transitions completed: %s", completed)
-                except Exception:
-                    logger.debug("Ancient formation update failed", exc_info=True)
+                except Exception as exc:
+                    if not self._suppress_runtime_failure(
+                        subsystem="entities.formation",
+                        operation="update",
+                        exception=exc,
+                    ):
+                        raise
 
             oar_eng = getattr(ctx, "naval_oar_engine", None)
             if oar_eng is not None:
                 try:
                     oar_eng.update(dt)
-                except Exception:
-                    logger.debug("Naval oar update failed", exc_info=True)
+                except Exception as exc:
+                    if not self._suppress_runtime_failure(
+                        subsystem="movement.naval_oar",
+                        operation="update",
+                        exception=exc,
+                    ):
+                        raise
 
             vs_eng = getattr(ctx, "visual_signals_engine", None)
             if vs_eng is not None:
@@ -1264,8 +1596,13 @@ class SimulationEngine:
                     delivered = vs_eng.update(dt, sim_time)
                     if delivered:
                         logger.debug("Visual signals: %d delivered", len(delivered))
-                except Exception:
-                    logger.debug("Visual signal update failed", exc_info=True)
+                except Exception as exc:
+                    if not self._suppress_runtime_failure(
+                        subsystem="c2.visual_signals",
+                        operation="update",
+                        exception=exc,
+                    ):
+                        raise
 
         # Phase 44c / 56b: Maintenance engine — equipment breakdowns + readiness
         if (
@@ -1278,8 +1615,13 @@ class SimulationEngine:
                 if ctx.weather_engine is not None:
                     try:
                         temp_c = ctx.weather_engine.current.temperature
-                    except Exception:
-                        pass
+                    except Exception as exc:
+                        if not self._suppress_runtime_failure(
+                            subsystem="environment.weather",
+                            operation="read_temperature",
+                            exception=exc,
+                        ):
+                            raise
                 ctx.maintenance_engine.update(
                     dt_hours=dt_hours, temperature_c=temp_c,
                     timestamp=ctx.clock.current_time,
@@ -1301,11 +1643,19 @@ class SimulationEngine:
                                 object.__setattr__(
                                     _u, "status", UnitStatus.DISABLED,
                                 )
-                        except (KeyError, Exception):
-                            pass
-            except Exception:
-                logger.error("Maintenance update failed", exc_info=True)
-                if self._strict_mode:
+                        except Exception as exc:
+                            if not self._suppress_runtime_failure(
+                                subsystem="logistics.maintenance",
+                                operation="get_unit_readiness",
+                                exception=exc,
+                            ):
+                                raise
+            except Exception as exc:
+                if not self._suppress_runtime_failure(
+                    subsystem="logistics.maintenance",
+                    operation="update",
+                    exception=exc,
+                ):
                     raise
 
         # Phase 66a: mine persistence — battery decay for armed mines
@@ -1315,8 +1665,13 @@ class SimulationEngine:
             if _mine_eng is not None:
                 try:
                     _mine_eng.update_mine_persistence(dt / 3600.0)
-                except Exception:
-                    logger.debug("Mine persistence update failed", exc_info=True)
+                except Exception as exc:
+                    if not self._suppress_runtime_failure(
+                        subsystem="combat.mine_warfare",
+                        operation="update_persistence",
+                        exception=exc,
+                    ):
+                        raise
 
             # Phase 66a: mine sweeping — minesweeper units clear nearby mines
             if _mine_eng is not None:
@@ -1335,8 +1690,13 @@ class SimulationEngine:
                                         dt=dt, sweep_center=_pos_ms,
                                         sweep_radius_m=2000.0,
                                     )
-                                except Exception:
-                                    logger.debug("Mine sweeping failed", exc_info=True)
+                                except Exception as exc:
+                                    if not self._suppress_runtime_failure(
+                                        subsystem="combat.mine_warfare",
+                                        operation="sweep_mines",
+                                        exception=exc,
+                                    ):
+                                        raise
 
         # Phase 44c: Medical engine — casualty processing
         if ctx.medical_engine is not None:
@@ -1344,9 +1704,12 @@ class SimulationEngine:
                 ctx.medical_engine.update(
                     dt / 3600.0, ctx.clock.current_time,
                 )
-            except Exception:
-                logger.error("Medical update failed", exc_info=True)
-                if self._strict_mode:
+            except Exception as exc:
+                if not self._suppress_runtime_failure(
+                    subsystem="medical",
+                    operation="update",
+                    exception=exc,
+                ):
                     raise
 
     # ── EW ────────────────────────────────────────────────────────────
@@ -1357,16 +1720,22 @@ class SimulationEngine:
         if ctx.ew_engine is not None and hasattr(ctx.ew_engine, "update"):
             try:
                 ctx.ew_engine.update(dt)
-            except Exception:
-                logger.error("EW jamming engine update failed", exc_info=True)
-                if self._strict_mode:
+            except Exception as exc:
+                if not self._suppress_runtime_failure(
+                    subsystem="ew.jamming",
+                    operation="update",
+                    exception=exc,
+                ):
                     raise
         if ctx.ew_decoy_engine is not None and hasattr(ctx.ew_decoy_engine, "update"):
             try:
                 ctx.ew_decoy_engine.update(dt)
-            except Exception:
-                logger.error("EW decoy engine update failed", exc_info=True)
-                if self._strict_mode:
+            except Exception as exc:
+                if not self._suppress_runtime_failure(
+                    subsystem="ew.decoy",
+                    operation="update",
+                    exception=exc,
+                ):
                     raise
 
     # ── Phase 65b: SIGINT intercept pass ──────────────────────────────
@@ -1422,8 +1791,13 @@ class SimulationEngine:
                 )
                 try:
                     sigint.attempt_intercept(collector, emitter, timestamp)
-                except Exception:
-                    logger.debug("SIGINT intercept failed", exc_info=True)
+                except Exception as exc:
+                    if not self._suppress_runtime_failure(
+                        subsystem="ew.sigint",
+                        operation="attempt_intercept",
+                        exception=exc,
+                    ):
+                        raise
 
     # ── Phase 52d: SIGINT fusion ──────────────────────────────────────
 
@@ -1467,8 +1841,13 @@ class SimulationEngine:
                 fusion.fuse_sigint_tracks(
                     side, [], ew_reports,
                 )
-            except Exception:
-                logger.debug("SIGINT fusion failed for side %s", side, exc_info=True)
+            except Exception as exc:
+                if not self._suppress_runtime_failure(
+                    subsystem="detection.intel_fusion",
+                    operation="fuse_sigint_tracks",
+                    exception=exc,
+                ):
+                    raise
 
     # ── Escalation ────────────────────────────────────────────────────
 
@@ -1526,8 +1905,13 @@ class SimulationEngine:
             if ctx.consequence_engine is not None and hasattr(ctx.consequence_engine, "get_collateral_by_region"):
                 try:
                     collateral = ctx.consequence_engine.get_collateral_by_region()
-                except Exception:
-                    pass
+                except Exception as exc:
+                    if not self._suppress_runtime_failure(
+                        subsystem="escalation.consequences",
+                        operation="get_collateral_by_region",
+                        exception=exc,
+                    ):
+                        raise
 
             ctx.insurgency_engine.update_radicalization(
                 dt_hours=dt_hours,
@@ -1560,19 +1944,16 @@ class SimulationEngine:
                         perceived_existential_threat=0.0,
                         timestamp=timestamp,
                     )
-                except Exception:
-                    logger.debug("Political pressure update failed for %s", _side_name, exc_info=True)
+                except Exception as exc:
+                    if not self._suppress_runtime_failure(
+                        subsystem="escalation.political",
+                        operation="update",
+                        exception=exc,
+                    ):
+                        raise
 
-        # Phase 44d: Collateral damage tracking
-        if ctx.collateral_engine is not None:
-            try:
-                # CollateralEngine is event-driven (record_damage called on hits),
-                # no per-tick update needed.
-                pass
-            except Exception:
-                logger.error("Collateral engine update failed", exc_info=True)
-                if self._strict_mode:
-                    raise
+        # CollateralEngine is event-driven (record_damage is called on hits),
+        # so it has no per-tick update here.
 
         # Phase 55c-4: drone provocation — drones in contact can trigger
         # escalation level increase
@@ -1596,11 +1977,13 @@ class SimulationEngine:
                                     side=side_name,
                                     context={"unit_id": u.entity_id},
                                 )
-                            except Exception:
-                                logger.debug(
-                                    "Drone provocation trigger failed for %s",
-                                    u.entity_id, exc_info=True,
-                                )
+                            except Exception as exc:
+                                if not self._suppress_runtime_failure(
+                                    subsystem="escalation",
+                                    operation="evaluate_drone_provocation",
+                                    exception=exc,
+                                ):
+                                    raise
                         break  # one provocation check per side per tick
 
         # Check war termination
@@ -1732,7 +2115,13 @@ class SimulationEngine:
                 for u in units:
                     try:
                         supply_states[u.entity_id] = ctx.stockpile_manager.get_supply_state(u.entity_id)
-                    except Exception:
+                    except Exception as exc:
+                        if not self._suppress_runtime_failure(
+                            subsystem="logistics.stockpile",
+                            operation="get_supply_state",
+                            exception=exc,
+                        ):
+                            raise
                         supply_states[u.entity_id] = 1.0
 
         # Update objective control before checking victory
@@ -1747,9 +2136,30 @@ class SimulationEngine:
 
     # ── Checkpoint / restore ─────────────────────────────────────────
 
+    def _checkpoint_state_keys(self) -> frozenset[str]:
+        """Return the format-118 engine key topology without capturing state."""
+        keys = {
+            "checkpoint_version",
+            "resolution",
+            "context",
+            "campaign",
+            "battle",
+            "last_ato_day",
+            "last_victory",
+        }
+        if self._victory is not None:
+            keys.add("victory")
+        if self._recorder is not None:
+            keys.add("recorder")
+        return frozenset(keys)
+
     def get_state(self) -> dict[str, Any]:
         """Capture full engine state for checkpointing."""
-        self._validate_runtime_bindings()
+        if not self._strict_mode:
+            raise RuntimeError(
+                "Degraded runtimes cannot create authoritative checkpoints",
+            )
+        self.assert_evidence_healthy()
         if self._ctx.morale_runtime is None:
             if self._ctx.all_units():
                 raise RuntimeError(
@@ -1770,10 +2180,9 @@ class SimulationEngine:
                     "A null morale runtime cannot checkpoint aggregates",
                 )
         battle_state = self._battle.get_state()
-        context_state = self._ctx.get_state()
-        self._ctx.validate_fow_cadence_checkpoint_bindings(
-            observer_unit_ids=battle_state["fow_observer_unit_ids"],
-            lod_tiers=battle_state["lod_tiers"],
+        context_state = self._ctx.get_state(
+            fow_observer_unit_ids=battle_state["fow_observer_unit_ids"],
+            battle_lod_tiers=battle_state["lod_tiers"],
         )
         state: dict[str, Any] = {
             "checkpoint_version": _CHECKPOINT_VERSION,
@@ -1804,7 +2213,11 @@ class SimulationEngine:
 
     def set_state(self, state: dict[str, Any]) -> None:
         """Restore engine state from a checkpoint dict."""
-        self._validate_runtime_bindings()
+        if not self._strict_mode:
+            raise RuntimeError(
+                "Degraded runtimes cannot restore authoritative checkpoints",
+            )
+        self.assert_evidence_healthy()
         if not isinstance(state, dict):
             raise ValueError("Checkpoint engine state must be a mapping")
         has_checkpoint_version = "checkpoint_version" in state
@@ -1853,7 +2266,7 @@ class SimulationEngine:
                 "declared time-on-target missions",
             )
         if not allow_legacy_checkpoint:
-            expected_engine_keys = set(self.get_state())
+            expected_engine_keys = set(self._checkpoint_state_keys())
             actual_engine_keys = set(state)
             if actual_engine_keys != expected_engine_keys:
                 raise ValueError(
@@ -1920,7 +2333,7 @@ class SimulationEngine:
                     "missing required "
                     f"morale state: {missing_morale_keys!r}",
                 )
-            expected_context_keys = set(self._ctx.get_state())
+            expected_context_keys = set(self._ctx.checkpoint_state_keys())
             actual_context_keys = set(context_state)
             if actual_context_keys != expected_context_keys:
                 raise ValueError(
@@ -2080,6 +2493,53 @@ class SimulationEngine:
                 and raw_commander.get("phase") in {1, 2}
             )
         }
+        expired_decide_ids = {
+            unit_id
+            for unit_id, raw_commander in raw_commanders.items()
+            if (
+                isinstance(raw_commander, dict)
+                and raw_commander.get("phase") == 2
+                and not isinstance(raw_commander.get("phase_timer"), bool)
+                and isinstance(raw_commander.get("phase_timer"), (int, float))
+                and raw_commander["phase_timer"] <= 0.0
+                and not isinstance(raw_commander.get("phase_duration"), bool)
+                and isinstance(
+                    raw_commander.get("phase_duration"),
+                    (int, float),
+                )
+                and raw_commander["phase_duration"] > 0.0
+            )
+        }
+        raw_planning = context_state.get("planning_engine", {})
+        raw_planning_states = (
+            raw_planning.get("states", {})
+            if isinstance(raw_planning, dict)
+            else {}
+        )
+        raw_battle_state = state.get("battle", {})
+        raw_pending_decisions = (
+            raw_battle_state.get("pending_decisions", {})
+            if isinstance(raw_battle_state, dict)
+            else {}
+        )
+        pending_decide_ids = (
+            set(raw_pending_decisions)
+            if isinstance(raw_pending_decisions, dict)
+            else set()
+        )
+        planning_decide_ids = (
+            set(raw_planning_states)
+            if isinstance(raw_planning_states, dict)
+            else set()
+        )
+        # Pending propagation state and an active planning process are the two
+        # wire-visible proofs that an expired DECIDE completion is genuinely
+        # deferred.  Intersecting with the OODA state avoids claiming unrelated
+        # expired commanders while still making pending/non-expired tampering
+        # fail the battle-stage subset check.
+        deferred_ooda_ids = expired_decide_ids & (
+            pending_decide_ids | planning_decide_ids
+        )
         raw_checkpoint_start = context_state["clock"]["start"]
         raw_checkpoint_time = context_state["clock"]["current"]
         try:
@@ -2138,6 +2598,8 @@ class SimulationEngine:
             expected_sides=expected_sides,
             required_assessment_ids=required_assessment_ids,
             checkpoint_time=checkpoint_time,
+            checkpoint_elapsed_s=checkpoint_elapsed_s,
+            deferred_ooda_ids=deferred_ooda_ids,
         )
         raw_targeting = context_state.get("tactical_targeting")
         if raw_targeting is None:

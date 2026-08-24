@@ -21,6 +21,7 @@ from pydantic import BaseModel, ConfigDict
 
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.logging import get_logger
+from stochastic_warfare.core.runtime_failure import RuntimeFailureHandler
 from stochastic_warfare.core.types import Position
 from stochastic_warfare.entities.base import Unit, UnitStatus
 from stochastic_warfare.morale.runtime import MoraleRuntime
@@ -1021,6 +1022,7 @@ class AggregationEngine:
         ctx: Any,
         *,
         original_index: int = 0,
+        failure_handler: RuntimeFailureHandler | None = None,
     ) -> UnitSnapshot:
         """Capture complete per-unit state from all subsystems."""
         unit_state = unit.get_state()
@@ -1041,24 +1043,46 @@ class AggregationEngine:
         supply_inv = None
         if ctx.stockpile_manager is not None:
             try:
-                inv = ctx.stockpile_manager._unit_inventories.get(unit.entity_id)
-                if inv is not None:
+                if ctx.stockpile_manager.has_unit_inventory(unit.entity_id):
+                    inv = ctx.stockpile_manager.get_unit_inventory(
+                        unit.entity_id,
+                    )
                     supply_inv = inv.get_state()
-            except Exception:
-                pass
+            except Exception as exc:
+                if failure_handler is None or not failure_handler(
+                    "logistics.stockpile",
+                    "snapshot_supply_inventory",
+                    exc,
+                ):
+                    raise
 
         # Orders (Phase 85)
         order_records: list[dict] = []
         _order_exec = getattr(ctx, "order_execution", None)
         if _order_exec is not None:
-            for rec in (
-                _order_exec.get_active_orders(unit.entity_id)
-                + _order_exec.get_pending_orders(unit.entity_id)
-            ):
+            try:
+                records = (
+                    _order_exec.get_active_orders(unit.entity_id)
+                    + _order_exec.get_pending_orders(unit.entity_id)
+                )
+            except Exception as exc:
+                if failure_handler is None or not failure_handler(
+                    "c2.order_execution",
+                    "snapshot_orders",
+                    exc,
+                ):
+                    raise
+                records = ()
+            for rec in records:
                 try:
                     order_records.append(rec.get_state())
-                except Exception:
-                    pass
+                except Exception as exc:
+                    if failure_handler is None or not failure_handler(
+                        "c2.order_execution",
+                        "snapshot_order_record",
+                        exc,
+                    ):
+                        raise
 
         return UnitSnapshot(
             unit_state=unit_state,
@@ -1074,6 +1098,8 @@ class AggregationEngine:
         self,
         unit_ids: list[str],
         ctx: Any,
+        *,
+        failure_handler: RuntimeFailureHandler | None = None,
     ) -> AggregateUnit | None:
         """Aggregate units into a composite formation.
 
@@ -1149,6 +1175,7 @@ class AggregationEngine:
                 unit,
                 ctx,
                 original_index=side_positions[unit.entity_id],
+                failure_handler=failure_handler,
             )
             for unit in units
         ]
@@ -1176,7 +1203,13 @@ class AggregationEngine:
                     ss = ctx.stockpile_manager.get_supply_state(u.entity_id)
                     total_supply += ss
                     supply_count += 1
-                except Exception:
+                except Exception as exc:
+                    if failure_handler is None or not failure_handler(
+                        "logistics.stockpile",
+                        "get_supply_state",
+                        exc,
+                    ):
+                        raise
                     total_supply += 1.0
                     supply_count += 1
 
@@ -1326,6 +1359,8 @@ class AggregationEngine:
         self,
         aggregate_id: str,
         ctx: Any,
+        *,
+        failure_handler: RuntimeFailureHandler | None = None,
     ) -> list[str]:
         """Restore individual units from an aggregate.
 
@@ -1385,8 +1420,13 @@ class AggregationEngine:
                         )
                         rec.set_state(rec_state)
                         staged_orders.append(rec)
-                    except Exception:
-                        pass
+                    except Exception as exc:
+                        if failure_handler is None or not failure_handler(
+                            "c2.order_execution",
+                            "restore_order_record",
+                            exc,
+                        ):
+                            raise
 
         current_ids = {
             unit.entity_id
@@ -1446,14 +1486,22 @@ class AggregationEngine:
         sensors_before = dict(ctx.unit_sensors)
         resolutions_before = dict(ctx.equipment_resolutions)
         aggregates_before = dict(self._aggregates)
-        order_records = (
-            getattr(order_execution, "_records", None)
-            if order_execution is not None
-            else None
-        )
-        order_records_before = (
-            dict(order_records) if order_records is not None else None
-        )
+        order_records_before = None
+        if order_execution is not None:
+            try:
+                order_records_before = (
+                    order_execution.capture_record_snapshot()
+                )
+            except Exception as exc:
+                if failure_handler is None or not failure_handler(
+                    "c2.order_execution",
+                    "capture_record_snapshot",
+                    exc,
+                ):
+                    raise
+                # Without an owner snapshot, no atomic disaggregation is
+                # possible.  The degraded result is explicitly non-operative.
+                return []
         morale_committed = False
 
         try:
@@ -1476,9 +1524,16 @@ class AggregationEngine:
                     key=lambda item: item[0],
                 ):
                     side_units.insert(original_index, unit)
-            if order_records is not None:
-                for record in staged_orders:
-                    order_records[record.order_id] = record
+            if order_execution is not None and staged_orders:
+                try:
+                    order_execution.install_records(staged_orders)
+                except Exception as exc:
+                    if failure_handler is None or not failure_handler(
+                        "c2.order_execution",
+                        "install_restored_records",
+                        exc,
+                    ):
+                        raise
             targeting.replace_registered_units(
                 expected_current=unit_sides_before,
                 replacement=unit_sides_after,
@@ -1512,7 +1567,9 @@ class AggregationEngine:
                 targeting.commit_state(targeting_before)
                 _restore_mapping(self._aggregates, aggregates_before)
                 if order_records_before is not None:
-                    _restore_mapping(order_records, order_records_before)
+                    order_execution.restore_record_snapshot(
+                        order_records_before,
+                    )
             except Exception as rollback_exc:
                 rollback_errors.append(rollback_exc)
             if morale_committed:

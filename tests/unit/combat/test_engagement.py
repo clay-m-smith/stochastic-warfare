@@ -140,7 +140,6 @@ class TestExecuteEngagement:
     def test_terrain_cover_reduces_hit(self):
         """Terrain cover modifier flows through to hit probability."""
         eng = _make_engagement_engine(seed=100)
-        weapon = _make_weapon_instance(rounds=100)
         ammo = _make_ap()
         # Run many engagements to check statistical hit rate
         hits_exposed = 0

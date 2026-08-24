@@ -9,12 +9,14 @@ Requires ``mcp[cli]>=1.2.0`` (install via ``uv sync --extra mcp``).
 from __future__ import annotations
 
 import math
+from functools import lru_cache
 from pathlib import Path
 from typing import Annotated, Any
 
 from pydantic import BeforeValidator, Field, StrictInt
 
 from stochastic_warfare.core.logging import get_logger
+from stochastic_warfare.application_paths import ApplicationPaths
 from stochastic_warfare.scenario_names import validate_scenario_name
 from stochastic_warfare.simulation.calibration import CalibrationSchema
 from stochastic_warfare.tools.result_store import ResultStore, StoredResult
@@ -33,10 +35,11 @@ _MAX_QUERY_EVENTS = 100
 # Global result store (lives for server lifetime)
 _store = ResultStore(max_size=_MAX_STORE_SIZE)
 
-# Project root detection
-_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-_DATA_DIR = _PROJECT_ROOT / "data"
-_SCENARIOS_DIR = _DATA_DIR / "scenarios"
+
+@lru_cache(maxsize=1)
+def _application_paths() -> ApplicationPaths:
+    """Resolve the exact MCP resource owner once per server process."""
+    return ApplicationPaths.discover()
 
 
 def _strict_finite_float(value: Any) -> float:
@@ -195,7 +198,7 @@ def _find_scenario_path(name: str) -> Path | None:
         name = validate_scenario_name(name)
     except ValueError:
         return None
-    candidate = _SCENARIOS_DIR / name / "scenario.yaml"
+    candidate = _application_paths().scenario_root / name / "scenario.yaml"
     if candidate.exists():
         return candidate
     return None
@@ -219,7 +222,7 @@ def _run_single(
     )
     prepared = SimulationRuntimeFactory().prepare(
         scenario_path,
-        _DATA_DIR,
+        _application_paths().catalog_root,
         (variant,),
     )
     return _run_prepared(
@@ -374,7 +377,7 @@ def _tool_run_monte_carlo(
         )
         prepared = SimulationRuntimeFactory().prepare(
             path,
-            _DATA_DIR,
+            _application_paths().catalog_root,
             (variant,),
         )
         runner = AnalysisRunner(
@@ -473,8 +476,9 @@ def _tool_compare_results(run_id_a: str, run_id_b: str) -> str:
 
 def _tool_list_scenarios() -> str:
     scenarios = []
-    if _SCENARIOS_DIR.exists():
-        for d in sorted(_SCENARIOS_DIR.iterdir()):
+    scenarios_dir = _application_paths().scenario_root
+    if scenarios_dir.exists():
+        for d in sorted(scenarios_dir.iterdir()):
             yaml_path = d / "scenario.yaml"
             if yaml_path.exists():
                 import yaml
@@ -498,7 +502,7 @@ def _tool_list_scenarios() -> str:
 def _tool_list_units(category: str | None = None, domain: str | None = None) -> str:
     import yaml
 
-    units_dir = _DATA_DIR / "units"
+    units_dir = _application_paths().catalog_root / "units"
     units = []
     if units_dir.exists():
         for yaml_file in sorted(units_dir.rglob("*.yaml")):
@@ -566,7 +570,7 @@ def _tool_modify_parameter(
         )
         prepared = SimulationRuntimeFactory().prepare(
             path,
-            _DATA_DIR,
+            _application_paths().catalog_root,
             variants,
         )
         baseline_summary, _, _ = _run_prepared(

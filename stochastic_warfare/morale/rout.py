@@ -20,7 +20,7 @@ from pydantic import BaseModel, ConfigDict
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.types import ModuleId
-from stochastic_warfare.morale.events import RallyEvent, RoutEvent
+from stochastic_warfare.morale.events import RoutEvent
 
 logger = get_logger(__name__)
 

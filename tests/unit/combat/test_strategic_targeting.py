@@ -117,7 +117,7 @@ class TestStrikeDamage:
         eng = _make_targeting_engine(seed=300)
         eng.register_target(_make_target("t1", "factory"))
 
-        effects = eng.apply_strike("t1", 0.4)
+        eng.apply_strike("t1", 0.4)
         assert eng.get_target("t1").health == pytest.approx(0.6)
 
     def test_strike_health_floors_at_zero(self):

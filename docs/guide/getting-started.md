@@ -14,24 +14,28 @@ Clone the repository and install dependencies:
 ```bash
 git clone https://github.com/clay-m-smith/stochastic-warfare.git
 cd stochastic-warfare
-uv sync --extra dev    # creates .venv, installs all deps
+uv sync --locked --extra dev    # creates .venv, installs all deps
 ```
 
 Verify the installation:
 
 ```bash
-uv run python -c "import stochastic_warfare; print('OK')"
+uv run --no-sync python -c "import stochastic_warfare; print('OK')"
 ```
 
 ### Optional Dependencies
 
 | Extra | Install Command | Purpose |
 |-------|----------------|---------|
-| `perf` | `uv sync --extra perf` | Numba JIT acceleration for hot loops |
-| `terrain` | `uv sync --extra terrain` | Real-world terrain data (rasterio, xarray) |
-| `mcp` | `uv sync --extra mcp` | MCP server for Claude integration |
-| `api` | `uv sync --extra api` | REST API server (FastAPI, SQLite) |
-| `docs` | `uv sync --extra docs` | MkDocs documentation site |
+| `perf` | `uv sync --locked --extra perf` | Numba JIT acceleration for hot loops |
+| `terrain` | `uv sync --locked --extra terrain` | Real-world terrain data (rasterio, xarray) |
+| `mcp` | `uv sync --locked --extra mcp` | MCP server integration |
+| `api` | `uv sync --locked --extra api` | REST API server (FastAPI, SQLite) |
+| `docs` | `uv sync --locked --extra docs` | MkDocs documentation site |
+
+The checkout, container, and locally built wheel/sdist are supported layouts.
+The wheel includes the headless application and authoritative YAML catalog but
+not the React frontend; API and MCP dependencies remain opt-in extras.
 
 ## Running the Test Suite
 
@@ -40,6 +44,7 @@ uv sync --locked --extra dev --extra api --extra terrain --extra mcp
 uv run --no-sync python scripts/validate_test_partitions.py \
   --output artifacts/partition-audit/manifest.json
 uv run --no-sync python scripts/run_pytest_partition.py standard \
+  --audit-manifest artifacts/partition-audit/manifest.json \
   --manifest artifacts/standard/manifest.json \
   --junit artifacts/standard/junit.xml --forbid-skips \
   --timeout-seconds 2700
@@ -47,10 +52,12 @@ uv run --no-sync python scripts/run_pytest_partition.py standard \
 
 The authoritative suite is the exact audited union of six disjoint partitions:
 `standard`, `slow-only`, `benchmark-only`, `slow-benchmark`, `api`, and `e2e`.
-PR/main CI runs the audit plus `standard`, `api`, `e2e`, and the overlapping
-`terrain` dependency profile. Weekly/manual CI runs the three marker
-partitions in deterministic module-affine shards. `benchmark-policy` is another
-overlapping focused profile, not a seventh partition.
+PR/main CI runs the audit plus `standard`, `api`, and `e2e`; main and relevant
+pull requests run the overlapping `terrain` dependency profile. Nightly/manual
+CI runs the three marker partitions in deterministic module-affine shards from
+the same revision-bound manifest. `benchmark-policy` is another overlapping
+focused profile, not a seventh partition; 73 Easting is nightly/manual and
+Golan remains manual.
 
 All commands use `uv run` to ensure the correct virtual environment is used.
 
@@ -58,6 +65,30 @@ All commands use `uv run` to ensure the correct virtual environment is used.
 
 The engine runs scenarios defined in YAML files. Production consumers construct
 and execute them through one typed runtime-owned boundary.
+
+The product CLI is the shortest supported route:
+
+```bash
+uv run --no-sync stochastic-warfare run test_campaign \
+  --seed 42 --max-ticks 10
+```
+
+An installed distribution may instead run `stochastic-warfare` directly or
+use `python -m stochastic_warfare`. A bare name resolves inside the selected
+catalog. An explicit absolute path, or a relative path containing a directory
+component, resolves as a user-authorized file; relative explicit paths use the
+invocation working directory.
+
+### Application resources
+
+`ApplicationPaths` owns the catalog, scenario root, historical-claim receipt,
+SQLite database, optional frontend bundle, and generated-artifact root. It
+selects checkout, packaged-resource, or explicitly configured external-catalog
+mode without assuming the working directory. `STOCHASTIC_WARFARE_DATA_ROOT`
+selects an external catalog; the database, frontend, artifacts, and user-state
+roots have corresponding `STOCHASTIC_WARFARE_*` variables. Installed mutable
+state defaults beneath `XDG_STATE_HOME/stochastic-warfare` or
+`~/.local/state/stochastic-warfare`.
 
 ### Step 1: Prepare a Scenario
 
@@ -132,6 +163,9 @@ print(f"Total events recorded: {len(events)}")
 | `duration_s` | `float` | Logical simulated elapsed seconds |
 | `victory_result` | `VictoryResult` | Who won, how, and when |
 | `campaign_summary` | `Any` | Campaign-level statistics (if applicable) |
+| `execution_mode` | `RuntimeExecutionMode` | `STRICT` or explicitly requested `DEGRADED` |
+| `suppressed_failures` | `tuple[SuppressedRuntimeFailure, ...]` | Ordered typed failures retained only by degraded execution |
+| `authoritative` | `bool` | True only for strict execution with no suppressed failures |
 
 ### VictoryResult
 
@@ -145,7 +179,13 @@ print(f"Total events recorded: {len(events)}")
 
 ### Events
 
-The `SimulationRecorder` captures all simulation events -- combat engagements, detections, morale changes, C2 orders, logistics deliveries, and more. Each event includes a tick number, event type, and domain-specific payload.
+The runtime-bound `SimulationRecorder` captures every successfully published
+event while its integrity contract is preserved. Overflow, extraction, and
+committed-event subscriber failures use the engine's exact strict/degraded
+policy: strict execution propagates and latches the original failure; degraded
+execution emits typed suppressed-failure evidence and is non-authoritative.
+Standalone recorder strictness flags retain only legacy diagnostic behavior and
+cannot turn a damaged event stream into authoritative evidence.
 
 ## Running Monte Carlo Batches
 

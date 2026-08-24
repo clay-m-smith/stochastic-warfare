@@ -17,6 +17,10 @@ Audit baseline: 2026-07-28 at `68acd4b`
 - `P`: persisted or exposed through every required boundary
 
 `-` means not yet proven. `N/A` requires a written reason in the issue record.
+Matrices and ranked-row statuses record the last accepted remediation state.
+The consolidation postmortem's REM-052/REM-053 closures are valid only for a
+revision whose final exact frozen-revision release gate is green; a failure
+revokes both closures and forbids the consolidation commit.
 
 ## Ranked issues
 
@@ -73,8 +77,8 @@ Audit baseline: 2026-07-28 at `68acd4b`
 | REM-049 | P1 | 136 | Web UI semantic integrity | Replay/export/editor/analysis surfaces retain incomplete or misleading boundaries after Phase 117 corrected status decoding, canonical scenario fields, and invalid one-click defaults | Queued | Yes | Yes | - | N/A | Yes | Yes | - | Complete export and causal replay/query projection plus explicit catalog-backed editor and analysis inputs |
 | REM-050 | P1 | 137 | Optional-suite configuration | Production discards authored escalation tuning, DEW enable-like keys are ignored while presence enables defaults, and no scenario combines a DEW config with a DEW-capable unit | Queued | - | Yes | - | - | Yes | - | - | Strict consumed Escalation/DEW configuration plus enabled/disabled production behavior and a real catalog DEW engagement |
 | REM-051 | P1 | 138 | Detection scan lifecycle | Resolving one battle reaches through the context to reset the shared detection engine's scan history globally, so an unrelated concurrent battle can lose integration-gain state | Queued | Yes | Yes | Yes | N/A | Yes | Yes | - | Typed battle-scoped scan-history lifecycle with multi-battle and checkpoint-continuation proof |
-| REM-052 | P2 | 139 | FOW update ownership | The public legacy `FogOfWarManager.update()` path duplicates the transactional detection, culling, cadence, indexed-RNG, and fusion algorithm owned by `update_with_receipt()` | Queued | Yes | Yes | - | N/A | Yes | Yes | - | One typed production update implementation or an explicit unsupported legacy boundary with parity/failure proof |
-| REM-053 | P2 | 140 | Checkpoint capture | Checkpoint validation repeatedly serializes and restages FOW, detection, and RNG state before the final capture, multiplying work and consistency surfaces | Queued | Yes | Yes | Yes | N/A | Yes | Yes | - | One immutable preflight snapshot graph with exact bytes, atomic failure, continuation, and separately measured profile evidence |
+| REM-052 | P2 | 139 | FOW update ownership | One canonical receipt-bearing owner; the legacy mutation boundary rejects explicitly | **Closed** | Yes | Yes | Yes | N/A | Yes | Yes | Yes | [Consolidation postmortem](devlog/consolidation-tiered-modular-monolith.md#postmortem) |
+| REM-053 | P2 | 140 | Checkpoint capture | One immutable context snapshot is reused for validation and final encoding | **Closed** | Yes | Yes | Yes | N/A | Yes | Yes | Yes | [Consolidation postmortem](devlog/consolidation-tiered-modular-monolith.md#postmortem) |
 | REM-054 | P1 | 141 | Performance approximation | Frozen v7 scan scheduling failed 13/16 pairs and Suwalki LOD failed 4/16, so current production rejects both controls rather than accepting unbounded fidelity loss | Queued | Yes | Yes | Yes | N/A | Yes | Yes | Yes | Sourced redesign, current rejection red, fresh disjoint paired evidence, and accepted independently verified re-enablement artifact |
 | REM-055 | P1 | 142 | FOW runtime cost | Phase 118's atomic FOW transaction preserves semantics but increased the matched ten-tick production median from 47.035449 s to 59.220597 s (+25.906%) | Queued | Yes | Yes | Yes | N/A | Yes | Yes | - | Preserve every integrity invariant while recovering the measured gross regression with persistent matched profile evidence |
 
@@ -1189,7 +1193,7 @@ contact continuation.
 
 The gap is catalog-wide, not limited to one scenario. Thirty-one shipped
 scenario YAML files declare `documented_outcomes`. At the Phase 112 baseline,
-`tests/validation/test_historical_accuracy.py` labeled 34 winner rows and eight
+`tests/validation/historical/test_accuracy.py` labeled 34 winner rows and eight
 draw rows as historical accuracy, and called a winner frequency of at least
 80 percent across ten seeds statistical validation. Phase 67 and Phase 91
 tests imported or repeated those rows. Older Phase 7 validation tests used a
@@ -1378,24 +1382,27 @@ REM-030.
 
 ### Phase 117 implementation and closure evidence
 
-Phase 117 replaces that unowned claim surface with one strict repository
-ledger and factory-owned backtest boundary. Scanner version 2 enumerates 196
-candidate files across API Python, public and test frontend source, Python
-tests, public Markdown, scenario YAML, and repository workflow skills. The
-ledger binds 134 of those files to exact claim IDs and records 62 explicit
-reviewed nonclaims. Reviews are whole-file/digest based rather than
-occurrence-level, so semantic locators and a manual cross-document audit remain
-mandatory.
+Phase 117 replaced that unowned claim surface with one strict repository
+ledger and factory-owned backtest boundary. Its closure-era scanner version 2
+enumerated 196 candidate files across API Python, frontend source and tests,
+Python tests, all Markdown history, scenario YAML, and mirrored workflow
+skills. The closure ledger bound 134 of those files to exact claim IDs and
+recorded 62 explicit reviewed nonclaims. The tiered-monolith consolidation now
+supersedes that maintenance-heavy whole-file inventory with scanner version 3:
+current public/product/scenario/workflow surfaces use path-independent exact
+matched-span review identities, while generic tests and historical engineering
+narratives no longer act as current truth.
 
-The current inventory contains 233 claims: 214 unsupported, 19
-current-engine-regression-only, and zero production-validated. It covers all
+That closure-era inventory contained 233 claims: 214 unsupported, 19
+current-engine-regression-only, and zero production-validated. It covered all
 31 shipped `documented_outcomes` collections / 83 metrics, three scenario
 prose claims, 25 Python claim-test surfaces, one frontend claim-test surface,
 154 documentation claims across 66 paths, 11 frontend claim surfaces, four API
 claim surfaces, three duplicated regression tables, and the canonical
-46-scenario snapshot. Full source/data validation reports no uninventoried or
-missing collections, unreviewed candidates, stale reviews, source/rule/binding
-errors, obsolete boolean verdict APIs, or content-digest mismatch.
+46-scenario snapshot. Scanner version 3 deliberately replaces those permanent
+cardinality assertions with a fresh relational audit: every in-scope candidate
+must have one exact review, every compatible claim must be bound, and every
+deficit set must be empty. Zero claims are currently production-validated.
 
 The strict study plan declares source provenance and lineage, exact metric
 units/scopes/event boundary, arithmetic training/held-out seed intervals, a
@@ -2937,9 +2944,25 @@ invites semantic drift and permits future callers to bypass the transactional
 receipt/indexed-RNG boundary. Phase 118 validates the new production route but
 does not claim that duplicated legacy behavior is a second supported owner.
 
-**Matrix:** `D=Yes, L=Yes, W=-, E=N/A, X=Yes, O=Yes, P=-`. Both entry points
-are declared and the legacy path is directly exercisable; one canonical
-implementation or an explicit unsupported adapter contract is absent.
+### Consolidation acceptance
+
+The completed tiered modular-monolith consolidation changes public legacy
+`FogOfWarManager.update()` to raise
+`UnsupportedLegacyFogOfWarUpdateError`; supported production execution remains
+on the receipt-bearing owner. The 2026-08-23 postmortem accepts this explicit-
+unsupported boundary with focused parity, failure-atomicity, RNG, and
+checkpoint-continuation coverage and closes REM-052.
+
+**Historical Phase 118 matrix:** `D=Yes, L=Yes, W=-, E=N/A, X=Yes, O=Yes,
+P=-`. At that boundary both entry points were directly exercisable and the
+explicit unsupported adapter was absent.
+
+**Accepted consolidation matrix (2026-08-23):** `D=Yes, L=Yes, W=Yes,
+E=N/A, X=Yes, O=Yes, P=Yes`. Enable/disable is N/A because this remediation
+selects the one supported ownership boundary rather than adding an optional
+runtime feature. Explicit legacy rejection, production routing, observable
+failure behavior, RNG authority, and checkpoint continuation supply the
+remaining closure evidence.
 
 ### Required proof
 
@@ -2952,7 +2975,10 @@ implementation or an explicit unsupported adapter contract is absent.
 - Remove tests that award behavioral credit to the duplicate algorithm after
   the canonical boundary is established.
 
-**Status:** Queued for Phase 139 in Block 20.
+**Status:** **Closed** on 2026-08-23 by the
+[consolidation postmortem](devlog/consolidation-tiered-modular-monolith.md#postmortem).
+Planned Phase 139 is retired before start. This closure is valid only for a
+revision whose final exact frozen-revision release gate is green.
 
 ## REM-053 - Checkpoint capture repeatedly restages mutable FOW state
 
@@ -2966,9 +2992,30 @@ snapshot is emitted. It is not a semantic failure in the accepted format-118
 bytes, so Phase 118 records it separately instead of weakening the checkpoint
 gate or calling an unmeasured refactor a speed improvement.
 
-**Matrix:** `D=Yes, L=Yes, W=Yes, E=N/A, X=Yes, O=Yes, P=-`. The repeated
-production captures and resulting bytes are observable; a single immutable
-snapshot graph and dedicated profile evidence are absent.
+### Consolidation acceptance
+
+The completed consolidation introduces one immutable context checkpoint
+snapshot graph with typed atomic, legacy-clone, and stateless owner
+dispositions, and reuses one current targeting/FOW snapshot across the relevant
+tick consumers. Focused bytes, atomicity, and continuation checks support the
+accepted boundary. A dedicated matched checkpoint-capture profile used five
+interleaved blocks per revision, each with two warmups and seven measured
+captures (35 observations per revision). It recorded a consolidation-base
+median of 11.288641 ms and current median of 4.506367 ms, a 0.399195 ratio.
+The matched run also preserved exact restored state, continuation, replay,
+recorder output, and RNG state. This is workload-specific checkpoint-path
+evidence, not a universal speed claim. The 2026-08-23 postmortem accepts this
+evidence and closes REM-053.
+
+**Historical Phase 118 matrix:** `D=Yes, L=Yes, W=Yes, E=N/A, X=Yes, O=Yes,
+P=-`. At that accepted boundary the repeated captures and resulting bytes were
+observable while a single snapshot graph and dedicated profile were absent.
+
+**Accepted consolidation matrix (2026-08-23):** `D=Yes, L=Yes, W=Yes,
+E=N/A, X=Yes, O=Yes, P=Yes`. Enable/disable is N/A because capture consistency
+is an always-on integrity obligation, not an optional feature. The immutable
+snapshot, atomic rejection, exact bytes, continuation, exposure, and dedicated
+measurement provide the remaining closure evidence.
 
 ### Required proof
 
@@ -2982,7 +3029,10 @@ snapshot graph and dedicated profile evidence are absent.
 - Measure the production checkpoint path separately before and after; keep
   timing evidence distinct from correctness evidence.
 
-**Status:** Queued for Phase 140 in Block 20.
+**Status:** **Closed** on 2026-08-23 by the
+[consolidation postmortem](devlog/consolidation-tiered-modular-monolith.md#postmortem).
+Planned Phase 140 is retired before start. This closure is valid only for a
+revision whose final exact frozen-revision release gate is green.
 
 ## REM-054 - Performance approximations failed frozen semantic validation
 
@@ -3073,6 +3123,20 @@ contract declared no speed threshold, every semantic deadline completed, and
 the profile supports no universal throughput or speed claim. The regression is
 therefore tracked separately rather than hidden or used to relabel the valid
 semantic evidence.
+
+The consolidation's matched R16 boundary measurement has overlapping
+ranges: median 0.010538683 seconds versus 0.010371553 seconds (1.016x), and
+mean 0.010285734 seconds versus 0.010440483 seconds (0.985x). That narrow
+measurement supports equivalence review only, not a speed claim or REM-055
+closure.
+
+The canonical paired 73 Easting comparison subsequently recorded a reference
+median of 2.757796 seconds, candidate median of 3.144280 seconds, and median
+paired ratio of 1.136065. That ratio is below the predeclared 1.20 benchmark
+policy limit, but the candidate is still 13.61% slower. Its semantic projection
+was exact. Because this comparison ran with FOW disabled, it does not measure
+recovery of the transactional-FOW cost and cannot close REM-055. REM-055 is
+still open and queued for Phase 142.
 
 **Matrix:** `D=Yes, L=Yes, W=Yes, E=N/A, X=Yes, O=Yes, P=-`. The production
 cost is declared, loaded, wired, exercised, and outcome-measured. Enable/disable

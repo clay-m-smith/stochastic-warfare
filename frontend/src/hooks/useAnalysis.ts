@@ -1,7 +1,10 @@
 import { useMutation } from '@tanstack/react-query'
 import { runCompare, runDoctrineCompare, runSweep } from '../api/analysis'
-import type { DoctrineCompareRequest } from '../api/analysis'
-import type { CompareRequest, SweepRequest } from '../types/api'
+import type {
+  CompareRequest,
+  DoctrineCompareRequest,
+  SweepRequest,
+} from '../types/api'
 import type { CompareResult, DoctrineCompareResult, SweepResult } from '../types/analysis'
 
 export function useCompare() {

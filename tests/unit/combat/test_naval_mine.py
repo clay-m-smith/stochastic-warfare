@@ -82,6 +82,7 @@ class TestLayMines:
 class TestMineEncounter:
     """Resolve mine encounters by type."""
 
+    @pytest.mark.test_evidence("structural_only")
     def test_contact_mine_trigger(self):
         eng = _make_engine(seed=10)
         mines = eng.lay_mines("l1", [Position(0, 0, -10)], MineType.CONTACT)
@@ -106,6 +107,7 @@ class TestMineEncounter:
                 triggered_count += 1
         assert triggered_count > 10  # 1.0 * 0.9 = 0.9 trigger prob
 
+    @pytest.mark.test_evidence("structural_only")
     def test_smart_mine_selectivity(self):
         eng = _make_engine(seed=15)
         mines = eng.lay_mines("l1", [Position(0, 0, -10)], MineType.SMART)

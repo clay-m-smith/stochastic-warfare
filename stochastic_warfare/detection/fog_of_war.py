@@ -52,7 +52,11 @@ from stochastic_warfare.detection.cadence import (
     TacticalCadenceScheduler,
     TacticalObserverIdentity,
 )
-from stochastic_warfare.detection.deception import Decoy, DeceptionEngine
+from stochastic_warfare.detection.deception import (
+    Decoy,
+    DeceptionEngine,
+    DeceptionType,
+)
 from stochastic_warfare.detection.detection import (
     DetectionDecisionStage,
     DetectionEngine,
@@ -89,6 +93,11 @@ from stochastic_warfare.detection.sensors import SensorInstance, SensorType
 from stochastic_warfare.detection.signatures import SignatureProfile
 
 logger = get_logger(__name__)
+
+
+class UnsupportedLegacyFogOfWarUpdateError(RuntimeError):
+    """Raised when a caller bypasses the receipt-bearing FOW transaction."""
+
 
 # ---------------------------------------------------------------------------
 # Data types
@@ -342,6 +351,19 @@ class FogOfWarRestorePlan:
     def cadence_state(self) -> dict[str, Any]:
         """Return a defensive copy of the staged cadence publication."""
         return copy.deepcopy(self._cadence_state)
+
+
+@dataclass(frozen=True, slots=True)
+class FogOfWarCheckpointSnapshot:
+    """One canonical FOW payload and the plan that validated that payload."""
+
+    _state: dict[str, Any] = field(repr=False)
+    plan: FogOfWarRestorePlan
+
+    @property
+    def state(self) -> dict[str, Any]:
+        """Return a defensive copy of the validated canonical payload."""
+        return copy.deepcopy(self._state)
 
 
 @dataclass(frozen=True, slots=True)
@@ -1596,13 +1618,11 @@ class FogOfWarManager:
     def deploy_decoy(
         self,
         position: Position,
-        deception_type: "DeceptionType | int" = 4,
+        deception_type: DeceptionType | int = 4,
         effectiveness: float = 1.0,
         signature: "SignatureProfile | None" = None,
     ) -> Decoy:
         """Deploy a decoy via the internal deception engine."""
-        from stochastic_warfare.detection.deception import DeceptionType
-
         if isinstance(deception_type, int):
             deception_type = DeceptionType(deception_type)
         return self._deception.deploy_decoy(
@@ -3415,301 +3435,22 @@ class FogOfWarManager:
         transmission_loss: float | None = None,
         jam_snr_penalty_db: float = 0.0,
     ) -> SideWorldView:
-        """Run one detection cycle for *side*.
+        """Reject the owner-incomplete legacy update boundary.
 
-        Parameters
-        ----------
-        own_units:
-            List of dicts with keys: position, sensors, observer_height, and
-            observer_heading_deg.
-        enemy_units:
-            List of dicts with keys: unit_id, position, signature, unit,
-            target_height, concealment, posture.
-        dt:
-            Time step in seconds.
-        current_time:
-            Current simulation time.
-        decoys:
-            Active enemy decoys.
-        detection_culling:
-            Use STRtree spatial index to skip out-of-range targets.
-        scan_scheduling:
-            Respect per-sensor ``scan_interval_ticks`` scheduling.
-        current_tick:
-            Current simulation tick (for scan scheduling).
-        visibility_m, illumination_lux, thermal_contrast, ambient_noise_db,
-        atmospheric_atten_db_per_km, transmission_loss,
-        jam_snr_penalty_db:
-            Current detection-environment inputs forwarded to the canonical
-            :class:`DetectionEngine` check.  A target mapping may override an
-            input when propagation or concealment is target-specific.
-
-        Returns the updated :class:`SideWorldView`.
+        The retained signature gives callers a deterministic migration error;
+        it cannot supply the complete-side transaction, cadence plan, indexed
+        RNG allocation, receipt, or atomic outer commit required by the
+        supported update path.
         """
-        _require_witness_id(side, "fog-of-war side")
-        # Never allow a prior update's success to survive a failed or empty
-        # current update.  New witnesses publish only after the full scan and
-        # track-lifecycle work succeeds.
-        self.clear_current_detection_witnesses(side)
-        _require_finite_witness_scalar(
-            current_time,
-            "fog-of-war logical time",
-            non_negative=True,
+        raise UnsupportedLegacyFogOfWarUpdateError(
+            "FogOfWarManager.update() is unsupported because it cannot carry "
+            "the receipt-bearing complete-side transaction. Production callers "
+            "must use BattleManager.prepare_tactical_interval(); direct "
+            "integrations must use begin_update_transaction(), "
+            "update_with_receipt(), prevalidate_update_transaction(), "
+            "commit_update_transaction(), and the typed cadence/indexed-RNG "
+            "commit owners.",
         )
-        logical_time_s = float(current_time)
-        staged_witnesses: list[ObserverDetectionWitness] = []
-        wv = self.get_world_view(side)
-        wv.last_update_time = logical_time_s
-
-        # Build list of scannable targets (enemy units + decoys)
-        all_targets = list(enemy_units)
-        if decoys:
-            for decoy in decoys:
-                if decoy.active:
-                    all_targets.append(
-                        {
-                            "unit_id": decoy.decoy_id,
-                            "position": decoy.position,
-                            "signature": decoy.signature,
-                            "unit": None,
-                            "target_height": 0.0,
-                            "concealment": 0.0,
-                            "posture": 0,
-                        }
-                    )
-
-        # Phase 88: Pre-build target position array for vectorized ops
-        _target_pos_arr: np.ndarray | None = None
-        if unit_arrays is not None and len(all_targets) > 0:
-            _target_pos_arr = np.array(
-                [(t["position"].easting, t["position"].northing) for t in all_targets],
-                dtype=np.float64,
-            )
-
-        # Phase 84a: Build spatial index for range-limited detection
-        _target_tree = None
-        _target_points = None
-        if detection_culling and len(all_targets) > 1:
-            _target_points = [Point(t["position"].easting, t["position"].northing) for t in all_targets]
-            _target_tree = STRtree(_target_points)
-
-        # For each own unit's sensors, scan each target
-        for observer_index, own in enumerate(own_units):
-            obs_pos = own["position"]
-            sensor_scans = self._observer_sensor_scans(own)
-            sensors = tuple(scan.sensor for scan in sensor_scans)
-            obs_height = own.get("observer_height", 1.8)
-            obs_heading_deg = own.get("observer_heading_deg", 0.0)
-            observer_unit_id = own.get("unit_id")
-            has_typed_attachments = any(scan.source_equipment_index is not None for scan in sensor_scans)
-            if has_typed_attachments:
-                _require_witness_id(
-                    observer_unit_id,
-                    "observer unit_id",
-                )
-            elif observer_unit_id is None:
-                # Legacy sensor projections have no authored equipment
-                # identity.  Their canonical input position is the only
-                # available observer-local compatibility identity.
-                observer_unit_id = f"__legacy_fow_observer_index__:{observer_index}"
-            else:
-                _require_witness_id(observer_unit_id, "observer unit_id")
-
-            # Phase 84a: determine targets in range via spatial index
-            if _target_tree is not None:
-                _op_sensors = [s for s in sensors if s.operational]
-                _max_range = max(
-                    (s.effective_range for s in _op_sensors),
-                    default=0.0,
-                )
-                if _max_range > 0:
-                    _obs_pt = Point(obs_pos.easting, obs_pos.northing)
-                    _cand_idxs = sorted(
-                        _target_tree.query(_obs_pt.buffer(_max_range)),
-                    )
-                    _scan_targets = [all_targets[i] for i in _cand_idxs]
-                else:
-                    _scan_targets = []
-            elif _target_pos_arr is not None and _target_pos_arr.shape[0] > 0:
-                # Phase 88b: vectorized range check via numpy
-                _op_sensors = [s for s in sensors if s.operational]
-                _max_range = max(
-                    (s.effective_range for s in _op_sensors),
-                    default=0.0,
-                )
-                if _max_range > 0:
-                    _obs_arr = np.array([obs_pos.easting, obs_pos.northing])
-                    _diffs = _target_pos_arr - _obs_arr
-                    _dists = np.sqrt(np.sum(_diffs * _diffs, axis=1))
-                    _in_range = np.where(_dists <= _max_range)[0]
-                    _scan_targets = [all_targets[i] for i in _in_range]
-                else:
-                    _scan_targets = []
-            else:
-                _scan_targets = all_targets
-
-            for target in _scan_targets:
-                tgt_id = target["unit_id"]
-                tgt_pos = target["position"]
-                tgt_sig = target["signature"]
-                tgt_unit = target.get("unit")
-                tgt_height = target.get("target_height", 0.0)
-                concealment = target.get("concealment", 0.0)
-                posture = target.get("posture", 0)
-
-                for sensor_index, scan in enumerate(sensor_scans):
-                    sensor = scan.sensor
-                    scan_source_index = (
-                        scan.source_equipment_index if scan.source_equipment_index is not None else sensor_index
-                    )
-                    if not sensor.operational:
-                        continue
-
-                    # Phase 84b: scan scheduling — skip sensor on off-ticks
-                    if scan_scheduling and sensor.definition.scan_interval_ticks > 1:
-                        _interval = sensor.definition.scan_interval_ticks
-                        _offset = sum(ord(c) for c in sensor.definition.sensor_id) % _interval
-                        if (current_tick + _offset) % _interval != 0:
-                            continue
-
-                    result = self._detection.check_detection(
-                        obs_pos,
-                        tgt_pos,
-                        sensor,
-                        tgt_sig,
-                        target_unit=tgt_unit,
-                        observer_height=obs_height,
-                        target_height=tgt_height,
-                        concealment=concealment,
-                        posture=posture,
-                        illumination_lux=target.get(
-                            "illumination_lux",
-                            illumination_lux,
-                        ),
-                        visibility_m=target.get("visibility_m", visibility_m),
-                        thermal_contrast=target.get(
-                            "thermal_contrast",
-                            thermal_contrast,
-                        ),
-                        ambient_noise_db=target.get(
-                            "ambient_noise_db",
-                            ambient_noise_db,
-                        ),
-                        atmospheric_atten_db_per_km=target.get(
-                            "atmospheric_atten_db_per_km",
-                            atmospheric_atten_db_per_km,
-                        ),
-                        transmission_loss=target.get(
-                            "transmission_loss",
-                            transmission_loss,
-                        ),
-                        observer_heading_deg=obs_heading_deg,
-                        target_id=tgt_id,
-                        scan_identity=DetectionScanIdentity(
-                            side=side,
-                            observer_unit_id=observer_unit_id,
-                            source_equipment_index=scan_source_index,
-                        ),
-                        jam_snr_penalty_db=target.get(
-                            "jam_snr_penalty_db",
-                            jam_snr_penalty_db,
-                        ),
-                        rng=rng,
-                    )
-
-                    if result.detected:
-                        if scan.source_equipment_index is not None:
-                            staged_witnesses.append(
-                                ObserverDetectionWitness(
-                                    side=side,
-                                    observer_unit_id=observer_unit_id,
-                                    target_id=tgt_id,
-                                    source_equipment_index=(scan.source_equipment_index),
-                                    sensor_id=sensor.sensor_id,
-                                    modeled_role=scan.modeled_role,
-                                    logical_time_s=logical_time_s,
-                                    detected=result.detected,
-                                    probability=float(result.probability),
-                                    snr_db=float(result.snr_db),
-                                    range_m=float(result.range_m),
-                                    sensor_type=result.sensor_type.name,
-                                    bearing_deg=float(result.bearing_deg),
-                                ),
-                            )
-                        # Classify
-                        ci = ContactInfo(ContactLevel.DETECTED, None, None, None, 0.3)
-                        if self._identification is not None:
-                            ci = self._identification.classify_from_detection(
-                                result,
-                                tgt_unit,
-                                threshold_db=sensor.definition.detection_threshold,
-                                rng=rng,
-                            )
-
-                        # Feed to intel fusion.  The internal target-keyed
-                        # contact retains an already issued side-local public
-                        # track; new contacts receive the next opaque ordinal.
-                        existing_track_id = wv.contacts[tgt_id].track.track_id if tgt_id in wv.contacts else None
-
-                        tid = self._intel_fusion.submit_sensor_detection(
-                            side,
-                            result,
-                            ci,
-                            obs_pos,
-                            contact_id=existing_track_id,
-                            allocate_fow_track=True,
-                            observation_time_s=logical_time_s,
-                        )
-
-                        if tid is not None:
-                            # Update or create contact record
-                            tracks = self._intel_fusion.get_tracks(side)
-                            if tid in tracks:
-                                track = tracks[tid]
-                                if tgt_id in wv.contacts:
-                                    cr = wv.contacts[tgt_id]
-                                    cr.track = track
-                                    cr.contact_info = (
-                                        IdentificationEngine.update_contact(
-                                            cr.contact_info,
-                                            ci,
-                                        )
-                                        if self._identification
-                                        else ci
-                                    )
-                                    cr.last_sensor_contact_time = logical_time_s
-                                    if sensor.sensor_id not in cr.reporting_sensors:
-                                        cr.reporting_sensors.append(sensor.sensor_id)
-                                else:
-                                    wv.contacts[tgt_id] = ContactRecord(
-                                        contact_id=tgt_id,
-                                        track=track,
-                                        contact_info=ci,
-                                        first_detected_time=logical_time_s,
-                                        last_sensor_contact_time=logical_time_s,
-                                        reporting_sensors=[sensor.sensor_id],
-                                    )
-
-        # Manage track lifecycle
-        tracks = self._intel_fusion.get_tracks(side)
-        to_delete = self._estimator.manage_tracks(tracks, logical_time_s)
-        for tid in to_delete:
-            # Find and remove associated contact
-            for cid in list(wv.contacts.keys()):
-                if wv.contacts[cid].track.track_id == tid:
-                    del wv.contacts[cid]
-                    break
-
-        published_witnesses = tuple(
-            sorted(
-                staged_witnesses,
-                key=self._witness_sort_key,
-            )
-        )
-        with self._witness_lock:
-            self._current_detection_witnesses[side] = published_witnesses
-
-        return wv
 
     # ------------------------------------------------------------------
     # 12a-7: COP sharing via data links
@@ -3929,7 +3670,8 @@ class FogOfWarManager:
                     "Fog-of-war observer track support must bind its exact live fusion contact",
                 )
 
-    def get_state(self) -> dict[str, Any]:
+    def _capture_checkpoint_state(self) -> dict[str, Any]:
+        """Serialize the live owner once without independently restaging it."""
         self.validate_checkpoint_boundary()
         self.validate_live_contact_bindings()
         with self._witness_lock:
@@ -3955,10 +3697,42 @@ class FogOfWarManager:
             "scan_counts": self._detection.get_scan_count_state(),
             "cadence": self._cadence.get_state(),
         }
-        # Capture must fail closed on malformed live topology too.  Production
-        # context capture follows with the stronger roster/loadout preflight.
-        self.stage_state(state)
         return state
+
+    def capture_checkpoint_snapshot(
+        self,
+        *,
+        expected_sides: set[str] | None = None,
+        expected_target_sides: dict[str, str] | None = None,
+        satellite_topology: dict[str, tuple[str, str]] | None = None,
+        checkpoint_elapsed_s: float | None = None,
+        authoritative_rng_state: dict[str, Any] | None = None,
+        authoritative_detection_scan_counts: object | None = None,
+        expected_sensor_bindings: (tuple[FogOfWarSensorBinding, ...] | None) = None,
+        expected_cadence_sensor_bindings: (tuple[FogOfWarSensorBinding, ...] | None) = None,
+        expected_cadence_bindings: (tuple[FogOfWarCadenceBinding, ...] | None) = None,
+        expected_native_phase_bindings: (tuple[FogOfWarNativePhaseBinding, ...] | None) = None,
+    ) -> FogOfWarCheckpointSnapshot:
+        """Capture once and return the exact owner-bound validation plan."""
+        state = self._capture_checkpoint_state()
+        plan = self.stage_state(
+            state,
+            expected_sides=expected_sides,
+            expected_target_sides=expected_target_sides,
+            satellite_topology=satellite_topology,
+            checkpoint_elapsed_s=checkpoint_elapsed_s,
+            authoritative_rng_state=authoritative_rng_state,
+            authoritative_detection_scan_counts=(authoritative_detection_scan_counts),
+            expected_sensor_bindings=expected_sensor_bindings,
+            expected_cadence_sensor_bindings=(expected_cadence_sensor_bindings),
+            expected_cadence_bindings=expected_cadence_bindings,
+            expected_native_phase_bindings=(expected_native_phase_bindings),
+        )
+        return FogOfWarCheckpointSnapshot(_state=state, plan=plan)
+
+    def get_state(self) -> dict[str, Any]:
+        """Capture and validate canonical FOW state for compatibility callers."""
+        return self.capture_checkpoint_snapshot().state
 
     def validate_cadence_restore_bindings(
         self,

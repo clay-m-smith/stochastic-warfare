@@ -12,6 +12,7 @@ from pydantic import field_validator, model_validator
 from stochastic_warfare.entities.base import Unit, UnitStatus
 from stochastic_warfare.simulation.engine import (
     PRODUCTION_TERMINAL_CONDITION_TYPES,
+    RuntimeExecutionMode,
 )
 from stochastic_warfare.simulation.runtime import (
     CodeRevision,
@@ -917,7 +918,20 @@ def _code_revision(value: CodeRevision) -> CodeRevisionEvidence:
 
 
 def _runtime_provenance(value: RuntimeProvenance) -> RuntimeProvenanceEvidence:
-    return RuntimeProvenanceEvidence.model_validate(asdict(value))
+    if (
+        value.execution_mode is not RuntimeExecutionMode.STRICT
+        or value.suppressed_failures
+    ):
+        raise RuntimeError(
+            "Historical acceptance cannot publish degraded runtime evidence",
+        )
+    payload = asdict(value)
+    # The historical artifact retains its stable acceptance schema.  The
+    # typed runtime fields above are checked before conversion and strict
+    # runs have no suppressed records to serialize.
+    payload.pop("execution_mode")
+    payload.pop("suppressed_failures")
+    return RuntimeProvenanceEvidence.model_validate(payload)
 
 
 def _metric_statistics(values: tuple[float, ...]) -> MetricStatistics:
@@ -1270,6 +1284,11 @@ class HistoricalBacktestRunner:
             self._failure_stage = "runtime_execution"
             result = session.run_to_completion()
             live_result = session.finalize()
+            if not result.authoritative or not live_result.authoritative:
+                raise RuntimeError(
+                    "Historical acceptance requires strict execution without "
+                    "suppressed subsystem failures",
+                )
             if (
                 result.ticks_executed != live_result.ticks_executed
                 or result.duration_s != live_result.duration_s

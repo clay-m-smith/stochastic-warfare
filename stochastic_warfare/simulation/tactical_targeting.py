@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import math
 import sys
-from collections.abc import Collection, Iterable, Mapping
+from collections.abc import Collection, Mapping
 from dataclasses import dataclass, field, replace
 from enum import Enum
 from types import MappingProxyType

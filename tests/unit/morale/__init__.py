@@ -1,0 +1,1 @@
+"""Morale subsystem unit tests."""

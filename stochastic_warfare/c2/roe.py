@@ -13,11 +13,15 @@ from __future__ import annotations
 import enum
 from dataclasses import dataclass
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.types import ModuleId, Position
 from stochastic_warfare.c2.events import RoeChangeEvent, RoeViolationEvent
+
+if TYPE_CHECKING:
+    from stochastic_warfare.combat.ammunition import AmmoDefinition
 
 logger = get_logger(__name__)
 
@@ -113,6 +117,12 @@ class RoeEngine:
     def set_area_override(self, override: RoeAreaOverride) -> None:
         """Add a geographic ROE override."""
         self._area_overrides.append(override)
+
+    def configure_default_level(self, level: RoeLevel) -> None:
+        """Apply the typed scenario-wide default without exposing config."""
+        if not isinstance(level, RoeLevel):
+            raise TypeError("default ROE level must be a RoeLevel")
+        self._default_level = level
 
     def get_roe_level(self, unit_id: str) -> RoeLevel:
         """Return the effective ROE level for a unit."""
@@ -283,7 +293,7 @@ _TREATY_ESCALATION_LEVELS: dict[str, int] = {
 
 
 def check_treaty_compliance(
-    ammo_def: "AmmoDefinition",
+    ammo_def: AmmoDefinition,
     escalation_level: int,
 ) -> tuple[bool, str]:
     """Check if ammo is treaty-compliant at current escalation level.

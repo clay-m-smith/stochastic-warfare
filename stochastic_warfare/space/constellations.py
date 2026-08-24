@@ -15,6 +15,10 @@ import numpy as np
 
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.logging import get_logger
+from stochastic_warfare.core.runtime_failure import (
+    RuntimeFailureHandler,
+    RuntimeFailurePolicyBinding,
+)
 from stochastic_warfare.core.types import ModuleId
 from stochastic_warfare.space.config import (
     ASATAssetConfig,
@@ -478,6 +482,70 @@ class SpaceEngine:
         self._satcom_engine = satcom_engine
         self._asat_engine = asat_engine
         self._catalog_fingerprint = catalog_fingerprint
+        self._runtime_failure_handler: RuntimeFailurePolicyBinding | None = None
+        self._runtime_asat_owner: Any = None
+
+    def bind_runtime_failure_handler(
+        self,
+        handler: RuntimeFailureHandler,
+    ) -> None:
+        """Bind one production failure-policy owner across the space facade."""
+        binding = RuntimeFailurePolicyBinding(handler)
+        existing = (
+            self._runtime_failure_handler.resolve()
+            if self._runtime_failure_handler is not None
+            else None
+        )
+        if existing is not None and existing != handler:
+            raise RuntimeError(
+                "SpaceEngine already has a different runtime failure-policy "
+                "owner",
+            )
+        if (
+            existing is not None
+            and self._asat_engine is not self._runtime_asat_owner
+        ):
+            raise RuntimeError(
+                "SpaceEngine ASAT owner changed after runtime construction",
+            )
+        self._runtime_failure_handler = binding
+        if existing is None:
+            self._runtime_asat_owner = self._asat_engine
+        if self._asat_engine is not None:
+            bind = getattr(
+                self._asat_engine,
+                "bind_runtime_failure_handler",
+                None,
+            )
+            if callable(bind):
+                bind(handler)
+
+    def validate_runtime_failure_handler(
+        self,
+        handler: RuntimeFailureHandler,
+    ) -> None:
+        """Reject failure-policy drift in this facade or its ASAT owner."""
+        bound = (
+            self._runtime_failure_handler.resolve()
+            if self._runtime_failure_handler is not None
+            else None
+        )
+        if bound != handler:
+            raise RuntimeError(
+                "SpaceEngine runtime failure-policy binding changed",
+            )
+        if self._asat_engine is not self._runtime_asat_owner:
+            raise RuntimeError(
+                "SpaceEngine ASAT owner changed after runtime construction",
+            )
+        if self._asat_engine is not None:
+            validate = getattr(
+                self._asat_engine,
+                "validate_runtime_failure_handler",
+                None,
+            )
+            if callable(validate):
+                validate(handler)
 
     @property
     def constellation_manager(self) -> ConstellationManager:
@@ -614,8 +682,34 @@ class SpaceEngine:
             return 100.0
         try:
             state = self._gps_engine.compute_gps_accuracy(side, sim_time_s)
-            return getattr(state, "position_accuracy_m", 100.0)
-        except Exception:
+            cep = state.position_accuracy_m
+            if (
+                isinstance(cep, bool)
+                or not isinstance(cep, (int, float))
+                or not math.isfinite(float(cep))
+                or float(cep) < 0.0
+            ):
+                raise ValueError(
+                    "GPS owner returned an invalid position_accuracy_m",
+                )
+            return float(cep)
+        except Exception as exc:
+            binding = getattr(
+                self,
+                "_runtime_failure_handler",
+                None,
+            )
+            handler = (
+                binding.resolve()
+                if binding is not None
+                else None
+            )
+            if handler is None or not handler(
+                "space.gps",
+                "get_cep",
+                exc,
+            ):
+                raise
             return 100.0
 
     # ── State persistence ────────────────────────────────────────────

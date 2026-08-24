@@ -553,6 +553,7 @@ async def test_duplicate_calibration_paths_are_http_422(
     assert app.state.run_manager._tasks == {}
 
 
+@pytest.mark.test_evidence("behavioral_oracle")
 async def test_analysis_routes_map_real_missing_unit_input_to_422(
     client,
     monkeypatch: pytest.MonkeyPatch,
@@ -627,6 +628,7 @@ async def test_analysis_routes_map_real_missing_unit_input_to_422(
         assert missing_type in response.text
 
 
+@pytest.mark.test_evidence("behavioral_oracle")
 async def test_analysis_maps_unknown_scenario_references_to_422(
     client,
     monkeypatch: pytest.MonkeyPatch,

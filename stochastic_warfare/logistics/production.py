@@ -9,7 +9,7 @@ Phase 12b-2.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any
 
 import numpy as np
@@ -96,7 +96,6 @@ class ProductionEngine:
 
         Returns dict of facility_id → {supply_class: tons_produced}.
         """
-        ts = timestamp or datetime.now(tz=timezone.utc)
         production_results: dict[str, dict[str, float]] = {}
 
         for fid, config in self._facilities.items():

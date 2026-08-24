@@ -243,7 +243,6 @@ class CommandEngine:
 
             # Succession timer countdown
             if s.succession_timer > 0:
-                old_timer = s.succession_timer
                 s.succession_timer -= dt_seconds
                 if s.succession_timer <= 0:
                     remaining = -s.succession_timer  # Time left after succession

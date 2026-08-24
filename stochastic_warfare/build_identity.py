@@ -21,9 +21,12 @@ from typing import Any
 
 
 BUILD_IDENTITY_SCHEMA_VERSION = 1
+PYTHON_DISTRIBUTION_IDENTITY_SCHEMA_VERSION = 2
 BUILD_IDENTITY_RELATIVE_PATH = Path("stochastic_warfare/_build_identity.json")
 APPLICATION_SOURCE_DIRECTORIES = ("stochastic_warfare", "api")
 APPLICATION_SOURCE_FILES = ("pyproject.toml", "uv.lock")
+APPLICATION_TREE_LAYOUT = "application-tree"
+PYTHON_DISTRIBUTION_LAYOUT = "python-distribution"
 
 _COMMIT_PATTERN = re.compile(r"[0-9a-f]{40}\Z")
 _SHA256_PATTERN = re.compile(r"[0-9a-f]{64}\Z")
@@ -42,6 +45,7 @@ class BuildIdentity:
     schema_version: int
     commit: str
     source_manifest_sha256: str
+    artifact_layout: str = APPLICATION_TREE_LAYOUT
 
 
 def _normalized_mode(metadata: os.stat_result) -> str:
@@ -77,10 +81,17 @@ def _read_regular_file(path: Path, *, display_path: str) -> tuple[bytes, os.stat
         ) from exc
     try:
         opened = os.fstat(descriptor)
-        if (
-            not stat.S_ISREG(opened.st_mode)
-            or opened.st_dev != initial.st_dev
-            or opened.st_ino != initial.st_ino
+        stable_fields = (
+            "st_dev",
+            "st_ino",
+            "st_mode",
+            "st_size",
+            "st_mtime_ns",
+            "st_ctime_ns",
+        )
+        if not stat.S_ISREG(opened.st_mode) or any(
+            getattr(opened, field) != getattr(initial, field)
+            for field in stable_fields
         ):
             raise BuildIdentityError(
                 f"application source entry changed during capture: {display_path!r}",
@@ -89,17 +100,15 @@ def _read_regular_file(path: Path, *, display_path: str) -> tuple[bytes, os.stat
         while chunk := os.read(descriptor, 1024 * 1024):
             chunks.append(chunk)
         final = os.fstat(descriptor)
+        final_path = path.lstat()
     finally:
         os.close(descriptor)
 
-    stable_fields = (
-        "st_dev",
-        "st_ino",
-        "st_mode",
-        "st_size",
-        "st_mtime_ns",
-    )
-    if any(getattr(opened, field) != getattr(final, field) for field in stable_fields):
+    if any(
+        getattr(candidate, field) != getattr(opened, field)
+        for candidate in (final, final_path)
+        for field in stable_fields
+    ):
         raise BuildIdentityError(
             f"application source entry changed during capture: {display_path!r}",
         )
@@ -111,7 +120,11 @@ def _read_regular_file(path: Path, *, display_path: str) -> tuple[bytes, os.stat
     return payload, final
 
 
-def _iter_source_files(application_root: Path) -> Iterator[tuple[Path, str]]:
+def _iter_source_files(
+    application_root: Path,
+    *,
+    artifact_layout: str,
+) -> Iterator[tuple[Path, str]]:
     """Yield every source-owned file in deterministic relative-path order."""
     paths: list[tuple[Path, str]] = []
     for relative_directory in APPLICATION_SOURCE_DIRECTORIES:
@@ -176,16 +189,28 @@ def _iter_source_files(application_root: Path) -> Iterator[tuple[Path, str]]:
                     continue
                 paths.append((path, relative))
 
-    for relative_file in APPLICATION_SOURCE_FILES:
-        paths.append((application_root / relative_file, relative_file))
+    if artifact_layout == APPLICATION_TREE_LAYOUT:
+        for relative_file in APPLICATION_SOURCE_FILES:
+            paths.append((application_root / relative_file, relative_file))
+    elif artifact_layout != PYTHON_DISTRIBUTION_LAYOUT:
+        raise BuildIdentityError(
+            f"unsupported application source layout: {artifact_layout!r}",
+        )
     yield from sorted(paths, key=lambda item: item[1])
 
 
-def application_source_manifest(application_root: Path) -> tuple[dict[str, Any], ...]:
+def application_source_manifest(
+    application_root: Path,
+    *,
+    artifact_layout: str = APPLICATION_TREE_LAYOUT,
+) -> tuple[dict[str, Any], ...]:
     """Return the exact canonical manifest for production application source."""
     root = application_root.resolve()
     manifest: list[dict[str, Any]] = []
-    for path, relative in _iter_source_files(root):
+    for path, relative in _iter_source_files(
+        root,
+        artifact_layout=artifact_layout,
+    ):
         payload, metadata = _read_regular_file(path, display_path=relative)
         manifest.append(
             {
@@ -200,10 +225,17 @@ def application_source_manifest(application_root: Path) -> tuple[dict[str, Any],
     return tuple(manifest)
 
 
-def application_source_manifest_sha256(application_root: Path) -> str:
+def application_source_manifest_sha256(
+    application_root: Path,
+    *,
+    artifact_layout: str = APPLICATION_TREE_LAYOUT,
+) -> str:
     """Return a deterministic digest of the exact application-source manifest."""
     encoded = json.dumps(
-        application_source_manifest(application_root),
+        application_source_manifest(
+            application_root,
+            artifact_layout=artifact_layout,
+        ),
         allow_nan=False,
         ensure_ascii=False,
         separators=(",", ":"),
@@ -215,22 +247,43 @@ def application_source_manifest_sha256(application_root: Path) -> str:
 def _validate_identity_payload(payload: Any) -> BuildIdentity:
     if not isinstance(payload, dict):
         raise BuildIdentityError("build identity must be a JSON object")
-    expected_keys = {
+    v1_keys = {
         "schema_version",
         "commit",
         "source_manifest_sha256",
     }
-    if set(payload) != expected_keys:
+    v2_keys = v1_keys | {"artifact_layout"}
+    if set(payload) not in (v1_keys, v2_keys):
         raise BuildIdentityError(
-            "build identity must contain exactly "
-            "schema_version, commit, and source_manifest_sha256",
+            "build identity has unsupported fields",
         )
     schema_version = payload["schema_version"]
     commit = payload["commit"]
     source_manifest_sha256 = payload["source_manifest_sha256"]
-    if type(schema_version) is not int or schema_version != BUILD_IDENTITY_SCHEMA_VERSION:
+    if type(schema_version) is not int:
         raise BuildIdentityError(
-            f"build identity schema_version must equal {BUILD_IDENTITY_SCHEMA_VERSION}",
+            "build identity schema_version must be a strict integer",
+        )
+    if schema_version == BUILD_IDENTITY_SCHEMA_VERSION:
+        if set(payload) != v1_keys:
+            raise BuildIdentityError(
+                "schema-1 build identity must contain exactly schema_version, "
+                "commit, and source_manifest_sha256",
+            )
+        artifact_layout = APPLICATION_TREE_LAYOUT
+    elif schema_version == PYTHON_DISTRIBUTION_IDENTITY_SCHEMA_VERSION:
+        if set(payload) != v2_keys:
+            raise BuildIdentityError(
+                "schema-2 build identity must include artifact_layout",
+            )
+        artifact_layout = payload["artifact_layout"]
+        if artifact_layout != PYTHON_DISTRIBUTION_LAYOUT:
+            raise BuildIdentityError(
+                "schema-2 artifact_layout must equal python-distribution",
+            )
+    else:
+        raise BuildIdentityError(
+            "build identity schema_version is unsupported",
         )
     if not isinstance(commit, str) or _COMMIT_PATTERN.fullmatch(commit) is None:
         raise BuildIdentityError(
@@ -248,6 +301,7 @@ def _validate_identity_payload(payload: Any) -> BuildIdentity:
         schema_version=schema_version,
         commit=commit,
         source_manifest_sha256=source_manifest_sha256,
+        artifact_layout=artifact_layout,
     )
 
 
@@ -289,9 +343,10 @@ def find_application_root(start: Path) -> Path:
     )
 
 
-def load_verified_build_identity(start: Path) -> BuildIdentity:
-    """Load one exact-schema identity and verify its immutable source digest."""
-    application_root = find_application_root(start)
+def _capture_build_identity_verification(
+    application_root: Path,
+) -> tuple[bytes, BuildIdentity, str]:
+    """Capture one stable identity payload and its current source digest."""
     identity_path = application_root / BUILD_IDENTITY_RELATIVE_PATH
     payload_bytes, _ = _read_regular_file(
         identity_path,
@@ -310,7 +365,21 @@ def load_verified_build_identity(start: Path) -> BuildIdentity:
     identity = _validate_identity_payload(payload)
     current_manifest_sha256 = application_source_manifest_sha256(
         application_root,
+        artifact_layout=identity.artifact_layout,
     )
+    return payload_bytes, identity, current_manifest_sha256
+
+
+def load_verified_build_identity(start: Path) -> BuildIdentity:
+    """Load one exact-schema identity and verify its immutable source digest."""
+    application_root = find_application_root(start)
+    initial = _capture_build_identity_verification(application_root)
+    final = _capture_build_identity_verification(application_root)
+    if initial != final:
+        raise BuildIdentityError(
+            "packaged application changed during build identity verification",
+        )
+    _payload_bytes, identity, current_manifest_sha256 = initial
     if current_manifest_sha256 != identity.source_manifest_sha256:
         raise BuildIdentityError(
             "build identity source manifest does not match packaged application source",
@@ -318,16 +387,30 @@ def load_verified_build_identity(start: Path) -> BuildIdentity:
     return identity
 
 
-def write_build_identity(application_root: Path, commit: str) -> Path:
+def write_build_identity(
+    application_root: Path,
+    commit: str,
+    *,
+    artifact_layout: str = APPLICATION_TREE_LAYOUT,
+) -> Path:
     """Generate one immutable identity after application source is staged."""
     root = application_root.resolve()
-    identity = _validate_identity_payload(
-        {
-            "schema_version": BUILD_IDENTITY_SCHEMA_VERSION,
-            "commit": commit,
-            "source_manifest_sha256": application_source_manifest_sha256(root),
-        },
+    schema_version = (
+        PYTHON_DISTRIBUTION_IDENTITY_SCHEMA_VERSION
+        if artifact_layout == PYTHON_DISTRIBUTION_LAYOUT
+        else BUILD_IDENTITY_SCHEMA_VERSION
     )
+    payload: dict[str, Any] = {
+        "schema_version": schema_version,
+        "commit": commit,
+        "source_manifest_sha256": application_source_manifest_sha256(
+            root,
+            artifact_layout=artifact_layout,
+        ),
+    }
+    if schema_version == PYTHON_DISTRIBUTION_IDENTITY_SCHEMA_VERSION:
+        payload["artifact_layout"] = artifact_layout
+    _validate_identity_payload(payload)
     identity_path = root / BUILD_IDENTITY_RELATIVE_PATH
     try:
         existing = identity_path.lstat()
@@ -348,11 +431,7 @@ def write_build_identity(application_root: Path, commit: str) -> Path:
             )
     identity_path.write_text(
         json.dumps(
-            {
-                "schema_version": identity.schema_version,
-                "commit": identity.commit,
-                "source_manifest_sha256": identity.source_manifest_sha256,
-            },
+            payload,
             allow_nan=False,
             ensure_ascii=False,
             separators=(",", ":"),

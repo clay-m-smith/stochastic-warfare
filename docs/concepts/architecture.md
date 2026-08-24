@@ -4,7 +4,7 @@ This page explains the core architecture of Stochastic Warfare -- how the engine
 
 ## Module Dependency Chain
 
-The engine is composed of 12 top-level modules with a strict one-way dependency graph:
+The engine's foundational dependency spine follows this one-way direction:
 
 ```
 core -> coordinates -> terrain -> environment -> entities -> movement
@@ -26,11 +26,13 @@ core -> coordinates -> terrain -> environment -> entities -> movement
 | **logistics** | NATO supply classes, deterministic scenario topology/resupply, networkx routing, Poisson maintenance, M/M/c medical, engineering |
 | **simulation** | Scenario loading, battle/campaign managers, master engine, recording, metrics |
 
-**Key rule**: Dependencies flow downward only. Terrain never imports environment. Environment may read terrain (one-way). This prevents circular dependencies and makes the system testable in isolation.
+**Key rule**: Dependencies flow toward orchestration. Specialized domain
+packages join this spine through typed owners; lower-level packages do not
+import application adapters such as the API, CLI, MCP, or frontend.
 
 ### Additional Domain Modules
 
-Beyond the core 12, specialized domain modules provide optional capabilities:
+Specialized domain modules provide optional capabilities around that spine:
 
 | Module | Purpose | Phase |
 |--------|---------|-------|
@@ -116,6 +118,15 @@ Within combat, each potential engagement passes through a series of gates before
 11. **Hold-fire discipline** -- if enabled via `behavior_rules`, defensive units wait until targets are within effective range (default 80% of max range)
 12. **Engagement resolution** -- ballistics, penetration, and damage applied
 
+Two environment-sensitive range paths use conservative, explicit contracts.
+Enabled air-combat environment handling derives a finite positive wind
+modifier and applies it only to BVR eligibility and BVR range-dependent
+resolution; WVR/guns selection and reported geometric range are unchanged.
+Enabled acoustic layers use a 6x sonar discovery ceiling covering the largest
+supported positive surface-duct and convergence-zone combination. The exact
+acoustic resolver remains the final gate and still applies thermocline,
+shadow-zone, and disabled penalties.
+
 `MoraleRuntime` owns ordinary transitions and the related status, route, event,
 and MORALE-stream transaction. After a transition, a **rout cascade** may force
 nearby `SHAKEN`/`BROKEN` units to `ROUTED` in canonical candidate order. A
@@ -188,6 +199,66 @@ Provenance exposes source/config fingerprints, exact seeds and rosters, code
 and data revisions, catalog/doctrine/loadout fingerprints, and initial plus
 arriving assignments.
 
+### Execution authority and failure modes
+
+`RuntimeExecutionMode.STRICT` is the default for the factory, engine, product
+CLI, API, MCP, analysis, scenario evaluation, campaign validation, and
+historical-validation paths. An enabled subsystem exception is latched and
+re-raised; the runtime cannot publish a successful result or checkpoint after
+that failure.
+
+`RuntimeExecutionMode.DEGRADED` is an explicit interactive compatibility mode.
+Each suppressed exception becomes an ordered `SuppressedRuntimeFailure` with
+tick, logical time, subsystem, operation, exception type, and message.
+`SimulationRunResult` and `RuntimeProvenance` expose the mode and failures and
+report `authoritative=False`; degraded runtimes cannot create or restore an
+authoritative checkpoint. The legacy `strict_mode` boolean maps to this typed
+policy and conflicting inputs reject.
+
+Nested communications, indirect-fire, space, battle, recorder, and committed
+event-publication paths bind the same engine-owned failure policy. A
+runtime-bound recorder must use the context event bus and preserves complete
+event-stream integrity: overflow, extraction, or subscriber failures propagate
+in strict mode or become typed degraded evidence with a bounded fallback.
+Standalone `RecorderConfig` strictness flags retain diagnostic compatibility
+only. A recorder that lost evidence before binding cannot later enter an
+authoritative runtime.
+
+### Modular simulation ownership
+
+The public `simulation.scenario` and `simulation.loadouts` modules remain
+compatibility facades. Scenario configuration, live context, checkpoint
+orchestration, and loading are owned by `scenario_config.py`,
+`runtime_context.py`, `context_checkpoint.py`, and `scenario_loader.py`.
+Loadout contracts, registry resolution, live attachments, and construction are
+owned by `loadout_contracts.py`, `loadout_registry.py`,
+`runtime_attachments.py`, and `loadout_builder.py`.
+
+Calibration is compiled once into recursively frozen `ResolvedCalibration`.
+Its context hot-path view is read-only, while `to_flat_dict()` returns a
+detached mutable compatibility copy. Checkpoint owners are classified as typed
+atomic stage/commit, isolated legacy-clone, or stateless; a single immutable
+`ContextCheckpointSnapshot` is captured before validation and encoding.
+
+`BattleManager` remains the deterministic tactical transaction facade.
+Injected OODA, movement, engagement, and checkpoint executors receive frozen
+request envelopes plus least-privilege typed runtime views. Those views expose
+only the exact read-only values and explicitly named mutable domain owners each
+executor needs; they contain neither `SimulationContext` nor untyped `Any`
+capability. Live `Unit` identity remains intentional. Tick order, candidate
+order, RNG identity, event order, aliases, receipts, checkpoint bytes, and
+continuation remain facade invariants.
+
+The old `FogOfWarManager.update()` call shape cannot express the transactional
+owner contract and now raises `UnsupportedLegacyFogOfWarUpdateError` with the
+supported `BattleManager.prepare_tactical_interval()` migration boundary.
+Context checkpoint capture obtains the targeting/FOW snapshot once and reuses
+that exact state and plan for validation and final encoding. The accepted
+2026-08-23 consolidation postmortem closes REM-052 and REM-053 on these
+boundaries; planned Phases 139 and 140 are retired before start. The closure is
+valid only for a revision whose final exact frozen-revision release gate is
+green.
+
 ### Historical-validation boundary
 
 Historical acceptance is a separate typed pipeline over the production runtime:
@@ -204,12 +275,13 @@ historical_claims.yaml
   -> accepted-evidence verification and public claim disposition
 ```
 
-The full loader verifies the ledger's self-digest, source paths and content
-digests for every repository claim, and any accepted artifact bindings. Each
-study predeclares source lineage, exact claim and metric scopes, event
-boundaries, seeds, runtime inputs, and acceptance policy. The runner builds
-every seed through `PreparedScenario`, observes typed terminal outcomes and
-metric receipts, and retains the complete vectors rather than trusting summary
+The full loader verifies the ledger's self-digest, exact claim locators and
+content digests, path-independent matched-span reviews, and any accepted
+artifact bindings. Each study predeclares source lineage, exact claim and
+metric scopes, event boundaries, seeds, runtime inputs, and acceptance policy.
+The runner builds every seed through `PreparedScenario`, observes typed
+terminal outcomes and metric receipts, and retains the complete vectors rather
+than trusting summary
 statistics. `PASS` and `FAIL` are completed evaluations; an `ERROR` records a
 post-start operational failure without a verdict and is never promotable.
 Invalid plans reject before an artifact is created.
@@ -224,38 +296,85 @@ ledger has zero production-validated scenarios. The retained 73 Easting study
 is a completed, non-promotable `FAIL` with 0/20 joint successes and a 0.0
 one-sided lower confidence bound.
 
-### Source identity in checkouts and immutable images
+### Application resources and source identity
 
-Runtime source identity is Git-first. When preparation starts inside a Git
-worktree, the resolver records `HEAD`, a dirty flag, and a content-sensitive
-worktree fingerprint. A clean tree is identified by its commit; a dirty tree
-also incorporates Git status, the tracked binary diff, and the path, mode,
-size, and content of every untracked file. Symlinks and non-regular worktree
-entries are rejected. If a `.git` control marker exists but Git is unavailable
-or cannot verify the worktree, preparation fails rather than falling back to a
-packaged identity.
+`ApplicationPaths` resolves immutable inputs and mutable outputs without a
+hidden repository-CWD dependency. It selects checkout, packaged-resource, or
+explicit external-catalog mode and owns the catalog, scenario root,
+historical-claim receipt, SQLite path, optional frontend bundle, and artifact
+root. Installed catalog data is loaded through `importlib.resources`.
+Configured relative roots anchor to the application layout. A user-supplied
+explicit relative scenario path intentionally follows normal invocation-CWD
+semantics; a catalog name is resolved only below the selected catalog.
 
-The production Docker image deliberately omits `.git`. Its build requires an
+Checkout mutable defaults stay in `data/api_runs.db` and `artifacts/`.
+Package/external defaults use `XDG_STATE_HOME/stochastic-warfare` or
+`~/.local/state/stochastic-warfare`. An external catalog changes scenario/data
+resolution but does not replace the package or checkout's immutable historical
+claim receipt.
+
+Runtime source identity is anchored to the imported
+`stochastic_warfare.simulation.runtime` file, never to the selected catalog.
+In a source checkout, the exact owning Git root records `HEAD`, a dirty flag,
+and a content-sensitive worktree fingerprint. A nominally clean tree is
+accepted only after the runtime-owned package, API, root-import, Python startup,
+and repository-script paths match `HEAD` in path set, index state, executable
+mode, and raw bytes. Assume-unchanged or skip-worktree flags, undeclared root
+import shadows, ignored runtime sources, symlinks, and non-regular worktree
+entries fail closed. A dirty tree also incorporates the complete index path,
+flag, mode, and blob identity; Git status; the tracked binary diff; every
+untracked file; and an exact raw runtime-source digest, so Git filters and
+index-only changes cannot hide source state. Regular-file reads bind metadata
+before and after capture, and two complete dirty attributions must agree before
+publication. If an exact-root `.git` control marker exists but Git is
+unavailable or cannot verify it, preparation fails.
+
+An immutable build identity is an application-root ceiling. Git is accepted
+only when its root is exactly that application root. An enclosing deployment
+repository, such as a virtual environment inside an unrelated checkout, and a
+nested partial repository cannot override the identity for the complete
+application. The imported runtime must also reside below the identity-owned
+`stochastic_warfare/` package tree. These rules prevent a parent or shadow
+repository from attributing packaged bytes to an unrelated commit.
+
+No-`.git` application artifacts include the production Docker image and built
+Python distributions. The Docker build requires an
 explicit `SOURCE_REVISION` containing exactly 40 lowercase hexadecimal
 characters. Builders must use a clean checkout so that this supplied
 attribution names the staged source. After the locked Python environment is
 installed, `stochastic_warfare.build_identity` writes the exact-schema
-`stochastic_warfare/_build_identity.json`. That identity binds the supplied
-commit to a canonical manifest digest over every regular file beneath
-`stochastic_warfare/` and `api/`, plus `pyproject.toml` and `uv.lock`. Each
-manifest entry contains the relative path, normalized executable mode, byte
-size, and SHA-256 digest; generated identity and interpreter-cache files are
-excluded. Missing directories or files, symlinks, special files, duplicate
-identity keys, malformed values, and non-finite JSON are rejected.
+`stochastic_warfare/_build_identity.json`. Docker's schema-1
+`application-tree` identity binds every regular file beneath
+`stochastic_warfare/` and `api/` plus `pyproject.toml` and `uv.lock`. A wheel's
+schema-2 `python-distribution` identity binds the installed
+`stochastic_warfare/` and `api/` trees, including its bundled YAML catalog,
+without claiming absent checkout-only root files. Each manifest entry contains
+the relative path, normalized executable mode, byte size, and SHA-256 digest;
+the generated identity and interpreter caches are excluded. Missing
+directories or files, symlinks, special files, duplicate identity keys,
+malformed values, and non-finite JSON are rejected.
+
+Wheel and sdist hooks share one lexical, regular-file input enumerator. It
+rejects legacy setuptools configuration, source or directory symlinks,
+undeclared package roots, implicit package data, hidden Python sources, and
+ignored artifact inputs before staging. Clean Git-derived builds additionally
+bind the exact selected path set, index flags, executable modes, and raw blobs
+to `HEAD`; a pipeline-supplied revision can authorize dirty bytes but cannot
+bypass the layout and file-type checks. Distributable wheel staging starts from
+an empty validated in-checkout build directory, while PEP 660 editable installs
+continue to execute directly from the checkout.
 
 When no Git worktree exists, runtime preparation loads the generated identity
-and recomputes the complete application-source manifest. Missing or malformed
-identity data and any packaged-source tampering fail before a
+and recomputes the complete application-source manifest twice. The identity
+payload and both stable source captures must agree before publication. Missing
+or malformed identity data and any packaged-source tampering fail before a
 `PreparedScenario` can be used. A verified image reports the supplied commit,
 `dirty=False`, and a fingerprint derived from the immutable-build kind, commit,
-and source-manifest digest. Scenario and catalog inputs are outside this
-application manifest and retain their separate runtime data and catalog
-revisions.
+and source-manifest digest. Bundled catalog bytes are therefore both
+artifact-bound and independently reported through runtime data/catalog
+revisions. An explicitly configured external catalog is outside the
+application manifest and changes only those data provenance fields; it never
+changes the code revision.
 
 `.github/workflows/build.yml` is configured to exercise this path on pull
 requests to `main`, pushes to `main`, and manual dispatches. It builds with
@@ -263,7 +382,7 @@ requests to `main`, pushes to `main`, and manual dispatches. It builds with
 through `SimulationRuntimeFactory -> RuntimeSession`, and checks the expected
 commit and clean immutable-image identity. The configured image smoke also
 checks that docs and tests are absent, loads the historical ledger through
-`load_scenario_catalog()`, audits all API-published scenario claims in the
+`load_packaged_scenario_catalog()`, audits all API-published scenario claims in the
 current zero-accepted ledger, and verifies that 73 Easting remains unsupported
 with regression evidence but no accepted claim IDs. Phase 117's local
 packaged-loader tests exercise the ledger boundary. The Phase 117 push
@@ -311,6 +430,10 @@ factory. Given a scenario YAML or prevalidated effective config, it:
    validated `morale_initial`; `SimulationContext.morale_states` is the
    runtime's stable read-only `Mapping[str, MoraleState]`, not another owner
 8. Returns a `SimulationContext` with everything wired together
+
+The loader implementation lives in `scenario_loader.py`; imports through
+`simulation.scenario.ScenarioLoader` remain supported. The same compatibility
+rule applies to loadout types re-exported from `simulation.loadouts`.
 
 `RuntimeForceBuilder` owns typed initial-force construction. It validates exact
 unit enums, counts, positions, supported per-instance overrides, deterministic
@@ -569,6 +692,14 @@ exact-sign p-values, Holm-adjusted p-values, and family-wise significance.
 Unsupported metrics or incomplete/nonfinite runs fail rather than producing
 plausible zeroes.
 
+MCP uses the same `ApplicationPaths` and strict factory/session boundary.
+Scenario, unit, and result resource identifiers are path-free and normalized;
+resource resolution rejects symlinks and any escape from the configured
+catalog. Its in-memory result cache is bounded and process-local. The
+simplified validation helpers and trusted-local pickle conversion are
+quarantined under `stochastic_warfare.legacy` and have no production
+checkpoint, runtime, or acceptance authority.
+
 ### Frontend (`frontend/`)
 
 A React + TypeScript single-page application built with Vite:
@@ -587,6 +718,12 @@ payloads. The scenario list labels Block 11 entries as current-engine
 regression references, and scenario detail renders the exact ledger-backed
 aggregate disposition and claim scopes. It does not present legacy documented
 outcomes as validation evidence.
+
+FastAPI's production OpenAPI document is the transport-shape authority.
+`scripts/generate_openapi_types.py` deterministically generates
+`frontend/src/types/openapi.generated.ts`, and CI rejects drift. Handwritten
+frontend validators remain for semantic constraints and discriminated unions;
+generated types do not replace them.
 
 See the [Web UI Guide](../guide/web-ui.md) for usage documentation.
 
@@ -663,7 +800,14 @@ separately measured transactional-FOW runtime regression.
 
 ## Checkpointing
 
-Checkpoint-participating runtime owners implement the checkpoint protocol:
+Checkpoint participation uses typed ownership rather than probing every object
+for matching method names. Typed owners stage and commit atomically; explicitly
+classified legacy owners stage on isolated clones; stateless owners publish no
+payload. Public compatibility still exposes `get_state()`/`set_state()` where
+required, but one immutable `ContextCheckpointSnapshot` owns each current
+capture.
+
+The basic typed owner shape is:
 
 ```python
 class SomeEngine:
@@ -681,6 +825,11 @@ This enables:
 - **Save/restore** mid-simulation
 - **Branching** -- checkpoint, run two different decisions, compare outcomes
 - **Debugging** -- reproduce any simulation state from a checkpoint + seed
+
+Context capture enumerates registered owners once. The targeting checkpoint
+owner captures FOW state once, reuses its typed restore plan and serialized
+state for every cross-owner check, and emits that same snapshot in the final
+payload. Validation does not recapture a later mutable FOW epoch.
 
 The current `SimulationEngine` checkpoint schema is version 118. In addition
 to exact force/loadout/logistics/time-on-target state and the single

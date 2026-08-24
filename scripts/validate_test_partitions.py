@@ -1,4 +1,4 @@
-"""Audit the exact union and disjointness of Phase 112 pytest partitions."""
+"""Audit the exact union and disjointness of repository pytest partitions."""
 
 from __future__ import annotations
 
@@ -6,25 +6,36 @@ import argparse
 import hashlib
 import json
 import sys
-from itertools import combinations
+import tempfile
 from pathlib import Path
 from typing import Mapping, Sequence
+
+if __name__ == "__main__":
+    _PYCACHE_DIRECTORY = tempfile.TemporaryDirectory(
+        prefix="stochastic-warfare-audit-pycache-",
+    )
+    sys.dont_write_bytecode = True
+    sys.pycache_prefix = _PYCACHE_DIRECTORY.name
 
 if __package__:
     from scripts.run_pytest_partition import (
         AUDITED_PARTITIONS,
-        PARTITION_SPECS,
         PartitionCollectionError,
         collect_node_ids,
         collect_partition_node_ids,
+        partition_selector_payload,
+        repository_revision,
+        validate_partition_sets,
     )
 else:
     from run_pytest_partition import (
         AUDITED_PARTITIONS,
-        PARTITION_SPECS,
         PartitionCollectionError,
         collect_node_ids,
         collect_partition_node_ids,
+        partition_selector_payload,
+        repository_revision,
+        validate_partition_sets,
     )
 
 
@@ -32,59 +43,17 @@ def _digest(node_ids: Sequence[str]) -> str:
     return hashlib.sha256("\n".join(node_ids).encode("utf-8")).hexdigest()
 
 
-def validate_partition_sets(
-    superset: Sequence[str],
-    partitions: Mapping[str, Sequence[str]],
-) -> None:
-    """Reject empty, overlapping, missing, or extra partition node-ID sets."""
-
-    superset_set = set(superset)
-    errors: list[str] = []
-    for name in AUDITED_PARTITIONS:
-        node_ids = set(partitions.get(name, ()))
-        if not node_ids:
-            errors.append(f"partition {name!r} is empty")
-        outside = sorted(node_ids - superset_set)
-        if outside:
-            errors.append(
-                f"partition {name!r} contains {len(outside)} nodes outside "
-                f"superset; first={outside[0]!r}"
-            )
-
-    for left, right in combinations(AUDITED_PARTITIONS, 2):
-        overlap = sorted(set(partitions.get(left, ())) & set(partitions.get(right, ())))
-        if overlap:
-            errors.append(
-                f"partitions {left!r} and {right!r} overlap on "
-                f"{len(overlap)} nodes; first={overlap[0]!r}"
-            )
-
-    union: set[str] = set()
-    for name in AUDITED_PARTITIONS:
-        union.update(partitions.get(name, ()))
-    missing = sorted(superset_set - union)
-    extra = sorted(union - superset_set)
-    if missing:
-        errors.append(
-            f"partition union misses {len(missing)} superset nodes; "
-            f"first={missing[0]!r}"
-        )
-    if extra:
-        errors.append(
-            f"partition union contains {len(extra)} extra nodes; first={extra[0]!r}"
-        )
-    if errors:
-        raise ValueError("\n".join(errors))
-
-
 def build_audit_payload(
     superset: Sequence[str],
     partitions: Mapping[str, Sequence[str]],
+    *,
+    revision: Mapping[str, object],
 ) -> dict[str, object]:
     """Build deterministic machine-readable partition evidence."""
 
     return {
-        "schema_version": 1,
+        "schema_version": 2,
+        "revision": dict(revision),
         "superset": {
             "count": len(superset),
             "node_ids_sha256": _digest(superset),
@@ -95,11 +64,7 @@ def build_audit_payload(
                 "count": len(partitions[name]),
                 "node_ids_sha256": _digest(partitions[name]),
                 "node_ids": list(partitions[name]),
-                "selector": {
-                    "paths": list(PARTITION_SPECS[name].paths),
-                    "ignored_paths": list(PARTITION_SPECS[name].ignored_paths),
-                    "marker_expression": PARTITION_SPECS[name].marker_expression,
-                },
+                "selector": partition_selector_payload(name),
             }
             for name in AUDITED_PARTITIONS
         },
@@ -111,12 +76,22 @@ def build_audit_payload(
 def run_audit(*, output_path: Path | None) -> dict[str, object]:
     """Collect the locked-environment superset and all six partitions."""
 
+    initial_revision = repository_revision()
     superset = collect_node_ids(("tests",))
     partitions = {
         name: collect_partition_node_ids(name) for name in AUDITED_PARTITIONS
     }
     validate_partition_sets(superset, partitions)
-    payload = build_audit_payload(superset, partitions)
+    final_revision = repository_revision()
+    if final_revision != initial_revision:
+        raise PartitionCollectionError(
+            "repository revision changed while pytest partitions were collected",
+        )
+    payload = build_audit_payload(
+        superset,
+        partitions,
+        revision=initial_revision,
+    )
 
     if output_path is not None:
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -164,7 +139,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             arguments.output.write_text(
                 json.dumps(
                     {
-                        "schema_version": 1,
+                        "schema_version": 2,
                         "exact_union": False,
                         "pairwise_disjoint": False,
                         "error": str(error),

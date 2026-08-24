@@ -237,7 +237,6 @@ def _rk4_trajectory_kernel(
         if z <= fire_alt and t > dt * 2:
             break
 
-    speed = math.sqrt(vx * vx + vy * vy + vz * vz)
     v_horiz = math.sqrt(vx * vx + vy * vy)
     if v_horiz > 0:
         impact_angle = math.degrees(math.atan2(-vz, v_horiz))

@@ -12,6 +12,7 @@ from __future__ import annotations
 import enum
 import math
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -20,6 +21,10 @@ from pydantic import BaseModel
 
 from stochastic_warfare.core.events import EventBus
 from stochastic_warfare.core.logging import get_logger
+from stochastic_warfare.core.runtime_failure import (
+    RuntimeFailureHandler,
+    RuntimeFailurePolicyBinding,
+)
 from stochastic_warfare.core.types import ModuleId, Position
 from stochastic_warfare.c2.events import (
     CommsLostEvent,
@@ -27,7 +32,6 @@ from stochastic_warfare.c2.events import (
 )
 
 logger = get_logger(__name__)
-
 
 # ---------------------------------------------------------------------------
 # Enums
@@ -250,6 +254,40 @@ class CommunicationsEngine:
         self._satcom_reliability_factor: float = 1.0
         # Phase 61: EM environment for HF quality, radio horizon, rain atten
         self._em_environment: Any | None = None
+        self._runtime_failure_handler: RuntimeFailurePolicyBinding | None = None
+
+    def bind_runtime_failure_handler(
+        self,
+        handler: RuntimeFailureHandler,
+    ) -> None:
+        """Bind the production strict/degraded failure-policy owner."""
+        binding = RuntimeFailurePolicyBinding(handler)
+        existing = (
+            self._runtime_failure_handler.resolve()
+            if self._runtime_failure_handler is not None
+            else None
+        )
+        if existing is not None and existing != handler:
+            raise RuntimeError(
+                "CommunicationsEngine already has a different runtime "
+                "failure-policy owner",
+            )
+        self._runtime_failure_handler = binding
+
+    def validate_runtime_failure_handler(
+        self,
+        handler: RuntimeFailureHandler,
+    ) -> None:
+        """Reject failure-policy owner drift after runtime construction."""
+        bound = (
+            self._runtime_failure_handler.resolve()
+            if self._runtime_failure_handler is not None
+            else None
+        )
+        if bound != handler:
+            raise RuntimeError(
+                "CommunicationsEngine runtime failure-policy binding changed",
+            )
 
     # -- Registration -------------------------------------------------------
 
@@ -265,11 +303,9 @@ class CommunicationsEngine:
         self,
         unit_id: str,
         state: EmconState,
-        timestamp: "datetime | None" = None,
+        timestamp: datetime | None = None,
     ) -> None:
         """Set emission control state for a unit."""
-        from datetime import datetime, timezone
-
         s = self._units[unit_id]
         old = s.emcon_state
         if old == state:
@@ -525,8 +561,23 @@ class CommunicationsEngine:
                     _radio_hz += self._em_environment.radar_horizon(_rx_h)
                     if distance > _radio_hz:
                         r *= 0.1  # beyond radio horizon
-            except Exception:
-                pass
+            except Exception as exc:
+                binding = getattr(
+                    self,
+                    "_runtime_failure_handler",
+                    None,
+                )
+                handler = (
+                    binding.resolve()
+                    if binding is not None
+                    else None
+                )
+                if handler is None or not handler(
+                    "c2.communications",
+                    "apply_em_propagation",
+                    exc,
+                ):
+                    raise
 
         return max(0.0, min(1.0, r))
 
@@ -567,7 +618,10 @@ class CommunicationsEngine:
         to_pos: Position,
     ) -> CommEquipmentDefinition | None:
         """Return the highest-reliability channel between two units."""
-        sender_emcon = self._units[from_id].emcon_state
+        sender = self._units.get(from_id)
+        if sender is None or to_id not in self._units:
+            return None
+        sender_emcon = sender.emcon_state
         sender_equip = self._get_equipment(from_id)
         receiver_equip = self._get_equipment(to_id)
 
@@ -597,14 +651,12 @@ class CommunicationsEngine:
         from_pos: Position,
         to_pos: Position,
         message_size_bits: int = 1000,
-        timestamp: "datetime | None" = None,
+        timestamp: datetime | None = None,
     ) -> tuple[bool, float]:
         """Attempt to send a message. Returns (success, latency_s).
 
         Success is a Bernoulli trial based on channel reliability.
         """
-        from datetime import datetime, timezone
-
         ts = timestamp or datetime.now(tz=timezone.utc)
         channel = self.get_best_channel(from_id, to_id, from_pos, to_pos)
 
@@ -641,13 +693,12 @@ class CommunicationsEngine:
         to_id: str,
         unit_positions: dict[str, Position],
         message_size_bits: int = 1000,
-        timestamp: "datetime | None" = None,
+        timestamp: datetime | None = None,
     ) -> tuple[bool, float, int]:
         """12a-1: Send message via relay path. Returns (success, latency, hops).
 
         Falls back to direct send if multi-hop disabled or no path found.
         """
-        from datetime import datetime, timezone
         from stochastic_warfare.c2.events import MultiHopMessageEvent
 
         ts = timestamp or datetime.now(tz=timezone.utc)

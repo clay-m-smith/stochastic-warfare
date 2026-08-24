@@ -12,6 +12,7 @@ from api.config import ApiSettings
 if TYPE_CHECKING:
     from api.database import Database
     from api.run_manager import RunManager
+    from stochastic_warfare.application_paths import ApplicationPaths
 
 
 @lru_cache(maxsize=1)
@@ -33,3 +34,8 @@ def get_db(request: Request) -> Database:
 def get_run_manager(request: Request) -> RunManager:
     """Retrieve the RunManager instance from app state."""
     return request.app.state.run_manager
+
+
+def get_application_paths(request: Request) -> ApplicationPaths:
+    """Retrieve the exact resource paths owned by the application."""
+    return request.app.state.application_paths

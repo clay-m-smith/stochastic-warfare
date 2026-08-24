@@ -66,6 +66,7 @@ class TestSortieRate:
 class TestLaunchAircraft:
     """Aircraft launch from various deck states."""
 
+    @pytest.mark.test_evidence("structural_only")
     def test_launch_success_base(self):
         """Base launch success probability is 0.98."""
         eng = _make_engine(seed=10)
@@ -103,6 +104,7 @@ class TestLaunchAircraft:
 class TestRecoverAircraft:
     """Recovery with bolter probability from sea state."""
 
+    @pytest.mark.test_evidence("structural_only")
     def test_recovery_result(self):
         eng = _make_engine(seed=10)
         result = eng.recover_aircraft("cv_1", "f18_1", sea_state=2.0, pilot_skill=0.8)
@@ -124,6 +126,7 @@ class TestRecoverAircraft:
                 bolters_rough += 1
         assert bolters_rough >= bolters_calm
 
+    @pytest.mark.test_evidence("structural_only")
     def test_sea_state_bolter_scaling(self):
         """Bolter probability formula: base + factor * sea_state."""
         cfg = CarrierOpsConfig(

@@ -134,6 +134,7 @@ async def test_update_batch(db):
     assert row["completed_iterations"] == 5
 
 
+@pytest.mark.test_evidence("behavioral_oracle")
 async def test_batch_with_metrics(db):
     await db.create_batch("batch1", "scen", "/p", 20, 42, 100)
     await db.update_batch(

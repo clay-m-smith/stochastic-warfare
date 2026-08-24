@@ -105,9 +105,9 @@ REM-050 assigns strict consumed Escalation/DEW configuration and a real
 configured DEW engagement to planned Block 19 / Phase 137. Phase 117 records
 that escalation mappings are discarded and DEW is presence-enabled; engine
 construction or ignored enable-like keys are not behavioral proof.
-REM-051 through REM-053 assign scoped detection scan-history lifecycle,
-canonical FOW update ownership, and single-snapshot checkpoint capture to
-planned Block 20 / Phases 138--140.
+REM-051 assigns scoped detection scan-history lifecycle to planned Block 20 /
+Phase 138. The tiered modular-monolith consolidation closed REM-052 and REM-053
+and retired their planned Phases 139 and 140 before start.
 Phase 115's 73 Easting workload-identity change uses a strict non-timing
 transition qualification and is never called a performance pass. Phase 116
 has promoted the clean endpoint to the ordinary version-4 paired gate.
@@ -135,6 +135,7 @@ uv sync --locked --extra dev --extra api --extra terrain --extra mcp
 uv run --no-sync python scripts/validate_test_partitions.py \
   --output artifacts/partition-audit/manifest.json
 uv run --no-sync python scripts/run_pytest_partition.py standard \
+  --audit-manifest artifacts/partition-audit/manifest.json \
   --manifest artifacts/standard/manifest.json \
   --junit artifacts/standard/junit.xml --forbid-skips \
   --timeout-seconds 2700
@@ -143,9 +144,9 @@ uv run --no-sync python scripts/run_pytest_partition.py standard \
 The authoritative Python suite is the exact audited union of `standard`,
 `slow-only`, `benchmark-only`, `slow-benchmark`, `api`, and `e2e`. PR/main CI
 runs the audit, `standard`, `api`, `e2e`, and the overlapping `terrain`
-dependency profile. Weekly/manual CI runs the three marker partitions in
-deterministic module-affine shards. `benchmark-policy` is also an overlapping
-focused profile, not a seventh partition. Phase 115 routed routine 73 Easting
+dependency profile. Nightly/manual extended CI runs the three marker
+partitions from one revision-bound audit manifest. `benchmark-policy` is also
+an overlapping focused profile, not a seventh partition. Phase 115 routed routine 73 Easting
 through a strict version-4 non-timing workload transition while retaining
 version-3 runtime-input normalization. `transition_qualified` proves only the
 exact classified workload/semantic handoff; it is not a speed, default-morale,
@@ -218,19 +219,22 @@ Layered hybrid — graph (strategic), grid (operational/tactical), continuous (u
 ## Development Process
 - **MVP phases** (0–10): defined in `docs/development-phases.md`. All complete.
 - **Post-MVP phases** (11–24): defined in `docs/development-phases-post-mvp.md`. Design thinking in `docs/brainstorm-post-mvp.md`.
-- Devlog: `docs/devlog/` — one markdown file per phase, living documents. Update the relevant phase log when completing work.
+- Devlog: `docs/devlog/` — one markdown file per phase. Closed phase/devlog
+  bodies are immutable history; record current truth in living references or a
+  new append-only engineering-program log.
 - Run `/cross-doc-audit` after completing phases or changing architecture
 - Run `/validate-conventions` after writing simulation core code
-- All design docs are **living documents** — propagate implementation decisions back to all affected docs via `/update-docs`
+- Current-truth specifications and architecture references are living
+  documents. Preserve closed phase and devlog bodies as immutable history.
 - **Phase closure**: Update the current roadmap, phase devlog,
   `docs/devlog/index.md`, remediation backlog, public status pages, and affected
   reference/architecture documents. `CODEX.md` defines the Codex closure gates.
 
 ## Available Skills
 
-Claude routes remain under `.claude/skills/`. Maintained Codex ports live under
-`.agents/skills/`; `CODEX.md` and `AGENTS.md` define their phase-gate order and
-production-evidence requirements.
+Repository workflow skills are canonical under `.agents/skills/`.
+`.claude/skills/` is a validated generated projection. `CODEX.md` and
+`AGENTS.md` define phase-gate order and production-evidence requirements.
 
 | Skill | Purpose |
 |-------|---------|
@@ -329,7 +333,7 @@ All phase details are in `docs/devlog/` (one file per phase). Per-phase tables i
 | Block 17 | 133 | Complete active-deception checkpoint state with one DETECTION RNG authority | Planned |
 | Block 18 | 134 | Source-synchronous 73 Easting engagement and natural-boundary fidelity | Planned |
 | Block 19 | 135–137 | Build-time/no-Git accepted-evidence attestation, Web UI semantics, and Escalation/DEW configuration integrity | Planned |
-| Block 20 | 138–140 | Detection scan-state lifecycle, canonical FOW update ownership, and single-snapshot checkpoint integrity | Planned |
+| Block 20 | 138–140 | Detection scan-state lifecycle (Phase 138 planned); FOW ownership/checkpoint follow-ups (Phases 139–140 retired before start) | Mixed |
 | Block 21 | 141--142 | Performance-approximation re-enablement and transactional FOW runtime-cost integrity | Planned |
 
 ### Block 11 Detail (COMPLETE)

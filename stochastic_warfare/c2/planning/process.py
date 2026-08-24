@@ -19,6 +19,7 @@ leaving 2/3 for subordinate preparation.
 from __future__ import annotations
 
 import enum
+import math
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
@@ -36,6 +37,9 @@ from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.types import ModuleId
 
 logger = get_logger(__name__)
+
+_PLANNING_CHECKPOINT_SCHEMA_VERSION = 1
+_PLANNING_RESULT_KIND = "planning_result"
 
 
 # ---------------------------------------------------------------------------
@@ -523,10 +527,104 @@ class PlanningProcessEngine:
 
     # -- Checkpoint / restore -----------------------------------------------
 
+    @staticmethod
+    def _checkpoint_identifier(value: Any, *, field_name: str) -> str:
+        if not isinstance(value, str) or not value or value != value.strip():
+            raise ValueError(
+                f"Planning checkpoint {field_name} must be a non-empty trimmed string",
+            )
+        return value
+
+    @staticmethod
+    def _checkpoint_int(
+        value: Any,
+        *,
+        field_name: str,
+        minimum: int | None = None,
+    ) -> int:
+        if isinstance(value, bool) or not isinstance(value, int):
+            raise ValueError(
+                f"Planning checkpoint {field_name} must be a strict integer",
+            )
+        if minimum is not None and value < minimum:
+            raise ValueError(
+                f"Planning checkpoint {field_name} must be >= {minimum}",
+            )
+        return value
+
+    @staticmethod
+    def _checkpoint_float(
+        value: Any,
+        *,
+        field_name: str,
+        minimum: float | None = None,
+    ) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise ValueError(
+                f"Planning checkpoint {field_name} must be numeric",
+            )
+        result = float(value)
+        if not math.isfinite(result) or (
+            minimum is not None and result < minimum
+        ):
+            qualifier = (
+                "finite"
+                if minimum is None
+                else f"finite and >= {minimum}"
+            )
+            raise ValueError(
+                f"Planning checkpoint {field_name} must be {qualifier}",
+            )
+        return result
+
+    @classmethod
+    def _selected_result_state(cls, selected_coa: Any) -> dict[str, str] | None:
+        """Project one selected COA onto the result consumed by battle logic."""
+        if selected_coa is None:
+            return None
+        result = (
+            selected_coa
+            if isinstance(selected_coa, str)
+            else getattr(selected_coa, "posture", None)
+        )
+        if not isinstance(result, str) or not result or result != result.strip():
+            raise RuntimeError(
+                "Checkpointing a selected COA requires a non-empty string "
+                "planning result or posture",
+            )
+        return {
+            "kind": _PLANNING_RESULT_KIND,
+            "value": result,
+        }
+
+    @classmethod
+    def _stage_selected_result(
+        cls,
+        raw: Any,
+    ) -> str | None:
+        if raw is None:
+            return None
+        if not isinstance(raw, dict) or set(raw) != {"kind", "value"}:
+            raise ValueError(
+                "Planning selected_result must be null or a typed result mapping",
+            )
+        if raw["kind"] != _PLANNING_RESULT_KIND:
+            raise ValueError("Planning selected_result kind is unsupported")
+        return cls._checkpoint_identifier(
+            raw["value"],
+            field_name="selected_result value",
+        )
+
     def get_state(self) -> dict:
         """Serialize engine state for checkpoint/restore."""
         states = {}
         for uid, s in self._states.items():
+            if s.analysis_result is not None or s.coas or s.plan is not None:
+                raise RuntimeError(
+                    "Planning checkpoint cannot serialize transient analysis, "
+                    "COA-list, or operational-plan state",
+                )
+            selected_result = self._selected_result_state(s.selected_coa)
             states[uid] = {
                 "unit_id": s.unit_id,
                 "method": int(s.method),
@@ -536,35 +634,174 @@ class PlanningProcessEngine:
                 "available_time_s": s.available_time_s,
                 "echelon_level": s.echelon_level,
                 "order_id": s.order_id,
-                # analysis_result, coas, selected_coa, plan are transient --
-                # they would need domain-specific serializers if we wanted
-                # full checkpoint support.  For now we store None markers.
-                "has_analysis": s.analysis_result is not None,
-                "num_coas": len(s.coas),
-                "has_selected_coa": s.selected_coa is not None,
-                "has_plan": s.plan is not None,
+                # These legacy fields retain format-118 topology.  The nested
+                # schema makes the selected result exact and fail-closes the
+                # other unsupported transient payloads above.
+                "has_analysis": False,
+                "num_coas": 0,
+                "has_selected_coa": selected_result is not None,
+                "has_plan": False,
+                "selected_result": selected_result,
             }
         return {
+            "checkpoint_schema": _PLANNING_CHECKPOINT_SCHEMA_VERSION,
             "config": self._config.model_dump(),
             "states": states,
         }
 
     def set_state(self, state: dict) -> None:
-        """Restore engine state from checkpoint."""
-        self._config = PlanningProcessConfig(**state["config"])
-        self._states.clear()
-        for uid, s in state["states"].items():
-            ps = _PlanningState(
-                unit_id=s["unit_id"],
-                method=PlanningMethod(s["method"]),
-                phase=PlanningPhase(s["phase"]),
-                phase_timer=s["phase_timer"],
-                total_elapsed_s=s["total_elapsed_s"],
-                available_time_s=s["available_time_s"],
-                echelon_level=s["echelon_level"],
-                order_id=s["order_id"],
+        """Validate and atomically restore engine checkpoint state."""
+        if not isinstance(state, dict):
+            raise ValueError("Planning checkpoint state must be a mapping")
+        has_schema = "checkpoint_schema" in state
+        expected_topology = (
+            {"checkpoint_schema", "config", "states"}
+            if has_schema
+            else {"config", "states"}
+        )
+        if set(state) != expected_topology:
+            raise ValueError("Planning checkpoint key topology is invalid")
+        if has_schema:
+            raw_schema = state["checkpoint_schema"]
+            if (
+                isinstance(raw_schema, bool)
+                or not isinstance(raw_schema, int)
+                or raw_schema != _PLANNING_CHECKPOINT_SCHEMA_VERSION
+            ):
+                raise ValueError("Planning checkpoint schema is unsupported")
+
+        raw_config = state["config"]
+        if not isinstance(raw_config, dict):
+            raise ValueError("Planning checkpoint config must be a mapping")
+        staged_config = PlanningProcessConfig(**raw_config)
+        raw_states = state["states"]
+        if not isinstance(raw_states, dict):
+            raise ValueError("Planning checkpoint states must be a mapping")
+        legacy_fields = {
+            "unit_id",
+            "method",
+            "phase",
+            "phase_timer",
+            "total_elapsed_s",
+            "available_time_s",
+            "echelon_level",
+            "order_id",
+            "has_analysis",
+            "num_coas",
+            "has_selected_coa",
+            "has_plan",
+        }
+        expected_fields = (
+            legacy_fields | {"selected_result"}
+            if has_schema
+            else legacy_fields
+        )
+        staged_states: dict[str, _PlanningState] = {}
+        for uid, raw in raw_states.items():
+            uid = self._checkpoint_identifier(
+                uid,
+                field_name="state map key",
             )
-            self._states[uid] = ps
+            if not isinstance(raw, dict) or set(raw) != expected_fields:
+                raise ValueError(
+                    f"Planning checkpoint state {uid!r} has invalid fields",
+                )
+            state_unit_id = self._checkpoint_identifier(
+                raw["unit_id"],
+                field_name="unit_id",
+            )
+            if state_unit_id != uid:
+                raise ValueError(
+                    "Planning state map key disagrees with unit_id",
+                )
+            raw_method = self._checkpoint_int(
+                raw["method"],
+                field_name="method",
+            )
+            raw_phase = self._checkpoint_int(
+                raw["phase"],
+                field_name="phase",
+            )
+            try:
+                method = PlanningMethod(raw_method)
+                phase = PlanningPhase(raw_phase)
+            except ValueError as exc:
+                raise ValueError(
+                    f"Planning checkpoint state {uid!r} has an unknown enum",
+                ) from exc
+            flags: dict[str, bool] = {}
+            for flag_name in ("has_analysis", "has_selected_coa", "has_plan"):
+                flag = raw[flag_name]
+                if not isinstance(flag, bool):
+                    raise ValueError(
+                        f"Planning checkpoint {flag_name} must be boolean",
+                    )
+                flags[flag_name] = flag
+            num_coas = self._checkpoint_int(
+                raw["num_coas"],
+                field_name="num_coas",
+                minimum=0,
+            )
+            if flags["has_analysis"] or num_coas or flags["has_plan"]:
+                raise ValueError(
+                    "Planning checkpoint contains unsupported transient results",
+                )
+            order_id = self._checkpoint_identifier(
+                raw["order_id"],
+                field_name="order_id",
+            )
+            if has_schema:
+                selected_result = self._stage_selected_result(
+                    raw["selected_result"],
+                )
+                if flags["has_selected_coa"] != (selected_result is not None):
+                    raise ValueError(
+                        "Planning selected-result presence marker disagrees with payload",
+                    )
+            elif flags["has_selected_coa"]:
+                # The only reconstructable old production state is the battle
+                # orchestrator's auto-generated completion result.  Old custom
+                # COA injection had no value on wire and must fail closed.
+                if phase is not PlanningPhase.COMPLETE or not order_id.startswith(
+                    "plan_",
+                ):
+                    raise ValueError(
+                        "Markerless planning checkpoint cannot reconstruct its "
+                        "selected COA",
+                    )
+                selected_result = "ATTACK"
+            else:
+                selected_result = None
+            ps = _PlanningState(
+                unit_id=state_unit_id,
+                method=method,
+                phase=phase,
+                phase_timer=self._checkpoint_float(
+                    raw["phase_timer"],
+                    field_name="phase_timer",
+                ),
+                total_elapsed_s=self._checkpoint_float(
+                    raw["total_elapsed_s"],
+                    field_name="total_elapsed_s",
+                    minimum=0.0,
+                ),
+                available_time_s=self._checkpoint_float(
+                    raw["available_time_s"],
+                    field_name="available_time_s",
+                    minimum=0.0,
+                ),
+                echelon_level=self._checkpoint_int(
+                    raw["echelon_level"],
+                    field_name="echelon_level",
+                    minimum=0,
+                ),
+                order_id=order_id,
+                selected_coa=selected_result,
+            )
+            staged_states[uid] = ps
+
+        self._config = staged_config
+        self._states = staged_states
 
     # -- Internal helpers ---------------------------------------------------
 

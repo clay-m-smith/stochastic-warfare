@@ -110,6 +110,10 @@ class CavalryEngine:
         self._rng = rng
         self._charges: dict[str, ChargeState] = {}
 
+    def has_charge(self, charge_id: str) -> bool:
+        """Return whether the engine owns the addressed charge state."""
+        return charge_id in self._charges
+
     def initiate_charge(
         self,
         charge_id: str,

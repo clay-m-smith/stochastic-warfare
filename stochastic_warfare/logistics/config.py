@@ -7,7 +7,6 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from stochastic_warfare.logistics.stockpile import DepotType
 from stochastic_warfare.logistics.supply_classes import SupplyClass
 from stochastic_warfare.logistics.supply_network import TransportMode
 

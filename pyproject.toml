@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68.0", "setuptools-scm>=8.0"]
+requires = ["setuptools>=77.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,6 +7,7 @@ name = "stochastic-warfare"
 version = "0.1.0"
 description = "High-fidelity stochastic wargame simulator"
 requires-python = ">=3.12"
+license-files = ["LICENSE.md"]
 dependencies = [
     "numpy>=1.26",
     "scipy>=1.11",
@@ -59,14 +60,11 @@ markers = [
 ]
 
 [project.scripts]
-stochastic-warfare-mcp = "stochastic_warfare.tools.mcp_server:main"
-stochastic-warfare-api = "api.main:run"
+stochastic-warfare = "stochastic_warfare.cli:main"
 
 [tool.ruff]
 target-version = "py312"
 line-length = 120
-extend-exclude = ["scripts/archive"]
-
 [tool.ruff.lint]
 select = [
     "E",     # pycodestyle errors
@@ -79,13 +77,21 @@ ignore = [
     "E702",  # multiple statements on one line (semicolon)
     "E731",  # lambda assignment — acceptable in callbacks
     "E741",  # ambiguous variable name — common in math code
-    "F401",  # unused import — false positives on try/except optional deps
-    "F821",  # undefined name — false positives from string annotations + complex scope
-    "F841",  # local variable assigned but never used — common in simulation
 ]
 
 [tool.ruff.lint.isort]
 known-first-party = ["stochastic_warfare", "api"]
 
+[tool.setuptools]
+include-package-data = false
+
 [tool.setuptools.packages.find]
-include = ["stochastic_warfare*", "api*"]
+include = ["stochastic_warfare", "stochastic_warfare.*", "api", "api.*"]
+namespaces = false
+
+[tool.setuptools.exclude-package-data]
+"*" = ["*.pyi", "py.typed"]
+
+[tool.setuptools.cmdclass]
+build_py = "build_hooks.CatalogBuildPy"
+sdist = "build_hooks.AllowlistedSdist"

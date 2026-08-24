@@ -3,12 +3,87 @@
 from __future__ import annotations
 
 import asyncio
+import time
+from typing import Any
 
 import pytest
 
 from stochastic_warfare.tools._run_helpers import AnalysisRunner
 
 pytestmark = [pytest.mark.api, pytest.mark.asyncio]
+
+_BATCH_POLL_INTERVAL_S = 0.01
+_BATCH_POLL_TIMEOUT_S = 30.0
+_BATCH_PENDING_STATUSES = frozenset({"pending", "running"})
+_BATCH_TERMINAL_STATUSES = frozenset({"completed", "failed", "cancelled"})
+
+
+async def _wait_for_terminal_batch(
+    client,
+    batch_id: str,
+    *,
+    timeout_s: float = _BATCH_POLL_TIMEOUT_S,
+) -> dict[str, Any]:
+    """Poll a batch endpoint until it reports a terminal lifecycle status."""
+    endpoint = f"/api/runs/batch/{batch_id}"
+    started_at = time.monotonic()
+    deadline = started_at + timeout_s
+    attempts = 0
+    last_status = None
+    last_payload = None
+
+    while True:
+        attempts += 1
+        remaining_s = deadline - time.monotonic()
+        if remaining_s <= 0:
+            elapsed_s = time.monotonic() - started_at
+            pytest.fail(
+                f"batch {batch_id!r} did not reach a terminal state within "
+                f"{timeout_s:.1f}s after {attempts - 1} polls "
+                f"(elapsed={elapsed_s:.3f}s, last_status={last_status!r}, "
+                f"last_payload={last_payload!r})",
+            )
+        try:
+            response = await asyncio.wait_for(
+                client.get(endpoint),
+                timeout=remaining_s,
+            )
+        except TimeoutError:
+            elapsed_s = time.monotonic() - started_at
+            pytest.fail(
+                f"batch {batch_id!r} status request on attempt {attempts} "
+                f"did not complete within the {timeout_s:.1f}s deadline "
+                f"(elapsed={elapsed_s:.3f}s, last_status={last_status!r}, "
+                f"last_payload={last_payload!r})",
+            )
+        if response.status_code != 200:
+            pytest.fail(
+                f"batch {batch_id!r} status poll returned HTTP "
+                f"{response.status_code} on attempt {attempts}: {response.text!r}",
+            )
+
+        payload = response.json()
+        status = payload.get("status")
+        last_status = status
+        last_payload = payload
+        if status in _BATCH_TERMINAL_STATUSES:
+            return payload
+        if status not in _BATCH_PENDING_STATUSES:
+            pytest.fail(
+                f"batch {batch_id!r} status poll returned unexpected status "
+                f"{status!r} on attempt {attempts}: {payload!r}",
+            )
+
+        remaining_s = deadline - time.monotonic()
+        if remaining_s <= 0:
+            elapsed_s = time.monotonic() - started_at
+            pytest.fail(
+                f"batch {batch_id!r} did not reach a terminal state within "
+                f"{timeout_s:.1f}s after {attempts} polls "
+                f"(elapsed={elapsed_s:.3f}s, last_status={status!r}, "
+                f"last_payload={payload!r})",
+            )
+        await asyncio.sleep(min(_BATCH_POLL_INTERVAL_S, remaining_s))
 
 
 async def test_submit_batch(client):
@@ -129,15 +204,7 @@ async def test_batch_executes_one_full_authoritative_runner_call(
     assert response.status_code == 202
     batch_id = response.json()["batch_id"]
 
-    for _ in range(120):
-        detail = await client.get(f"/api/runs/batch/{batch_id}")
-        if detail.json()["status"] in ("completed", "failed"):
-            break
-        await asyncio.sleep(0.05)
-    else:
-        pytest.fail("Batch did not complete within timeout")
-
-    payload = detail.json()
+    payload = await _wait_for_terminal_batch(client, batch_id)
     assert payload["status"] == "completed", payload
     assert calls == [("batch", 3, 112, 20)]
     assert payload["provenance"]["seeds"] == [112, 113, 114]
@@ -203,15 +270,7 @@ async def test_submit_and_poll_batch(client):
         assert response.status_code == 202, response.text
         batch_id = response.json()["batch_id"]
 
-        for _ in range(120):
-            response = await client.get(
-                f"/api/runs/batch/{batch_id}",
-            )
-            payload = response.json()
-            if payload["status"] in ("completed", "failed"):
-                return payload
-            await asyncio.sleep(0.05)
-        pytest.fail("Batch did not complete within timeout")
+        return await _wait_for_terminal_batch(client, batch_id)
 
     zero = await submit_and_wait(0.0)
     ten = await submit_and_wait(10.0)
@@ -247,22 +306,18 @@ async def test_batch_metrics_have_stats(client):
             "max_ticks": 20,
         },
     )
+    assert resp.status_code == 202, resp.text
     batch_id = resp.json()["batch_id"]
 
-    for _ in range(120):
-        resp = await client.get(f"/api/runs/batch/{batch_id}")
-        data = resp.json()
-        if data["status"] in ("completed", "failed"):
-            break
-        await asyncio.sleep(0.5)
-
-    if data["status"] == "completed" and data["metrics"]:
-        for metric_name, stats in data["metrics"].items():
-            assert "mean" in stats
-            assert "std" in stats
-            assert "min" in stats
-            assert "max" in stats
-            assert "n" in stats
+    data = await _wait_for_terminal_batch(client, batch_id)
+    assert data["status"] == "completed", data
+    assert data["metrics"], data
+    for stats in data["metrics"].values():
+        assert "mean" in stats
+        assert "std" in stats
+        assert "min" in stats
+        assert "max" in stats
+        assert "n" in stats
 
 
 async def test_get_batch_not_found(client):

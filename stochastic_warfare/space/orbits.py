@@ -196,8 +196,6 @@ class OrbitalMechanicsEngine:
         Accounts for Earth rotation since sim start (t=0).
         """
         elems = sat.elements
-        a = elems.semi_major_axis_m
-        e = elems.eccentricity
         i_rad = elems.inclination_deg * _DEG2RAD
         omega_rad = elems.arg_perigee_deg * _DEG2RAD
         nu_rad = sat.current_true_anomaly_deg * _DEG2RAD

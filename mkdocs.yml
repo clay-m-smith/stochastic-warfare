@@ -33,6 +33,8 @@ plugins:
   - search
 
 validation:
+  nav:
+    omitted_files: ignore
   links:
     anchors: warn
 
@@ -65,165 +67,20 @@ nav:
     - API Reference: reference/api.md
     - Eras: reference/eras.md
     - Units & Equipment: reference/units.md
-  - Architecture (Internal):
-    - Core Design: brainstorm.md
-    - Post-MVP Design: brainstorm-post-mvp.md
-    - Block 2 Design: brainstorm-block2.md
-    - Block 3 Design: brainstorm-block3.md
-    - Block 4 Design: brainstorm-block4.md
-    - Block 5 Design: brainstorm-block5.md
-    - Block 6 Design: brainstorm-block6.md
-    - Block 7 Design: brainstorm-block7.md
-    - Block 8 Design: brainstorm-block8.md
-    - Block 9 Design: brainstorm-block9.md
-    - Block 10 Design: brainstorm-block10.md
-    - Block 11 Design: brainstorm-block11.md
-  - Development Phases:
-    - MVP (0-10): development-phases.md
-    - Post-MVP (11-24): development-phases-post-mvp.md
-    - Block 2 (25-30): development-phases-block2.md
-    - Block 3 (31-36): development-phases-block3.md
-    - Block 4 (37-39): development-phases-block4.md
-    - Block 5 (40-48): development-phases-block5.md
-    - Block 6 (49-57): development-phases-block6.md
-    - Block 7 (58-67): development-phases-block7.md
-    - Block 8 (68-82): development-phases-block8.md
-    - Block 9 (83-91): development-phases-block9.md
-    - Block 10 (92-97): development-phases-block10.md
-    - Block 11 (98-104): development-phases-block11.md
-    - Block 12 (105-114): development-phases-block12.md
-    - Block 13 (115-127): development-phases-block13.md
-    - Block 14 (128-130): development-phases-block14.md
-    - Block 15 (131): development-phases-block15.md
-    - Block 16 (132): development-phases-block16.md
-    - Block 17 (133): development-phases-block17.md
-    - Block 18 (134): development-phases-block18.md
-    - Block 19 (135-137): development-phases-block19.md
-    - Block 20 (138-140): development-phases-block20.md
-    - Block 21 (141-142): development-phases-block21.md
+  - Engineering:
+    - Consolidation Contract: specs/tiered-modular-monolith.md
+    - Current Roadmap: development-phases-block13.md
+    - Future Roadmaps:
+      - Block 14 (128-130): development-phases-block14.md
+      - Block 15 (131): development-phases-block15.md
+      - Block 16 (132): development-phases-block16.md
+      - Block 17 (133): development-phases-block17.md
+      - Block 18 (134): development-phases-block18.md
+      - Block 19 (135-137): development-phases-block19.md
+      - Block 20 (138-140): development-phases-block20.md
+      - Block 21 (141-142): development-phases-block21.md
     - Remediation Backlog: remediation-backlog.md
-  - Devlog:
-    - Overview: devlog/index.md
-    - Phase 0 - Scaffolding: devlog/phase-0.md
-    - Phase 1 - Terrain & Environment: devlog/phase-1.md
-    - Phase 2 - Entities & Movement: devlog/phase-2.md
-    - Phase 3 - Detection & Intelligence: devlog/phase-3.md
-    - Phase 4 - Combat & Morale: devlog/phase-4.md
-    - Phase 5 - C2 Infrastructure: devlog/phase-5.md
-    - Phase 6 - Logistics & Supply: devlog/phase-6.md
-    - Phase 7 - Engagement Validation: devlog/phase-7.md
-    - Phase 8 - AI & Planning: devlog/phase-8.md
-    - Phase 9 - Simulation Orchestration: devlog/phase-9.md
-    - Phase 10 - Campaign Validation: devlog/phase-10.md
-    - Phase 11 - Core Fidelity Fixes: devlog/phase-11.md
-    - Phase 12 - Deep Systems Rework: devlog/phase-12.md
-    - Phase 13 - Performance Optimization: devlog/phase-13.md
-    - Phase 14 - Tooling & Dev Experience: devlog/phase-14.md
-    - Phase 15 - Real-World Terrain: devlog/phase-15.md
-    - Phase 16 - Electronic Warfare: devlog/phase-16.md
-    - Phase 17 - Space & Satellite: devlog/phase-17.md
-    - Phase 18 - CBRN Effects: devlog/phase-18.md
-    - Phase 19 - Doctrinal AI Schools: devlog/phase-19.md
-    - Phase 20 - WW2 Era: devlog/phase-20.md
-    - Phase 21 - WW1 Era: devlog/phase-21.md
-    - Phase 22 - Napoleonic Era: devlog/phase-22.md
-    - Phase 23 - Ancient & Medieval Era: devlog/phase-23.md
-    - Phase 24 - Unconventional Warfare: devlog/phase-24.md
-    - Phase 25 - Engine Wiring: devlog/phase-25.md
-    - Phase 26 - Core Polish: devlog/phase-26.md
-    - Phase 27 - Combat Completeness: devlog/phase-27.md
-    - Phase 28 - Modern Data Package: devlog/phase-28.md
-    - Phase 28.5 - Directed Energy: devlog/phase-28.5.md
-    - Phase 29 - Historical Data Expansion: devlog/phase-29.md
-    - Phase 30 - Scenario Library: devlog/phase-30.md
-    - Phase 31 - Documentation Site: devlog/phase-31.md
-    - Phase 32 - API & Service Foundation: devlog/phase-32.md
-    - Phase 33 - Frontend Foundation: devlog/phase-33.md
-    - Phase 34 - Run Results & Analysis: devlog/phase-34.md
-    - Phase 35 - Tactical Map: devlog/phase-35.md
-    - Phase 36 - Scenario Tweaker & Polish: devlog/phase-36.md
-    - Phase 37 - Integration Fixes & E2E: devlog/phase-37.md
-    - Phase 38 - Map & Chart Enhancements: devlog/phase-38.md
-    - Phase 39 - Quality & Packaging: devlog/phase-39.md
-    - Phase 40 - Battle Loop Foundation: devlog/phase-40.md
-    - Phase 41 - Combat Depth: devlog/phase-41.md
-    - Phase 42 - Tactical Behavior: devlog/phase-42.md
-    - Phase 43 - Domain-Specific Resolution: devlog/phase-43.md
-    - Phase 44 - Environmental & Subsystem Integration: devlog/phase-44.md
-    - Phase 45 - Mathematical Model Audit & Hardening: devlog/phase-45.md
-    - Phase 46 - Scenario Data Cleanup & Expansion: devlog/phase-46.md
-    - Phase 47 - Full Recalibration & Validation: devlog/phase-47.md
-    - Phase 48 - Block 5 Deficit Resolution: devlog/phase-48.md
-    - Phase 49 - Calibration Schema Hardening: devlog/phase-49.md
-    - Phase 50 - Combat Fidelity Polish: devlog/phase-50.md
-    - Phase 51 - Naval Combat Completeness: devlog/phase-51.md
-    - Phase 52 - Environmental Continuity: devlog/phase-52.md
-    - Phase 53 - C2 & AI Completeness: devlog/phase-53.md
-    - Phase 54 - Era-Specific & Domain Sub-Engine Wiring: devlog/phase-54.md
-    - Phase 55 - Resolution & Scenario Migration: devlog/phase-55.md
-    - Phase 56 - Performance & Logistics: devlog/phase-56.md
-    - Phase 57 - Full Validation & Regression: devlog/phase-57.md
-    - Phase 58 - Structural Verification & Core Combat Wiring: devlog/phase-58.md
-    - Phase 59 - Atmospheric & Ground Environment Wiring: devlog/phase-59.md
-    - Phase 60 - Obscurants, Fire, & Visual Environment: devlog/phase-60.md
-    - Phase 61 - Maritime, Acoustic, & EM Environment: devlog/phase-61.md
-    - Phase 62 - Human Factors, CBRN, & Air Combat Environment: devlog/phase-62.md
-    - Phase 63 - Cross-Module Feedback Loops: devlog/phase-63.md
-    - Phase 64 - C2 Friction & Command Delay: devlog/phase-64.md
-    - Phase 65 - Space & EW Sub-Engine Activation: devlog/phase-65.md
-    - Phase 66 - Unconventional, Naval, & Cleanup: devlog/phase-66.md
-    - Phase 67 - Integration Validation & Recalibration: devlog/phase-67.md
-    - Phase 68 - Consequence Enforcement: devlog/phase-68.md
-    - Phase 69 - C2 Depth: devlog/phase-69.md
-    - Phase 70 - Performance Optimization: devlog/phase-70.md
-    - Phase 71 - Missile & Carrier Ops Completion: devlog/phase-71.md
-    - Phase 72 - Checkpoint & State Completeness: devlog/phase-72.md
-    - Phase 73 - Historical Scenario Correctness: devlog/phase-73.md
-    - Phase 74 - Combat Engine Unit Tests: devlog/phase-74.md
-    - Phase 75 - Simulation Core & Domain Unit Tests: devlog/phase-75.md
-    - Phase 76 - API Robustness: devlog/phase-76.md
-    - Phase 77 - Frontend Accessibility: devlog/phase-77.md
-    - Phase 78 - P2 Environment Wiring: devlog/phase-78.md
-    - Phase 79 - CI/CD & Packaging: devlog/phase-79.md
-    - Phase 80 - API & Frontend Sync: devlog/phase-80.md
-    - Phase 81 - Recalibration & Validation: devlog/phase-81.md
-    - Phase 82 - Block 8 Postmortem & Documentation: devlog/phase-82.md
-    - Phase 83 - Profiling Infrastructure: devlog/phase-83.md
-    - Phase 84 - Spatial Culling & Scan Scheduling: devlog/phase-84.md
-    - Phase 85 - LOD & Aggregation: devlog/phase-85.md
-    - Phase 86 - Engagement & Calibration Optimization: devlog/phase-86.md
-    - Phase 87 - Expanded Numba JIT: devlog/phase-87.md
-    - Phase 88 - SoA Data Layer: devlog/phase-88.md
-    - Phase 89 - Per-Side Parallelism: devlog/phase-89.md
-    - Phase 90 - Validation & Benchmarking: devlog/phase-90.md
-    - Phase 91 - Scenario Recalibration & Regression: devlog/phase-91.md
-    - Phase 92 - API Analytics & Frame Enrichment: devlog/phase-92.md
-    - Phase 93 - Results Dashboard Depth: devlog/phase-93.md
-    - Phase 94 - Tactical Map Enrichment: devlog/phase-94.md
-    - Phase 95 - Calibration & Scenario Editor Depth: devlog/phase-95.md
-    - Phase 96 - Analysis & Event Interaction: devlog/phase-96.md
-    - Phase 97 - Data Catalog & Block 10 Validation: devlog/phase-97.md
-    - Phase 98 - Shared Prework (Block 11 Golden Scenarios): devlog/phase-98.md
-    - Phase 99 - Debecka Pass 2003 (Block 11): devlog/phase-99.md
-    - Phase 100 - Khafji 1991 (Block 11): devlog/phase-100.md
-    - Phase 101 - Fallujah Phase Line Fran 2004 (Block 11): devlog/phase-101.md
-    - Phase 102 - Bint Jbeil + INS Hanit 2006 (Block 11): devlog/phase-102.md
-    - Phase 103 - Block 11 Polish - OOB + engine gap tightening: devlog/phase-103.md
-    - Phase 104 - Configurable Deployment Modes: devlog/phase-104.md
-    - Phase 105 - Checkpoint State Integrity: devlog/phase-105.md
-    - Phase 106 - API Execution Integrity: devlog/phase-106.md
-    - Phase 107 - Scenario Configuration Wiring: devlog/phase-107.md
-    - Phase 108 - Logistics Runtime Wiring: devlog/phase-108.md
-    - Phase 109 - Equipment Mapping Integrity: devlog/phase-109.md
-    - Phase 110 - ASAT Production Integration: devlog/phase-110.md
-    - Phase 111 - Time-on-Target Execution: devlog/phase-111.md
-    - Phase 112 - Validation and Documentation Trust: devlog/phase-112.md
-    - Phase 113 - Morale State Ownership: devlog/phase-113.md
-    - Phase 114 - Era Override Execution: devlog/phase-114.md
-    - Phase 115 - Sensing-Aware Tactical Standoff: devlog/phase-115.md
-    - Phase 116 - Fog-of-War Contact Continuation: devlog/phase-116.md
-    - Phase 117 - Historical Outcome-Envelope Integrity: devlog/phase-117.md
-    - Phase 118 - Performance-Flag Semantic Integrity: devlog/phase-118.md
+    - Phase History: devlog/index.md
   - Specifications:
     - Project Structure: specs/project-structure.md
     - Checkpoint State Contract: specs/checkpoint-state.md

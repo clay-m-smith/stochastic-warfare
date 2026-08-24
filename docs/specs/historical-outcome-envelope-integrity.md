@@ -90,28 +90,47 @@ The ledger inventories, at minimum:
    metric name;
 2. scenario prose that implies historical consistency without such a
    collection;
-3. every test that loads or compares the legacy metadata;
-4. the canonical 46-scenario current-engine snapshot and duplicated tables;
-5. every public documentation, API, and frontend statement that presents a
-   historical or validation claim.
+3. the explicitly designated current-engine historical-accuracy contract and
+   its canonical 46-scenario regression snapshot;
+4. every current public documentation, API, and frontend production statement
+   that presents a historical or validation claim; and
+5. materially current workflow statements that control historical evidence or
+   claim validation.
 
-Scanner version 2 makes that inventory boundary explicit. It audits Python
-under `api/`, public and test TypeScript/TSX under `frontend/src/`, Python
-tests, public Markdown documentation, shipped scenario YAML, and repository
-workflow skills under `.agents/skills/` and `.claude/skills/`. Generated
-declaration files (`*.d.ts`), build output, dependencies, caches, private
-tooling prose, and the ledger itself are outside that source boundary. Status
-tokens are separator-flexible and camel-case aware, so forms such as
-`historically validated`, `historical-validation`, and
-`HISTORICAL_WINNERS` cannot evade the audit through spelling alone.
+Scanner version 3 makes the current-truth boundary explicit. It audits API
+Python, non-test frontend production source, shipped scenario YAML, current
+GitHub workflows, README, the current index/guides/concepts/reference/specs,
+the remediation backlog, and the one explicit current-engine historical
+snapshot contract. Generic tests, frontend fixtures, devlogs, brainstorms,
+phase histories, provider mirrors, TypeScript declaration files (`*.d.ts`),
+build output, dependencies, caches, and the ledger itself are outside that
+boundary. Generated TypeScript shipped by the frontend remains production
+source and is scanned; its mechanically derived claim vocabulary can receive a
+typed mirror/reference exclusion rather than a duplicate claim.
+Historical phase records remain immutable history rather than perpetual
+present-tense claim surfaces. Status tokens remain separator-flexible and
+camel-case aware, so forms such as `historically validated`,
+`historical-validation`, and `HISTORICAL_WINNERS` cannot evade the audit
+through spelling alone.
 
-Each candidate file is either bound to one or more exact claim IDs or retained
-as an explicit reviewed nonclaim with a reason. Reviews bind the normalized
-whole-file digest and the triggering rule/count. They are deliberately
-file-level, not occurrence-level: semantic locators and the cross-document
-audit remain necessary to prove that multiple statements within one reviewed
-file received the right classification. The scanner must not be described as
-an occurrence-complete natural-language proof.
+The live ledger is schema version 2 with scanner version 3. Schema-1/scanner-2
+ledgers are rejected rather than silently interpreted under the narrower
+current-truth boundary. No compatibility reader is retained because the
+repository has zero accepted artifacts whose promotion depends on that legacy
+review schema; retained failed studies keep their immutable execution-ledger
+digest without becoming current claim inventory.
+
+Each discovered source identity is either bound to every compatible exact
+claim ID or retained as an explicit reviewed nonclaim with a reason. A review
+binds the rule and digest of each normalized sentence-like context that
+actually matched, plus the number of sources carrying that exact semantic
+identity. It does not bind unrelated file bytes or a repository path. An
+unrelated sentence or paragraph edit, or a path move, therefore leaves review
+identity stable, while changed claim wording or value, a new matching span,
+removal of a reviewed span, or a duplicate copy fails closed as an unreviewed,
+stale, or occurrence-mismatched identity. Exact claim locators and content
+digests remain independently required; the scanner is still a conservative
+discovery mechanism, not an occurrence-complete natural-language proof.
 
 Scenario collections retain their legacy metadata only as catalog history.
 The ledger digest must match the normalized collection exactly, so edits,

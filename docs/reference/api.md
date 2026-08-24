@@ -100,9 +100,9 @@ nor reinterprets either study.
 
 Both scenario endpoints require a `historical_validation` object loaded from
 the canonical repository claim ledger. The API audits the ledger self-digest,
-every API-published scenario claim's source digest, and all accepted evidence
-before returning catalog data. It does not derive a verdict from scenario YAML
-metadata.
+every API-published scenario claim's exact locator/content digest, the current
+semantic matched-span inventory, and all accepted evidence before returning
+catalog data. It does not derive a verdict from scenario YAML metadata.
 
 | Summary field | Type | Meaning |
 |---|---|---|
@@ -294,15 +294,59 @@ rejected and the database remains open until run and batch workers stop.
 
 ### Configuration
 
-All settings are overridable via environment variables with the `SW_API_` prefix:
+All settings are overridable via environment variables with the `SW_API_`
+prefix. Paths are resolved once by `ApplicationPaths`; immutable inputs and
+mutable outputs have separate owners.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `SW_API_HOST` | `127.0.0.1` | Bind address |
 | `SW_API_PORT` | `8000` | Port |
-| `SW_API_DB_PATH` | `data/api_runs.db` | SQLite database path |
+| `SW_API_DB_PATH` | Checkout: `data/api_runs.db`; installed/external: user state directory | SQLite database path (`:memory:` is supported) |
 | `SW_API_MAX_CONCURRENT_RUNS` | `4` | Max parallel simulation runs; must be at least 1 |
 | `SW_API_CORS_ORIGINS` | `["http://localhost:5173"]` | Allowed CORS origins |
+| `SW_API_DATA_DIR` | Discovered checkout or packaged catalog | Explicit authoritative catalog root |
+| `SW_API_FRONTEND_DIR` | Checkout `frontend/dist` when present; otherwise none | Optional built SPA directory |
+| `SW_API_ARTIFACT_DIR` | Checkout `artifacts/`; installed/external: user state directory | Mutable run-artifact root |
+| `SW_API_MAX_STORED_EVENTS` | `50000` | Maximum stored events per run |
+| `SW_API_DEFAULT_MAX_TICKS` | `10000` | Default run tick limit |
+
+The lower-level `STOCHASTIC_WARFARE_DATA_ROOT`,
+`STOCHASTIC_WARFARE_DB_PATH`, `STOCHASTIC_WARFARE_FRONTEND_ROOT`,
+`STOCHASTIC_WARFARE_ARTIFACT_ROOT`, and `STOCHASTIC_WARFARE_STATE_ROOT`
+variables provide the same application-resource boundary outside the API.
+Explicit API settings take precedence.
+
+### Product CLI and resource paths
+
+The installed `stochastic-warfare` command and
+`python -m stochastic_warfare` expose the same strict production entry point:
+
+```bash
+stochastic-warfare run test_campaign --seed 42 --max-ticks 10000
+```
+
+A bare scenario name resolves through the selected catalog. An absolute path,
+or a relative reference containing a path component, is an explicitly
+authorized file; relative explicit paths resolve from the invocation working
+directory. `ApplicationPaths` otherwise discovers checkout, packaged, or
+explicit-external resources without assuming that working directory. The
+wheel contains the YAML catalog and CLI but not the built frontend.
+
+### OpenAPI transport types
+
+FastAPI's production `create_app().openapi()` document is the transport-shape
+authority for the tracked TypeScript output:
+
+```bash
+uv run --no-sync python scripts/generate_openapi_types.py
+uv run --no-sync python scripts/generate_openapi_types.py --check
+```
+
+`frontend/src/types/openapi.generated.ts` contains generated transport aliases.
+Handwritten TypeScript remains responsible for semantic refinements and
+discriminated runtime validation; generated shapes do not replace those
+checks. CI uses `--check` as the drift gate.
 
 ---
 
@@ -338,13 +382,13 @@ a new preparation observes the replacement.
 |---|---|---|
 | `SimulationRuntimeFactory.prepare(path, data_root, variants)` | `PreparedScenario` | Parse one YAML source and capture source/code/data plus effective era identity |
 | `SimulationRuntimeFactory.prepare_config(source_config, data_root, variants, source_label=...)` | `PreparedScenario` | Prepare a typed source directly and resolve its era contract |
-| `PreparedScenario.build(variant, seed, max_ticks, ..., record_events=False)` | `RuntimeSession` | Eagerly validate exact sides, roster, loadouts, profiles, doctrine, captured era contract, and provenance; build a fresh production engine |
+| `PreparedScenario.build(variant, seed, max_ticks, ..., record_events=False, execution_mode=None)` | `RuntimeSession` | Eagerly validate exact sides, roster, loadouts, profiles, doctrine, captured era contract, and provenance; omitted mode resolves to strict failure handling |
 | `RuntimeSession.run_to_completion()` | `SimulationRunResult` | Run until a public terminal result or reject |
 | `RuntimeSession.step()` | `bool` | Advance one tick; `True` means the session is terminal and `False` means it can continue |
 | `RuntimeSession.finalize()` | `SimulationRunResult` | Return the result only after `step()` reports terminal |
 | `RuntimeSession.performance_execution_receipt()` | `PerformanceExecutionReceipt` | Cross-bind authored, typed, flattened, and committed flag owners, then return the committed typed receipt for supported effective flags and controlled production work |
 | `RuntimeSession.fow_indexed_interval_record()` | `FOWIndexedIntervalRecord \| None` | Return the latest committed raw identity-addressed FOW decision record |
-| `RuntimeSession.provenance()` | `RuntimeProvenance` | Capture code/data/catalog/doctrine/loadout identity and initial/arriving assignments |
+| `RuntimeSession.provenance()` | `RuntimeProvenance` | Capture code/data/catalog/doctrine/loadout identity, initial/arriving assignments, execution mode, ordered suppressed failures, and acceptance authority |
 
 ```python
 from pathlib import Path
@@ -378,28 +422,47 @@ recorder, avoiding private consumer-specific construction.
 
 #### Code-revision provenance
 
-`RuntimeProvenance.code_revision` always comes from a verified source boundary.
-In a source checkout, preparation uses Git first and returns the exact `HEAD`,
-the dirty-tree state, and a content-sensitive fingerprint that includes tracked
-and untracked changes. An established Git worktree that cannot be verified
-fails; it cannot use the immutable-package path as a fallback.
+`RuntimeProvenance.code_revision` always comes from the imported runtime code,
+not from the scenario or catalog path. In a source checkout, the exact owning
+Git root returns `HEAD`, the dirty-tree state, and a content-sensitive
+fingerprint that includes tracked and untracked changes. Clean attribution
+first binds the package, API, root-import, Python-startup, and repository-script
+closure to `HEAD` by path, index state, executable mode, and raw bytes. Dirty
+attribution binds the complete index path/flag/mode/blob set plus an exact raw
+runtime-source digest, status, binary diff, and untracked-file identity. Stable
+file reads and two equal complete captures are required before publication.
+Hidden index flags, ignored import shadows, symlinks, and non-regular sources
+reject. An exact-root Git worktree that cannot be verified fails closed.
+
+For an immutable application, Git is accepted only when its root equals the
+build-identity application root. An enclosing deployment checkout and a nested
+partial repository cannot override the complete artifact identity, and the
+imported runtime must be inside the identity-owned `stochastic_warfare/` tree.
+This lets a wheel run safely from an ignored virtual environment inside another
+Git repository without inheriting that repository's commit. Immutable package
+identity and source-manifest verification likewise require two equal stable
+captures before returning provenance.
 
 Production images contain no `.git` directory. Their build must supply
 `SOURCE_REVISION` as exactly 40 lowercase hexadecimal characters and generates
 `stochastic_warfare/_build_identity.json` only after the locked Python
-environment has been installed. The identity binds that commit attribution to
-a canonical manifest of all files beneath `stochastic_warfare/` and `api/`
-plus `pyproject.toml` and `uv.lock`. Runtime preparation recomputes the
-manifest. Missing, malformed, symlinked, non-regular, or modified packaged
-source is rejected before session construction; a verified image reports
-`dirty=False`. Data and catalog revisions remain independent provenance fields.
+environment has been installed. Docker's schema-1 identity covers all files
+beneath `stochastic_warfare/` and `api/` plus `pyproject.toml` and `uv.lock`.
+Wheel schema 2 covers the installed `stochastic_warfare/` and `api/` trees,
+including bundled catalog resources, without claiming checkout-only files.
+Runtime preparation recomputes the selected manifest. Missing, malformed,
+symlinked, non-regular, or modified packaged source is rejected before session
+construction; a verified artifact reports `dirty=False`. Bundled catalog bytes
+also receive independent data/catalog revisions. An external catalog changes
+those data fields but not code attribution.
 
 The repository Docker workflow covers pull requests to `main`, pushes to
 `main`, and manual dispatch. Its configured image smoke asserts that `.git` is
 absent, executes a bounded production session, and verifies the supplied
 commit and clean code-revision result. It also checks that docs and tests are
-absent, loads the historical claim ledger through `load_scenario_catalog()`,
-audits every API-published scenario claim, and verifies the expected
+absent, verifies the full ledger receipt and projects its scenario sources
+through `load_packaged_scenario_catalog()`, audits every API-published scenario
+claim, and verifies the expected
 unsupported/current-engine-regression status for 73 Easting. Phase 117's local
 packaged-loader tests exercise the same ledger boundary. The Phase 117 push
 prerequisite is satisfied at `84cf4c4`, but no successful hosted image result
@@ -417,8 +480,9 @@ owns the build-time attestation and package receipt required for that case.
 from stochastic_warfare.simulation.scenario import ScenarioLoader
 ```
 
-Lower-level wiring factory that loads a scenario YAML and creates a fully-wired
-`SimulationContext`. Direct subsystem work may use it, but production
+Compatibility facade over the lower-level `simulation.scenario_loader` owner.
+It loads scenario YAML and creates a fully wired `SimulationContext`. Direct
+subsystem work may use it, but production
 consumers that claim comparable run/analysis evidence use
 `SimulationRuntimeFactory` and `RuntimeSession`.
 
@@ -505,7 +569,8 @@ Top-level simulation orchestrator. Manages the master tick loop, automatic resol
 | `battle_config` | `BattleConfig \| None` | `None` | Battle manager parameters |
 | `victory_evaluator` | `VictoryEvaluator \| None` | `None` | Victory condition checker |
 | `recorder` | `SimulationRecorder \| None` | `None` | Event recorder |
-| `strict_mode` | `bool` | `False` | Re-raise engine errors instead of logging (useful for debugging) |
+| `strict_mode` | `bool \| None` | `None` | Legacy compatibility selector; `True` means strict and `False` explicitly requests degraded mode |
+| `execution_mode` | `RuntimeExecutionMode \| None` | `None` (resolves to `STRICT`) | Typed runtime failure policy; must agree with `strict_mode` if both are supplied |
 
 **Methods:**
 
@@ -527,6 +592,13 @@ engine = SimulationEngine(
 )
 result = engine.run()
 ```
+
+Strict mode is the production default: subsystem, subscriber, committed-event,
+and recorder-integrity failures propagate. Degraded mode records each
+suppressed failure in deterministic sequence with tick, logical time,
+subsystem, operation, exception type, and message. A degraded runtime cannot
+create or restore an authoritative checkpoint. Standalone recorder
+compatibility flags do not override the engine's bound failure policy.
 
 ---
 
@@ -562,6 +634,9 @@ Dataclass returned by `SimulationEngine.run()`.
 | `duration_s` | `float` | Logical simulated elapsed seconds |
 | `victory_result` | `VictoryResult` | Who won, how, and when |
 | `campaign_summary` | `Any` | Campaign-level statistics (or `None`) |
+| `execution_mode` | `RuntimeExecutionMode` | Effective strict or degraded policy |
+| `suppressed_failures` | `tuple[SuppressedRuntimeFailure, ...]` | Ordered degraded-mode failure evidence |
+| `authoritative` | `bool` | `True` only for strict results with no suppressed failures |
 
 ---
 
@@ -589,6 +664,11 @@ Records all simulation events for post-run analysis. Subscribes to the `EventBus
 | `events` | `list` | Copy of all recorded events (property) |
 | `events_of_type(event_type_name)` | `list` | Events filtered by type |
 | `snapshots` | `list[dict]` | Copy of state snapshots (property; captured at `snapshot_interval_ticks`) |
+
+When bound to a runtime, recorder overflow and extraction failures use the
+engine's strict/degraded authority. The committed state transition and event
+publication remain ordered; degraded subscriber failures are collected only
+after all subscribers have had the deterministic chance to observe the event.
 
 ---
 
@@ -672,8 +752,9 @@ from the legacy comparison helpers below.
 
 | API | Contract |
 |---|---|
-| `HistoricalClaimLedgerLoader(root).load(path)` | Verify the ledger self-digest, source path/content binding for every repository claim, and accepted evidence |
-| `HistoricalClaimLedgerLoader(root).load_scenario_catalog(path)` | Load the same ledger while source-auditing every API-published scenario claim; the current no-docs/no-tests package supports the zero-accepted ledger and fails closed on a future accepted reference until REM-048 |
+| `HistoricalClaimLedgerLoader(root).load(path)` | Verify the ledger self-digest, exact claim locator/content binding, semantic matched-span review inventory, and accepted evidence |
+| `HistoricalClaimLedgerLoader(root).load_scenario_catalog(path)` | Load the full checkout ledger while source-auditing every API-published scenario claim |
+| `HistoricalClaimLedgerLoader(root).load_packaged_scenario_catalog(path)` | Verify the full packaged ledger receipt before projecting its scenario-only review/claim set; the current no-docs/no-tests package supports the zero-accepted ledger and fails closed on a future accepted reference until REM-048 |
 | `HistoricalStudyLoader(root).load(path)` | Validate the typed source lineage, claim/metric scopes, event boundaries, seeds, runtime inputs, and acceptance policy |
 | `HistoricalBacktestRunner(prepared, plan).run()` | Build every seed from one `PreparedScenario`, retain typed terminal/metric receipts and ordered vectors, then return the exact evaluation and eligibility reasons |
 | `evaluate_joint_coverage(...)` | Form the per-seed conjunction of all gating metrics and apply the exact one-sided Clopper--Pearson lower bound |
@@ -702,11 +783,12 @@ pending a separate evidence-remote or Git LFS decision. See the
 ### MonteCarloHarness
 
 ```python
-from stochastic_warfare.validation.monte_carlo import MonteCarloHarness
+from stochastic_warfare.legacy.validation.monte_carlo import MonteCarloHarness
 ```
 
-Runs multiple independent iterations through the legacy validation interface.
-It remains available for compatibility, but its `ScenarioRunner` path is not
+Runs multiple independent iterations through the quarantined legacy validation
+interface. It remains available for compatibility, but its `ScenarioRunner`
+path is not
 the authoritative evidence boundary for production batch, comparison, sweep,
 doctrine, or historical-validation claims. Use `SimulationRuntimeFactory` and
 the shared analysis helpers for current-engine distribution claims, and the
@@ -968,7 +1050,11 @@ provenance are not supported.
 from stochastic_warfare.simulation.calibration import CalibrationSchema
 ```
 
-Pydantic model (`extra="forbid"`) for all scenario tuning parameters. Replaces free-form `dict` overrides — mistyped keys are caught at parse time. Key fields organized by domain:
+Pydantic model (`extra="forbid"`) for authored scenario tuning parameters.
+Scenario loading resolves it once into recursively immutable
+`ResolvedCalibration`; `ctx.cal_flat` is a read-only compatibility view and
+`to_flat_dict()` returns a detached dictionary. Mistyped authored keys are
+caught at parse time. Key fields are organized by domain:
 
 **Combat & Engagement:**
 
@@ -1003,7 +1089,7 @@ Pydantic model (`extra="forbid"`) for all scenario tuning parameters. Replaces f
 | `icing_maneuver_penalty` | `float` | `0.15` | Stall speed increase fraction from icing |
 | `icing_power_penalty` | `float` | `0.10` | Engine power reduction from icing |
 | `icing_radar_penalty_db` | `float` | `3.0` | Radar detection loss in dB from radome ice |
-| `wind_bvr_missile_speed_mps` | `float` | `1000.0` | Reference missile speed for wind range modifier |
+| `wind_bvr_missile_speed_mps` | `float` | `1000.0` | Reference missile speed used to normalize closing-axis wind; crosswind has no signed range contribution |
 
 **Consequence Enforcement & Ops (Phase 68--71):**
 
@@ -1080,7 +1166,10 @@ transactional-FOW runtime regression without changing this API contract.
 
 **Flat Dict Optimization (Phase 86):**
 
-CalibrationSchema provides a `to_flat_dict(sides)` method that expands all fields (including nested morale and per-side overrides) into a plain `dict[str, Any]` for O(1) battle-loop access. This is generated once at scenario load time and stored as `ctx.cal_flat` on SimulationContext.
+`CalibrationSchema.to_flat_dict(sides)` returns a detached compatibility
+dictionary. Scenario loading converts the effective schema to immutable
+`ResolvedCalibration`, including its recursively frozen flat view, so callers
+cannot mutate the live calibration owner through `ctx.cal_flat`.
 
 **Meta-Flags (Phase 80):**
 

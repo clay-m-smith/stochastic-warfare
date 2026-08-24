@@ -19,6 +19,8 @@ published in the
 
 ## Install
 
+For a source checkout:
+
 ```bash
 git clone https://github.com/clay-m-smith/stochastic-warfare.git
 cd stochastic-warfare
@@ -32,9 +34,28 @@ Verify the Python installation:
 uv run --no-sync python -c "import stochastic_warfare; print('OK')"
 ```
 
+The checkout, container image, and locally built wheel/sdist are supported
+application layouts. The wheel bundles the authoritative YAML catalog and the
+headless CLI, but not the React frontend. API and MCP dependencies remain
+opt-in extras; this repository does not claim that a wheel is published to a
+package index.
+
 ## Run a Headless Scenario
 
-Create `quickstart.py` in the repository root:
+Run a catalog scenario through the production runtime:
+
+```bash
+uv run --no-sync stochastic-warfare run test_campaign \
+  --seed 112 --max-ticks 1
+```
+
+An installed distribution exposes the same command as
+`stochastic-warfare`; `python -m stochastic_warfare` is equivalent. A bare
+scenario name is resolved in the selected catalog. An explicit absolute path,
+or a relative path containing a directory component, names a user-authorized
+scenario file; relative explicit paths use the invocation working directory.
+
+For programmatic construction:
 
 ```python
 from pathlib import Path
@@ -52,12 +73,6 @@ prepared = SimulationRuntimeFactory().prepare(
 session = prepared.build("quickstart", seed=112, max_ticks=1)
 result = session.run_to_completion()
 print(result.victory_result)
-```
-
-Run it through the locked project environment:
-
-```bash
-uv run --no-sync python quickstart.py
 ```
 
 See the [Getting Started guide](docs/guide/getting-started.md) for longer runs,
@@ -130,6 +145,7 @@ uv run --no-sync python scripts/validate_test_partitions.py \
   --output artifacts/partition-audit/manifest.json
 
 uv run --no-sync python scripts/run_pytest_partition.py standard \
+  --audit-manifest artifacts/partition-audit/manifest.json \
   --manifest artifacts/standard/manifest.json \
   --junit artifacts/standard/junit.xml \
   --forbid-skips \
@@ -137,9 +153,14 @@ uv run --no-sync python scripts/run_pytest_partition.py standard \
 ```
 
 The remaining audited partitions and conditional validation routes are defined
-in [CODEX.md](CODEX.md). Run static and frontend checks with:
+in [CODEX.md](CODEX.md). Check repository data, source-local evidence
+annotations, generated OpenAPI transport types, static analysis, and the
+frontend with:
 
 ```bash
+uv run --no-sync python scripts/validate_scenario_data.py
+uv run --no-sync python scripts/validate_test_evidence.py
+uv run --no-sync python scripts/generate_openapi_types.py --check
 uv run --no-sync ruff check stochastic_warfare/ api/ tests/ scripts/
 npm --prefix frontend test
 npm --prefix frontend run lint

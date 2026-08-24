@@ -251,10 +251,6 @@ class NavalGunneryEngine:
         # Determine actual hits per shell
         hits = 0
         for _ in range(num_guns):
-            p_shell = p_hit / num_guns if num_guns > 0 else 0
-            # Use individual per-shell probability
-            p_shell = min(1.0, max(0.0, p_hit))
-            # Bernoulli per shell using per-shell base probability
             sigma_range = range_m * self._config.range_dispersion_mrad / 1000.0
             sigma_defl = range_m * self._config.deflection_dispersion_mrad / 1000.0
             if sigma_range > 0 and sigma_defl > 0:

@@ -9,12 +9,7 @@ from __future__ import annotations
 import numpy as np
 
 from stochastic_warfare.core.types import Position
-from stochastic_warfare.terrain.classification import (
-    ClassificationConfig,
-    LandCover,
-    SoilType,
-    TerrainClassification,
-)
+from stochastic_warfare.terrain.classification import LandCover
 from stochastic_warfare.terrain.heightmap import Heightmap, HeightmapConfig
 from stochastic_warfare.terrain.infrastructure import (
     Building,
@@ -42,10 +37,6 @@ def main() -> None:
     lc = np.full((rows, cols), LandCover.GRASSLAND, dtype=np.int32)
     lc[elevation > 100] = LandCover.FOREST_DECIDUOUS
     lc[elevation > 180] = LandCover.DESERT_ROCK
-    soil = np.full((rows, cols), SoilType.LOAM, dtype=np.int32)
-    cls_config = ClassificationConfig(cell_size=50.0)
-    classification = TerrainClassification(lc, soil, cls_config)
-
     # Infrastructure
     roads = [Road(road_id="r1", road_type=RoadType.PAVED,
                   points=[(0, 1500), (3000, 1500)])]

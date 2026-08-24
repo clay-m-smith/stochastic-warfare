@@ -312,7 +312,6 @@ class InfrastructureManager:
 
     def bridges_near(self, pos: Position, radius: Meters) -> list[Bridge]:
         """Return bridges within *radius* metres of *pos*."""
-        pt = Point(pos.easting, pos.northing)
         return [
             b for b in self._bridges.values()
             if b.condition > 0

@@ -4,10 +4,59 @@ from __future__ import annotations
 
 import asyncio
 import tempfile
+import time
+from typing import Any
 
 import pytest
 
 pytestmark = [pytest.mark.api, pytest.mark.asyncio]
+
+_RUN_POLL_INTERVAL_S = 0.01
+_RUN_POLL_TIMEOUT_S = 10.0
+_RUN_PENDING_STATUSES = frozenset({"pending", "running"})
+_RUN_TERMINAL_STATUSES = frozenset({"completed", "failed", "cancelled"})
+
+
+async def _wait_for_terminal_run(
+    client,
+    run_id: str,
+    *,
+    timeout_s: float = _RUN_POLL_TIMEOUT_S,
+) -> dict[str, Any]:
+    """Poll a run endpoint until it reports a terminal lifecycle status."""
+    endpoint = f"/api/runs/{run_id}"
+    started_at = time.monotonic()
+    deadline = started_at + timeout_s
+    attempts = 0
+
+    while True:
+        response = await client.get(endpoint)
+        attempts += 1
+        if response.status_code != 200:
+            pytest.fail(
+                f"run {run_id!r} status poll returned HTTP "
+                f"{response.status_code} on attempt {attempts}: {response.text!r}",
+            )
+
+        payload = response.json()
+        status = payload.get("status")
+        if status in _RUN_TERMINAL_STATUSES:
+            return payload
+        if status not in _RUN_PENDING_STATUSES:
+            pytest.fail(
+                f"run {run_id!r} status poll returned unexpected status {status!r} on attempt {attempts}: {payload!r}",
+            )
+
+        remaining_s = deadline - time.monotonic()
+        if remaining_s <= 0:
+            elapsed_s = time.monotonic() - started_at
+            pytest.fail(
+                f"run {run_id!r} did not reach a terminal state within "
+                f"{timeout_s:.1f}s after {attempts} polls "
+                f"(elapsed={elapsed_s:.3f}s, last_status={status!r}, "
+                f"last_payload={payload!r})",
+            )
+        await asyncio.sleep(min(_RUN_POLL_INTERVAL_S, remaining_s))
 
 
 # --- Minimal valid config for CampaignScenarioConfig ---
@@ -163,16 +212,7 @@ async def test_from_config_accepts_valid(client, monkeypatch):
     assert "run_id" in data
     assert data["status"] == "pending"
 
-    detail = await client.get(f"/api/runs/{data['run_id']}")
-    for _ in range(100):
-        assert detail.status_code == 200
-        if detail.json()["status"] in {"completed", "failed"}:
-            break
-        await asyncio.sleep(0.01)
-        detail = await client.get(f"/api/runs/{data['run_id']}")
-    else:
-        pytest.fail("inline scenario did not reach a terminal state")
-    payload = detail.json()
+    payload = await _wait_for_terminal_run(client, data["run_id"])
     assert payload["status"] == "completed", payload
     assert payload["scenario_path"] == "<inline-config>"
     assert payload["config_overrides"] == {}
@@ -208,16 +248,7 @@ async def test_from_config_preserves_exact_school_and_side_commander_assignments
     assert response.status_code == 202, response.text
     run_id = response.json()["run_id"]
 
-    for _ in range(100):
-        detail = await client.get(f"/api/runs/{run_id}")
-        assert detail.status_code == 200
-        payload = detail.json()
-        if payload["status"] in {"completed", "failed"}:
-            break
-        await asyncio.sleep(0.01)
-    else:
-        pytest.fail("canonical commander/school run did not terminate")
-
+    payload = await _wait_for_terminal_run(client, run_id)
     assert payload["status"] == "completed", payload
     assignments = payload["result"]["provenance"]["initial_unit_assignments"]
     assert len(assignments) == 4

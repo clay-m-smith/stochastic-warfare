@@ -308,6 +308,8 @@ class UnconventionalWarfareEngine:
         guerrilla_unit_id: str,
         casualties_fraction: float,
         in_populated_area: bool,
+        *,
+        disengage_threshold: float | None = None,
     ) -> tuple[bool, float]:
         """Decide whether a guerrilla unit should disengage.
 
@@ -326,13 +328,20 @@ class UnconventionalWarfareEngine:
             ``(should_disengage, blend_probability)``
         """
         cfg = self._cfg_guer
-        should_disengage = casualties_fraction > cfg.disengage_threshold
+        threshold = (
+            cfg.disengage_threshold
+            if disengage_threshold is None
+            else float(disengage_threshold)
+        )
+        if not 0.0 <= threshold <= 1.0:
+            raise ValueError("guerrilla disengage threshold must be within [0, 1]")
+        should_disengage = casualties_fraction > threshold
         blend_prob = cfg.blend_probability if in_populated_area else 0.0
         logger.debug(
             "Guerrilla %s disengage eval: cas=%.2f thr=%.2f -> disengage=%s blend=%.2f",
             guerrilla_unit_id,
             casualties_fraction,
-            cfg.disengage_threshold,
+            threshold,
             should_disengage,
             blend_prob,
         )

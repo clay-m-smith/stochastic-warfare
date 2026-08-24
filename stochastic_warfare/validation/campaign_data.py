@@ -25,7 +25,7 @@ from stochastic_warfare.simulation.scenario import (
     TickResolutionConfig,
     VictoryConditionConfig,
 )
-from stochastic_warfare.validation.historical_data import HistoricalMetric
+from stochastic_warfare.validation.contracts import HistoricalMetric
 
 logger = get_logger(__name__)
 

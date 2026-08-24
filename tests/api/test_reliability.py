@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import os
 import tempfile
 
@@ -58,6 +57,7 @@ async def test_busy_timeout_set():
                 pass
 
 
+@pytest.mark.test_evidence("invariant_only")
 async def test_double_init_no_error():
     """Calling initialize() twice on same DB should not raise."""
     db = Database(":memory:")

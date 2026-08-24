@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from contextlib import asynccontextmanager
 from typing import Any, AsyncIterator, Mapping
 
@@ -45,14 +46,16 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     from api.run_manager import RunManager
 
     settings: ApiSettings = app.state.settings
-    db = Database(settings.db_path)
+    paths = app.state.application_paths
+    paths.prepare_output_directories()
+    db = Database(os.fspath(paths.database_path))
     manager: RunManager | None = None
     try:
         await db.initialize()
         app.state.db = db
         manager = RunManager(
             db,
-            data_dir=settings.data_dir,
+            data_dir=paths.catalog_root,
             max_concurrent=settings.max_concurrent_runs,
             max_stored_events=settings.max_stored_events,
             default_max_ticks=settings.default_max_ticks,
@@ -76,6 +79,21 @@ def create_app(settings: ApiSettings | None = None) -> FastAPI:
     """Build and return the configured FastAPI application."""
     if settings is None:
         settings = get_default_settings()
+    paths = settings.application_paths()
+    # Retain the established settings surface as an absolute compatibility
+    # view while ApplicationPaths remains the single resolver/owner.
+    resolved_settings = settings.model_copy(
+        update={
+            "data_dir": str(paths.catalog_root),
+            "db_path": os.fspath(paths.database_path),
+            "frontend_dir": (
+                str(paths.frontend_bundle)
+                if paths.frontend_bundle is not None
+                else None
+            ),
+            "artifact_dir": str(paths.artifact_root),
+        },
+    )
 
     app = FastAPI(
         title="Stochastic Warfare API",
@@ -85,7 +103,8 @@ def create_app(settings: ApiSettings | None = None) -> FastAPI:
         openapi_url="/api/openapi.json",
         lifespan=lifespan,
     )
-    app.state.settings = settings
+    app.state.settings = resolved_settings
+    app.state.application_paths = paths
     app.add_exception_handler(
         RequestValidationError,
         request_validation_error_response,
@@ -93,7 +112,7 @@ def create_app(settings: ApiSettings | None = None) -> FastAPI:
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.cors_origins,
+        allow_origins=resolved_settings.cors_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -107,22 +126,20 @@ def create_app(settings: ApiSettings | None = None) -> FastAPI:
     app.include_router(analysis.router, prefix="/api")
 
     # Serve built frontend if available (Phase 39c)
-    import os
-
-    frontend_dist = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
-    if os.path.isdir(frontend_dist):
+    frontend_dist = paths.frontend_bundle
+    if frontend_dist is not None:
         from fastapi.staticfiles import StaticFiles
 
-        index_html = os.path.join(frontend_dist, "index.html")
+        index_html = frontend_dist / "index.html"
 
-        assets_dir = os.path.join(frontend_dist, "assets")
-        if os.path.isdir(assets_dir):
+        assets_dir = frontend_dist / "assets"
+        if assets_dir.is_dir():
             app.mount("/assets", StaticFiles(directory=assets_dir), name="static-assets")
 
-        @app.get("/{full_path:path}")
+        @app.get("/{full_path:path}", include_in_schema=False)
         async def spa_fallback(full_path: str) -> FileResponse:
-            file_path = os.path.join(frontend_dist, full_path)
-            if os.path.isfile(file_path):
+            file_path = frontend_dist / full_path
+            if file_path.is_file():
                 return FileResponse(file_path)
             return FileResponse(index_html)
 

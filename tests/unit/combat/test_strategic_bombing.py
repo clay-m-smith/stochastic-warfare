@@ -38,10 +38,10 @@ class TestCEPAltitudeScaling:
         low_stream = eng.plan_mission("m1", 50, target_id="t1", altitude_m=3000.0)
         high_stream = eng.plan_mission("m2", 50, target_id="t2", altitude_m=12000.0)
 
-        res_low = eng.execute_bombing_run(low_stream)
+        eng.execute_bombing_run(low_stream)
         # Reset target for fair comparison
         eng._targets.clear()
-        res_high = eng.execute_bombing_run(high_stream)
+        eng.execute_bombing_run(high_stream)
 
         # The on-target fraction is stochastic with the same 0.5 center,
         # but CEP scales with altitude so effective CEP is larger at high alt
@@ -118,11 +118,11 @@ class TestCumulativeTargetDamage:
         target_id = "factory_1"
 
         stream1 = eng.plan_mission("r1", 50, target_id=target_id, altitude_m=6000.0)
-        res1 = eng.execute_bombing_run(stream1)
+        eng.execute_bombing_run(stream1)
         damage_after_1 = eng.get_target_damage(target_id).damage_fraction
 
         stream2 = eng.plan_mission("r2", 50, target_id=target_id, altitude_m=6000.0)
-        res2 = eng.execute_bombing_run(stream2)
+        eng.execute_bombing_run(stream2)
         damage_after_2 = eng.get_target_damage(target_id).damage_fraction
 
         assert damage_after_2 >= damage_after_1

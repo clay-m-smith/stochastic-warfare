@@ -41,6 +41,15 @@ def _make_victory_engine(
     engine = SimpleNamespace(
         _ctx=ctx,
         _victory=victory_evaluator,
+        _strict_mode=True,
+        _fatal_runtime_failure=None,
+        _suppressed_failures=[],
+    )
+    engine._suppress_runtime_failure = lambda **kwargs: (
+        SimulationEngine._suppress_runtime_failure(engine, **kwargs)
+    )
+    engine._latch_runtime_failure = lambda failure: (
+        SimulationEngine._latch_runtime_failure(engine, failure)
     )
     engine._evaluate_victory = lambda tick: SimulationEngine._evaluate_victory(engine, tick)
     return engine
@@ -142,29 +151,29 @@ class TestEvaluateVictory:
         engine._evaluate_victory(10)
         assert len(updated) == 1
 
-    def test_exception_in_supply(self):
-        """Supply manager exception should not prevent victory eval."""
-        captured = {}
+    def test_exception_in_supply_propagates_in_strict_mode(self):
+        """A strict run cannot substitute full supply after owner failure."""
+        failure = RuntimeError("fail")
 
         def bad_supply(uid):
-            raise RuntimeError("fail")
+            raise failure
 
         mgr = SimpleNamespace(get_supply_state=bad_supply)
         u = _make_unit("u1")
         evaluator = SimpleNamespace(
             update_objective_control=lambda ubs: None,
-            evaluate=lambda **kw: captured.update(kw) or SimpleNamespace(game_over=False),
+            evaluate=lambda **kw: SimpleNamespace(game_over=False),
         )
         engine = _make_victory_engine(
             units_by_side={"blue": [u]},
             victory_evaluator=evaluator,
             stockpile_manager=mgr,
         )
-        result = engine._evaluate_victory(10)
+        with pytest.raises(RuntimeError) as caught:
+            engine._evaluate_victory(10)
 
-        assert result.game_over is False
-        assert captured["supply_states"] == {"u1": 1.0}
-        assert captured["units_by_side"] == {"blue": [u]}
+        assert caught.value is failure
+        assert engine._fatal_runtime_failure is failure
 
 
 # ===================================================================
@@ -175,16 +184,19 @@ class TestEvaluateVictory:
 class TestFuseSigint:
     """SIGINT fusion gated by enable_space_effects."""
 
+    @pytest.mark.test_evidence("invariant_only")
     def test_disabled_noop(self):
         cal = SimpleNamespace(get=lambda k, d=None: False if k == "enable_space_effects" else d)
         engine = _make_sigint_engine(calibration=cal)
         engine._fuse_sigint()  # no error
 
+    @pytest.mark.test_evidence("invariant_only")
     def test_missing_engines_noop(self):
         cal = SimpleNamespace(get=lambda k, d=None: True if k == "enable_space_effects" else d)
         engine = _make_sigint_engine(calibration=cal, space_engine=None)
         engine._fuse_sigint()  # no error
 
+    @pytest.mark.test_evidence("invariant_only")
     def test_no_fow_noop(self):
         cal = SimpleNamespace(get=lambda k, d=None: True if k == "enable_space_effects" else d)
         space = SimpleNamespace(

@@ -330,7 +330,6 @@ def _find_rise_set(
     the event does not occur (polar day/night).
     """
     # Initial estimate at local noon
-    T = (jd0 - _J2000) / 36525.0
     _, dec, _ = _solar_equatorial(jd0 + 0.5)
     lat_r = lat * _DEG
     dep_r = depression * _DEG

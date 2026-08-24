@@ -70,6 +70,12 @@ _STATIC_RUNTIME_SUFFIXES = {
     ".yaml",
     ".yml",
 }
+_IMPORTABLE_MODULE_SUFFIXES = {
+    ".py",
+    ".pyc",
+    ".pyd",
+    ".so",
+}
 _LOADER_DATA_SUFFIXES = {
     ".geojson",
     ".hgt",
@@ -83,14 +89,36 @@ _RUNTIME_TOP_LEVEL = {
     "stochastic_warfare",
     "api",
     "data",
+    "scripts",
+    "tests",
+}
+_DECLARED_IMPORT_ROOTS = _RUNTIME_TOP_LEVEL
+_EXEMPT_NONRUNTIME_ROOTS = {
+    ".cache",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".venv",
+    "__pycache__",
+    "artifacts",
+    "build",
 }
 _RUNTIME_EXACT_PATHS = {
     ".gitignore",
+    "build_hooks.py",
     "pyproject.toml",
+    "sitecustomize.py",
     "uv.lock",
     "scripts/run_paired_benchmark.py",
+    "scripts/sitecustomize.py",
+    "scripts/usercustomize.py",
+    "tests/__init__.py",
+    "tests/benchmarks/__init__.py",
     "tests/benchmarks/benchmark_suite.py",
     "tests/benchmarks/baselines.json",
+    "tests/benchmarks/sitecustomize.py",
+    "tests/benchmarks/usercustomize.py",
+    "usercustomize.py",
 }
 
 
@@ -119,14 +147,14 @@ def _canonical_value(value: Any) -> Any:
         return _canonical_value(
             value.model_dump(mode="json", exclude_none=False),
         )
-    if is_dataclass(value) and not isinstance(value, type):
-        return {field.name: _canonical_value(getattr(value, field.name)) for field in fields(value)}
-    if hasattr(value, "_asdict"):
-        return _canonical_value(value._asdict())
     if isinstance(value, Mapping):
         if not all(isinstance(key, str) for key in value):
             raise ValueError("canonical JSON mapping keys must be strings")
         return {key: _canonical_value(item) for key, item in sorted(value.items())}
+    if is_dataclass(value) and not isinstance(value, type):
+        return {field.name: _canonical_value(getattr(value, field.name)) for field in fields(value)}
+    if hasattr(value, "_asdict"):
+        return _canonical_value(value._asdict())
     if isinstance(value, (list, tuple)):
         return [_canonical_value(item) for item in value]
     if isinstance(value, (set, frozenset)):
@@ -1754,6 +1782,7 @@ def _git(
     repo_root: Path,
     *args: str,
     check: bool = True,
+    input_text: str | None = None,
 ) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         ["git", *args],
@@ -1761,6 +1790,7 @@ def _git(
         text=True,
         capture_output=True,
         check=check,
+        input=input_text,
         timeout=120,
     )
 
@@ -2503,10 +2533,24 @@ def _is_runtime_path(
     path = Path(relative_path)
     if relative_path in _RUNTIME_EXACT_PATHS:
         return True
+    if "__pycache__" in path.parts:
+        return False
+    import_candidate = path.suffix.lower() in _IMPORTABLE_MODULE_SUFFIXES
+    if len(path.parts) == 1 and import_candidate:
+        return True
     static_runtime_path = (
         bool(path.parts) and path.parts[0] in _RUNTIME_TOP_LEVEL and path.suffix.lower() in _STATIC_RUNTIME_SUFFIXES
     )
-    return static_runtime_path or relative_path in external_runtime_paths
+    import_shadow_path = (
+        bool(path.parts)
+        and path.parts[0] in _RUNTIME_TOP_LEVEL
+        and import_candidate
+    )
+    return (
+        static_runtime_path
+        or import_shadow_path
+        or relative_path in external_runtime_paths
+    )
 
 
 def _scenario_external_runtime_paths(
@@ -2667,6 +2711,246 @@ def _status_path(line: str) -> str:
     return raw.strip('"')
 
 
+def _status_records_deletion(line: str) -> bool:
+    """Return whether a non-conflicted status records an absent worktree path."""
+    state = line[:2]
+    if state in {"DD", "AU", "UD", "UA", "DU", "AA", "UU"}:
+        return False
+    return "D" in state
+
+
+def _validated_git_runtime_path(relative_path: str) -> str:
+    if (
+        not relative_path
+        or relative_path.startswith("/")
+        or "\\" in relative_path
+        or "\n" in relative_path
+        or "\r" in relative_path
+        or ".." in Path(relative_path).parts
+    ):
+        raise ValueError(
+            f"Git runtime path is unsupported: {relative_path!r}",
+        )
+    return relative_path
+
+
+def _is_undeclared_package_initializer(relative_path: str) -> bool:
+    path = Path(relative_path)
+    if len(path.parts) != 2:
+        return False
+    root_name, filename = path.parts
+    if (
+        root_name in _DECLARED_IMPORT_ROOTS
+        or root_name in _EXEMPT_NONRUNTIME_ROOTS
+        or not root_name.isidentifier()
+    ):
+        return False
+    return (
+        filename == "__init__.py"
+        or filename == "__init__.pyc"
+        or (
+            filename.startswith("__init__.")
+            and path.suffix.lower() in {".pyd", ".so"}
+        )
+    )
+
+
+def _reject_undeclared_top_level_packages(
+    repo_root: Path,
+    *,
+    revision: str,
+) -> None:
+    """Reject package roots that could shadow locked benchmark dependencies."""
+    try:
+        children = sorted(repo_root.iterdir(), key=lambda path: path.name)
+    except OSError as exc:
+        raise ValueError("benchmark repository root cannot be inspected") from exc
+    for child in children:
+        name = child.name
+        if (
+            name in _DECLARED_IMPORT_ROOTS
+            or name in _EXEMPT_NONRUNTIME_ROOTS
+            or not name.isidentifier()
+        ):
+            continue
+        try:
+            metadata = child.lstat()
+        except OSError as exc:
+            raise ValueError(
+                f"top-level benchmark import candidate cannot be inspected: {name!r}",
+            ) from exc
+        if stat.S_ISLNK(metadata.st_mode):
+            raise ValueError(
+                "undeclared top-level Python package root cannot be a symlink: "
+                f"{name!r}",
+            )
+        if not stat.S_ISDIR(metadata.st_mode):
+            continue
+        try:
+            initializers = tuple(
+                entry
+                for entry in child.iterdir()
+                if (
+                    entry.name == "__init__.py"
+                    or entry.name == "__init__.pyc"
+                    or (
+                        entry.name.startswith("__init__.")
+                        and entry.suffix.lower() in {".pyd", ".so"}
+                    )
+                )
+            )
+        except OSError as exc:
+            raise ValueError(
+                f"top-level benchmark package cannot be inspected: {name!r}",
+            ) from exc
+        if not initializers:
+            continue
+        for initializer in initializers:
+            try:
+                initializer_metadata = initializer.lstat()
+            except OSError as exc:
+                raise ValueError(
+                    "top-level benchmark package initializer cannot be "
+                    f"inspected: {initializer.relative_to(repo_root).as_posix()!r}",
+                ) from exc
+            if (
+                stat.S_ISLNK(initializer_metadata.st_mode)
+                or not stat.S_ISREG(initializer_metadata.st_mode)
+            ):
+                raise ValueError(
+                    "undeclared top-level Python package initializer must be "
+                    "a regular non-symlink file: "
+                    f"{initializer.relative_to(repo_root).as_posix()!r}",
+                )
+        raise ValueError(
+            "undeclared top-level Python package can shadow benchmark "
+            f"dependencies: {name!r}",
+        )
+
+    index_paths = _git(repo_root, "ls-files", "-z").stdout.split("\0")
+    head_paths = _git(
+        repo_root,
+        "ls-tree",
+        "-r",
+        "--name-only",
+        "-z",
+        revision,
+    ).stdout.split("\0")
+    persisted_initializers = sorted(
+        {
+            _validated_git_runtime_path(path)
+            for path in (*index_paths, *head_paths)
+            if path and _is_undeclared_package_initializer(path)
+        },
+    )
+    if persisted_initializers:
+        raise ValueError(
+            "undeclared top-level Python package initializer remains in Git "
+            f"index or HEAD: {persisted_initializers!r}",
+        )
+
+
+def _head_runtime_entries(
+    repo_root: Path,
+    revision: str,
+    *,
+    external_runtime_paths: frozenset[str],
+) -> dict[str, tuple[Literal["100644", "100755"], str]]:
+    output = _git(
+        repo_root,
+        "ls-tree",
+        "-r",
+        "-z",
+        revision,
+    ).stdout
+    entries: dict[str, tuple[Literal["100644", "100755"], str]] = {}
+    for record in output.split("\0"):
+        if not record:
+            continue
+        try:
+            metadata, raw_path = record.split("\t", maxsplit=1)
+            mode, object_type, object_id = metadata.split()
+        except ValueError as exc:
+            raise ValueError("Git runtime tree entry is malformed") from exc
+        if not _is_runtime_path(
+            raw_path,
+            external_runtime_paths=external_runtime_paths,
+        ):
+            continue
+        relative_path = _validated_git_runtime_path(raw_path)
+        if (
+            mode not in {"100644", "100755"}
+            or object_type != "blob"
+            or _FULL_COMMIT_PATTERN.fullmatch(object_id) is None
+        ):
+            raise ValueError(
+                "Git runtime tree contains a symlink, gitlink, or special "
+                f"entry: {relative_path!r}",
+            )
+        if relative_path in entries:
+            raise ValueError(
+                f"Git runtime tree contains duplicate path: {relative_path!r}",
+            )
+        entries[relative_path] = (mode, object_id)
+    return entries
+
+
+def _reject_unsupported_runtime_index_flags(
+    repo_root: Path,
+    *,
+    external_runtime_paths: frozenset[str],
+) -> None:
+    output = _git(
+        repo_root,
+        "ls-files",
+        "-v",
+        "-z",
+    ).stdout
+    unsupported: list[tuple[str, str]] = []
+    for record in output.split("\0"):
+        if not record:
+            continue
+        if len(record) < 3 or record[1] != " ":
+            raise ValueError("Git runtime index entry is malformed")
+        flag = record[0]
+        raw_path = record[2:]
+        if _is_runtime_path(
+            raw_path,
+            external_runtime_paths=external_runtime_paths,
+        ):
+            relative_path = _validated_git_runtime_path(raw_path)
+        else:
+            continue
+        if flag != "H":
+            unsupported.append((flag, relative_path))
+    if unsupported:
+        raise ValueError(
+            "runtime-affecting tracked paths use unsupported Git index flags: "
+            f"{unsupported!r}",
+        )
+
+
+def _raw_worktree_object_ids(
+    repo_root: Path,
+    relative_paths: list[str],
+) -> dict[str, str]:
+    for relative_path in relative_paths:
+        _validated_git_runtime_path(relative_path)
+    output = _git(
+        repo_root,
+        "hash-object",
+        "--stdin-paths",
+        "--no-filters",
+        input_text="".join(f"{path}\n" for path in relative_paths),
+    ).stdout.splitlines()
+    if len(output) != len(relative_paths) or any(
+        _FULL_COMMIT_PATTERN.fullmatch(object_id) is None
+        for object_id in output
+    ):
+        raise ValueError("Git did not hash every raw runtime source")
+    return dict(zip(relative_paths, output, strict=True))
+
+
 def _runtime_tree_manifest(
     repo_root: Path,
     *,
@@ -2680,19 +2964,29 @@ def _runtime_tree_manifest(
         "--exclude-standard",
         "-z",
     ).stdout.split("\0")
-    relative_paths = sorted(
-        {
+    candidate_paths = {
+        path
+        for path in [*tracked, *untracked]
+        if (
             path
-            for path in [*tracked, *untracked]
-            if (
-                path
-                and _is_runtime_path(
-                    path,
-                    external_runtime_paths=external_runtime_paths,
-                )
+            and _is_runtime_path(
+                path,
+                external_runtime_paths=external_runtime_paths,
             )
-        }
-    )
+        )
+    }
+    relative_paths: list[str] = []
+    for raw_path in sorted(candidate_paths):
+        path = _validated_git_runtime_path(raw_path)
+        try:
+            (repo_root / path).lstat()
+        except FileNotFoundError:
+            continue
+        except OSError as exc:
+            raise ValueError(
+                f"runtime source cannot be inspected: {path!r}",
+            ) from exc
+        relative_paths.append(path)
 
     ignored = _git(
         repo_root,
@@ -2704,7 +2998,7 @@ def _runtime_tree_manifest(
     ).stdout.split("\0")
     ignored_runtime = sorted(
         {
-            path
+            _validated_git_runtime_path(path)
             for path in ignored
             if (
                 path
@@ -2730,16 +3024,100 @@ def _runtime_tree_manifest(
     ]
 
 
+def _verify_clean_runtime_manifest(
+    repo_root: Path,
+    *,
+    revision: str,
+    manifest: list[RuntimeSource],
+    external_runtime_paths: frozenset[str],
+) -> None:
+    """Bind one clean runtime manifest to immutable HEAD bytes and modes."""
+    head_entries = _head_runtime_entries(
+        repo_root,
+        revision,
+        external_runtime_paths=external_runtime_paths,
+    )
+    manifest_by_path = {source.path: source for source in manifest}
+    head_paths = set(head_entries)
+    manifest_paths = set(manifest_by_path)
+    if manifest_paths != head_paths:
+        raise ValueError(
+            "clean runtime manifest path set differs from Git HEAD: "
+            f"missing={sorted(head_paths - manifest_paths)!r}, "
+            f"added={sorted(manifest_paths - head_paths)!r}",
+        )
+
+    mismatched_modes = [
+        path
+        for path in sorted(head_paths)
+        if manifest_by_path[path].mode != head_entries[path][0]
+    ]
+    if mismatched_modes:
+        raise ValueError(
+            "clean runtime source modes differ from Git HEAD: "
+            f"{mismatched_modes!r}",
+        )
+
+    relative_paths = sorted(head_paths)
+    current_objects = _raw_worktree_object_ids(repo_root, relative_paths)
+    mismatched_bytes = [
+        path
+        for path in relative_paths
+        if current_objects[path] != head_entries[path][1]
+    ]
+    if mismatched_bytes:
+        raise ValueError(
+            "clean runtime source raw bytes differ from Git HEAD: "
+            f"{mismatched_bytes!r}",
+        )
+
+    if _runtime_tree_manifest(
+        repo_root,
+        external_runtime_paths=external_runtime_paths,
+    ) != manifest:
+        raise ValueError("runtime manifest changed during clean identity capture")
+    _reject_unsupported_runtime_index_flags(
+        repo_root,
+        external_runtime_paths=external_runtime_paths,
+    )
+    if _git_status(repo_root):
+        raise ValueError("benchmark worktree changed during clean identity capture")
+    if _full_commit(repo_root) != revision:
+        raise ValueError("Git HEAD changed during clean identity capture")
+
+
 def _git_identity(
     repo_root: Path,
     *,
     require_clean: bool,
     external_runtime_paths: frozenset[str] = frozenset(),
 ) -> GitIdentity:
+    revision = _full_commit(repo_root)
+    _reject_undeclared_top_level_packages(
+        repo_root,
+        revision=revision,
+    )
     status = _git_status(repo_root)
+    _reject_unsupported_runtime_index_flags(
+        repo_root,
+        external_runtime_paths=external_runtime_paths,
+    )
     if require_clean and status:
         raise ValueError(
             f"benchmark worktree is dirty: {status!r}",
+        )
+    unmerged_runtime = sorted(
+        line
+        for line in status
+        if line[:2] in {"DD", "AU", "UD", "UA", "DU", "AA", "UU"}
+        and _is_runtime_path(
+            _status_path(line),
+            external_runtime_paths=external_runtime_paths,
+        )
+    )
+    if unmerged_runtime:
+        raise ValueError(
+            f"unmerged runtime paths are not benchmarkable: {unmerged_runtime!r}",
         )
     manifest = _runtime_tree_manifest(
         repo_root,
@@ -2755,14 +3133,26 @@ def _git_identity(
                 external_runtime_paths=external_runtime_paths,
             )
             and path not in manifested
+            and not _status_records_deletion(line)
         }
     )
     if missing_dirty_runtime:
         raise ValueError(
             f"dirty runtime paths are absent from the candidate manifest: {missing_dirty_runtime!r}",
         )
+    if not status:
+        _verify_clean_runtime_manifest(
+            repo_root,
+            revision=revision,
+            manifest=manifest,
+            external_runtime_paths=external_runtime_paths,
+        )
+    _reject_undeclared_top_level_packages(
+        repo_root,
+        revision=revision,
+    )
     return GitIdentity(
-        commit=_full_commit(repo_root),
+        commit=revision,
         dirty=bool(status),
         status=status,
         runtime_manifest=manifest,
@@ -2778,6 +3168,10 @@ def _materialize_candidate_snapshot(
     external_runtime_paths: frozenset[str],
 ) -> None:
     """Create one immutable candidate runtime tree for every paired worker."""
+    _reject_undeclared_top_level_packages(
+        candidate_root,
+        revision=identity.commit,
+    )
     _git(
         candidate_root,
         "clone",
@@ -2792,6 +3186,17 @@ def _materialize_candidate_snapshot(
         "--detach",
         identity.commit,
     )
+    expected_paths = {source.path for source in identity.runtime_manifest}
+    stale_runtime_paths = {
+        source.path
+        for source in _runtime_tree_manifest(
+            snapshot_root,
+            external_runtime_paths=external_runtime_paths,
+        )
+        if source.path not in expected_paths
+    }
+    for stale_path in sorted(stale_runtime_paths):
+        (snapshot_root / stale_path).unlink()
     for expected_source in identity.runtime_manifest:
         source_path = candidate_root / expected_source.path
         current_source = _runtime_source(
@@ -2809,6 +3214,7 @@ def _materialize_candidate_snapshot(
         target_path.chmod(
             0o755 if expected_source.mode == "100755" else 0o644,
         )
+    _git(snapshot_root, "add", "-A")
 
     snapshot_external_paths = _scenario_external_runtime_paths(
         snapshot_root,
@@ -3085,6 +3491,7 @@ def _run_worker_subprocess(
     try:
         environment = os.environ.copy()
         environment["PYTHONPATH"] = str(repo_root)
+        environment["PYTHONNOUSERSITE"] = "1"
         completed = subprocess.run(
             [
                 sys.executable,
@@ -3142,6 +3549,7 @@ def _run_closure_subprocess(
     try:
         environment = os.environ.copy()
         environment["PYTHONPATH"] = str(repo_root)
+        environment["PYTHONNOUSERSITE"] = "1"
         completed = subprocess.run(
             [
                 sys.executable,
@@ -4338,7 +4746,6 @@ def run_benchmark(
             "runtime factory did not construct the benchmark recorder",
         )
     context = session.context
-    recorder = session.recorder
 
     hotspots: list[tuple[str, float, int]] = []
     peak_memory_mb: float | None = None

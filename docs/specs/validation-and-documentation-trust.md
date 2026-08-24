@@ -39,6 +39,25 @@ REM-025, REM-026, and REM-027
 > Phase 112's empty-world-view Space ISR fixtures and the historical future-work
 > statements below remain scoped evidence rather than current limitations.
 
+> **Current maintenance authority:** The Phase 112 counts and paths below are
+> immutable closure evidence, not the current test layout. The active suite now
+> uses durable domain/capability paths and six pairwise-disjoint partitions:
+> `standard`, `slow-only`, `benchmark-only`, `slow-benchmark`, `api`, and `e2e`.
+> `scripts/validate_test_partitions.py` produces one revision-bound manifest
+> consumed by every shard; source-local evidence annotations and compact typed
+> receipts replace exact expanded-node ledgers on `main`. PR/main CI runs the
+> ordinary partitions and policy gates, daily extended CI routes the slow and
+> benchmark matrix, 73 Easting paired work is nightly or explicit-dispatch,
+> and Golan remains manual. Current claims are maintained in `CODEX.md`, the
+> living guides/specs, and the remediation backlog. Closed phase/devlog bodies
+> below remain historical and are not rewritten to look current.
+> The checked-in historical ledger remains strict schema 2 with claim-source
+> scanner version 3. Its closed source-kind vocabulary covers API Python,
+> non-test frontend public source, the explicit claim-bearing historical test,
+> current public documents/specs, scenario YAML, and workflow documents. Each
+> discovered semantic-span digest requires exactly one reviewed disposition;
+> a stale, missing, ambiguous, or extra review fails closed.
+
 ## Purpose and scope
 
 Phase 112 makes repository validation claims fail closed. A green command,
@@ -100,30 +119,29 @@ The zero-selecting `terrain` marker and default exclusion are removed. A clean
 terrain job installs `uv sync --locked --extra dev --extra terrain` and runs
 exactly:
 
-- `tests/unit/test_phase_15a_pipeline_heightmap.py`;
-- `tests/unit/test_phase_15b_classification_infrastructure.py`;
-- `tests/unit/test_phase_15c_bathymetry.py`; and
-- `tests/unit/test_phase_15d_integration.py`.
+- `tests/unit/terrain/test_heightmap_pipeline.py`;
+- `tests/unit/terrain/test_classification_infrastructure.py`;
+- `tests/unit/terrain/test_bathymetry_pipeline.py`; and
+- `tests/unit/terrain/test_pipeline_integration.py`.
 
 Those tests may overlap the standard node-ID set; their separate claim is that
 optional terrain dependencies are installed and the import-skipped paths are
-actually exercised. At the phase start these four files collect 62 nodes, but
-that count is reported evidence rather than a permanent oracle.
+actually exercised. Their count is reported evidence rather than a permanent
+oracle.
 
 CI enforces this cadence:
 
-- repository-wide Ruff, standard backend, complete API path, complete E2E
-  path, terrain dependency profile, and strict documentation on every pull
-  request and push to `main`;
+- partition audit, standard backend, complete API path, complete E2E path,
+  data/claim checks, OpenAPI drift, and the relevant terrain dependency profile
+  on pull requests and pushes to `main`; lint and strict documentation retain
+  their dedicated workflows;
 - the refactored `slow-only`, `benchmark-only`, and `slow-benchmark`
-  partitions on a declared weekly schedule and manual dispatch: slow-only uses
+  partitions on a declared daily schedule and manual dispatch: slow-only uses
   fifteen shards, benchmark-only uses three, and slow-benchmark uses one, all
   with measured job timeouts that do not conceal a timeout as a skip; and
-- the routine 73 Easting benchmark workflow on every pull request and push,
-  using the ordinary paired performance gate when its workload identity is
-  stable and the strict non-timing transition path during a reviewed workload
-  handoff; the paired Golan gate remains available only through an explicit
-  long-running manual dispatch.
+- the benchmark policy workflow on pull requests and pushes, with 73 Easting
+  paired work restricted to nightly or explicit dispatch and the paired Golan
+  gate available only through an explicit long-running manual dispatch.
 
 Every job prints its exact collection/pass/skip/deselect/warning counts and
 the command used. Machine-readable results and benchmark data upload under

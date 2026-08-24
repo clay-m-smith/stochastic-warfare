@@ -101,11 +101,8 @@ class MagneticModel:
         s2p = math.sin(2 * phi)
 
         # Associated Legendre functions (Schmidt semi-normalised)
-        # P10 = cos(theta), P11 = sin(theta)
-        # P20 = 0.5*(3*cos^2-1), P21 = sqrt(3)*sin*cos, P22 = sqrt(3)*sin^2
-        p10 = ct
+        # P11 = sin(theta), P21 = sqrt(3)*sin*cos, P22 = sqrt(3)*sin^2
         p11 = st
-        p20 = 0.5 * (3.0 * ct * ct - 1.0)
         p21 = math.sqrt(3.0) * st * ct
         p22 = math.sqrt(3.0) * st * st
 

@@ -4,26 +4,22 @@ Modules register state-provider callables.  A checkpoint captures the
 full state of the clock, RNG manager, and every registered module into a
 single ``bytes`` blob serialized as JSON.  A custom encoder/decoder pair
 handles numpy types (arrays, scalars) that appear in bit-generator state
-dicts.  Legacy pickle checkpoints (version 1) are transparently loaded
-via a fallback path.
+dicts.  Unsafe legacy pickle conversion is deliberately isolated under
+``stochastic_warfare.legacy`` and is never part of runtime restore.
 """
 
 from __future__ import annotations
 
 import json
 import math
-import pickle  # legacy checkpoint fallback only
 from pathlib import Path
 from typing import Any, Callable
 
 import numpy as np
 
 from stochastic_warfare.core.clock import SimulationClock
-from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.rng import RNGManager
 from stochastic_warfare.core.types import ModuleId
-
-logger = get_logger(__name__)
 
 _CHECKPOINT_VERSION = 2
 
@@ -201,8 +197,8 @@ def decode_checkpoint_json(
 ) -> dict[str, Any]:
     """Decode one strict, finite, duplicate-free JSON checkpoint.
 
-    This boundary is deliberately JSON-only and never invokes the legacy
-    pickle fallback.  The optional non-finite migration accepts only negative
+    This boundary is deliberately JSON-only and never invokes pickle decoding.
+    The optional non-finite migration accepts only negative
     infinity at exact legacy weapon timestamp paths and only when the engine
     checkpoint has no explicit ``checkpoint_version``.
     """
@@ -276,16 +272,18 @@ class CheckpointManager:
     def restore_checkpoint(self, data: bytes) -> dict:
         """Deserialize checkpoint data and return the full state dict.
 
-        Version-2+ checkpoints use the strict JSON boundary.  A payload with
-        the binary pickle protocol marker uses the isolated legacy version-1
-        compatibility path; malformed JSON never falls through to pickle.
+        Runtime restore is JSON-only.  Binary pickle payloads are rejected
+        before decoding; trusted, offline conversion lives in the explicit
+        ``stochastic_warfare.legacy.checkpoint_pickle`` namespace.
 
         The caller is responsible for calling ``clock.set_state``,
         ``rng.set_state``, and restoring individual module states.
         """
         if data.startswith(b"\x80"):
-            logger.info("Restoring an explicitly marked legacy pickle checkpoint")
-            return pickle.loads(data)  # noqa: S301
+            raise ValueError(
+                "Legacy pickle checkpoints are not accepted by runtime restore; "
+                "use the explicit trusted offline conversion tool",
+            )
         return decode_checkpoint_json(data)
 
     def save_to_file(self, path: Path, data: bytes) -> None:

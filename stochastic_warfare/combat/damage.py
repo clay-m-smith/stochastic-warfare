@@ -673,6 +673,25 @@ class IncendiaryDamageEngine:
         self._burned_zones: list[BurnedZone] = []
         self._zone_counter: int = 0
 
+    @property
+    def smoke_obscurant_radius_m(self) -> float:
+        """Return the configured smoke radius as an immutable scalar."""
+        return float(self._config.smoke_obscurant_radius_m)
+
+    @property
+    def has_active_fire_zones(self) -> bool:
+        """Return whether any current fire zone can affect this interval."""
+        return bool(self._active_zones)
+
+    def position_in_active_fire(self, position: "Position") -> bool:
+        """Return whether ``position`` lies inside a current fire zone."""
+        for zone in self._active_zones:
+            dx = position.easting - zone.center.easting
+            dy = position.northing - zone.center.northing
+            if math.sqrt(dx**2 + dy**2) < zone.current_radius_m:
+                return True
+        return False
+
     def create_fire_zone(
         self,
         position: "Position",

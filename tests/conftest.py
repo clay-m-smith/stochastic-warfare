@@ -17,9 +17,7 @@ Usage in a test file::
 from __future__ import annotations
 
 import copy
-import json
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -44,26 +42,51 @@ POS_5KM = Position(5000.0, 5000.0, 0.0)
 #: Default seed for deterministic tests.
 DEFAULT_SEED = 42
 
-_EVIDENCE_ROOT = Path(__file__).parent / "validation" / "evidence_ledgers"
-_CURRENT_EVIDENCE_LEDGERS = (
-    _EVIDENCE_ROOT / "no_direct_oracles.json",
-    _EVIDENCE_ROOT / "weak_oracles.json",
+_EVIDENCE_CLASSIFICATIONS = frozenset(
+    {
+        "behavioral_oracle",
+        "helper_assertion",
+        "invariant_only",
+        "structural_only",
+    },
 )
 
 
-def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
-    """Apply reviewed structural classifications to exact collected nodes."""
-    structural_node_ids: set[str] = set()
-    for ledger_path in _CURRENT_EVIDENCE_LEDGERS:
-        if not ledger_path.is_file():
-            continue
-        ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
-        structural_node_ids.update(
-            entry["node_id"] for entry in ledger["entries"] if entry["classification"] == "structural_only"
-        )
+def pytest_configure(config: pytest.Config) -> None:
+    """Register the source-local evidence marker before strict collection."""
 
+    config.addinivalue_line(
+        "markers",
+        "test_evidence(classification): reviewed source-local evidence classification",
+    )
+
+
+def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
+    """Map the nearest reviewed structural annotation to pytest's marker."""
     for item in items:
-        if item.nodeid in structural_node_ids:
+        effective: str | None = None
+        seen_scopes: set[int] = set()
+        for node, marker in item.iter_markers_with_node("test_evidence"):
+            if (
+                len(marker.args) != 1
+                or marker.kwargs
+                or not isinstance(marker.args[0], str)
+                or not marker.args[0].strip()
+                or marker.args[0] != marker.args[0].strip()
+                or marker.args[0] not in _EVIDENCE_CLASSIFICATIONS
+            ):
+                raise pytest.UsageError(
+                    f"invalid source-local test_evidence marker on {item.nodeid}",
+                )
+            scope_identity = id(node)
+            if scope_identity in seen_scopes:
+                raise pytest.UsageError(
+                    f"conflicting source-local test_evidence markers on {item.nodeid}",
+                )
+            seen_scopes.add(scope_identity)
+            if effective is None:
+                effective = marker.args[0]
+        if effective == "structural_only":
             item.add_marker(pytest.mark.structural)
 
 
@@ -199,6 +222,9 @@ def make_versionless_legacy_morale_checkpoint(
     context.pop("targeting_default_visibility_m")
     context.pop("tactical_targeting")
     context.pop("era_runtime_contract")
+    planning_state = context.get("planning_engine")
+    if isinstance(planning_state, dict):
+        planning_state.pop("checkpoint_schema", None)
     fog_state = context.get("fog_of_war")
     if fog_state is not None:
         assert fog_state.pop("current_detection_witnesses") == {}
@@ -207,6 +233,7 @@ def make_versionless_legacy_morale_checkpoint(
         fog_state.pop("cadence")
     battle_state = legacy.get("battle")
     if battle_state is not None:
+        battle_state.pop("deferred_ooda_schema")
         battle_state.pop("performance_execution_receipt")
         battle_state.pop("fow_observer_unit_ids")
     runtime_state = context.pop("morale_runtime")

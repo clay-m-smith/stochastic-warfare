@@ -119,6 +119,7 @@ async def test_unsubscribe_removes_queue(mgr):
     assert len(mgr._progress_queues["test_run"]) == 0
 
 
+@pytest.mark.test_evidence("invariant_only")
 async def test_unsubscribe_nonexistent_no_error(mgr):
     """unsubscribe() for a nonexistent run or queue should not raise."""
     mgr.unsubscribe("nonexistent", asyncio.Queue())

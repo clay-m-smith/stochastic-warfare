@@ -9,7 +9,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 
 from api.config import ApiSettings
-from api.dependencies import get_settings
+from api.dependencies import get_application_paths, get_settings
 from api.scenarios import resolve_scenario, scan_scenarios
 from api.schemas import (
     HistoricalValidationSummary,
@@ -22,17 +22,32 @@ from stochastic_warfare.validation.historical_backtest import (
     HistoricalClaimLedger,
     HistoricalClaimLedgerLoader,
 )
+from stochastic_warfare.application_paths import (
+    ApplicationPaths,
+    HistoricalClaimAuditMode,
+)
 
 router = APIRouter(prefix="/scenarios", tags=["scenarios"])
-APPLICATION_ROOT = Path(__file__).resolve().parents[2]
 
 
-@lru_cache(maxsize=1)
-def _load_historical_claim_ledger() -> HistoricalClaimLedger:
+@lru_cache(maxsize=8)
+def _load_historical_claim_ledger(
+    application_root: Path | None = None,
+    historical_claims_path: Path | None = None,
+    audit_mode: HistoricalClaimAuditMode = HistoricalClaimAuditMode.REPOSITORY,
+) -> HistoricalClaimLedger:
     """Load API-published claims from the immutable application catalog."""
-    return HistoricalClaimLedgerLoader(APPLICATION_ROOT).load_scenario_catalog(
-        APPLICATION_ROOT / "data/validation/historical_claims.yaml",
-    )
+    if application_root is None or historical_claims_path is None:
+        paths = ApplicationPaths.discover()
+        application_root = paths.application_root
+        historical_claims_path = paths.historical_claims_path
+        audit_mode = paths.historical_claim_audit_mode
+    loader = HistoricalClaimLedgerLoader(application_root)
+    if audit_mode is HistoricalClaimAuditMode.PACKAGE:
+        return loader.load_packaged_scenario_catalog(
+            historical_claims_path,
+        )
+    return loader.load_scenario_catalog(historical_claims_path)
 
 
 def _historical_validation(
@@ -83,10 +98,17 @@ def _extract_summary(
 
 
 @router.get("", response_model=list[ScenarioSummary])
-async def list_scenarios(settings: ApiSettings = Depends(get_settings)) -> list[ScenarioSummary]:
+async def list_scenarios(
+    settings: ApiSettings = Depends(get_settings),
+    paths: ApplicationPaths = Depends(get_application_paths),
+) -> list[ScenarioSummary]:
     data_dir = Path(settings.data_dir)
     raw = scan_scenarios(data_dir)
-    ledger = _load_historical_claim_ledger()
+    ledger = _load_historical_claim_ledger(
+        paths.application_root,
+        paths.historical_claims_path,
+        paths.historical_claim_audit_mode,
+    )
     return [
         _extract_summary(
             s["name"],
@@ -98,7 +120,11 @@ async def list_scenarios(settings: ApiSettings = Depends(get_settings)) -> list[
 
 
 @router.get("/{name}", response_model=ScenarioDetail)
-async def get_scenario(name: str, settings: ApiSettings = Depends(get_settings)) -> ScenarioDetail:
+async def get_scenario(
+    name: str,
+    settings: ApiSettings = Depends(get_settings),
+    paths: ApplicationPaths = Depends(get_application_paths),
+) -> ScenarioDetail:
     data_dir = Path(settings.data_dir)
     try:
         path = resolve_scenario(name, data_dir)
@@ -113,7 +139,11 @@ async def get_scenario(name: str, settings: ApiSettings = Depends(get_settings))
     with open(path, encoding="utf-8") as f:
         config_dict = yaml.safe_load(f)
 
-    ledger = _load_historical_claim_ledger()
+    ledger = _load_historical_claim_ledger(
+        paths.application_root,
+        paths.historical_claims_path,
+        paths.historical_claim_audit_mode,
+    )
     historical_validation = _historical_validation(ledger, path)
 
     # Build force summary from sides (supports list or dict format)

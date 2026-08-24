@@ -11,7 +11,7 @@ import copy
 import math
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any
+from typing import Any, Callable
 
 import numpy as np
 from pydantic import BaseModel
@@ -44,6 +44,8 @@ from stochastic_warfare.simulation.scenario import (
 )
 
 logger = get_logger(__name__)
+
+RuntimeFailureHandler = Callable[[str, str, Exception], bool]
 
 
 @dataclass(frozen=True)
@@ -208,6 +210,7 @@ class CampaignManager:
         dt: float,
         *,
         stage: MovementStage = MovementStage.STRATEGIC,
+        failure_handler: RuntimeFailureHandler | None = None,
     ) -> None:
         """Execute one strategic tick.
 
@@ -222,6 +225,10 @@ class CampaignManager:
             SimulationContext with all engines and state.
         dt:
             Tick duration in seconds.
+        failure_handler:
+            Optional degraded-runtime boundary.  The callback returns
+            ``True`` only when the failure was recorded and may be
+            suppressed; without one, subsystem failures propagate.
         """
         timestamp = ctx.clock.current_time
 
@@ -242,16 +249,26 @@ class CampaignManager:
                 try:
                     for cid in list(getattr(convoy_eng, "_convoys", {}).keys()):
                         convoy_eng.update_convoy(cid, dt)
-                except Exception:
-                    logger.debug("Convoy update failed", exc_info=True)
+                except Exception as exc:
+                    if failure_handler is None or not failure_handler(
+                        "logistics.convoy",
+                        "update",
+                        exc,
+                    ):
+                        raise
 
             # Phase 54a: strategic bombing target regeneration
             sb_eng = getattr(ctx, "strategic_bombing_engine", None)
             if sb_eng is not None:
                 try:
                     sb_eng.apply_target_regeneration(dt)
-                except Exception:
-                    logger.debug("Strategic bombing regeneration failed", exc_info=True)
+                except Exception as exc:
+                    if failure_handler is None or not failure_handler(
+                        "combat.strategic_bombing",
+                        "apply_target_regeneration",
+                        exc,
+                    ):
+                        raise
 
         elif era == "napoleonic":
             # Phase 54c: foraging zone recovery
@@ -260,8 +277,13 @@ class CampaignManager:
                 try:
                     dt_days = dt / 86400.0
                     foraging_eng.update_recovery(dt_days)
-                except Exception:
-                    logger.debug("Foraging recovery failed", exc_info=True)
+                except Exception as exc:
+                    if failure_handler is None or not failure_handler(
+                        "logistics.foraging",
+                        "update_recovery",
+                        exc,
+                    ):
+                        raise
 
         elif era == "ancient_medieval":
             # Phase 54d: siege advancement
@@ -279,8 +301,13 @@ class CampaignManager:
                             if _phase == SiegePhase.BREACH:
                                 siege_eng.attempt_assault(sid)
                             siege_eng.sally_sortie(sid)
-                except Exception:
-                    logger.debug("Siege advance failed", exc_info=True)
+                except Exception as exc:
+                    if failure_handler is None or not failure_handler(
+                        "combat.siege",
+                        "advance",
+                        exc,
+                    ):
+                        raise
 
     # ── Strategic movement ───────────────────────────────────────────
 
@@ -590,12 +617,16 @@ class CampaignManager:
         self,
         ctx: Any,
         elapsed_s: float,
+        *,
+        failure_handler: RuntimeFailureHandler | None = None,
     ) -> int:
         """Fire scripted events whose time has elapsed (Phase 101).
 
         Looks up ``ctx.scripted_events`` (list of ``ScriptedEventConfig``)
         and a ``ctx._fired_scripted_events`` set of indices used as
         once-only gating. Returns the number of events fired this call.
+        Failed dispatches propagate unless ``failure_handler`` records and
+        explicitly suppresses them.
 
         Honest semantics: each handler invokes real engine APIs
         (IED detonation, fire-zone creation, unit teleport, casualty
@@ -622,10 +653,13 @@ class CampaignManager:
                     "Scripted event fired: idx=%d type=%s t=%.0fs",
                     idx, ev.event_type, elapsed_s,
                 )
-            except Exception:
-                logger.warning(
-                    "Scripted event %d (%s) failed", idx, ev.event_type, exc_info=True,
-                )
+            except Exception as exc:
+                if failure_handler is None or not failure_handler(
+                    "simulation.campaign",
+                    "dispatch_scripted_event",
+                    exc,
+                ):
+                    raise
                 fired_set.add(idx)  # don't retry failed events
         return fired_count
 
@@ -671,7 +705,7 @@ class CampaignManager:
                 try:
                     _ws = _weather.current.wind.speed
                     _wd = _weather.current.wind.direction
-                except Exception:
+                except AttributeError:
                     pass
             inc_eng.create_fire_zone(
                 position=pos,
@@ -702,7 +736,7 @@ class CampaignManager:
             for _ in range(min(casualties, len(unit.personnel))):
                 try:
                     unit.personnel.pop()
-                except Exception:
+                except IndexError:
                     break
 
     def _find_unit(self, ctx: Any, unit_id: str) -> Unit | None:

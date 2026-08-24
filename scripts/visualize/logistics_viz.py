@@ -100,9 +100,6 @@ def plot_naval_fuel_curve() -> None:
 
 def plot_supply_network() -> None:
     """Node-link diagram of a sample supply network."""
-    bus = EventBus()
-    rng = RNGManager(42).get_stream(ModuleId.LOGISTICS)
-
     positions = {
         "Theater Depot": (0, 0),
         "Corps Depot": (3, 2),

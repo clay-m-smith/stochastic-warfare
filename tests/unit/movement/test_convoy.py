@@ -42,6 +42,7 @@ class TestConvoyFormation:
         convoy = engine.form_convoy("cv1", ["s1"], ["e1"])
         assert convoy.speed_kts == pytest.approx(10.0)  # max_convoy_speed_kts default
 
+    @pytest.mark.test_evidence("behavioral_oracle")
     def test_get_convoy(self):
         engine = ConvoyEngine(rng=_rng())
         engine.form_convoy("cv1", ["s1"], ["e1"])

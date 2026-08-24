@@ -7,7 +7,6 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 import json
 import math
-import os
 from pathlib import Path
 import subprocess
 import sys
@@ -1472,6 +1471,7 @@ class TestPairedPolicy:
         assert set(artifact.closures) == {"reference", "candidate"}
         assert artifact.timing_assessment.applicability == "not_applicable"
 
+    @pytest.mark.test_evidence("structural_only")
     def test_hosted_73_easting_job_declares_paired_evidence(
         self,
     ) -> None:
@@ -2001,6 +2001,7 @@ class TestCanonicalEvidence:
         with pytest.raises(ValidationError, match="fingerprint"):
             RuntimeInputManifest.model_validate(payload)
 
+    @pytest.mark.test_evidence("behavioral_oracle")
     def test_version_one_or_extra_baseline_fields_reject(
         self,
         tmp_path: Path,
@@ -2014,6 +2015,7 @@ class TestCanonicalEvidence:
         with pytest.raises(ValueError, match="version-4"):
             BenchmarkBaseline(path).load_file()
 
+    @pytest.mark.test_evidence("behavioral_oracle")
     def test_artifact_digest_detects_tampering(
         self,
         tmp_path: Path,
@@ -2161,6 +2163,371 @@ class TestRuntimeClosure:
                 require_clean=False,
             )
 
+    @pytest.mark.parametrize(
+        "index_flag",
+        ("--assume-unchanged", "--skip-worktree"),
+    )
+    def test_runtime_index_flags_cannot_hide_changed_bytes(
+        self,
+        tmp_path: Path,
+        index_flag: str,
+    ) -> None:
+        repo = tmp_path / "repo"
+        _initialize_runtime_repository(repo)
+        relative = "stochastic_warfare/runtime.py"
+        runtime_path = repo / relative
+        benchmark_module._git(repo, "update-index", index_flag, relative)
+        runtime_path.write_text("VALUE = 2\n", encoding="utf-8")
+
+        assert benchmark_module._git_status(repo) == []
+        for require_clean in (False, True):
+            with pytest.raises(ValueError, match="unsupported Git index flags"):
+                benchmark_module._git_identity(
+                    repo,
+                    require_clean=require_clean,
+                )
+
+    def test_nonruntime_index_flags_do_not_taint_clean_runtime_identity(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        repo = tmp_path / "repo"
+        _initialize_runtime_repository(repo)
+        notes_path = repo / "notes.txt"
+        notes_path.write_text("tracked note\n", encoding="utf-8")
+        benchmark_module._git(repo, "add", "notes.txt")
+        benchmark_module._git(repo, "commit", "-m", "add nonruntime note")
+        benchmark_module._git(
+            repo,
+            "update-index",
+            "--assume-unchanged",
+            "notes.txt",
+        )
+        notes_path.write_text("hidden nonruntime note\n", encoding="utf-8")
+
+        assert benchmark_module._git_status(repo) == []
+        identity = benchmark_module._git_identity(repo, require_clean=True)
+        assert identity.dirty is False
+        assert all(
+            source.path != "notes.txt"
+            for source in identity.runtime_manifest
+        )
+
+    def test_clean_identity_rejects_hidden_executable_mode_drift(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        repo = tmp_path / "repo"
+        _initialize_runtime_repository(repo)
+        relative = "stochastic_warfare/runtime.py"
+        runtime_path = repo / relative
+        benchmark_module._git(repo, "config", "core.filemode", "false")
+        runtime_path.chmod(0o755)
+
+        assert benchmark_module._git_status(repo) == []
+        for require_clean in (False, True):
+            with pytest.raises(ValueError, match="modes differ from Git HEAD"):
+                benchmark_module._git_identity(
+                    repo,
+                    require_clean=require_clean,
+                )
+
+    def test_clean_identity_compares_raw_bytes_without_git_filters(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        repo = tmp_path / "repo"
+        _initialize_runtime_repository(repo)
+        attributes_path = repo / ".gitattributes"
+        attributes_path.write_text("*.py text eol=lf\n", encoding="utf-8")
+        benchmark_module._git(repo, "add", ".gitattributes")
+        benchmark_module._git(repo, "commit", "-m", "normalize Python sources")
+        runtime_path = repo / "stochastic_warfare" / "runtime.py"
+        runtime_path.write_bytes(b"VALUE = 1\r\n")
+        benchmark_module._git(
+            repo,
+            "add",
+            "--renormalize",
+            "stochastic_warfare/runtime.py",
+        )
+
+        assert benchmark_module._git_status(repo) == []
+        for require_clean in (False, True):
+            with pytest.raises(ValueError, match="bytes differ from Git HEAD"):
+                benchmark_module._git_identity(
+                    repo,
+                    require_clean=require_clean,
+                )
+
+    def test_clean_identity_requires_exact_head_runtime_path_set(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        repo = tmp_path / "repo"
+        _initialize_runtime_repository(repo)
+        manifest = benchmark_module._runtime_tree_manifest(repo)
+        incomplete_manifest = [
+            source
+            for source in manifest
+            if source.path != "stochastic_warfare/runtime.py"
+        ]
+        monkeypatch.setattr(
+            benchmark_module,
+            "_runtime_tree_manifest",
+            lambda *_args, **_kwargs: incomplete_manifest,
+        )
+
+        for require_clean in (False, True):
+            with pytest.raises(ValueError, match="path set differs from Git HEAD"):
+                benchmark_module._git_identity(
+                    repo,
+                    require_clean=require_clean,
+                )
+
+    def test_tests_package_transitive_helper_bytes_are_content_bound(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        repo = tmp_path / "repo"
+        _initialize_runtime_repository(repo)
+        package_init = repo / "tests" / "__init__.py"
+        helper_path = repo / "tests" / "helper.py"
+        package_init.write_text("from . import helper\n", encoding="utf-8")
+        helper_path.write_text("VALUE = 1\n", encoding="utf-8")
+        benchmark_module._git(repo, "add", "tests/__init__.py", "tests/helper.py")
+        benchmark_module._git(repo, "commit", "-m", "add transitive test helper")
+
+        helper_path.write_text("VALUE = 2\n", encoding="utf-8")
+        first = benchmark_module._git_identity(repo, require_clean=False)
+        helper_path.write_text("VALUE = 3\n", encoding="utf-8")
+        second = benchmark_module._git_identity(repo, require_clean=False)
+
+        assert first.status == second.status == [" M tests/helper.py"]
+        assert first != second
+        assert {
+            source.path: source.sha256
+            for source in first.runtime_manifest
+        }["tests/helper.py"] != {
+            source.path: source.sha256
+            for source in second.runtime_manifest
+        }["tests/helper.py"]
+
+    @pytest.mark.parametrize(
+        "relative_path",
+        (
+            "sitecustomize.py",
+            "usercustomize.py",
+            "scripts/sitecustomize.py",
+            "scripts/usercustomize.py",
+            "tests/benchmarks/sitecustomize.py",
+            "tests/benchmarks/usercustomize.py",
+        ),
+    )
+    def test_ignored_python_startup_hooks_are_runtime_inputs(
+        self,
+        tmp_path: Path,
+        relative_path: str,
+    ) -> None:
+        repo = tmp_path / "repo"
+        _initialize_runtime_repository(repo)
+        (repo / ".gitignore").write_text(
+            f"/{relative_path}\n",
+            encoding="utf-8",
+        )
+        benchmark_module._git(repo, "add", ".gitignore")
+        benchmark_module._git(repo, "commit", "-m", "ignore startup hook")
+        hook_path = repo / relative_path
+        hook_path.parent.mkdir(parents=True, exist_ok=True)
+        hook_path.write_text("HOOK_EXECUTED = True\n", encoding="utf-8")
+
+        assert benchmark_module._git_status(repo) == []
+        with pytest.raises(ValueError, match="ignored runtime-affecting"):
+            benchmark_module._git_identity(
+                repo,
+                require_clean=False,
+            )
+
+    @pytest.mark.parametrize(
+        "relative_path",
+        (
+            "pydantic.py",
+            "pydantic.pyc",
+            "pydantic.cpython-312-x86_64-linux-gnu.so",
+            "pydantic.cp312-win_amd64.pyd",
+            "scripts/pydantic.py",
+            "tests/benchmarks/pydantic.py",
+        ),
+    )
+    def test_ignored_import_shadows_are_runtime_inputs(
+        self,
+        tmp_path: Path,
+        relative_path: str,
+    ) -> None:
+        repo = tmp_path / "repo"
+        _initialize_runtime_repository(repo)
+        (repo / ".gitignore").write_text(
+            f"/{relative_path}\n",
+            encoding="utf-8",
+        )
+        benchmark_module._git(repo, "add", ".gitignore")
+        benchmark_module._git(repo, "commit", "-m", "ignore dependency shadow")
+        shadow_path = repo / relative_path
+        shadow_path.parent.mkdir(parents=True, exist_ok=True)
+        shadow_path.write_text(
+            "raise RuntimeError('shadowed benchmark dependency')\n",
+            encoding="utf-8",
+        )
+
+        assert benchmark_module._git_status(repo) == []
+        with pytest.raises(ValueError, match="ignored runtime-affecting"):
+            benchmark_module._git_identity(
+                repo,
+                require_clean=False,
+            )
+
+    @pytest.mark.parametrize(
+        "state",
+        ("ignored", "untracked", "staged", "tracked"),
+    )
+    def test_undeclared_top_level_packages_reject(
+        self,
+        tmp_path: Path,
+        state: str,
+    ) -> None:
+        repo = tmp_path / "repo"
+        _initialize_runtime_repository(repo)
+        relative = "pydantic/__init__.py"
+        if state == "ignored":
+            (repo / ".gitignore").write_text(
+                "/pydantic/\n",
+                encoding="utf-8",
+            )
+            benchmark_module._git(repo, "add", ".gitignore")
+            benchmark_module._git(repo, "commit", "-m", "ignore shadow package")
+        initializer = repo / relative
+        initializer.parent.mkdir()
+        initializer.write_text("SHADOW = True\n", encoding="utf-8")
+        if state in {"staged", "tracked"}:
+            benchmark_module._git(repo, "add", relative)
+        if state == "tracked":
+            benchmark_module._git(repo, "commit", "-m", "add shadow package")
+
+        with pytest.raises(ValueError, match="undeclared top-level Python package"):
+            benchmark_module._git_identity(
+                repo,
+                require_clean=False,
+            )
+
+    @pytest.mark.parametrize(
+        "initializer_name",
+        (
+            "__init__.pyc",
+            "__init__.cpython-312-x86_64-linux-gnu.so",
+            "__init__.cp312-win_amd64.pyd",
+        ),
+    )
+    def test_undeclared_sourceless_and_extension_packages_reject(
+        self,
+        tmp_path: Path,
+        initializer_name: str,
+    ) -> None:
+        repo = tmp_path / "repo"
+        _initialize_runtime_repository(repo)
+        initializer = repo / "pydantic" / initializer_name
+        initializer.parent.mkdir()
+        initializer.write_bytes(b"shadow package initializer")
+
+        with pytest.raises(ValueError, match="undeclared top-level Python package"):
+            benchmark_module._git_identity(
+                repo,
+                require_clean=False,
+            )
+
+    @pytest.mark.parametrize(
+        "deletion_state",
+        ("unstaged", "staged"),
+    )
+    def test_deleted_undeclared_package_cannot_survive_in_snapshot_head(
+        self,
+        tmp_path: Path,
+        deletion_state: str,
+    ) -> None:
+        repo = tmp_path / "repo"
+        _initialize_runtime_repository(repo)
+        relative = "pydantic/__init__.py"
+        initializer = repo / relative
+        initializer.parent.mkdir()
+        initializer.write_text("SHADOW = True\n", encoding="utf-8")
+        benchmark_module._git(repo, "add", relative)
+        benchmark_module._git(repo, "commit", "-m", "add shadow package")
+        if deletion_state == "staged":
+            benchmark_module._git(repo, "rm", relative)
+        else:
+            initializer.unlink()
+
+        with pytest.raises(ValueError, match="initializer remains in Git"):
+            benchmark_module._git_identity(
+                repo,
+                require_clean=False,
+            )
+
+    @pytest.mark.parametrize(
+        "root_name",
+        (".venv", "artifacts", "build", ".pytest_cache"),
+    )
+    def test_known_nonruntime_roots_do_not_become_import_closure(
+        self,
+        tmp_path: Path,
+        root_name: str,
+    ) -> None:
+        repo = tmp_path / "repo"
+        _initialize_runtime_repository(repo)
+        (repo / ".gitignore").write_text(
+            f"/{root_name}/\n",
+            encoding="utf-8",
+        )
+        benchmark_module._git(repo, "add", ".gitignore")
+        benchmark_module._git(repo, "commit", "-m", "ignore nonruntime root")
+        initializer = repo / root_name / "__init__.py"
+        initializer.parent.mkdir()
+        initializer.write_text("IGNORED = True\n", encoding="utf-8")
+
+        assert benchmark_module._git_status(repo) == []
+        identity = benchmark_module._git_identity(repo, require_clean=True)
+        assert all(
+            not source.path.startswith(f"{root_name}/")
+            for source in identity.runtime_manifest
+        )
+
+    @pytest.mark.test_evidence("behavioral_oracle")
+    def test_untracked_root_module_is_captured_in_candidate_snapshot(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        repo = tmp_path / "repo"
+        snapshot = tmp_path / "snapshot"
+        _initialize_runtime_repository(repo)
+        relative = "benchmark_shadow.py"
+        (repo / relative).write_text("SHADOW = True\n", encoding="utf-8")
+
+        identity = benchmark_module._git_identity(
+            repo,
+            require_clean=False,
+        )
+        benchmark_module._materialize_candidate_snapshot(
+            candidate_root=repo,
+            snapshot_root=snapshot,
+            identity=identity,
+            scenario_relative="data/scenarios/test/scenario.yaml",
+            external_runtime_paths=frozenset(),
+        )
+
+        assert identity.dirty is True
+        assert (snapshot / relative).read_text(encoding="utf-8") == "SHADOW = True\n"
+        assert benchmark_module._runtime_tree_manifest(snapshot) == identity.runtime_manifest
+
+    @pytest.mark.test_evidence("behavioral_oracle")
     def test_candidate_snapshot_is_exact_and_immutable(
         self,
         tmp_path: Path,
@@ -2188,6 +2555,109 @@ class TestRuntimeClosure:
 
         runtime_path.write_text("VALUE = 3\n", encoding="utf-8")
         assert snapshot_runtime.read_text(encoding="utf-8") == "VALUE = 2\n"
+
+    @pytest.mark.test_evidence("behavioral_oracle")
+    def test_candidate_snapshot_removes_staged_runtime_rename_sources(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        repo = tmp_path / "repo"
+        snapshot = tmp_path / "snapshot"
+        _initialize_runtime_repository(repo)
+        obsolete_path = repo / "stochastic_warfare" / "obsolete.py"
+        obsolete_path.write_text("OBSOLETE = True\n", encoding="utf-8")
+        benchmark_module._git(repo, "add", obsolete_path.relative_to(repo).as_posix())
+        benchmark_module._git(repo, "commit", "-m", "add obsolete runtime source")
+        replacement_path = repo / "stochastic_warfare" / "replacement.py"
+        benchmark_module._git(
+            repo,
+            "mv",
+            obsolete_path.relative_to(repo).as_posix(),
+            replacement_path.relative_to(repo).as_posix(),
+        )
+        identity = benchmark_module._git_identity(
+            repo,
+            require_clean=False,
+        )
+
+        benchmark_module._materialize_candidate_snapshot(
+            candidate_root=repo,
+            snapshot_root=snapshot,
+            identity=identity,
+            scenario_relative="data/scenarios/test/scenario.yaml",
+            external_runtime_paths=frozenset(),
+        )
+
+        assert not (snapshot / "stochastic_warfare" / "obsolete.py").exists()
+        assert (snapshot / "stochastic_warfare" / "replacement.py").read_text(
+            encoding="utf-8",
+        ) == "OBSOLETE = True\n"
+        assert benchmark_module._runtime_tree_manifest(snapshot) == identity.runtime_manifest
+
+    def test_candidate_snapshot_removes_staged_runtime_deletions(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        repo = tmp_path / "repo"
+        snapshot = tmp_path / "snapshot"
+        _initialize_runtime_repository(repo)
+        obsolete_path = repo / "stochastic_warfare" / "obsolete.py"
+        obsolete_path.write_text("OBSOLETE = True\n", encoding="utf-8")
+        relative = obsolete_path.relative_to(repo).as_posix()
+        benchmark_module._git(repo, "add", relative)
+        benchmark_module._git(repo, "commit", "-m", "add obsolete runtime source")
+        benchmark_module._git(repo, "rm", relative)
+
+        identity = benchmark_module._git_identity(
+            repo,
+            require_clean=False,
+        )
+        benchmark_module._materialize_candidate_snapshot(
+            candidate_root=repo,
+            snapshot_root=snapshot,
+            identity=identity,
+            scenario_relative="data/scenarios/test/scenario.yaml",
+            external_runtime_paths=frozenset(),
+        )
+
+        assert not (snapshot / relative).exists()
+        assert benchmark_module._runtime_tree_manifest(snapshot) == identity.runtime_manifest
+
+    @pytest.mark.test_evidence("behavioral_oracle")
+    def test_candidate_snapshot_captures_unstaged_deletion_and_untracked_source(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        repo = tmp_path / "repo"
+        snapshot = tmp_path / "snapshot"
+        _initialize_runtime_repository(repo)
+        obsolete_path = repo / "stochastic_warfare" / "obsolete.py"
+        obsolete_path.write_text("OBSOLETE = True\n", encoding="utf-8")
+        relative_obsolete = obsolete_path.relative_to(repo).as_posix()
+        benchmark_module._git(repo, "add", relative_obsolete)
+        benchmark_module._git(repo, "commit", "-m", "add obsolete runtime source")
+        obsolete_path.unlink()
+        added_path = repo / "stochastic_warfare" / "added.py"
+        added_path.write_text("ADDED = True\n", encoding="utf-8")
+
+        identity = benchmark_module._git_identity(
+            repo,
+            require_clean=False,
+        )
+        benchmark_module._materialize_candidate_snapshot(
+            candidate_root=repo,
+            snapshot_root=snapshot,
+            identity=identity,
+            scenario_relative="data/scenarios/test/scenario.yaml",
+            external_runtime_paths=frozenset(),
+        )
+
+        assert identity.dirty is True
+        assert not (snapshot / relative_obsolete).exists()
+        assert (snapshot / "stochastic_warfare" / "added.py").read_text(
+            encoding="utf-8",
+        ) == "ADDED = True\n"
+        assert benchmark_module._runtime_tree_manifest(snapshot) == identity.runtime_manifest
 
     def test_ignored_external_cache_is_scenario_closure_aware(
         self,
@@ -2503,6 +2973,23 @@ def test_morale_timing_identity_unifies_only_discrete_default() -> None:
     continuous = payload(True)
     assert benchmark_module._normalize_morale_timing_identity(continuous) == (payload(True))
     assert continuous != implicit_discrete
+
+
+def test_resolved_calibration_uses_its_public_mapping_identity() -> None:
+    from stochastic_warfare.simulation.calibration import ResolvedCalibration
+
+    calibration = ResolvedCalibration(
+        {
+            "morale_use_continuous_time": False,
+            "nested": {"values": [1, 2]},
+        },
+        ("blue", "red"),
+    )
+
+    assert benchmark_module._canonical_value(calibration) == {
+        "morale_use_continuous_time": False,
+        "nested": {"values": [1, 2]},
+    }
 
 
 @pytest.mark.parametrize(
@@ -2912,6 +3399,7 @@ class TestMeasurementOnlyScenarios:
             raise BenchmarkComparisonError("explicit harness failure")
 
 
+@pytest.mark.test_evidence("structural_only")
 def test_checked_in_baseline_document_is_exact_v4() -> None:
     baseline = BaselineFile.model_validate_json(
         BASELINES_PATH.read_text(encoding="utf-8"),

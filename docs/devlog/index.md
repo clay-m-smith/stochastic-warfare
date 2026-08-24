@@ -7,6 +7,16 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 > not establish historical validation. Only the typed historical-claim ledger
 > and an explicitly accepted production artifact can do so.
 
+## Engineering programs
+
+| Program | Status | Log |
+|---|---|---|
+| Tiered modular-monolith consolidation | **Complete** | [consolidation-tiered-modular-monolith.md](consolidation-tiered-modular-monolith.md) |
+
+Engineering-program logs record cross-cutting work that is not a numbered
+phase. They may reference closed phase evidence without changing phase or
+remediation status.
+
 ## Phases
 
 | Phase | Focus | Status | Log |
@@ -148,6 +158,7 @@ Rolling record of implementation decisions, changes, and lessons learned across 
 | 116 | Fog-of-War Contact Continuation | **Complete** | [phase-116.md](phase-116.md) |
 | 117 | Historical Outcome-Envelope Integrity | **Complete** | [phase-117.md](phase-117.md) |
 | 118 | Performance-Flag Semantic Integrity | **Complete** | [phase-118.md](phase-118.md) |
+| 119 | Guerrilla Concealment & Population Query | Not started | -- |
 
 ## Post-MVP Refinement Index
 
@@ -385,7 +396,9 @@ Known limitations and deferred improvements logged during implementation. Review
 
 ## Conventions
 
-- Each phase file is a **living document** — updated as work happens, not just at the end.
+- An in-progress phase or engineering-program file is a living document.
+  Closed phase and devlog bodies are immutable historical records; current
+  corrections belong in living guides/specs, the backlog, or a new current log.
 - Sections within a phase: Summary, What Was Built, Design Decisions, Deviations from Plan, Issues & Fixes, Open Questions, Known Limitations, Lessons Learned.
 - When a decision in one phase affects another, note it and cross-reference.
 - **Known Limitations / Post-MVP Refinements**: every phase should document deliberate simplifications. The index table above aggregates them for easy review.

@@ -257,10 +257,6 @@ class StrategicBombingEngine:
         # CEP scales with altitude
         cep = cfg.formation_cep_m * (stream.altitude_m / cfg.norden_reference_altitude_m)
 
-        # Each bomber drops bombs — fraction landing within CEP of target
-        # Using circular normal: P(within CEP) = 1 - exp(-0.5 * (R/sigma)^2)
-        # where sigma = CEP / 1.1774 (CEP is 50th percentile radius)
-        sigma = cep / 1.1774
         total_bomb_kg = surviving * cfg.bomb_load_kg
 
         # Compute fraction of bombs on target (within 1 CEP)
@@ -314,7 +310,6 @@ class StrategicBombingEngine:
 
         Utility function for direct computation without a stream.
         """
-        sigma = cep_m / 1.1774
         on_target_fraction = 0.5  # expected value at CEP
         effective_kg = total_bomb_kg * on_target_fraction
         return min(1.0, effective_kg * self._config.damage_per_kg_in_cep)
