@@ -1,0 +1,3089 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="High-fidelity stochastic wargame simulator — multi-scale, multi-domain, multi-era">
+      
+      
+        <meta name="author" content="Clay Smith">
+      
+      
+        <link rel="canonical" href="https://clay-m-smith.github.io/stochastic-warfare/specs/tiered-modular-monolith/">
+      
+      
+        <link rel="prev" href="../../reference/units/">
+      
+      
+        <link rel="next" href="../../development-phases-block13/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.4">
+    
+    
+      
+        <title>Consolidation Contract - Stochastic Warfare</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#tiered-modular-monolith-consolidation" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Stochastic Warfare" class="md-header__button md-logo" aria-label="Stochastic Warfare" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Stochastic Warfare
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Consolidation Contract
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/clay-m-smith/stochastic-warfare" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    clay-m-smith/stochastic-warfare
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../guide/getting-started/" class="md-tabs__link">
+          
+  
+  
+  Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../concepts/architecture/" class="md-tabs__link">
+          
+  
+  
+  Concepts
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/api/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
+          
+  
+  
+  Engineering
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../project-structure/" class="md-tabs__link">
+          
+  
+  
+  Specifications
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Stochastic Warfare" class="md-nav__button md-logo" aria-label="Stochastic Warfare" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Stochastic Warfare
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/clay-m-smith/stochastic-warfare" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    clay-m-smith/stochastic-warfare
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/web-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Web UI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/scenarios/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scenario Library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mathematical Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/eras/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eras
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/units/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Units & Equipment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Engineering
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Engineering
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Consolidation Contract
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Consolidation Contract
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#purpose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Purpose
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#current-baseline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Current baseline
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#closure-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Closure state
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#repository-tiers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Repository tiers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Requirements
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Requirements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#r1-strict-authoritative-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R1. Strict authoritative execution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r2-deferred-ooda-decisions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R2. Deferred OODA decisions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r3-movement-and-position-correctness" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R3. Movement and position correctness
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r4-static-safety-floor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R4. Static safety floor
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r5-durable-test-ownership" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R5. Durable test ownership
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r6-test-evidence-classification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R6. Test-evidence classification
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r7-ci-tiers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R7. CI tiers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r8-documentation-and-claim-scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R8. Documentation and claim scope
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r9-evidence-and-generated-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R9. Evidence and generated output
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r10-supported-application-artifacts-and-resource-paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R10. Supported application artifacts and resource paths
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r11-product-cli-and-version-authority" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R11. Product CLI and version authority
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r12-truthful-wheel-and-sdist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R12. Truthful wheel and sdist
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r13-apifrontend-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R13. API/frontend contract
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r14-authoritative-and-legacy-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R14. Authoritative and legacy tools
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r15-mechanical-module-boundaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R15. Mechanical module boundaries
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r16-battle-facade-and-subsystem-executors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R16. Battle facade and subsystem executors
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r17-canonical-repository-skills" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R17. Canonical repository skills
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#acceptance-criteria" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Acceptance criteria
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#migration-invariants" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migration invariants
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verification-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verification plan
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Verification plan">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#safety-tranche" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Safety tranche
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-and-ci-tranche" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test and CI tranche
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#documentation-and-claim-tranche" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation and claim tranche
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#packaging-and-interface-tranche" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Packaging and interface tranche
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#module-and-executor-tranches" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Module and executor tranches
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#closure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Closure
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#non-goals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Non-goals
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#open-operational-decisions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Open operational decisions
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block13/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Current Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_3" id="__nav_5_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Future Roadmaps
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Future Roadmaps
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block14/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 14 (128-130)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block15/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 15 (131)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block16/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 16 (132)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block17/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 17 (133)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block18/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 18 (134)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block19/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 19 (135-137)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block20/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 20 (138-140)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block21/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 21 (141-142)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../remediation-backlog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Remediation Backlog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devlog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase History
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specifications
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Specifications
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../project-structure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Structure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../checkpoint-state/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Checkpoint State Contract
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../equipment-mapping/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Equipment Mapping and Runtime Loadouts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../asat-production-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ASAT Production Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../time-on-target-execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Time-on-Target Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../validation-and-documentation-trust/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validation and Documentation Trust
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fog-of-war-contact-continuation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fog-of-War Contact Continuation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../historical-outcome-envelope-integrity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Historical Outcome-Envelope Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../performance-flag-semantic-integrity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Performance-Flag Semantic Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../morale-state-ownership/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Morale State Ownership
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../era-override-execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Era Override Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sensing-aware-tactical-standoff/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sensing-Aware Tactical Standoff
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../skills-and-hooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skills & Hooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#purpose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Purpose
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#current-baseline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Current baseline
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#closure-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Closure state
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#repository-tiers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Repository tiers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Requirements
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Requirements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#r1-strict-authoritative-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R1. Strict authoritative execution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r2-deferred-ooda-decisions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R2. Deferred OODA decisions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r3-movement-and-position-correctness" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R3. Movement and position correctness
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r4-static-safety-floor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R4. Static safety floor
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r5-durable-test-ownership" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R5. Durable test ownership
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r6-test-evidence-classification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R6. Test-evidence classification
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r7-ci-tiers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R7. CI tiers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r8-documentation-and-claim-scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R8. Documentation and claim scope
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r9-evidence-and-generated-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R9. Evidence and generated output
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r10-supported-application-artifacts-and-resource-paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R10. Supported application artifacts and resource paths
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r11-product-cli-and-version-authority" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R11. Product CLI and version authority
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r12-truthful-wheel-and-sdist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R12. Truthful wheel and sdist
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r13-apifrontend-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R13. API/frontend contract
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r14-authoritative-and-legacy-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R14. Authoritative and legacy tools
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r15-mechanical-module-boundaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R15. Mechanical module boundaries
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r16-battle-facade-and-subsystem-executors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R16. Battle facade and subsystem executors
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r17-canonical-repository-skills" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R17. Canonical repository skills
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#acceptance-criteria" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Acceptance criteria
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#migration-invariants" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migration invariants
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verification-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verification plan
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Verification plan">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#safety-tranche" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Safety tranche
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-and-ci-tranche" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test and CI tranche
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#documentation-and-claim-tranche" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation and claim tranche
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#packaging-and-interface-tranche" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Packaging and interface tranche
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#module-and-executor-tranches" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Module and executor tranches
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#closure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Closure
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#non-goals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Non-goals
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#open-operational-decisions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Open operational decisions
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="tiered-modular-monolith-consolidation">Tiered Modular Monolith Consolidation<a class="headerlink" href="#tiered-modular-monolith-consolidation" title="Permanent link">&para;</a></h1>
+<p><strong>Contract status:</strong> Accepted for implementation on 2026-08-22</p>
+<p><strong>Implementation status:</strong> Complete on 2026-08-23</p>
+<p><strong>Release condition:</strong> The Complete status is valid only for an exact frozen
+revision that passes the release gate recorded in the
+<a href="../../devlog/consolidation-tiered-modular-monolith/#release-condition">consolidation log</a></p>
+<p><strong>Owner decision:</strong> Retain one deterministic modular monolith; separate large
+generated evidence, not the engine and its authoritative catalogs.</p>
+<p><strong>Execution boundary:</strong> This program precedes Phase 119. Its accepted
+postmortem closes REM-052 and REM-053 and retires their planned Phases 139 and
+140 before start. Other remediation ordering and numbering remain unchanged.</p>
+<h2 id="purpose">Purpose<a class="headerlink" href="#purpose" title="Permanent link">&para;</a></h2>
+<p>Stochastic Warfare has a sound domain-package dependency direction, but its
+active test suite, validation metadata, documentation history, packaging, and
+largest runtime coordinators have accumulated by development phase rather than
+by durable ownership. This contract turns the repository into a tiered modular
+monolith without weakening deterministic execution, checkpoint compatibility,
+historical-claim integrity, or production-path proof.</p>
+<p>The program has four ordered goals:</p>
+<ol>
+<li>repair verified runtime safety defects before structural movement;</li>
+<li>make tests and validation evidence belong to stable subsystem contracts;</li>
+<li>make the checkout, container, Python distribution, API, frontend, and
+   evidence boundaries explicit and independently testable; and</li>
+<li>split oversized coordinators behind compatibility facades while preserving
+   tick order, RNG ownership, state identity, and serialized behavior.</li>
+</ol>
+<h2 id="current-baseline">Current baseline<a class="headerlink" href="#current-baseline" title="Permanent link">&para;</a></h2>
+<p>The accepted starting inventory is the clean <code>main</code> revision
+<code>0265e54fa125d5258223c5b224b8de56eb6254a9</code>. It established:</p>
+<ul>
+<li>a large, exact six-partition Python suite whose active paths and evidence
+  metadata were substantially organized by implementation phase;</li>
+<li>a phase-history corpus large enough to obscure current product guidance;</li>
+<li>a checkout and Docker image that contain the full application, but a Python
+  wheel that omits authoritative catalogs/frontend/build identity and an sdist
+  that includes nearly the complete repository; and</li>
+<li><code>BattleManager</code>, <code>SimulationContext</code>/<code>ScenarioLoader</code>, FOW, loadout, and
+  equipment-mapping owners whose size and mixed responsibilities impede safe
+  change.</li>
+</ul>
+<p>The detailed current inventory belongs only in the compact consolidation log.
+Tests prove relational completeness and zero unresolved deficits rather than
+asserting permanent cardinalities.</p>
+<h2 id="closure-state">Closure state<a class="headerlink" href="#closure-state" title="Permanent link">&para;</a></h2>
+<p>The 2026-08-23 postmortem accepted the implementation with scope on target,
+high quality, fully proven integration, and no new deficits. The exact evidence,
+qualifications, exclusions, and transactional rule are recorded once in the
+<a href="../../devlog/consolidation-tiered-modular-monolith/#postmortem">consolidation log</a>.
+The Complete transition is revoked and no commit is permitted for a revision
+whose final single-revision release gate fails.</p>
+<h2 id="repository-tiers">Repository tiers<a class="headerlink" href="#repository-tiers" title="Permanent link">&para;</a></h2>
+<p>The repository remains one source revision with these logical tiers:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>runtime kernel       core/domain packages and deterministic owner interfaces
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>application          simulation facade, API, MCP, CLI, catalog and web bundle
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>verification         unit, contract, integration, API, E2E and benchmark tests
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>engineering          scripts, specifications, current remediation truth
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>archive              ignored artifacts and the append-only evidence history
+</code></pre></div>
+<p>Engine code, authoritative catalogs, runtime factory, checkpoint/RNG owners,
+API contracts, provenance validation, the lockfile, and system tests stay in
+the same Git revision until a separately approved composite release-manifest
+contract can prove equivalence across revisions. A microservice or engine/data
+multi-repository split is a non-goal.</p>
+<h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h2>
+<h3 id="r1-strict-authoritative-execution">R1. Strict authoritative execution<a class="headerlink" href="#r1-strict-authoritative-execution" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>PreparedScenario.build()</code> and every production runtime consumer must fail
+  on an enabled subsystem exception by default.</li>
+<li>API, MCP, analysis, scenario evaluation, campaign validation, historical
+  validation, and accepted-claim verification must use strict execution.</li>
+<li>A non-strict interactive mode may remain only as an explicitly named
+  degraded mode. It must publish every suppressed subsystem failure in typed
+  result/provenance state and must never produce acceptance evidence.</li>
+<li>Rejection must preserve the original exception and must not publish a
+  successful terminal result.</li>
+</ul>
+<h3 id="r2-deferred-ooda-decisions">R2. Deferred OODA decisions<a class="headerlink" href="#r2-deferred-ooda-decisions" title="Permanent link">&para;</a></h3>
+<ul>
+<li>A successfully propagated decision with positive delay must become a typed,
+  independently polled deferred decision owned by the C2/battle boundary.</li>
+<li>Maturity is based only on logical simulation time. It consumes no additional
+  RNG draw and executes exactly once.</li>
+<li>Planning initiation, propagation, delay maturity, misinterpretation, decision
+  execution, and OODA phase advancement must not strand a unit in an expired
+  phase.</li>
+<li>The complete deferred queue, including due time and typed effect, must survive
+  checkpoint/restore and produce the same continuation as an uninterrupted run.</li>
+</ul>
+<h3 id="r3-movement-and-position-correctness">R3. Movement and position correctness<a class="headerlink" href="#r3-movement-and-position-correctness" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Tidal-current projection must use the current unit's resolved movement vector
+  after that vector exists. No unit may consume another unit's local vector.</li>
+<li>Enabled aligned, opposed, cross-current, first-unit, multi-unit, and disabled
+  behavior must be observed through the production movement executor.</li>
+<li>Position misinterpretation must update the exact addressed live unit through
+  a typed unit index or <code>SimulationContext</code> owner; no unresolved local name is
+  permitted.</li>
+<li>Broad exception handling may not conceal programming errors in either path.</li>
+<li>A discovered air-combat defect is repaired in the same correctness tranche:
+  <code>AirCombatEngine.resolve_air_engagement()</code> accepts an explicit finite,
+  positive effective BVR range modifier whose default is <code>1.0</code>. The production
+  air-combat route supplies the modifier derived from enabled headwind or
+  tailwind conditions, and the engine applies it only to BVR range
+  eligibility/resolution. Enabled headwind and tailwind plus disabled and
+  default-compatibility controls must be behavioral. This input adds no RNG
+  draw, mutable state, event-order change, or checkpoint field.</li>
+<li>A discovered sonar-culling defect is repaired in the same correctness
+  tranche: when acoustic layers are enabled, the engagement prefilter uses a
+  deterministic conservative bound covering the largest supported positive
+  surface-duct and convergence-zone multiplier. The existing acoustic resolver
+  remains the exact eligibility gate, so thermocline and convergence-zone
+  shadow penalties, disabled behavior, and non-sonar behavior are unchanged.
+  Production tests must cover positive duct/CZ acquisition, negative and
+  disabled controls, candidate order, and same-seed RNG continuation. This
+  repair adds no RNG draw, event-order change, mutable state, or checkpoint
+  field.</li>
+</ul>
+<h3 id="r4-static-safety-floor">R4. Static safety floor<a class="headerlink" href="#r4-static-safety-floor" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Undefined names (<code>F821</code>) are repository errors. Annotation-only references
+  must use <code>TYPE_CHECKING</code>, real imports, or narrowly justified per-line
+  suppression rather than a global ignore.</li>
+<li>Global lint exemptions for unused imports/locals are removed or replaced by
+  scoped compatibility suppressions as the affected code is migrated.</li>
+<li>Complexity and dead-code reports are review inputs. They do not by themselves
+  authorize deletion or behavior claims.</li>
+</ul>
+<h3 id="r5-durable-test-ownership">R5. Durable test ownership<a class="headerlink" href="#r5-durable-test-ownership" title="Permanent link">&para;</a></h3>
+<p>Active tests are organized by product boundary, not implementation phase:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>tests/unit/&lt;domain&gt;/
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>tests/integration/{runtime,checkpoint,targeting,scenarios}/
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>tests/contracts/{configuration,serialization,determinism,repository_policy}/
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>tests/api/
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>tests/e2e/
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>tests/benchmarks/
+</code></pre></div>
+<ul>
+<li>Phase work may use temporary tests while in progress, but postmortem must
+  classify each as <strong>promote</strong>, <strong>merge</strong>, <strong>retire</strong>, or <strong>archive</strong>.</li>
+<li>Active test filenames and directories must not use a phase number as their
+  ownership identity after promotion.</li>
+<li>Production-path behavior, negative/disabled controls, unique regressions,
+  RNG topology, serial/parallel equality, checkpoint continuation and
+  atomicity, and public API/recorder exposure are preserved.</li>
+<li>Source-string, import-presence, non-null, copied-formula, archive-layout, and
+  phase-delivery checks cannot replace behavioral proof. They are retired only
+  after their durable obligation is mapped to equivalent or stronger evidence.</li>
+<li>Shared builders remain domain-specific and transparent; there is no universal
+  fixture that hides runtime construction or stochastic authority.</li>
+</ul>
+<h3 id="r6-test-evidence-classification">R6. Test-evidence classification<a class="headerlink" href="#r6-test-evidence-classification" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Test quality classification is attached to a stable test definition or
+  contract ID, not every expanded pytest node ID.</li>
+<li>Parameterization must not duplicate identical metadata entries.</li>
+<li>The validator rejects newly introduced weak/no-direct tests unless they carry
+  an explicit reviewed structural/invariant classification.</li>
+<li>A structural classification never upgrades a test into behavioral closure
+  evidence.</li>
+<li>Immutable Phase 112 delivery inventories move to archive/history; current
+  collection must not depend on a historic phase-start commit.</li>
+<li>Collection must not read large exact-node ledgers merely to add markers.</li>
+</ul>
+<h3 id="r7-ci-tiers">R7. CI tiers<a class="headerlink" href="#r7-ci-tiers" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Pull request:</strong> lint/static/data/docs, standard contracts, API, E2E, and
+  dependency-profile tests relevant to the change.</li>
+<li><strong>Main:</strong> full standard/API/E2E/terrain and container/product smoke.</li>
+<li><strong>Nightly:</strong> slow-only, benchmark-only, and slow-benchmark partitions.</li>
+<li><strong>Manual/release evidence:</strong> historical backtests, held-out studies,
+  calibration, and heavyweight paired comparisons.</li>
+<li>A published failed study is not rerun as “held-out” acceptance evidence on
+  every pull request. Its artifact schema/evaluator use synthetic or explicitly
+  diagnostic inputs in routine CI.</li>
+<li>One revision-bound collection manifest is reused by execution jobs when
+  exact-node evidence is required. Generated matrices replace hand-authored
+  shard repetition.</li>
+<li>The six authoritative partitions remain exact, non-empty, and disjoint until
+  a later explicit partition contract replaces them.</li>
+</ul>
+<h3 id="r8-documentation-and-claim-scope">R8. Documentation and claim scope<a class="headerlink" href="#r8-documentation-and-claim-scope" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Public navigation contains current guides, concepts, reference, and supported
+  capability contracts. Engineering navigation contains specifications,
+  current backlog, roadmaps, and retained devlogs.</li>
+<li>Historical phase documents become immutable history after closure. They are
+  not perpetual current-truth surfaces and need not be edited for unrelated
+  future changes.</li>
+<li>Main retains a compact phase index and open remediation truth. Detailed
+  closed narratives may be consolidated into block retrospectives while exact
+  originals remain in archive history.</li>
+<li>Historical-claim scanning covers current public claims, API/frontend public
+  surfaces, scenario YAML, and explicit claim-bearing tests. It does not hash
+  unrelated prose across every devlog, skill mirror, or test file.</li>
+<li>The current strict ledger is schema 2 / claim-source scanner 3. Its closed
+  source kinds and semantic-span digests reject missing, stale, ambiguous, or
+  extra reviewed dispositions.</li>
+<li>Review identity binds the exact matched claim span or stable claim locator,
+  not the whole source file. The ledger digest is computed by validation rather
+  than stored as a self-referential maintenance field where possible.</li>
+<li>Integrity remains fail-closed: every discovered current claim has one typed
+  disposition, stale locators reject, and storage never upgrades a verdict.</li>
+</ul>
+<h3 id="r9-evidence-and-generated-output">R9. Evidence and generated output<a class="headerlink" href="#r9-evidence-and-generated-output" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Generated vectors, JUnit, traces, profiles, manifests, and raw studies remain
+  below ignored <code>artifacts/</code> during normal work.</li>
+<li>Full retained evidence lives in an append-only <code>evidence/full</code> history on a
+  separate evidence remote, LFS-backed store, or documented object store.</li>
+<li>Main retains only compact typed receipts, immutable locators, digests,
+  verdicts, qualifications, and reproducibility inputs.</li>
+<li>The evidence history absorbs main only; main never merges archive commits.</li>
+<li>Runtime validation on main must not require the evidence remote to be
+  fetched.</li>
+</ul>
+<h3 id="r10-supported-application-artifacts-and-resource-paths">R10. Supported application artifacts and resource paths<a class="headerlink" href="#r10-supported-application-artifacts-and-resource-paths" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Until isolated package tests pass, source checkout and the Docker image are
+  the supported runnable application artifacts; the Python wheel is not
+  described as standalone.</li>
+<li>A typed <code>ApplicationPaths</code>/resource resolver owns catalog root, scenario
+  root, historical-claim receipt, database, frontend bundle, and generated
+  artifact locations. API, MCP, CLI, validation, and Docker inject or derive
+  this owner rather than assuming the current working directory.</li>
+<li>Installed package resources use <code>importlib.resources</code> or an explicitly
+  configured external catalog root. Missing resources reject with a precise
+  error.</li>
+<li>Repository-only tools never infer that their output belongs under tracked
+  documentation.</li>
+</ul>
+<h3 id="r11-product-cli-and-version-authority">R11. Product CLI and version authority<a class="headerlink" href="#r11-product-cli-and-version-authority" title="Permanent link">&para;</a></h3>
+<ul>
+<li>The application exposes one typed headless entry point:
+  <code>stochastic-warfare run ...</code> and <code>python -m stochastic_warfare</code>.</li>
+<li>The CLI runs scenarios only through
+  <code>SimulationRuntimeFactory -&gt; PreparedScenario -&gt; RuntimeSession</code>.</li>
+<li>Repository validation, calibration, and evidence commands remain separate
+  tools and cannot be confused with the user runner.</li>
+<li>Python package version has one source of truth. Runtime packages read
+  installed distribution metadata; frontend versioning is explicitly bound or
+  explicitly independent.</li>
+</ul>
+<h3 id="r12-truthful-wheel-and-sdist">R12. Truthful wheel and sdist<a class="headerlink" href="#r12-truthful-wheel-and-sdist" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Base installation must not advertise entry points whose dependencies are
+  absent. API and MCP entry points are provided by their appropriate extras or
+  distributions.</li>
+<li>Wheel and sdist contents use explicit allowlists. The wheel contains every
+  resource required by its declared capability; the sdist excludes tests,
+  frontend sources, docs, workflows, agent metadata, and generated evidence
+  unless deliberately required to build the declared artifact.</li>
+<li>Isolated no-Git installation tests prove import, CLI help, declared resource
+  behavior, API-extra startup, build identity, and one bounded production
+  scenario under the supported catalog contract.</li>
+<li>Setuptools SCM is configured as the actual version/file authority or removed.</li>
+</ul>
+<h3 id="r13-apifrontend-contract">R13. API/frontend contract<a class="headerlink" href="#r13-apifrontend-contract" title="Permanent link">&para;</a></h3>
+<ul>
+<li>FastAPI OpenAPI is the shape authority for transport DTOs.</li>
+<li>Frontend transport types are generated from, or mechanically checked against,
+  the exact OpenAPI document in CI.</li>
+<li>Semantic frontend validators remain handwritten where they enforce more than
+  transport shape.</li>
+<li>The generic <code>api</code> package may move to <code>stochastic_warfare_api</code> only behind a
+  compatibility import/entry-point period and an explicit package-identity
+  migration.</li>
+</ul>
+<h3 id="r14-authoritative-and-legacy-tools">R14. Authoritative and legacy tools<a class="headerlink" href="#r14-authoritative-and-legacy-tools" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Production, API, analysis, and historical acceptance use the runtime factory
+  and session boundary.</li>
+<li>The simplified <code>ScenarioRunner</code>, legacy Monte Carlo/historical-data helpers,
+  old visualizers, and trusted-local pickle conversion are quarantined under an
+  explicit <code>legacy</code>/<code>examples</code>/migration namespace or removed after their useful
+  DTOs and callers are migrated.</li>
+<li>Unsafe pickle restore is never a production checkpoint path. Strict JSON is
+  the runtime checkpoint authority.</li>
+</ul>
+<h3 id="r15-mechanical-module-boundaries">R15. Mechanical module boundaries<a class="headerlink" href="#r15-mechanical-module-boundaries" title="Permanent link">&para;</a></h3>
+<p>The first structural split preserves imports and behavior with compatibility
+re-exports:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>simulation/scenario_config.py
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>simulation/runtime_context.py
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>simulation/context_checkpoint.py
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>simulation/scenario_loader.py
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>simulation/loadout_contracts.py
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>simulation/loadout_registry.py
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>simulation/runtime_attachments.py
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>simulation/loadout_builder.py
+</code></pre></div>
+<ul>
+<li><code>simulation/scenario.py</code> and <code>simulation/loadouts.py</code> remain temporary public
+  compatibility facades.</li>
+<li>Moving a definition does not change its field names, serialization, object
+  identity, import compatibility, or checkpoint shape.</li>
+<li>A typed checkpoint-owner protocol replaces deep-copy/set-state probing one
+  owner at a time; legacy owners remain explicitly classified until migrated.</li>
+<li>Mutable <code>cal_flat</code> compatibility is replaced incrementally by an immutable
+  typed <code>ResolvedCalibration</code> compiled once at load time.</li>
+</ul>
+<h3 id="r16-battle-facade-and-subsystem-executors">R16. Battle facade and subsystem executors<a class="headerlink" href="#r16-battle-facade-and-subsystem-executors" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>BattleManager</code> remains the deterministic interval transaction facade called
+  by <code>SimulationEngine</code>.</li>
+<li>OODA completion, movement, engagement, and battle-checkpoint behavior move to
+  injected typed executors in that order.</li>
+<li>Executors receive frozen, least-privilege typed runtime views and explicit
+  immutable inputs rather than <code>SimulationContext</code>, <code>Any</code>, private-attribute
+  reach-through, or configuration mutation mid-tick. Live <code>Unit</code> identities
+  and explicitly named mutable domain owners are allowed only where the
+  executor contract authorizes them.</li>
+<li>Existing owner interfaces are used where available; missing operations expose
+  immutable snapshots or typed commands.</li>
+<li>Extraction must preserve exact tick order, candidate order, RNG stream and
+  indexed-decision identity, event order, object aliases, receipt contents,
+  checkpoint bytes where the format is unchanged, and continuation behavior.</li>
+<li>Duplicate FOW update ownership and repeated checkpoint staging are removed
+  through the typed transaction/snapshot owner; integrity fingerprints and
+  atomic publication remain intact.</li>
+<li>Performance-sensitive extraction requires matched production profiling.
+  Correctness checks may be reorganized, but REM-055's measured regression is
+  not declared recovered without persistent matched evidence.</li>
+</ul>
+<h3 id="r17-canonical-repository-skills">R17. Canonical repository skills<a class="headerlink" href="#r17-canonical-repository-skills" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>.agents/skills</code> is the single tracked source for repository workflow skill
+  instructions and Codex UI metadata.</li>
+<li>Provider views such as <code>.claude/skills</code> are generated, byte-identical
+  projections rather than independently edited instructions. They remain
+  regular files because runtime provenance correctly rejects source symlinks;
+  Git deduplicates their identical blobs.</li>
+<li>Repository-policy tests require the exact route set, safe in-repository
+  targets, byte identity through each projection, and complete provider
+  metadata.</li>
+<li>Adding or removing a workflow skill is one canonical change followed by a
+  projection refresh. A stale, symlinked, external, or broken provider view
+  rejects validation.</li>
+</ul>
+<h2 id="acceptance-criteria">Acceptance criteria<a class="headerlink" href="#acceptance-criteria" title="Permanent link">&para;</a></h2>
+<p>The consolidation is complete only when all of the following are true:</p>
+<ol>
+<li>Strict authoritative paths fail on injected enabled-subsystem faults, while
+   any explicit degraded mode exposes typed failure evidence.</li>
+<li>Production OODA delay/misinterpretation behavior executes exactly once,
+   advances the phase, and continues identically after checkpoint restore.</li>
+<li>Production movement proves correct first/multi-vessel current behavior and
+   contains no unresolved F821 finding.</li>
+<li>Repository lint enables F821 with only narrow documented suppressions.</li>
+<li>No active test path is owned by a phase number; the six partition union is
+   exact and all promoted contracts remain represented.</li>
+<li>Test collection does not load exact expanded-node classification ledgers;
+   the weak-test validator has no unreviewed current candidate.</li>
+<li>Routine PR CI performs no held-out study and does not duplicate collection
+   or immutable evidence work unnecessarily; main/nightly/manual tiers each
+   have a verified non-empty contract.</li>
+<li>Public docs no longer publish the full engineering history in their primary
+   navigation, and current claim validation has zero unreviewed, stale,
+   mismatched, or ambiguous dispositions without whole-history hash churn.</li>
+<li>Main tracks no generated evidence; every retained external archive locator
+   is immutable and digest-bound.</li>
+<li>Supported checkout/container/package modes are truthful. Wheel and sdist
+    allowlists plus isolated-install tests pass.</li>
+<li>The headless CLI and API/MCP resource paths work outside the repository
+    current working directory through the production runtime.</li>
+<li>Frontend transport types have a passing OpenAPI drift check.</li>
+<li>Legacy validation/pickle paths are absent from authoritative entry points
+    and clearly quarantined or removed.</li>
+<li>Scenario/loadout compatibility facades preserve public imports and strict
+    checkpoint behavior while real ownership resides in smaller modules.</li>
+<li><code>BattleManager</code> delegates OODA, movement, engagement, and checkpoint work
+    to typed executors with deterministic production, replay, and checkpoint
+    equivalence.</li>
+<li>A final <code>$profile</code> demonstrates the post-consolidation runtime cost; no
+    speed improvement is claimed unless matched evidence supports it.</li>
+<li>All applicable standard, API, E2E, slow, benchmark, terrain, data, docs,
+    frontend, packaging, scenario, determinism, checkpoint, and postmortem gates
+    pass with exclusions stated exactly.</li>
+</ol>
+<h2 id="migration-invariants">Migration invariants<a class="headerlink" href="#migration-invariants" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Test relocation is lossless before consolidation. Deletion requires an
+  obligation map naming the stronger retained proof.</li>
+<li>Mechanical module moves precede interface redesign.</li>
+<li>Compatibility facades are removed only after repository and downstream
+  callers migrate.</li>
+<li>No extraction changes checkpoint format implicitly. Any format change needs
+  its own typed migration and fresh continuation proof.</li>
+<li>No extraction changes RNG allocation, event order, or iteration order as an
+  incidental cleanup.</li>
+<li>No current historical <code>FAIL</code> or performance regression is reinterpreted as a
+  pass.</li>
+<li>Large generated evidence remains external throughout the migration.</li>
+<li>Every tranche leaves the tree in a coherent, testable state and records its
+  remaining compatibility surface.</li>
+</ul>
+<h2 id="verification-plan">Verification plan<a class="headerlink" href="#verification-plan" title="Permanent link">&para;</a></h2>
+<h3 id="safety-tranche">Safety tranche<a class="headerlink" href="#safety-tranche" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Initial red production tests for strict caller behavior, OODA maturity,
+  position misinterpretation, and first/multi-vessel tidal movement.</li>
+<li>Negative disabled controls and injected subsystem failures.</li>
+<li>Fresh and in-place checkpoint continuation for the deferred OODA queue.</li>
+<li>Focused deterministic RNG/event comparison.</li>
+<li>F821 lint with global ignore removed.</li>
+</ul>
+<h3 id="test-and-ci-tranche">Test and CI tranche<a class="headerlink" href="#test-and-ci-tranche" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Before/after definition and partition manifests retained under <code>artifacts/</code>.</li>
+<li>Exact obligation mapping for every removed or merged test.</li>
+<li>Fresh six-partition collection audit, evidence validator, and repository
+  policy tests.</li>
+<li>Workflow parse/contract tests proving the four tiers and absence of held-out
+  PR execution.</li>
+</ul>
+<h3 id="documentation-and-claim-tranche">Documentation and claim tranche<a class="headerlink" href="#documentation-and-claim-tranche" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Synthetic positive/negative claim discovery, stale-locator, changed-span,
+  and unrelated-prose controls.</li>
+<li>Full historical-claim and scenario-data validation.</li>
+<li>Strict public and engineering documentation builds plus link controls.</li>
+</ul>
+<h3 id="packaging-and-interface-tranche">Packaging and interface tranche<a class="headerlink" href="#packaging-and-interface-tranche" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Wheel/sdist content allowlists and isolated no-Git installs.</li>
+<li>Base, API, MCP, and explicit external-catalog profiles.</li>
+<li>Headless CLI production scenario smoke.</li>
+<li>OpenAPI generation/drift tests and frontend build/test/lint.</li>
+</ul>
+<h3 id="module-and-executor-tranches">Module and executor tranches<a class="headerlink" href="#module-and-executor-tranches" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Public import compatibility tests.</li>
+<li>Exact state/checkpoint round trip and uninterrupted/restored continuation.</li>
+<li>Production scenario regression and deterministic replay.</li>
+<li>API/recorder equivalence.</li>
+<li>Matched profiles around performance-sensitive transactions.</li>
+</ul>
+<h3 id="closure">Closure<a class="headerlink" href="#closure" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>$validate-conventions</code>, <code>$audit-determinism</code>, <code>$evaluate-scenarios</code>, and
+  <code>$profile</code> apply.</li>
+<li><code>$validate-data</code> applies if any catalog/schema source changes.</li>
+<li><code>$simplify</code>, <code>$update-docs</code>, <code>$cross-doc-audit</code>, and <code>$postmortem</code> are
+  mandatory before the consolidation is described as complete.</li>
+</ul>
+<h2 id="non-goals">Non-goals<a class="headerlink" href="#non-goals" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Rewriting the simulation engine.</li>
+<li>Splitting engine and catalogs across independent revisions now.</li>
+<li>Introducing microservices.</li>
+<li>Changing military models, calibration, scenario outcomes, RNG distributions,
+  or checkpoint schema merely to make extraction easier.</li>
+<li>Deleting tests based only on line count, coverage percentage, age, or phase
+  number.</li>
+<li>Treating generated OpenAPI types as a replacement for semantic frontend
+  validation.</li>
+<li>Fetching full evidence at runtime.</li>
+<li>Claiming Phase 118's performance regression is recovered without matched
+  production evidence.</li>
+</ul>
+<h2 id="open-operational-decisions">Open operational decisions<a class="headerlink" href="#open-operational-decisions" title="Permanent link">&para;</a></h2>
+<ul>
+<li>The URL and retention provider for the separate evidence remote are external
+  deployment choices. Until supplied, the local append-only <code>evidence/full</code>
+  branch remains unpublished and main records that qualification.</li>
+<li>Independent package releases are deferred. A future uv workspace requires a
+  composite release-manifest design review before engine/catalog separation.</li>
+<li>Exact compatibility-facade removal dates are chosen from real downstream
+  caller evidence, not a calendar deadline.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

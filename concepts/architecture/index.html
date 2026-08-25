@@ -310,51 +310,11 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../brainstorm/" class="md-tabs__link">
+        <a href="../../specs/tiered-modular-monolith/" class="md-tabs__link">
           
   
   
-  Architecture (Internal)
-
-        </a>
-      </li>
-    
-  
-
-      
-        
-  
-  
-  
-  
-    
-    
-      <li class="md-tabs__item">
-        <a href="../../development-phases/" class="md-tabs__link">
-          
-  
-  
-  Development Phases
-
-        </a>
-      </li>
-    
-  
-
-      
-        
-  
-  
-  
-  
-    
-    
-      <li class="md-tabs__item">
-        <a href="../../devlog/" class="md-tabs__link">
-          
-  
-  
-  Devlog
+  Engineering
 
         </a>
       </li>
@@ -874,6 +834,28 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#execution-authority-and-failure-modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Execution authority and failure modes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modular-simulation-ownership" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modular simulation ownership
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#historical-validation-boundary" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -885,10 +867,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#source-identity-in-checkouts-and-immutable-images" class="md-nav__link">
+  <a href="#application-resources-and-source-identity" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Source identity in checkouts and immutable images
+        Application resources and source identity
       
     </span>
   </a>
@@ -1254,7 +1236,7 @@
   <span class="md-ellipsis">
     
   
-    Architecture (Internal)
+    Engineering
   
 
     
@@ -1270,7 +1252,7 @@
             <span class="md-nav__icon md-icon"></span>
             
   
-    Architecture (Internal)
+    Engineering
   
 
           </label>
@@ -1283,747 +1265,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../brainstorm/" class="md-nav__link">
+      <a href="../../specs/tiered-modular-monolith/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Core Design
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../brainstorm-post-mvp/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Post-MVP Design
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../brainstorm-block2/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Block 2 Design
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../brainstorm-block3/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Block 3 Design
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../brainstorm-block4/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Block 4 Design
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../brainstorm-block5/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Block 5 Design
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../brainstorm-block6/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Block 6 Design
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../brainstorm-block7/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Block 7 Design
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../brainstorm-block8/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Block 8 Design
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../brainstorm-block9/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Block 9 Design
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../brainstorm-block10/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Block 10 Design
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../brainstorm-block11/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Block 11 Design
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
-        
-          
-          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Development Phases
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Development Phases
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../development-phases/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    MVP (0-10)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../development-phases-post-mvp/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Post-MVP (11-24)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../development-phases-block2/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Block 2 (25-30)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../development-phases-block3/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Block 3 (31-36)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../development-phases-block4/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Block 4 (37-39)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../development-phases-block5/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Block 5 (40-48)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../development-phases-block6/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Block 6 (49-57)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../development-phases-block7/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Block 7 (58-67)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../development-phases-block8/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Block 8 (68-82)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../development-phases-block9/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Block 9 (83-91)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../development-phases-block10/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Block 10 (92-97)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../development-phases-block11/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Block 11 (98-104)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../development-phases-block12/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Block 12 (105-114)
+    Consolidation Contract
   
 
     
@@ -2051,7 +1300,7 @@
   <span class="md-ellipsis">
     
   
-    Block 13 (115-127)
+    Current Roadmap
   
 
     
@@ -2064,6 +1313,60 @@
   
 
               
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_3" id="__nav_5_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Future Roadmaps
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Future Roadmaps
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
             
               
                 
@@ -2289,6 +1592,14 @@
 
               
             
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
               
                 
   
@@ -2317,67 +1628,6 @@
 
               
             
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
-        
-          
-          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Devlog
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_7">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Devlog
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
               
                 
   
@@ -2392,3367 +1642,7 @@
   <span class="md-ellipsis">
     
   
-    Overview
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-0/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 0 - Scaffolding
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-1/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 1 - Terrain & Environment
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-2/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 2 - Entities & Movement
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-3/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 3 - Detection & Intelligence
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-4/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 4 - Combat & Morale
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-5/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 5 - C2 Infrastructure
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-6/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 6 - Logistics & Supply
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-7/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 7 - Engagement Validation
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-8/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 8 - AI & Planning
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-9/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 9 - Simulation Orchestration
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-10/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 10 - Campaign Validation
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-11/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 11 - Core Fidelity Fixes
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-12/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 12 - Deep Systems Rework
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-13/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 13 - Performance Optimization
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-14/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 14 - Tooling & Dev Experience
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-15/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 15 - Real-World Terrain
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-16/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 16 - Electronic Warfare
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-17/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 17 - Space & Satellite
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-18/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 18 - CBRN Effects
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-19/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 19 - Doctrinal AI Schools
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-20/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 20 - WW2 Era
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-21/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 21 - WW1 Era
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-22/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 22 - Napoleonic Era
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-23/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 23 - Ancient & Medieval Era
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-24/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 24 - Unconventional Warfare
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-25/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 25 - Engine Wiring
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-26/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 26 - Core Polish
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-27/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 27 - Combat Completeness
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-28/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 28 - Modern Data Package
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-28.5/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 28.5 - Directed Energy
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-29/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 29 - Historical Data Expansion
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-30/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 30 - Scenario Library
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-31/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 31 - Documentation Site
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-32/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 32 - API & Service Foundation
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-33/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 33 - Frontend Foundation
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-34/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 34 - Run Results & Analysis
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-35/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 35 - Tactical Map
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-36/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 36 - Scenario Tweaker & Polish
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-37/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 37 - Integration Fixes & E2E
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-38/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 38 - Map & Chart Enhancements
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-39/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 39 - Quality & Packaging
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-40/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 40 - Battle Loop Foundation
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-41/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 41 - Combat Depth
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-42/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 42 - Tactical Behavior
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-43/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 43 - Domain-Specific Resolution
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-44/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 44 - Environmental & Subsystem Integration
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-45/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 45 - Mathematical Model Audit & Hardening
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-46/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 46 - Scenario Data Cleanup & Expansion
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-47/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 47 - Full Recalibration & Validation
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-48/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 48 - Block 5 Deficit Resolution
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-49/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 49 - Calibration Schema Hardening
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-50/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 50 - Combat Fidelity Polish
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-51/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 51 - Naval Combat Completeness
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-52/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 52 - Environmental Continuity
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-53/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 53 - C2 & AI Completeness
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-54/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 54 - Era-Specific & Domain Sub-Engine Wiring
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-55/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 55 - Resolution & Scenario Migration
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-56/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 56 - Performance & Logistics
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-57/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 57 - Full Validation & Regression
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-58/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 58 - Structural Verification & Core Combat Wiring
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-59/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 59 - Atmospheric & Ground Environment Wiring
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-60/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 60 - Obscurants, Fire, & Visual Environment
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-61/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 61 - Maritime, Acoustic, & EM Environment
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-62/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 62 - Human Factors, CBRN, & Air Combat Environment
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-63/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 63 - Cross-Module Feedback Loops
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-64/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 64 - C2 Friction & Command Delay
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-65/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 65 - Space & EW Sub-Engine Activation
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-66/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 66 - Unconventional, Naval, & Cleanup
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-67/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 67 - Integration Validation & Recalibration
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-68/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 68 - Consequence Enforcement
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-69/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 69 - C2 Depth
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-70/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 70 - Performance Optimization
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-71/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 71 - Missile & Carrier Ops Completion
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-72/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 72 - Checkpoint & State Completeness
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-73/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 73 - Historical Scenario Correctness
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-74/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 74 - Combat Engine Unit Tests
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-75/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 75 - Simulation Core & Domain Unit Tests
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-76/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 76 - API Robustness
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-77/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 77 - Frontend Accessibility
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-78/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 78 - P2 Environment Wiring
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-79/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 79 - CI/CD & Packaging
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-80/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 80 - API & Frontend Sync
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-81/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 81 - Recalibration & Validation
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-82/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 82 - Block 8 Postmortem & Documentation
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-83/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 83 - Profiling Infrastructure
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-84/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 84 - Spatial Culling & Scan Scheduling
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-85/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 85 - LOD & Aggregation
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-86/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 86 - Engagement & Calibration Optimization
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-87/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 87 - Expanded Numba JIT
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-88/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 88 - SoA Data Layer
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-89/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 89 - Per-Side Parallelism
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-90/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 90 - Validation & Benchmarking
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-91/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 91 - Scenario Recalibration & Regression
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-92/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 92 - API Analytics & Frame Enrichment
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-93/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 93 - Results Dashboard Depth
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-94/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 94 - Tactical Map Enrichment
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-95/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 95 - Calibration & Scenario Editor Depth
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-96/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 96 - Analysis & Event Interaction
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-97/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 97 - Data Catalog & Block 10 Validation
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-98/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 98 - Shared Prework (Block 11 Golden Scenarios)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-99/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 99 - Debecka Pass 2003 (Block 11)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-100/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 100 - Khafji 1991 (Block 11)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-101/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 101 - Fallujah Phase Line Fran 2004 (Block 11)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-102/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 102 - Bint Jbeil + INS Hanit 2006 (Block 11)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-103/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 103 - Block 11 Polish - OOB + engine gap tightening
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-104/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 104 - Configurable Deployment Modes
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-105/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 105 - Checkpoint State Integrity
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-106/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 106 - API Execution Integrity
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-107/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 107 - Scenario Configuration Wiring
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-108/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 108 - Logistics Runtime Wiring
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-109/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 109 - Equipment Mapping Integrity
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-110/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 110 - ASAT Production Integration
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-111/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 111 - Time-on-Target Execution
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-112/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 112 - Validation and Documentation Trust
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-113/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 113 - Morale State Ownership
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-114/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 114 - Era Override Execution
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-115/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 115 - Sensing-Aware Tactical Standoff
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-116/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 116 - Fog-of-War Contact Continuation
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-117/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 117 - Historical Outcome-Envelope Integrity
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../devlog/phase-118/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Phase 118 - Performance-Flag Semantic Integrity
+    Phase History
   
 
     
@@ -5795,10 +1685,10 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
         
           
-          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
             
   
   
@@ -5816,8 +1706,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_8">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -6376,6 +2266,28 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#execution-authority-and-failure-modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Execution authority and failure modes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modular-simulation-ownership" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modular simulation ownership
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#historical-validation-boundary" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6387,10 +2299,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#source-identity-in-checkouts-and-immutable-images" class="md-nav__link">
+  <a href="#application-resources-and-source-identity" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Source identity in checkouts and immutable images
+        Application resources and source identity
       
     </span>
   </a>
@@ -6558,7 +2470,7 @@
 <h1 id="architecture-overview">Architecture Overview<a class="headerlink" href="#architecture-overview" title="Permanent link">&para;</a></h1>
 <p>This page explains the core architecture of Stochastic Warfare -- how the engine is structured, how simulation runs execute, and how optional subsystems integrate.</p>
 <h2 id="module-dependency-chain">Module Dependency Chain<a class="headerlink" href="#module-dependency-chain" title="Permanent link">&para;</a></h2>
-<p>The engine is composed of 12 top-level modules with a strict one-way dependency graph:</p>
+<p>The engine's foundational dependency spine follows this one-way direction:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>core -&gt; coordinates -&gt; terrain -&gt; environment -&gt; entities -&gt; movement
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  -&gt; detection -&gt; combat -&gt; morale -&gt; c2 -&gt; logistics -&gt; simulation
 </code></pre></div>
@@ -6620,9 +2532,11 @@
 </tr>
 </tbody>
 </table>
-<p><strong>Key rule</strong>: Dependencies flow downward only. Terrain never imports environment. Environment may read terrain (one-way). This prevents circular dependencies and makes the system testable in isolation.</p>
+<p><strong>Key rule</strong>: Dependencies flow toward orchestration. Specialized domain
+packages join this spine through typed owners; lower-level packages do not
+import application adapters such as the API, CLI, MCP, or frontend.</p>
 <h3 id="additional-domain-modules">Additional Domain Modules<a class="headerlink" href="#additional-domain-modules" title="Permanent link">&para;</a></h3>
-<p>Beyond the core 12, specialized domain modules provide optional capabilities:</p>
+<p>Specialized domain modules provide optional capabilities around that spine:</p>
 <table>
 <thead>
 <tr>
@@ -6769,6 +2683,14 @@ fuel tanks or weapon magazines remain explicit remediation boundaries.</p>
 <li><strong>Hold-fire discipline</strong> -- if enabled via <code>behavior_rules</code>, defensive units wait until targets are within effective range (default 80% of max range)</li>
 <li><strong>Engagement resolution</strong> -- ballistics, penetration, and damage applied</li>
 </ol>
+<p>Two environment-sensitive range paths use conservative, explicit contracts.
+Enabled air-combat environment handling derives a finite positive wind
+modifier and applies it only to BVR eligibility and BVR range-dependent
+resolution; WVR/guns selection and reported geometric range are unchanged.
+Enabled acoustic layers use a 6x sonar discovery ceiling covering the largest
+supported positive surface-duct and convergence-zone combination. The exact
+acoustic resolver remains the final gate and still applies thermocline,
+shadow-zone, and disabled penalties.</p>
 <p><code>MoraleRuntime</code> owns ordinary transitions and the related status, route, event,
 and MORALE-stream transaction. After a transition, a <strong>rout cascade</strong> may force
 nearby <code>SHAKEN</code>/<code>BROKEN</code> units to <code>ROUTED</code> in canonical candidate order. A
@@ -6851,6 +2773,57 @@ registry lookup. <code>RuntimeSession.step()</code> returns <code>True</code> at
 Provenance exposes source/config fingerprints, exact seeds and rosters, code
 and data revisions, catalog/doctrine/loadout fingerprints, and initial plus
 arriving assignments.</p>
+<h3 id="execution-authority-and-failure-modes">Execution authority and failure modes<a class="headerlink" href="#execution-authority-and-failure-modes" title="Permanent link">&para;</a></h3>
+<p><code>RuntimeExecutionMode.STRICT</code> is the default for the factory, engine, product
+CLI, API, MCP, analysis, scenario evaluation, campaign validation, and
+historical-validation paths. An enabled subsystem exception is latched and
+re-raised; the runtime cannot publish a successful result or checkpoint after
+that failure.</p>
+<p><code>RuntimeExecutionMode.DEGRADED</code> is an explicit interactive compatibility mode.
+Each suppressed exception becomes an ordered <code>SuppressedRuntimeFailure</code> with
+tick, logical time, subsystem, operation, exception type, and message.
+<code>SimulationRunResult</code> and <code>RuntimeProvenance</code> expose the mode and failures and
+report <code>authoritative=False</code>; degraded runtimes cannot create or restore an
+authoritative checkpoint. The legacy <code>strict_mode</code> boolean maps to this typed
+policy and conflicting inputs reject.</p>
+<p>Nested communications, indirect-fire, space, battle, recorder, and committed
+event-publication paths bind the same engine-owned failure policy. A
+runtime-bound recorder must use the context event bus and preserves complete
+event-stream integrity: overflow, extraction, or subscriber failures propagate
+in strict mode or become typed degraded evidence with a bounded fallback.
+Standalone <code>RecorderConfig</code> strictness flags retain diagnostic compatibility
+only. A recorder that lost evidence before binding cannot later enter an
+authoritative runtime.</p>
+<h3 id="modular-simulation-ownership">Modular simulation ownership<a class="headerlink" href="#modular-simulation-ownership" title="Permanent link">&para;</a></h3>
+<p>The public <code>simulation.scenario</code> and <code>simulation.loadouts</code> modules remain
+compatibility facades. Scenario configuration, live context, checkpoint
+orchestration, and loading are owned by <code>scenario_config.py</code>,
+<code>runtime_context.py</code>, <code>context_checkpoint.py</code>, and <code>scenario_loader.py</code>.
+Loadout contracts, registry resolution, live attachments, and construction are
+owned by <code>loadout_contracts.py</code>, <code>loadout_registry.py</code>,
+<code>runtime_attachments.py</code>, and <code>loadout_builder.py</code>.</p>
+<p>Calibration is compiled once into recursively frozen <code>ResolvedCalibration</code>.
+Its context hot-path view is read-only, while <code>to_flat_dict()</code> returns a
+detached mutable compatibility copy. Checkpoint owners are classified as typed
+atomic stage/commit, isolated legacy-clone, or stateless; a single immutable
+<code>ContextCheckpointSnapshot</code> is captured before validation and encoding.</p>
+<p><code>BattleManager</code> remains the deterministic tactical transaction facade.
+Injected OODA, movement, engagement, and checkpoint executors receive frozen
+request envelopes plus least-privilege typed runtime views. Those views expose
+only the exact read-only values and explicitly named mutable domain owners each
+executor needs; they contain neither <code>SimulationContext</code> nor untyped <code>Any</code>
+capability. Live <code>Unit</code> identity remains intentional. Tick order, candidate
+order, RNG identity, event order, aliases, receipts, checkpoint bytes, and
+continuation remain facade invariants.</p>
+<p>The old <code>FogOfWarManager.update()</code> call shape cannot express the transactional
+owner contract and now raises <code>UnsupportedLegacyFogOfWarUpdateError</code> with the
+supported <code>BattleManager.prepare_tactical_interval()</code> migration boundary.
+Context checkpoint capture obtains the targeting/FOW snapshot once and reuses
+that exact state and plan for validation and final encoding. The accepted
+2026-08-23 consolidation postmortem closes REM-052 and REM-053 on these
+boundaries; planned Phases 139 and 140 are retired before start. The closure is
+valid only for a revision whose final exact frozen-revision release gate is
+green.</p>
 <h3 id="historical-validation-boundary">Historical-validation boundary<a class="headerlink" href="#historical-validation-boundary" title="Permanent link">&para;</a></h3>
 <p>Historical acceptance is a separate typed pipeline over the production runtime:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>historical_claims.yaml
@@ -6863,12 +2836,13 @@ arriving assignments.</p>
 <a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>  -&gt; completed PASS/FAIL or operational ERROR artifact
 <a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>  -&gt; accepted-evidence verification and public claim disposition
 </code></pre></div>
-<p>The full loader verifies the ledger's self-digest, source paths and content
-digests for every repository claim, and any accepted artifact bindings. Each
-study predeclares source lineage, exact claim and metric scopes, event
-boundaries, seeds, runtime inputs, and acceptance policy. The runner builds
-every seed through <code>PreparedScenario</code>, observes typed terminal outcomes and
-metric receipts, and retains the complete vectors rather than trusting summary
+<p>The full loader verifies the ledger's self-digest, exact claim locators and
+content digests, path-independent matched-span reviews, and any accepted
+artifact bindings. Each study predeclares source lineage, exact claim and
+metric scopes, event boundaries, seeds, runtime inputs, and acceptance policy.
+The runner builds every seed through <code>PreparedScenario</code>, observes typed
+terminal outcomes and metric receipts, and retains the complete vectors rather
+than trusting summary
 statistics. <code>PASS</code> and <code>FAIL</code> are completed evaluations; an <code>ERROR</code> records a
 post-start operational failure without a verdict and is never promotable.
 Invalid plans reject before an artifact is created.</p>
@@ -6881,42 +2855,85 @@ compatibility interfaces and cannot issue a historical verdict. The current
 ledger has zero production-validated scenarios. The retained 73 Easting study
 is a completed, non-promotable <code>FAIL</code> with 0/20 joint successes and a 0.0
 one-sided lower confidence bound.</p>
-<h3 id="source-identity-in-checkouts-and-immutable-images">Source identity in checkouts and immutable images<a class="headerlink" href="#source-identity-in-checkouts-and-immutable-images" title="Permanent link">&para;</a></h3>
-<p>Runtime source identity is Git-first. When preparation starts inside a Git
-worktree, the resolver records <code>HEAD</code>, a dirty flag, and a content-sensitive
-worktree fingerprint. A clean tree is identified by its commit; a dirty tree
-also incorporates Git status, the tracked binary diff, and the path, mode,
-size, and content of every untracked file. Symlinks and non-regular worktree
-entries are rejected. If a <code>.git</code> control marker exists but Git is unavailable
-or cannot verify the worktree, preparation fails rather than falling back to a
-packaged identity.</p>
-<p>The production Docker image deliberately omits <code>.git</code>. Its build requires an
+<h3 id="application-resources-and-source-identity">Application resources and source identity<a class="headerlink" href="#application-resources-and-source-identity" title="Permanent link">&para;</a></h3>
+<p><code>ApplicationPaths</code> resolves immutable inputs and mutable outputs without a
+hidden repository-CWD dependency. It selects checkout, packaged-resource, or
+explicit external-catalog mode and owns the catalog, scenario root,
+historical-claim receipt, SQLite path, optional frontend bundle, and artifact
+root. Installed catalog data is loaded through <code>importlib.resources</code>.
+Configured relative roots anchor to the application layout. A user-supplied
+explicit relative scenario path intentionally follows normal invocation-CWD
+semantics; a catalog name is resolved only below the selected catalog.</p>
+<p>Checkout mutable defaults stay in <code>data/api_runs.db</code> and <code>artifacts/</code>.
+Package/external defaults use <code>XDG_STATE_HOME/stochastic-warfare</code> or
+<code>~/.local/state/stochastic-warfare</code>. An external catalog changes scenario/data
+resolution but does not replace the package or checkout's immutable historical
+claim receipt.</p>
+<p>Runtime source identity is anchored to the imported
+<code>stochastic_warfare.simulation.runtime</code> file, never to the selected catalog.
+In a source checkout, the exact owning Git root records <code>HEAD</code>, a dirty flag,
+and a content-sensitive worktree fingerprint. A nominally clean tree is
+accepted only after the runtime-owned package, API, root-import, Python startup,
+and repository-script paths match <code>HEAD</code> in path set, index state, executable
+mode, and raw bytes. Assume-unchanged or skip-worktree flags, undeclared root
+import shadows, ignored runtime sources, symlinks, and non-regular worktree
+entries fail closed. A dirty tree also incorporates the complete index path,
+flag, mode, and blob identity; Git status; the tracked binary diff; every
+untracked file; and an exact raw runtime-source digest, so Git filters and
+index-only changes cannot hide source state. Regular-file reads bind metadata
+before and after capture, and two complete dirty attributions must agree before
+publication. If an exact-root <code>.git</code> control marker exists but Git is
+unavailable or cannot verify it, preparation fails.</p>
+<p>An immutable build identity is an application-root ceiling. Git is accepted
+only when its root is exactly that application root. An enclosing deployment
+repository, such as a virtual environment inside an unrelated checkout, and a
+nested partial repository cannot override the identity for the complete
+application. The imported runtime must also reside below the identity-owned
+<code>stochastic_warfare/</code> package tree. These rules prevent a parent or shadow
+repository from attributing packaged bytes to an unrelated commit.</p>
+<p>No-<code>.git</code> application artifacts include the production Docker image and built
+Python distributions. The Docker build requires an
 explicit <code>SOURCE_REVISION</code> containing exactly 40 lowercase hexadecimal
 characters. Builders must use a clean checkout so that this supplied
 attribution names the staged source. After the locked Python environment is
 installed, <code>stochastic_warfare.build_identity</code> writes the exact-schema
-<code>stochastic_warfare/_build_identity.json</code>. That identity binds the supplied
-commit to a canonical manifest digest over every regular file beneath
-<code>stochastic_warfare/</code> and <code>api/</code>, plus <code>pyproject.toml</code> and <code>uv.lock</code>. Each
-manifest entry contains the relative path, normalized executable mode, byte
-size, and SHA-256 digest; generated identity and interpreter-cache files are
-excluded. Missing directories or files, symlinks, special files, duplicate
-identity keys, malformed values, and non-finite JSON are rejected.</p>
+<code>stochastic_warfare/_build_identity.json</code>. Docker's schema-1
+<code>application-tree</code> identity binds every regular file beneath
+<code>stochastic_warfare/</code> and <code>api/</code> plus <code>pyproject.toml</code> and <code>uv.lock</code>. A wheel's
+schema-2 <code>python-distribution</code> identity binds the installed
+<code>stochastic_warfare/</code> and <code>api/</code> trees, including its bundled YAML catalog,
+without claiming absent checkout-only root files. Each manifest entry contains
+the relative path, normalized executable mode, byte size, and SHA-256 digest;
+the generated identity and interpreter caches are excluded. Missing
+directories or files, symlinks, special files, duplicate identity keys,
+malformed values, and non-finite JSON are rejected.</p>
+<p>Wheel and sdist hooks share one lexical, regular-file input enumerator. It
+rejects legacy setuptools configuration, source or directory symlinks,
+undeclared package roots, implicit package data, hidden Python sources, and
+ignored artifact inputs before staging. Clean Git-derived builds additionally
+bind the exact selected path set, index flags, executable modes, and raw blobs
+to <code>HEAD</code>; a pipeline-supplied revision can authorize dirty bytes but cannot
+bypass the layout and file-type checks. Distributable wheel staging starts from
+an empty validated in-checkout build directory, while PEP 660 editable installs
+continue to execute directly from the checkout.</p>
 <p>When no Git worktree exists, runtime preparation loads the generated identity
-and recomputes the complete application-source manifest. Missing or malformed
-identity data and any packaged-source tampering fail before a
+and recomputes the complete application-source manifest twice. The identity
+payload and both stable source captures must agree before publication. Missing
+or malformed identity data and any packaged-source tampering fail before a
 <code>PreparedScenario</code> can be used. A verified image reports the supplied commit,
 <code>dirty=False</code>, and a fingerprint derived from the immutable-build kind, commit,
-and source-manifest digest. Scenario and catalog inputs are outside this
-application manifest and retain their separate runtime data and catalog
-revisions.</p>
+and source-manifest digest. Bundled catalog bytes are therefore both
+artifact-bound and independently reported through runtime data/catalog
+revisions. An explicitly configured external catalog is outside the
+application manifest and changes only those data provenance fields; it never
+changes the code revision.</p>
 <p><code>.github/workflows/build.yml</code> is configured to exercise this path on pull
 requests to <code>main</code>, pushes to <code>main</code>, and manual dispatches. It builds with
 <code>GITHUB_SHA</code>, asserts that <code>/app/.git</code> is absent, runs a bounded scenario
 through <code>SimulationRuntimeFactory -&gt; RuntimeSession</code>, and checks the expected
 commit and clean immutable-image identity. The configured image smoke also
 checks that docs and tests are absent, loads the historical ledger through
-<code>load_scenario_catalog()</code>, audits all API-published scenario claims in the
+<code>load_packaged_scenario_catalog()</code>, audits all API-published scenario claims in the
 current zero-accepted ledger, and verifies that 73 Easting remains unsupported
 with regression evidence but no accepted claim IDs. Phase 117's local
 packaged-loader tests exercise the ledger boundary. The Phase 117 push
@@ -6964,6 +2981,9 @@ factory. Given a scenario YAML or prevalidated effective config, it:</p>
    runtime's stable read-only <code>Mapping[str, MoraleState]</code>, not another owner</li>
 <li>Returns a <code>SimulationContext</code> with everything wired together</li>
 </ol>
+<p>The loader implementation lives in <code>scenario_loader.py</code>; imports through
+<code>simulation.scenario.ScenarioLoader</code> remain supported. The same compatibility
+rule applies to loadout types re-exported from <code>simulation.loadouts</code>.</p>
 <p><code>RuntimeForceBuilder</code> owns typed initial-force construction. It validates exact
 unit enums, counts, positions, supported per-instance overrides, deterministic
 IDs, loaded runtime domains, and final roster cardinality before publication.
@@ -7216,6 +3236,13 @@ modified. Comparisons preserve paired counts/differences, superiority, raw
 exact-sign p-values, Holm-adjusted p-values, and family-wise significance.
 Unsupported metrics or incomplete/nonfinite runs fail rather than producing
 plausible zeroes.</p>
+<p>MCP uses the same <code>ApplicationPaths</code> and strict factory/session boundary.
+Scenario, unit, and result resource identifiers are path-free and normalized;
+resource resolution rejects symlinks and any escape from the configured
+catalog. Its in-memory result cache is bounded and process-local. The
+simplified validation helpers and trusted-local pickle conversion are
+quarantined under <code>stochastic_warfare.legacy</code> and have no production
+checkpoint, runtime, or acceptance authority.</p>
 <h3 id="frontend-frontend">Frontend (<code>frontend/</code>)<a class="headerlink" href="#frontend-frontend" title="Permanent link">&para;</a></h3>
 <p>A React + TypeScript single-page application built with Vite:</p>
 <ul>
@@ -7233,6 +3260,11 @@ payloads. The scenario list labels Block 11 entries as current-engine
 regression references, and scenario detail renders the exact ledger-backed
 aggregate disposition and claim scopes. It does not present legacy documented
 outcomes as validation evidence.</p>
+<p>FastAPI's production OpenAPI document is the transport-shape authority.
+<code>scripts/generate_openapi_types.py</code> deterministically generates
+<code>frontend/src/types/openapi.generated.ts</code>, and CI rejects drift. Handwritten
+frontend validators remain for semantic constraints and discriminated unions;
+generated types do not replace them.</p>
 <p>See the <a href="../../guide/web-ui/">Web UI Guide</a> for usage documentation.</p>
 <h2 id="consequence-enforcement-gates">Consequence Enforcement Gates<a class="headerlink" href="#consequence-enforcement-gates" title="Permanent link">&para;</a></h2>
 <p>The engine's legacy resource-consumption and C2-friction consequences use an
@@ -7340,7 +3372,13 @@ closed Phase 118 / REM-031. Neither semantic evidence nor externally contended
 execution establishes a speed improvement; REM-055 / Phase 142 owns the
 separately measured transactional-FOW runtime regression.</p>
 <h2 id="checkpointing">Checkpointing<a class="headerlink" href="#checkpointing" title="Permanent link">&para;</a></h2>
-<p>Checkpoint-participating runtime owners implement the checkpoint protocol:</p>
+<p>Checkpoint participation uses typed ownership rather than probing every object
+for matching method names. Typed owners stage and commit atomically; explicitly
+classified legacy owners stage on isolated clones; stateless owners publish no
+payload. Public compatibility still exposes <code>get_state()</code>/<code>set_state()</code> where
+required, but one immutable <code>ContextCheckpointSnapshot</code> owns each current
+capture.</p>
+<p>The basic typed owner shape is:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">SomeEngine</span><span class="p">:</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">get_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Serialize full internal state.&quot;&quot;&quot;</span>
@@ -7356,6 +3394,10 @@ separately measured transactional-FOW runtime regression.</p>
 <li><strong>Branching</strong> -- checkpoint, run two different decisions, compare outcomes</li>
 <li><strong>Debugging</strong> -- reproduce any simulation state from a checkpoint + seed</li>
 </ul>
+<p>Context capture enumerates registered owners once. The targeting checkpoint
+owner captures FOW state once, reuses its typed restore plan and serialized
+state for every cross-owner check, and emits that same snapshot in the final
+payload. Validation does not recapture a later mutable FOW epoch.</p>
 <p>The current <code>SimulationEngine</code> checkpoint schema is version 118. In addition
 to exact force/loadout/logistics/time-on-target state and the single
 <code>morale_runtime</code> envelope, it stores one fully effective

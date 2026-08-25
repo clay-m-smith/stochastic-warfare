@@ -1,0 +1,2463 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="High-fidelity stochastic wargame simulator — multi-scale, multi-domain, multi-era">
+      
+      
+        <meta name="author" content="Clay Smith">
+      
+      
+        <link rel="canonical" href="https://clay-m-smith.github.io/stochastic-warfare/devlog/phase-142/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.4">
+    
+    
+      
+        <title>Phase 142 - Transactional FOW Runtime-Cost Integrity - Stochastic Warfare</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#phase-142-transactional-fow-runtime-cost-integrity" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Stochastic Warfare" class="md-header__button md-logo" aria-label="Stochastic Warfare" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Stochastic Warfare
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Phase 142 - Transactional FOW Runtime-Cost Integrity
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/clay-m-smith/stochastic-warfare" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    clay-m-smith/stochastic-warfare
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../guide/getting-started/" class="md-tabs__link">
+          
+  
+  
+  Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../concepts/architecture/" class="md-tabs__link">
+          
+  
+  
+  Concepts
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/api/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../specs/tiered-modular-monolith/" class="md-tabs__link">
+          
+  
+  
+  Engineering
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../specs/project-structure/" class="md-tabs__link">
+          
+  
+  
+  Specifications
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Stochastic Warfare" class="md-nav__button md-logo" aria-label="Stochastic Warfare" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Stochastic Warfare
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/clay-m-smith/stochastic-warfare" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    clay-m-smith/stochastic-warfare
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/web-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Web UI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/scenarios/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scenario Library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mathematical Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/eras/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eras
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/units/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Units & Equipment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Engineering
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Engineering
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/tiered-modular-monolith/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Consolidation Contract
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block13/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Current Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_3" id="__nav_5_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Future Roadmaps
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Future Roadmaps
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block14/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 14 (128-130)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block15/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 15 (131)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block16/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 16 (132)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block17/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 17 (133)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block18/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 18 (134)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block19/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 19 (135-137)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block20/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 20 (138-140)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-phases-block21/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block 21 (141-142)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../remediation-backlog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Remediation Backlog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase History
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specifications
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Specifications
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/project-structure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Structure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/checkpoint-state/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Checkpoint State Contract
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/equipment-mapping/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Equipment Mapping and Runtime Loadouts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/asat-production-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ASAT Production Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/time-on-target-execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Time-on-Target Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/validation-and-documentation-trust/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validation and Documentation Trust
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/fog-of-war-contact-continuation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fog-of-War Contact Continuation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/historical-outcome-envelope-integrity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Historical Outcome-Envelope Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/performance-flag-semantic-integrity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Performance-Flag Semantic Integrity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/morale-state-ownership/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Morale State Ownership
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/era-override-execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Era Override Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../specs/sensing-aware-tactical-standoff/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sensing-Aware Tactical Standoff
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../skills-and-hooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skills & Hooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#objective" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Objective
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#start-gate-and-production-trace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Start gate and production trace
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#acceptance-contract-and-threshold-history" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Acceptance contract and threshold history
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-start-environment-and-evidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase-start environment and evidence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#requirements-and-non-goals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Requirements and non-goals
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verification-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verification plan
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-and-closure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation and closure
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation and closure">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#production-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Production implementation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#simplification-and-integrity-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Simplification and integrity review
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#accepted-performance-receipt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Accepted performance receipt
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#final-source-bound-call-profile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Final source-bound call profile
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#semantic-and-continuation-evidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Semantic and continuation evidence
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bounded-scenario-evidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bounded scenario evidence
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#partition-and-static-evidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Partition and static evidence
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#limitations-and-closure-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Limitations and closure status
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#postmortem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Postmortem
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="phase-142-transactional-fow-runtime-cost-integrity">Phase 142 - Transactional FOW Runtime-Cost Integrity<a class="headerlink" href="#phase-142-transactional-fow-runtime-cost-integrity" title="Permanent link">&para;</a></h1>
+<p><strong>Status:</strong> Complete</p>
+<p><strong>Remediation:</strong> REM-055</p>
+<p><strong>Started:</strong> 2026-08-24</p>
+<p><strong>Completed:</strong> 2026-08-25</p>
+<p><strong>Contract:</strong> <a href="../../specs/performance-flag-semantic-integrity/">Performance-Flag Semantic Integrity</a></p>
+<h2 id="objective">Objective<a class="headerlink" href="#objective" title="Permanent link">&para;</a></h2>
+<p>Recover the gross production runtime regression introduced by Phase 118's
+transactional fog-of-war update without weakening failure atomicity,
+owner-bound mutation detection, canonical indexed-RNG identity, deterministic
+parallel publication, correlation-safe fusion, observer-support continuation,
+receipts, or checkpoint reconciliation.</p>
+<p>This is an execution optimization. It does not revise the detection model,
+re-enable scan scheduling or LOD, tune scenario/catalog inputs, or establish a
+universal throughput claim.</p>
+<h2 id="start-gate-and-production-trace">Start gate and production trace<a class="headerlink" href="#start-gate-and-production-trace" title="Permanent link">&para;</a></h2>
+<p>Phase 142 starts from clean commit
+<code>941590261a5ae7d8066884805fdf66556b6d5f59</code>. The production target is the
+factory-built <code>benchmark_battalion</code> scenario at seed 42 for exactly ten ticks
+and 50 logical seconds, with strict mode and event recording, fog of war,
+detection culling, SoA selection, and parallel detection enabled, and scan
+scheduling and LOD disabled.</p>
+<p>The measured path is:</p>
+<p><code>SimulationRuntimeFactory.prepare -&gt; PreparedScenario.build -&gt; RuntimeSession
+-&gt; SimulationEngine.run -&gt; BattleManager.prepare_tactical_interval -&gt;
+BattleManager._update_interval_fog_of_war -&gt; FogOfWarManager transaction</code></p>
+<p>The runtime-cost defect has no separate enable/disable stage. Declared,
+loaded, wired, exercised, and outcome-measured stages already exist; Phase 142
+must add accepted persistent optimization evidence while preserving every
+existing outcome and persistence boundary.</p>
+<h2 id="acceptance-contract-and-threshold-history">Acceptance contract and threshold history<a class="headerlink" href="#acceptance-contract-and-threshold-history" title="Permanent link">&para;</a></h2>
+<p>The repository owner approved the original contract on 2026-08-24 before any
+hot-path source change:</p>
+<ul>
+<li>discard one warm-up per revision;</li>
+<li>execute five same-host interleaved matched pairs in the order <code>B/C</code>, <code>C/B</code>,
+  <code>B/C</code>, <code>C/B</code>, <code>B/C</code> using fresh production sessions;</li>
+<li>initially require the median of candidate/reference paired timing ratios to
+  be at most <code>0.80</code>;</li>
+<li>require each revision's relative sample range to be at most <code>0.05</code>;</li>
+<li>require candidate peak Python allocation memory under the matched
+  <code>tracemalloc</code> measurement to be at most <code>1.05</code> times the baseline;</li>
+<li>compare call profiles independently; cumulative descendants are diagnostic
+  and are not added as savings;</li>
+<li>require exact semantic-envelope, ordered-event, complete checkpoint-byte,
+  conventional-RNG-state, indexed-transcript, receipt, and fresh-runtime
+  continuation equality; and</li>
+<li>reject any source, scenario, dependency, environment, or workload drift.</li>
+</ul>
+<p>The <code>0.80</code> timing limit approximately reverses the original <code>1.259063</code> Phase
+118 slowdown. On the phase-start host it corresponded to a provisional median
+ceiling of 49.576 seconds against the measured 61.969-second baseline.</p>
+<p>The threshold history is retained rather than rewritten. After implementation
+and review, the owner explicitly accepted bounded partial recovery and revised
+the limit first to <code>0.86</code>. The formal <code>0.86</code> run failed at
+<code>0.8635476449973133</code>, despite passing dispersion, memory, exact deterministic
+equality, fresh-runtime continuation, and drift gates. After observing that
+result, the owner explicitly accepted <code>0.87</code> as the final partial-recovery
+limit on 2026-08-25. The decision artifact SHA-256 is
+<code>da9b3fe5260dee81f65cd84fb72fa0b426ec5c194231e2eb33ea265be40a3bd2</code>.
+A fresh harness encoded <code>0.87</code> before execution and repeated the complete
+workflow. The earlier results were neither cherry-picked nor silently
+relabeled. Historical absolute seconds remain host-specific; the matched
+ratios decide each recorded gate.</p>
+<h2 id="phase-start-environment-and-evidence">Phase-start environment and evidence<a class="headerlink" href="#phase-start-environment-and-evidence" title="Permanent link">&para;</a></h2>
+<ul>
+<li>OS/kernel: Linux 7.1.6-1-cachyos, x86-64</li>
+<li>CPU: AMD Ryzen AI MAX+ 395, 16 cores / 32 threads</li>
+<li>Python: CPython 3.12.10</li>
+<li>thread limits: one for OMP, OpenBLAS, MKL, NumExpr, vecLib, and BLIS</li>
+<li>dependency lock SHA-256:
+  <code>bbc6b45cfc270d08baa09d3d568a6b84d0f936a6ee9c874cb49c9d8813c5ad39</code></li>
+<li>scenario SHA-256:
+  <code>26699027374b89454f69f924e2a1f75cf8c97d2026b25725591ca352851586e6</code></li>
+</ul>
+<p>After one discarded warm-up, three phase-start timing samples were
+61.886042, 61.969439, and 62.173692 seconds: median 61.969439 seconds and
+relative range 0.004642. Every run produced the same 1,000-unit, ten-tick,
+blue <code>max_ticks</code> result, event digest, checkpoint bytes, and conventional RNG
+state. The phase-start <code>tracemalloc</code> peak was 33.398545 MiB; its instrumented
+wall time is not part of the timing comparison.</p>
+<p>The phase-start cProfile recorded 518,194,574 calls and 139.311824 seconds of
+profiled function time. <code>_update_interval_fog_of_war()</code> enclosed 23.116
+seconds. Independently observed transactional costs included 3.620 seconds in
+200 full update-plan fingerprints, 2.957 seconds in transaction prevalidation,
+2.126 seconds in prepared-commit validation, 2.004 seconds in commit
+preparation, and repeated scan-count snapshot/staging/validation. The targeting
+loop remains the dominant absolute hotspot but is not attributed to REM-055.</p>
+<p>Raw phase-start evidence is outside the worktree under
+<code>/tmp/sw-rem055-baseline.apEoF8/</code>: timing JSON SHA-256
+<code>4173e090ed955cceb7a3ccb06c3424ee702c433f809a75c5b68afb99df61b549</code>,
+profile JSON SHA-256
+<code>63342c551e7ee9ee17bd5ba9bb45938d864a0dbf06f83356f375fff7b91b4f8e</code>,
+profile SHA-256
+<code>78b5a3be2af1bd908f60f4efa0b13c484edf26703a26987e40943251f363a536</code>,
+and memory JSON SHA-256
+<code>e5384dd1b009f8777e39b9f5f556f4ad283c590e89ab0a334d2a1620daed65df</code>.
+These local artifacts are reproducibility evidence, not a permanent archive.</p>
+<h2 id="requirements-and-non-goals">Requirements and non-goals<a class="headerlink" href="#requirements-and-non-goals" title="Permanent link">&para;</a></h2>
+<p>The implementation may remove only causally measured redundant work. The
+outer all-owner validation immediately before publication remains mandatory.
+Mutation between staging and that boundary must still fail without publishing
+any FOW, cadence, indexed-RNG, battle, targeting, or receipt state. Retained
+plans must not alias committed state. Serial and threaded execution must
+produce identical canonical plans, RNG transcripts, events, and checkpoints.</p>
+<p>The phase does not change HTTP API or frontend schemas, typed configuration,
+format-118 checkpoint semantics, equipment or scenario data, physical sensor
+behavior, targeting policy, scan/LOD support status, or REM-051/REM-054 scope.
+Any post-observation threshold revision requires explicit owner approval, a
+retained decision record, and a fresh native-policy run; Phase 142 used exactly
+that process for the final <code>0.87</code> limit.</p>
+<h2 id="verification-plan">Verification plan<a class="headerlink" href="#verification-plan" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Add behavioral regressions for every eliminated validation/copy boundary,
+   including a mutation injected after FOW staging but before outer commit.</li>
+<li>Run focused FOW atomicity, tamper, observer-support, serial/parallel,
+   indexed-RNG, receipt, replay, and fresh-runtime checkpoint continuation
+   tests.</li>
+<li>Run the frozen matched timing, call-profile, and peak-memory comparison and
+   independently validate the retained receipt.</li>
+<li>Run the production scenario evaluator against the accepted pre-phase
+   semantic baseline, plus applicable standard, slow, benchmark, API, E2E,
+   data, lint, documentation, determinism, convention, and packaging gates.</li>
+<li>Apply <code>$simplify</code>, <code>$update-docs</code>, <code>$cross-doc-audit</code>, and <code>$postmortem</code>;
+   close REM-055 and Phase 142 only if every required gate passes.</li>
+</ol>
+<h2 id="implementation-and-closure">Implementation and closure<a class="headerlink" href="#implementation-and-closure" title="Permanent link">&para;</a></h2>
+<h3 id="production-implementation">Production implementation<a class="headerlink" href="#production-implementation" title="Permanent link">&para;</a></h3>
+<p>Phase 142 retains the public FOW transaction contract while moving
+authoritative mutation through manager-private, single-use workspaces. Side
+graphs detach once, move through prevalidation and preparation, and publish
+through bounded commits. Public plans and outcomes retain stable defensive
+projections; stale diagnostic previews retire; abort poisons the workspace;
+and retained update, cadence, publication, commit, witness-clear, and restore
+plans do not alias committed state.</p>
+<p>The optimized path reuses validated scan-count, cadence, fusion, indexed-RNG,
+geometry, and spatial-query representations without weakening the final
+all-owner seal. Exact-builtin scan counts use a private raw binding while
+accepted anomalous subclasses retain the full canonical validation path.
+Fusion preserves the complete order-sensitive candidate ledger but constructs
+and submits only the canonical prepared representative for each exact group.
+Indexed FOW decisions retain a compact issuance-time identity snapshot and
+reject same-object post-issuance mutation. Cadence and composite restore
+payloads are completely prepared before the first owner swap.</p>
+<p>Public witness and observer-support getters remain graph-defensive. Trusted
+Battle/FOW consumers use private read-only projections only within the owning
+call and detach evidence retained afterward. Canonical per-target detection
+geometry, cadence-plan attachment identities, vectorized target construction,
+and vectorized STRtree queries remove repeated hot-loop allocation without
+changing sensor physics, target selection, RNG allocation, or receipt order.</p>
+<p>Terminal-gate and grouped-detector experiments that regressed the measured
+workload were fully reverted. They contribute no final behavior or performance
+claim.</p>
+<h3 id="simplification-and-integrity-review">Simplification and integrity review<a class="headerlink" href="#simplification-and-integrity-review" title="Permanent link">&para;</a></h3>
+<p><code>$simplify</code> found one material closure defect after the optimization froze:
+ordinary Pydantic equality at public plan boundaries could accept equal-valued
+nested scalar type substitutions such as <code>True</code> for receipt integer <code>1</code>.
+The final tree recursively validates exact receipt graph types and values and
+uses strict type or identity checks for generation, side, fusion metadata,
+opaque seals, and scan fingerprints. New adversarial tests prove rejection
+without publishing FOW, cadence, indexed-RNG, targeting, or receipt state.
+Independent re-review returned clean.</p>
+<p><code>$audit-determinism</code> and <code>$validate-conventions</code> returned clean. Canonical
+observer, target, attachment, fusion, scan, side, and commit order remains
+unchanged; indexed decisions retain their exact identity lanes; conventional
+RNG state remains stable; and no public API, checkpoint schema, coordinate,
+clock, logging, data, model, or policy contract changed.</p>
+<h3 id="accepted-performance-receipt">Accepted performance receipt<a class="headerlink" href="#accepted-performance-receipt" title="Permanent link">&para;</a></h3>
+<p>The formal <code>0.86</code> result remains a recorded failure. Its result SHA-256 is
+<code>7b9922ae048f02278f8d8731423f9573e68ed8b453ef46aa9e6dedf487062180</code>.
+After the owner approved <code>0.87</code>, a new versioned external harness first passed
+construction-only readiness, then ran one discarded warm-up per revision,
+five alternating fresh-process pairs, separate matched <code>tracemalloc</code>, and
+fresh-runtime continuation. The readiness artifact SHA-256 is
+<code>093c0491d7d4b58af15b553d142011420f9e07e3ba8053d8288e37823a946e0a</code>;
+the terminal result SHA-256 is
+<code>6fac6f1f370302d247d1a00ad56af5e269622c85d81c90fbed4c5fbe2397578c</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Measure</th>
+<th style="text-align: right;">Baseline</th>
+<th style="text-align: right;">Candidate</th>
+<th style="text-align: right;">Accepted boundary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Median wall time</td>
+<td style="text-align: right;">59.892654 s</td>
+<td style="text-align: right;">51.839189 s</td>
+<td style="text-align: right;">Diagnostic absolute values only</td>
+</tr>
+<tr>
+<td>Relative sample range</td>
+<td style="text-align: right;">0.013218</td>
+<td style="text-align: right;">0.016081</td>
+<td style="text-align: right;">Each &lt;= 0.05</td>
+</tr>
+<tr>
+<td>Median paired candidate/baseline ratio</td>
+<td style="text-align: right;">-</td>
+<td style="text-align: right;">0.861173</td>
+<td style="text-align: right;">&lt;= 0.87</td>
+</tr>
+<tr>
+<td>Peak Python allocation</td>
+<td style="text-align: right;">35,237,923 B</td>
+<td style="text-align: right;">33,490,734 B</td>
+<td style="text-align: right;">Ratio 0.950417 &lt;= 1.05</td>
+</tr>
+</tbody>
+</table>
+<p>The five paired ratios were <code>0.857463</code>, <code>0.859370</code>, <code>0.861173</code>, <code>0.866019</code>,
+and <code>0.875246</code>. Their median represents about 13.88% recovery on this exact
+matched workload. It does not meet the original <code>0.80</code> target and is not a
+universal throughput claim.</p>
+<h3 id="final-source-bound-call-profile">Final source-bound call profile<a class="headerlink" href="#final-source-bound-call-profile" title="Permanent link">&para;</a></h3>
+<p>A final one-run cProfile used the same profile driver (SHA-256
+<code>a73a84e4f1976f7dfad07f2949931c2a5e98967d9d6fe52c557a8fdbb224d889</code>)
+and execution policy as the phase-start profile. The six changed production
+files byte-matched the accepted performance artifact's
+<code>original_source_after</code> manifest identity
+<code>05f6fea1bfe098b21cb35d45a63af29160dd2d01e7ccf176913ef1b6f1c61562</code>:
+<code>indexed_rng.py</code> <code>44550a9d...130744</code>,
+<code>cadence.py</code> <code>4b86c4cd...fc5ed</code>, <code>detection.py</code> <code>1d7271b4...d610a</code>,
+<code>fog_of_war.py</code> <code>37bc609c...38225</code>, <code>intel_fusion.py</code>
+<code>88150001...99915</code>, and <code>battle.py</code> <code>c1be3698...d114</code>. The run reproduced
+the accepted semantic, checkpoint, and full-RNG digests exactly.</p>
+<table>
+<thead>
+<tr>
+<th>Profile measure</th>
+<th style="text-align: right;">Phase start</th>
+<th style="text-align: right;">Final tree</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Total calls</td>
+<td style="text-align: right;">518,194,574</td>
+<td style="text-align: right;">473,385,421</td>
+</tr>
+<tr>
+<td>Primitive calls</td>
+<td style="text-align: right;">514,939,857</td>
+<td style="text-align: right;">472,791,132</td>
+</tr>
+<tr>
+<td>Profiled function time</td>
+<td style="text-align: right;">139.311824 s</td>
+<td style="text-align: right;">126.639694 s</td>
+</tr>
+<tr>
+<td><code>_update_interval_fog_of_war()</code> cumulative</td>
+<td style="text-align: right;">23.116448 s</td>
+<td style="text-align: right;">9.683666 s</td>
+</tr>
+<tr>
+<td><code>_update_plan_fingerprint()</code></td>
+<td style="text-align: right;">200 calls / 3.620372 s</td>
+<td style="text-align: right;">40 calls / 0.837962 s</td>
+</tr>
+<tr>
+<td><code>_interval_plan_fingerprint()</code></td>
+<td style="text-align: right;">120 calls / 1.904136 s</td>
+<td style="text-align: right;">30 calls / 0.619557 s</td>
+</tr>
+<tr>
+<td><code>_stage_live_update_baseline()</code></td>
+<td style="text-align: right;">10 calls / 1.067930 s</td>
+<td style="text-align: right;">10 calls / 0.327441 s</td>
+</tr>
+<tr>
+<td><code>prevalidate_update_transaction()</code></td>
+<td style="text-align: right;">10 calls / 2.956961 s</td>
+<td style="text-align: right;">10 calls / 0.300160 s</td>
+</tr>
+<tr>
+<td><code>prepare_update_commit()</code></td>
+<td style="text-align: right;">10 calls / 2.004109 s</td>
+<td style="text-align: right;">10 calls / 0.769159 s</td>
+</tr>
+<tr>
+<td><code>validate_prepared_update_commit()</code></td>
+<td style="text-align: right;">20 calls / 2.125770 s</td>
+<td style="text-align: right;">10 calls / 0.569130 s</td>
+</tr>
+</tbody>
+</table>
+<p>The final raw profile JSON SHA-256 is
+<code>ca2c9ce5eb9a21d566be8b7a42880cbe7226fad15ecb91e1962e5161d60138e6</code>;
+the <code>.prof</code> SHA-256 is
+<code>ac876ecb856fdc2316962576e41b22b223f941be3bf22cdcb3e385ecf86a0e21</code>.
+These are diagnostic single-profile measurements, not timing acceptance.
+Cumulative descendants overlap and must not be added; the matched five-pair
+wall-time receipt remains the performance gate.</p>
+<h3 id="semantic-and-continuation-evidence">Semantic and continuation evidence<a class="headerlink" href="#semantic-and-continuation-evidence" title="Permanent link">&para;</a></h3>
+<p>Baseline and candidate produced the same 1,000-unit, ten-tick, 50-second blue
+<code>max_ticks</code> result, 283 ordered events, complete checkpoint bytes,
+conventional and indexed RNG state, execution receipt, and fresh-runtime
+continuation. Compact identities are:</p>
+<ul>
+<li>semantic projection:
+  <code>53018be90e5f8090270d714f96d844058d14edc314dd70b7bf7601d857958693</code>;</li>
+<li>ordered events:
+  <code>08d0886584e1e1dc556f3d1e5cf94aa9b70e9600d7124ec9631e584fb9d3d8b2</code>;</li>
+<li>final checkpoint:
+  <code>73967e2e8953ec5f9b02a20b490c361a337e217422e0bc845813535c8c6e0408</code>;</li>
+<li>conventional RNG state:
+  <code>b31627f846618ac74ac05506933f850b96de7c2769eef64a4b099dc6f45db0f0</code>;</li>
+<li>full RNG state:
+  <code>7f15301eb10193f0f40151e7b12165732a558dd3384ea8e50b4908c70edf972e</code>;</li>
+<li>indexed FOW state:
+  <code>ff81dc96a0f4b7d47f9028e6bcd7b3d1cd051fbb8c345455fdc689f52442cc33</code>;
+  and</li>
+<li>performance execution receipt:
+  <code>5b6cd85d03669f85d47551095347af6743dd34cd52d475304c191b41301b8bbf</code>.</li>
+</ul>
+<p>The source, scenario, dependency, environment, and workload drift gates all
+passed. The scenario SHA-256 remained
+<code>26699027374b89454f69f924e2a1f75cf8c97d2026b25725591ca352851586e6</code>;
+the dependency-lock SHA-256 remained
+<code>bbc6b45cfc270d08baa09d3d568a6b84d0f936a6ee9c874cb49c9d8813c5ad39</code>.</p>
+<h3 id="bounded-scenario-evidence">Bounded scenario evidence<a class="headerlink" href="#bounded-scenario-evidence" title="Permanent link">&para;</a></h3>
+<p>The final production evaluator ran only the bounded
+<code>calibration_urban_cbrn</code> scenario. It completed successfully through tactical
+execution: 14 constructed units, 82 ticks / 820 logical seconds, red
+<code>force_destroyed</code> victory, three blue units destroyed, 84 events, and no
+diagnostic issues. This is one current-engine scenario regression, not a
+scenario-library sweep, historical validation, distributional proof, or
+universal behavior claim. The evaluator artifact SHA-256 is
+<code>d5281c6c789613f814ce0d22d7faccda748191a5a25c886cb53b3e715b22ce87</code>.</p>
+<h3 id="partition-and-static-evidence">Partition and static evidence<a class="headerlink" href="#partition-and-static-evidence" title="Permanent link">&para;</a></h3>
+<p>The revision-bound audit enumerated 13,015 node IDs across six exact,
+pairwise-disjoint partitions. Its SHA-256 is
+<code>5b01af839bc7a958a4776f79e547f132e5ed9fb4981248ce233855ebcd1971c0</code>;
+it binds commit <code>941590261a5ae7d8066884805fdf66556b6d5f59</code> and worktree
+fingerprint
+<code>4076edb13031898ac3b351bdfcc5951232926de874e14bf81e27dc48355cecbc</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Partition</th>
+<th style="text-align: right;">Result</th>
+<th style="text-align: right;">Warnings / skips</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Standard</td>
+<td style="text-align: right;">12,387 passed</td>
+<td style="text-align: right;">6 / 0</td>
+</tr>
+<tr>
+<td>Slow-only, 15 shards</td>
+<td style="text-align: right;">108 passed</td>
+<td style="text-align: right;">0 / 0</td>
+</tr>
+<tr>
+<td>Benchmark-only, 3 shards</td>
+<td style="text-align: right;">128 passed</td>
+<td style="text-align: right;">0 / 0</td>
+</tr>
+<tr>
+<td>Slow benchmark</td>
+<td style="text-align: right;">7 passed</td>
+<td style="text-align: right;">0 / 0</td>
+</tr>
+<tr>
+<td>API</td>
+<td style="text-align: right;">344 passed</td>
+<td style="text-align: right;">0 / 0</td>
+</tr>
+<tr>
+<td>E2E</td>
+<td style="text-align: right;">41 passed</td>
+<td style="text-align: right;">0 / 0</td>
+</tr>
+<tr>
+<td><strong>Exact union</strong></td>
+<td style="text-align: right;"><strong>13,015 passed</strong></td>
+<td style="text-align: right;"><strong>6 / 0</strong></td>
+</tr>
+</tbody>
+</table>
+<p>The six standard warnings are the known planning-process UTC deprecation,
+empty-chart legend, and replay-animation cleanup warnings. The first standard
+attempt reached 12,385 passes but its two packaging fixtures could not resolve
+<code>setuptools&gt;=77</code> from a fresh offline cache. A diagnostic offline build passed
+with the established warmed cache; the exact full standard rerun then passed
+12,387/12,387. Initial sandboxed API/E2E attempts reached their operational
+timeouts without terminal receipts; fresh sequential runs outside the sandbox
+passed 344/344 and 41/41. Neither diagnostic attempt is counted as test
+evidence.</p>
+<p>The exact partition receipt binds the pre-closure-documentation worktree
+fingerprint. Subsequent repository changes were limited to <code>docs/</code> and
+<code>CLAUDE.md</code>. A final whole-manifest comparison checked all 2,384
+non-documentation files against the accepted performance artifact's source
+manifest and found zero mismatches; both filtered manifests have SHA-256
+<code>e4787e4a2a0771a48778f378100df2bb3dfb873b67213197b1fd9ad2eb2285d5</code>.
+The postmortem accepts this explicit split
+evidence boundary: behavioral receipts apply to that unchanged production and
+test tree, while the documentation, link, provider-projection, and static
+checks apply to the final closure text. The original test fingerprint is not
+relabeled as a final-documentation fingerprint.</p>
+<p>Repository Ruff, changed-file format, isolated compilation, and diff checks
+passed before documentation closure. Strict documentation and link validation
+are rerun on this final text before the cross-document audit.</p>
+<h3 id="limitations-and-closure-status">Limitations and closure status<a class="headerlink" href="#limitations-and-closure-status" title="Permanent link">&para;</a></h3>
+<p>The accepted receipt applies only to the declared host, dependency lock,
+scenario, seed, ten-tick workload, and execution policy. Absolute seconds are
+not portable. The original <code>0.80</code> recovery target and interim <code>0.86</code> target
+remain misses; further throughput work belongs to a later dedicated
+optimization pass.</p>
+<p>Phase 142 does not revise detection or targeting models, scenario/catalog
+data, or public support policy. Scan scheduling and sensing-only LOD remain
+rejected in production; REM-054 / Phase 141 remains not started. The targeting
+loop remains the dominant absolute hotspot but is not attributed to REM-055
+without separate evidence.</p>
+<p>Raw evidence remains under ignored local artifact storage rather than main.
+The implementation, performance, scenario, partition, convention,
+determinism, simplification, documentation, cross-document, and postmortem
+gates are complete. REM-055 is closed by the accepted postmortem below.</p>
+<h2 id="postmortem">Postmortem<a class="headerlink" href="#postmortem" title="Permanent link">&para;</a></h2>
+<p><strong>Verdict:</strong> ACCEPT</p>
+<p><strong>Scope:</strong> On target. Phase 142 reduced the measured transactional FOW cost
+while preserving atomic publication, exact tamper rejection, deterministic
+RNG and ordering, receipts, retained-handle isolation, and checkpoint
+continuation. It did not change detection or targeting models, scenario or
+catalog data, public schemas, checkpoint format, scan scheduling, or LOD
+support.</p>
+<p><strong>Delivery changes:</strong> The original <code>0.80</code> target and interim <code>0.86</code> target were
+not met. The owner explicitly approved <code>0.87</code> as a bounded partial-recovery
+limit, and a fresh native-policy run passed at <code>0.861173</code>. Terminal-gate and
+grouped-detector experiments that regressed the workload were reverted. The
+fusion optimization retained the complete order-sensitive ledger instead of
+the rejected count-only design. Unplanned integrity work closed retained-plan
+and public-projection aliases, cadence and restore publication aliases,
+composite-restore atomicity, raw-scan anomaly handling, indexed-identity
+mutation, and exact-type receipt and handle tampering.</p>
+<p><strong>Quality and integration:</strong> High and fully proven for the applicable stages.
+The final production diff has no new stub, placeholder, unconditional-success,
+production print, wall-clock RNG, or obsolete experiment path. Battle drives
+the owner-bound FOW transaction through side execution, prevalidation,
+preparation, final all-owner validation, and bounded commit. Enabled,
+disabled, serial, threaded, malformed, tamper, abort, restore, and continuation
+paths have behavioral regressions. Public outcomes, receipts, witnesses,
+supports, RNG transcript, ordered events, and checkpoint bytes remain exact.</p>
+<p><strong>Validation:</strong> The accepted paired performance receipt recorded a <code>0.861173</code>
+median ratio, compliant dispersion, a <code>0.950417</code> memory ratio, and exact
+semantic, event, receipt, RNG, checkpoint, and fresh-runtime continuation
+identity. The source-bound call profile reduced total calls from 518,194,574
+to 473,385,421 and the non-additive FOW enclosure from 23.116448 to 9.683666
+seconds. The exact six-partition union passed 13,015/13,015 nodes with six
+known warnings and zero skips, failures, errors, xfails, or xpasses. Sixty-one
+new behavioral regression functions are included in that accepted standard
+partition. The bounded production scenario passed, and Ruff, formatting,
+compilation, diff, strict MkDocs, link, provider-projection, determinism,
+convention, simplification, and cross-document gates passed.</p>
+<p>The partition receipt intentionally binds the unchanged production and test
+tree before closure-documentation edits. A complete comparison of 2,384
+non-documentation manifest entries found zero mismatch; final documentation
+gates bind the closure text separately. Monte Carlo calibration, backtesting,
+terrain/data validation, and frontend model validation were not applicable
+because this phase changed no model, data, terrain, or frontend contract.</p>
+<p><strong>New deficits and actions:</strong> None. The missed <code>0.80</code> full-recovery target is
+an explicit accepted limitation, not a concealed pass. Further throughput
+work requires a separately scoped, predeclared optimization phase. REM-054 and
+Phase 141 remain unchanged and not started. No action remains before the
+coherent Phase 142 commit.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
