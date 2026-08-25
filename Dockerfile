@@ -11,7 +11,7 @@ FROM python:3.12-slim
 ARG SOURCE_REVISION
 WORKDIR /app
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
-COPY pyproject.toml uv.lock .python-version ./
+COPY pyproject.toml uv.lock .python-version build_hooks.py LICENSE.md ./
 COPY stochastic_warfare/ stochastic_warfare/
 COPY api/ api/
 COPY data/ data/

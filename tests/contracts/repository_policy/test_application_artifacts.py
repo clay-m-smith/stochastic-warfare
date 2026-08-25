@@ -231,6 +231,41 @@ def test_setuptools_discovery_and_implicit_data_are_fail_closed() -> None:
     assert observed_license_inputs == {"LICENSE.md"}
 
 
+@pytest.mark.test_evidence("structural_only")
+def test_docker_image_copies_build_backend_inputs_before_sync() -> None:
+    dockerfile = (REPOSITORY_ROOT / "Dockerfile").read_text(encoding="utf-8")
+    _frontend_stage, python_separator, python_stage = dockerfile.partition(
+        "FROM python:",
+    )
+    assert python_separator
+    python_stage, _next_stage, _remainder = python_stage.partition("\nFROM ")
+    before_sync, sync_separator, _after_sync = python_stage.partition(
+        "RUN uv sync --locked --extra api --no-dev",
+    )
+    assert sync_separator
+    copied_inputs = {
+        token
+        for line in before_sync.splitlines()
+        if line.startswith("COPY ") and not line.startswith("COPY --from=")
+        for token in line.removeprefix("COPY ").split()[:-1]
+    }
+    pyproject = tomllib.loads(
+        (REPOSITORY_ROOT / "pyproject.toml").read_text(encoding="utf-8"),
+    )
+    command_modules = {
+        value.rsplit(".", 1)[0].replace(".", "/") + ".py"
+        for value in pyproject["tool"]["setuptools"]["cmdclass"].values()
+    }
+    required_inputs = {
+        ".python-version",
+        "pyproject.toml",
+        "uv.lock",
+        *pyproject["project"]["license-files"],
+        *command_modules,
+    }
+    assert required_inputs <= copied_inputs
+
+
 def test_external_catalog_missing_unconditional_loader_root_fails(
     tmp_path: Path,
 ) -> None:
