@@ -159,6 +159,10 @@ remediation status.
 | 117 | Historical Outcome-Envelope Integrity | **Complete** | [phase-117.md](phase-117.md) |
 | 118 | Performance-Flag Semantic Integrity | **Complete** | [phase-118.md](phase-118.md) |
 | 119 | Guerrilla Concealment & Population Query | Not started | -- |
+| | | | |
+| **Block 21: Performance Follow-ups** ||||
+| 141 | Performance-Approximation Re-enablement Integrity | Not started | -- |
+| 142 | Transactional FOW Runtime-Cost Integrity | **Complete** | [phase-142.md](phase-142.md) |
 
 ## Post-MVP Refinement Index
 

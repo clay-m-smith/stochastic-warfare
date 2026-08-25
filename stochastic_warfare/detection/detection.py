@@ -369,6 +369,27 @@ def _bearing_deg(obs: Position, tgt: Position) -> float:
     return math.degrees(math.atan2(dx, dy)) % 360.0
 
 
+@dataclass(frozen=True, slots=True)
+class _DetectionGeometry:
+    """Exact detector geometry reusable across one FOW target opportunity."""
+
+    range_m: float
+    horizontal_range_m: float
+    bearing_deg: float
+
+
+def _detection_geometry(
+    observer_pos: Position,
+    target_pos: Position,
+) -> _DetectionGeometry:
+    """Compute geometry in the canonical public-detector evaluation order."""
+    return _DetectionGeometry(
+        range_m=_range_m(observer_pos, target_pos),
+        horizontal_range_m=_horizontal_range_m(observer_pos, target_pos),
+        bearing_deg=_bearing_deg(observer_pos, target_pos),
+    )
+
+
 # ---------------------------------------------------------------------------
 # Detection engine
 # ---------------------------------------------------------------------------
@@ -535,12 +556,16 @@ class DetectionEngine:
         with self._scan_count_lock:
             self._scan_counts.clear()
 
-    def prepare_detection(
+    def _prepare_detection_core(
         self,
         observer_pos: Position,
         target_pos: Position,
         sensor: SensorInstance,
         target_sig: SignatureProfile,
+        *,
+        geometry: _DetectionGeometry,
+        sensor_type: SensorType,
+        signature_domain: SignatureDomain,
         target_unit: Any = None,
         observer_height: float = 1.8,
         target_height: float = 0.0,
@@ -556,73 +581,32 @@ class DetectionEngine:
         target_id: str = "",
         scan_identity: DetectionScanIdentity | None = None,
         jam_snr_penalty_db: float = 0.0,
-    ) -> DetectionResult | PreparedDetection:
-        """Run deterministic gates and physics up to the stochastic draw.
-
-        Pre-RNG rejection returns a terminal :class:`DetectionResult` with its
-        exact decision stage.  A stochastic opportunity returns a
-        :class:`PreparedDetection`; its caller then supplies exactly one
-        uniform through :meth:`PreparedDetection.adjudicate`.
-        """
-        rng_m = _range_m(observer_pos, target_pos)
-        horizontal_range_m = _horizontal_range_m(observer_pos, target_pos)
-        bearing = _bearing_deg(observer_pos, target_pos)
-        st = sensor.sensor_type
-        signature_domain = signature_domain_for_sensor_type(st)
+    ) -> DetectionDecisionStage | PreparedDetection:
+        """Run the canonical deterministic gates and stochastic preparation."""
+        rng_m = geometry.range_m
 
         # 1. Operational check
         if not sensor.operational:
-            return DetectionResult(
-                False,
-                0.0,
-                -100.0,
-                rng_m,
-                st,
-                bearing,
-                DetectionDecisionStage.PRE_RNG_SENSOR_OFFLINE,
-                horizontal_range_m,
-            )
+            return DetectionDecisionStage.PRE_RNG_SENSOR_OFFLINE
 
         # 1b. Mapping-owned target-domain policy. Production fog-of-war scans
         # pass the concrete target unit, so an air-search radar cannot become
         # a surface-search capability merely because both consume RCS.
         if target_unit is not None:
             target_domain = getattr(target_unit, "domain", None)
-            if target_domain is not None and not sensor.supports_target_domain(target_domain):
-                return DetectionResult(
-                    False,
-                    0.0,
-                    -100.0,
-                    rng_m,
-                    st,
-                    bearing,
-                    DetectionDecisionStage.PRE_RNG_UNSUPPORTED_DOMAIN,
-                    horizontal_range_m,
-                )
+            if target_domain is not None and not sensor.supports_target_domain(
+                target_domain,
+            ):
+                return DetectionDecisionStage.PRE_RNG_UNSUPPORTED_DOMAIN
 
         # 2. Range check
         if rng_m > sensor.effective_range:
-            return DetectionResult(
-                False,
-                0.0,
-                -100.0,
-                rng_m,
-                st,
-                bearing,
-                DetectionDecisionStage.PRE_RNG_ABOVE_MAX_RANGE,
-                horizontal_range_m,
-            )
+            return DetectionDecisionStage.PRE_RNG_ABOVE_MAX_RANGE
+        horizontal_range_m = geometry.horizontal_range_m
+        bearing = geometry.bearing_deg
+
         if rng_m < sensor.definition.min_range_m:
-            return DetectionResult(
-                False,
-                0.0,
-                -100.0,
-                rng_m,
-                st,
-                bearing,
-                DetectionDecisionStage.PRE_RNG_BELOW_MIN_RANGE,
-                horizontal_range_m,
-            )
+            return DetectionDecisionStage.PRE_RNG_BELOW_MIN_RANGE
 
         # 2b. FOV check
         fov = sensor.definition.fov_deg
@@ -634,81 +618,91 @@ class DetectionEngine:
             if relative_bearing > 180.0:
                 relative_bearing -= 360.0
             if abs(relative_bearing) > fov / 2.0:
-                return DetectionResult(
-                    False,
-                    0.0,
-                    -100.0,
-                    rng_m,
-                    st,
-                    bearing,
-                    DetectionDecisionStage.PRE_RNG_OUTSIDE_FOV,
-                    horizontal_range_m,
-                )
+                return DetectionDecisionStage.PRE_RNG_OUTSIDE_FOV
 
         # 3. LOS check (for sensors that require it)
         if sensor.definition.requires_los and self._los is not None:
-            los_result = self._los(observer_pos, target_pos, observer_height, target_height)
+            los_result = self._los(
+                observer_pos,
+                target_pos,
+                observer_height,
+                target_height,
+            )
             if not los_result.visible:
-                return DetectionResult(
-                    False,
-                    0.0,
-                    -100.0,
-                    rng_m,
-                    st,
-                    bearing,
-                    DetectionDecisionStage.PRE_RNG_LOS,
-                    horizontal_range_m,
-                )
+                return DetectionDecisionStage.PRE_RNG_LOS
 
         # 4. Compute SNR
         threshold = sensor.definition.detection_threshold
         if signature_domain is SignatureDomain.VISUAL:
             eff_sig = SignatureResolver.effective_visual(
-                target_sig, target_unit, concealment=concealment, posture=posture
+                target_sig,
+                target_unit,
+                concealment=concealment,
+                posture=posture,
             )
-            snr = self.compute_snr_visual(sensor, eff_sig, rng_m, illumination_lux, visibility_m)
+            snr = self.compute_snr_visual(
+                sensor,
+                eff_sig,
+                rng_m,
+                illumination_lux,
+                visibility_m,
+            )
         elif signature_domain is SignatureDomain.THERMAL:
             eff_sig = SignatureResolver.effective_thermal(
-                target_sig, target_unit, thermal_contrast=thermal_contrast, posture=posture
+                target_sig,
+                target_unit,
+                thermal_contrast=thermal_contrast,
+                posture=posture,
             )
-            snr = self.compute_snr_thermal(sensor, eff_sig, rng_m, thermal_contrast)
+            snr = self.compute_snr_thermal(
+                sensor,
+                eff_sig,
+                rng_m,
+                thermal_contrast,
+            )
         elif signature_domain is SignatureDomain.RADAR:
-            eff_rcs = SignatureResolver.effective_rcs(target_sig, target_unit, bearing)
-            snr = self.compute_snr_radar(sensor, eff_rcs, rng_m, atmospheric_atten_db_per_km)
+            eff_rcs = SignatureResolver.effective_rcs(
+                target_sig,
+                target_unit,
+                bearing,
+            )
+            snr = self.compute_snr_radar(
+                sensor,
+                eff_rcs,
+                rng_m,
+                atmospheric_atten_db_per_km,
+            )
         elif signature_domain is SignatureDomain.ACOUSTIC:
-            if st is SensorType.ACTIVE_SONAR:
-                sl = sensor.definition.source_level_db or 200.0
+            if sensor_type is SensorType.ACTIVE_SONAR:
+                snr_source = sensor.definition.source_level_db or 200.0
                 # Two-way TL for active sonar (handled in sonar module for detail)
-            elif st in (
+            elif sensor_type in (
                 SensorType.PASSIVE_ACOUSTIC,
                 SensorType.PASSIVE_SONAR,
             ):
-                sl = SignatureResolver.effective_acoustic(
+                snr_source = SignatureResolver.effective_acoustic(
                     target_sig,
                     target_unit,
                 )
             else:  # pragma: no cover - domain function and dispatch stay paired
                 raise ValueError(
-                    f"SensorType {st.name} lacks an acoustic SNR implementation",
+                    f"SensorType {sensor_type.name} lacks an acoustic SNR implementation",
                 )
-            snr = self.compute_snr_acoustic(sensor, sl, rng_m, ambient_noise_db, transmission_loss)
-        elif signature_domain is SignatureDomain.ELECTROMAGNETIC and st is SensorType.ESM:
+            snr = self.compute_snr_acoustic(
+                sensor,
+                snr_source,
+                rng_m,
+                ambient_noise_db,
+                transmission_loss,
+            )
+        elif signature_domain is SignatureDomain.ELECTROMAGNETIC and sensor_type is SensorType.ESM:
             em_power = SignatureResolver.effective_em(target_sig, target_unit)
             if em_power == float("-inf"):
-                return DetectionResult(
-                    False,
-                    0.0,
-                    -100.0,
-                    rng_m,
-                    st,
-                    bearing,
-                    DetectionDecisionStage.PRE_RNG_NO_EMISSION,
-                    horizontal_range_m,
-                )
+                return DetectionDecisionStage.PRE_RNG_NO_EMISSION
             snr = em_power - 20.0 * math.log10(max(rng_m, 1.0))
         else:
             raise ValueError(
-                f"SensorType {st.name} lacks a production SNR implementation",
+                f"SensorType {sensor_type.name} lacks a production SNR implementation",
             )
 
         # 4b. Jamming penalty (EW module)
@@ -752,8 +746,131 @@ class DetectionEngine:
             snr_db=snr,
             range_m=rng_m,
             horizontal_range_m=horizontal_range_m,
-            sensor_type=st,
+            sensor_type=sensor_type,
             bearing_deg=bearing,
+        )
+
+    def _prepare_fow_detection(
+        self,
+        observer_pos: Position,
+        target_pos: Position,
+        sensor: SensorInstance,
+        target_sig: SignatureProfile,
+        *,
+        geometry: _DetectionGeometry,
+        target_unit: Any = None,
+        observer_height: float = 1.8,
+        target_height: float = 0.0,
+        concealment: float = 0.0,
+        posture: int = 0,
+        illumination_lux: float = 100.0,
+        visibility_m: float = 10000.0,
+        thermal_contrast: float = 1.0,
+        ambient_noise_db: float = 70.0,
+        atmospheric_atten_db_per_km: float = 0.01,
+        transmission_loss: float | None = None,
+        observer_heading_deg: float = 0.0,
+        target_id: str = "",
+        scan_identity: DetectionScanIdentity | None = None,
+        jam_snr_penalty_db: float = 0.0,
+    ) -> DetectionDecisionStage | PreparedDetection:
+        """Prepare one trusted FOW check without materializing terminal results."""
+        if type(geometry) is not _DetectionGeometry:
+            raise TypeError("geometry must be an exact _DetectionGeometry")
+        sensor_type = sensor.sensor_type
+        signature_domain = signature_domain_for_sensor_type(sensor_type)
+        return self._prepare_detection_core(
+            observer_pos,
+            target_pos,
+            sensor,
+            target_sig,
+            geometry=geometry,
+            sensor_type=sensor_type,
+            signature_domain=signature_domain,
+            target_unit=target_unit,
+            observer_height=observer_height,
+            target_height=target_height,
+            concealment=concealment,
+            posture=posture,
+            illumination_lux=illumination_lux,
+            visibility_m=visibility_m,
+            thermal_contrast=thermal_contrast,
+            ambient_noise_db=ambient_noise_db,
+            atmospheric_atten_db_per_km=atmospheric_atten_db_per_km,
+            transmission_loss=transmission_loss,
+            observer_heading_deg=observer_heading_deg,
+            target_id=target_id,
+            scan_identity=scan_identity,
+            jam_snr_penalty_db=jam_snr_penalty_db,
+        )
+
+    def prepare_detection(
+        self,
+        observer_pos: Position,
+        target_pos: Position,
+        sensor: SensorInstance,
+        target_sig: SignatureProfile,
+        target_unit: Any = None,
+        observer_height: float = 1.8,
+        target_height: float = 0.0,
+        concealment: float = 0.0,
+        posture: int = 0,
+        illumination_lux: float = 100.0,
+        visibility_m: float = 10000.0,
+        thermal_contrast: float = 1.0,
+        ambient_noise_db: float = 70.0,
+        atmospheric_atten_db_per_km: float = 0.01,
+        transmission_loss: float | None = None,
+        observer_heading_deg: float = 0.0,
+        target_id: str = "",
+        scan_identity: DetectionScanIdentity | None = None,
+        jam_snr_penalty_db: float = 0.0,
+    ) -> DetectionResult | PreparedDetection:
+        """Run deterministic gates and physics up to the stochastic draw.
+
+        Pre-RNG rejection returns a terminal :class:`DetectionResult` with its
+        exact decision stage.  A stochastic opportunity returns a
+        :class:`PreparedDetection`; its caller then supplies exactly one
+        uniform through :meth:`PreparedDetection.adjudicate`.
+        """
+        geometry = _detection_geometry(observer_pos, target_pos)
+        sensor_type = sensor.sensor_type
+        signature_domain = signature_domain_for_sensor_type(sensor_type)
+        prepared = self._prepare_detection_core(
+            observer_pos,
+            target_pos,
+            sensor,
+            target_sig,
+            geometry=geometry,
+            sensor_type=sensor_type,
+            signature_domain=signature_domain,
+            target_unit=target_unit,
+            observer_height=observer_height,
+            target_height=target_height,
+            concealment=concealment,
+            posture=posture,
+            illumination_lux=illumination_lux,
+            visibility_m=visibility_m,
+            thermal_contrast=thermal_contrast,
+            ambient_noise_db=ambient_noise_db,
+            atmospheric_atten_db_per_km=atmospheric_atten_db_per_km,
+            transmission_loss=transmission_loss,
+            observer_heading_deg=observer_heading_deg,
+            target_id=target_id,
+            scan_identity=scan_identity,
+            jam_snr_penalty_db=jam_snr_penalty_db,
+        )
+        if isinstance(prepared, PreparedDetection):
+            return prepared
+        return DetectionResult(
+            False,
+            0.0,
+            -100.0,
+            geometry.range_m,
+            sensor_type,
+            geometry.bearing_deg,
+            prepared,
+            geometry.horizontal_range_m,
         )
 
     def check_detection(
@@ -987,6 +1104,86 @@ class DetectionEngine:
             _fingerprint=self._scan_count_fingerprint(entries),
         )
 
+    @staticmethod
+    def _prevalidated_scan_count_entry(
+        key: _ScanCountKey,
+        count: int,
+    ) -> DetectionScanCountEntry:
+        """Materialize one already-validated private counter without restaging."""
+        scan_identity: DetectionScanIdentity | None = None
+        if len(key) == 5:
+            scan_identity = object.__new__(DetectionScanIdentity)
+            object.__setattr__(scan_identity, "side", key[0])
+            object.__setattr__(scan_identity, "observer_unit_id", key[1])
+            object.__setattr__(
+                scan_identity,
+                "source_equipment_index",
+                key[2],
+            )
+            sensor_id = key[3]
+            target_id = key[4]
+        else:
+            sensor_id = key[0]
+            target_id = key[1]
+        entry = object.__new__(DetectionScanCountEntry)
+        object.__setattr__(entry, "scan_identity", scan_identity)
+        object.__setattr__(entry, "sensor_id", sensor_id)
+        object.__setattr__(entry, "target_id", target_id)
+        object.__setattr__(entry, "count", count)
+        return entry
+
+    @staticmethod
+    def _raw_scan_count_is_exact_builtin(
+        key: object,
+        count: object,
+    ) -> bool:
+        """Return whether one validated raw counter has no mutable subclasses."""
+        if type(key) is not tuple or type(count) is not int:
+            return False
+        if len(key) == 2:
+            return type(key[0]) is str and type(key[1]) is str
+        return (
+            len(key) == 5
+            and type(key[0]) is str
+            and type(key[1]) is str
+            and type(key[2]) is int
+            and type(key[3]) is str
+            and type(key[4]) is str
+        )
+
+    def _stage_fow_scan_count_values(
+        self,
+        values: dict[_ScanCountKey, int],
+    ) -> DetectionScanCountSnapshot:
+        """Build one canonical owner snapshot from manager-private raw values."""
+        if type(values) is not dict:
+            raise TypeError("FOW scan-count values must be an exact dict")
+        entries: list[DetectionScanCountEntry] = []
+        exact_builtin = True
+        for key, count in values.items():
+            self._validate_raw_scan_count(key, count)
+            entries.append(self._prevalidated_scan_count_entry(key, count))
+            exact_builtin = exact_builtin and self._raw_scan_count_is_exact_builtin(
+                key,
+                count,
+            )
+        if not exact_builtin:
+            public_entries = tuple(
+                sorted(
+                    (self._scan_count_entry(key, count) for key, count in values.items()),
+                    key=DetectionScanCountEntry.sort_key,
+                )
+            )
+            return self.stage_scan_counts(public_entries)
+        canonical_entries = tuple(
+            sorted(entries, key=DetectionScanCountEntry.sort_key),
+        )
+        return DetectionScanCountSnapshot(
+            _entries=canonical_entries,
+            _owner_token=self._scan_count_snapshot_owner,
+            _fingerprint=self._scan_count_fingerprint(canonical_entries),
+        )
+
     def _validated_scan_counts(
         self,
         snapshot: DetectionScanCountSnapshot,
@@ -999,6 +1196,71 @@ class DetectionEngine:
         if snapshot._fingerprint != restaged._fingerprint:
             raise ValueError("Detection scan-count snapshot was mutated")
         return {self._scan_count_key(entry): entry.count for entry in snapshot._entries}
+
+    @staticmethod
+    def _validate_raw_scan_count(key: object, count: object) -> None:
+        """Validate one internal dwell counter without materializing entries."""
+        if type(key) is not tuple:
+            raise ValueError(
+                "Detection scan-count key must be an exact two- or five-item tuple",
+            )
+        key_length = len(key)
+        if key_length != 2 and key_length != 5:
+            raise ValueError(
+                "Detection scan-count key must be an exact two- or five-item tuple",
+            )
+        identifier_indexes = (0, 1) if key_length == 2 else (0, 1, 3, 4)
+        for index in identifier_indexes:
+            value = key[index]
+            if not isinstance(value, str) or not value or value != value.strip():
+                raise ValueError(
+                    "Detection scan-count identifiers must be non-empty trimmed strings",
+                )
+            if type(value) is str and value.isascii():
+                continue
+            try:
+                value.encode("utf-8")
+            except UnicodeEncodeError as exc:
+                raise ValueError(
+                    "Detection scan-count identifiers must be valid UTF-8",
+                ) from exc
+        if key_length == 5:
+            source_equipment_index = key[2]
+            if (
+                isinstance(source_equipment_index, bool)
+                or not isinstance(source_equipment_index, int)
+                or source_equipment_index < 0
+            ):
+                raise ValueError(
+                    "Detection scan-count source equipment index must be a non-negative integer",
+                )
+        if isinstance(count, bool) or not isinstance(count, int) or count <= 0:
+            raise ValueError("Detection scan count must be a positive integer")
+
+    def _snapshot_scan_count_values(self) -> dict[_ScanCountKey, int]:
+        """Return a validated defensive copy of manager-private dwell counts."""
+        with self._scan_count_lock:
+            values = dict(self._scan_counts)
+        for key, count in values.items():
+            self._validate_raw_scan_count(key, count)
+        return values
+
+    def _live_scan_count_values_equal(
+        self,
+        expected: dict[_ScanCountKey, int],
+    ) -> bool:
+        """Compare validated live dwell counts with one private baseline."""
+        if type(expected) is not dict:
+            return False
+        try:
+            for key, count in expected.items():
+                self._validate_raw_scan_count(key, count)
+            with self._scan_count_lock:
+                for key, count in self._scan_counts.items():
+                    self._validate_raw_scan_count(key, count)
+                return self._scan_counts == expected
+        except ValueError:
+            return False
 
     def snapshot_scan_counts(self) -> DetectionScanCountSnapshot:
         """Capture only dwell counters; never capture or advance RNG state."""
@@ -1021,6 +1283,15 @@ class DetectionEngine:
         if not isinstance(rng, np.random.Generator):
             raise TypeError("Detection staging RNG must be a numpy Generator")
         staged_counts = self._validated_scan_counts(snapshot)
+        return self._fork_scan_count_values(staged_counts, rng=rng)
+
+    def _fork_scan_count_values(
+        self,
+        staged_counts: dict[_ScanCountKey, int],
+        *,
+        rng: np.random.Generator,
+    ) -> DetectionEngine:
+        """Construct one isolated detection engine from owned counter values."""
         fork = DetectionEngine(
             los_checker=self._los,
             conditions_engine=self._conditions,

@@ -2584,8 +2584,7 @@ class _BattleExecutorOwnerAdapter:
             raise RuntimeError("Deferred OODA decision ownership is incomplete")
         if set(self._manager._misinterpreted_orders) != pending:
             raise RuntimeError(
-                "Current deferred-OODA state requires exactly one propagation "
-                "record per pending decision",
+                "Current deferred-OODA state requires exactly one propagation record per pending decision",
             )
 
     def deferred_ooda_owner_items(self) -> tuple[tuple[str, str], ...]:
@@ -2676,11 +2675,7 @@ class _BattleExecutorOwnerAdapter:
         *,
         fallback_key: str | None = None,
     ) -> int:
-        fallback = (
-            0
-            if fallback_key is None
-            else self._manager._ammo_expended.get(fallback_key, 0)
-        )
+        fallback = 0 if fallback_key is None else self._manager._ammo_expended.get(fallback_key, 0)
         return self._manager._ammo_expended.get(key, fallback)
 
     def record_ammunition_expenditure(
@@ -2690,10 +2685,7 @@ class _BattleExecutorOwnerAdapter:
         *,
         fallback_key: str | None = None,
     ) -> None:
-        self._manager._ammo_expended[key] = (
-            self.ammunition_expenditure(key, fallback_key=fallback_key)
-            + quantity
-        )
+        self._manager._ammo_expended[key] = self.ammunition_expenditure(key, fallback_key=fallback_key) + quantity
 
     def cumulative_casualties(self, unit_id: str) -> int:
         return self._manager._cumulative_casualties.get(unit_id, 0)
@@ -2810,8 +2802,7 @@ class _BattleExecutorOwnerAdapter:
         manager = self._manager
         return BattleCheckpointSnapshot(
             battles={
-                battle_id: BattleIntervalView.from_battle(battle)
-                for battle_id, battle in manager._battles.items()
+                battle_id: BattleIntervalView.from_battle(battle) for battle_id, battle in manager._battles.items()
             },
             next_battle_id=manager._next_battle_id,
             vls_launches=manager._vls_launches,
@@ -2984,25 +2975,13 @@ class BattleManager:
         self._executor_owner: BattleExecutorOwner = _BattleExecutorOwnerAdapter(
             self,
         )
-        self._ooda_executor = (
-            DefaultBattleOODAExecutor()
-            if ooda_executor is None
-            else ooda_executor
-        )
-        self._movement_executor = (
-            DefaultBattleMovementExecutor()
-            if movement_executor is None
-            else movement_executor
-        )
+        self._ooda_executor = DefaultBattleOODAExecutor() if ooda_executor is None else ooda_executor
+        self._movement_executor = DefaultBattleMovementExecutor() if movement_executor is None else movement_executor
         self._engagement_executor = (
-            DefaultBattleEngagementExecutor()
-            if engagement_executor is None
-            else engagement_executor
+            DefaultBattleEngagementExecutor() if engagement_executor is None else engagement_executor
         )
         self._checkpoint_executor = (
-            DefaultBattleCheckpointExecutor()
-            if checkpoint_executor is None
-            else checkpoint_executor
+            DefaultBattleCheckpointExecutor() if checkpoint_executor is None else checkpoint_executor
         )
 
     def _suppress_runtime_failure(
@@ -3131,17 +3110,16 @@ class BattleManager:
             authored_configuration=(
                 configured_calibration
                 if configured_calibration is not None
-                else calibration if calibration is not None else flat_calibration
+                else calibration
+                if calibration is not None
+                else flat_calibration
             ),
-            typed_calibration=(
-                calibration if calibration is not None else flat_calibration
-            ),
+            typed_calibration=(calibration if calibration is not None else flat_calibration),
             flat_calibration=flat_calibration,
         )
         if effective_flags != self._performance_receipts.effective_flags:
             raise RuntimeError(
-                "Live performance calibration diverged from the committed "
-                "performance receipt flags",
+                "Live performance calibration diverged from the committed performance receipt flags",
             )
 
     # ── Engagement detection ────────────────────────────────────────
@@ -3828,30 +3806,28 @@ class BattleManager:
                 fow_transaction,
                 tuple(side_plans[side] for side in reporting_sides),
             )
-            outcomes = publication.outcomes
-            witnesses = tuple(witness for outcome in outcomes for witness in outcome.witnesses)
             promoted_observers = self._lod_witness_promotions(
                 ctx,
-                witnesses=witnesses,
+                witnesses=(publication.witnesses if lod_enabled else ()),
                 lod_tiers=lod_plan.lod_tiers,
             )
             promoted_unit_ids = self._validate_lod_publication(
                 lod_plan,
                 witness_promoted_unit_ids={observer.observer_unit_id for observer in promoted_observers},
             )
-            cadence_plan = fog_of_war.cadence.stage_witness_promotions(
-                cadence_plan,
-                promoted_observers,
-            )
-            fog_of_war.cadence.validate_interval_plan(cadence_plan)
+            if promoted_observers:
+                cadence_plan = fog_of_war.cadence.stage_witness_promotions(
+                    cadence_plan,
+                    promoted_observers,
+                )
+                fog_of_war.cadence.validate_interval_plan(cadence_plan)
 
             expected_entries = 0
-            for expected_side, outcome in zip(
+            for expected_side, receipt in zip(
                 reporting_sides,
-                outcomes,
+                publication.receipts,
                 strict=True,
             ):
-                receipt = outcome.receipt
                 if receipt.reporting_side != expected_side or receipt.engine_tick != engine_tick:
                     raise RuntimeError(
                         "Staged FOW receipt owner/tick topology disagrees with the production interval",
@@ -3869,7 +3845,7 @@ class BattleManager:
                 cadence_plan,
             )
             fow_commit = fog_of_war.prepare_update_commit(publication)
-            outcomes = fow_commit.outcomes
+            outcomes = fog_of_war._prepared_outcomes_for_owner(fow_commit)
             indexed_record = indexed_commit.record
             if (
                 indexed_record.engine_tick != engine_tick
@@ -3879,13 +3855,6 @@ class BattleManager:
                 raise RuntimeError(
                     "Prepared indexed FOW record disagrees with staged side receipts",
                 )
-            ctx.rng_manager.validate_prepared_fow_detection_interval_commit(
-                indexed_commit,
-            )
-            fog_of_war.cadence.validate_prepared_interval_commit(
-                cadence_commit,
-            )
-            fog_of_war.validate_prepared_update_commit(fow_commit)
             return _StagedFOWObservation(
                 reporting_sides=reporting_sides,
                 indexed_allocation=indexed_allocation,
@@ -4645,7 +4614,9 @@ class BattleManager:
         witnesses = (
             observation.witnesses.get(shooter.side, ())
             if observation is not None
-            else fog_of_war.get_current_detection_witnesses(shooter.side)
+            else fog_of_war._current_detection_witnesses_for_owner(
+                shooter.side,
+            )
         )
         candidates = []
         for witness in witnesses:
@@ -4712,7 +4683,7 @@ class BattleManager:
             process_noise_std_mps2 = observation.support_process_noise_std_mps2
             max_position_uncertainty_m = observation.support_max_position_uncertainty_m
         elif fog_of_war is not None:
-            retained_supports = fog_of_war.get_observer_track_supports(
+            retained_supports = fog_of_war._observer_track_supports_for_owner(
                 shooter.side,
             )
             committed_ordinal = fog_of_war.cadence.committed_ordinal
@@ -4812,7 +4783,7 @@ class BattleManager:
                     source=ContactSource.FOW_OBSERVER_TRACK_SUPPORT,
                     range_m=reach_m,
                     sensor_attachment=attachment,
-                    observer_track_support=evidence,
+                    observer_track_support=copy.deepcopy(evidence),
                 )
             )
         return tuple(
@@ -5755,8 +5726,7 @@ class BattleManager:
             longitude=float(getattr(config, "longitude", 0.0)),
             behavior_rules=getattr(config, "behavior_rules", {}),
             side_experience_levels={
-                side.side: float(getattr(side, "experience_level", 0.5))
-                for side in getattr(config, "sides", ())
+                side.side: float(getattr(side, "experience_level", 0.5)) for side in getattr(config, "sides", ())
             },
         )
 
@@ -5934,10 +5904,7 @@ class BattleManager:
             self._executor_owner,
             OODAIntervalRequest(
                 runtime=self._build_ooda_runtime(ctx),
-                battles=tuple(
-                    BattleIntervalView.from_battle(battle)
-                    for battle in battles
-                ),
+                battles=tuple(BattleIntervalView.from_battle(battle) for battle in battles),
                 dt_seconds=dt,
             ),
         )
@@ -6601,10 +6568,7 @@ class BattleManager:
         _fz_cal = getattr(getattr(ctx, "config", None), "calibration_overrides", None)
         if _fz_cal is not None and _fz_cal.get("enable_fire_zones", False):
             _inc_eng_fz = getattr(ctx, "incendiary_engine", None)
-            if (
-                _inc_eng_fz is not None
-                and _inc_eng_fz.has_active_fire_zones
-            ):
+            if _inc_eng_fz is not None and _inc_eng_fz.has_active_fire_zones:
                 # Phase 70b: reuse _unit_index for O(1) lookup
                 _unit_positions: dict[str, Position] = {
                     uid: u.position for uid, u in _unit_index.items() if u.status == UnitStatus.ACTIVE
@@ -6710,15 +6674,12 @@ class BattleManager:
     ) -> BattleResult:
         """Finalize a terminated battle and produce a result."""
         deferred_unit_ids = sorted(
-            unit_id
-            for unit_id, battle_id in self._deferred_battle_ids.items()
-            if battle_id == battle.battle_id
+            unit_id for unit_id, battle_id in self._deferred_battle_ids.items() if battle_id == battle.battle_id
         )
         if deferred_unit_ids:
             if ctx is None:
                 raise RuntimeError(
-                    "Resolving a battle with deferred OODA decisions requires "
-                    "the simulation context",
+                    "Resolving a battle with deferred OODA decisions requires the simulation context",
                 )
             if ctx.ooda_engine is None:
                 raise RuntimeError(
@@ -6740,11 +6701,7 @@ class BattleManager:
                 planning_engine = getattr(ctx, "planning_engine", None)
                 if planning_engine is not None:
                     planning_engine.cancel_planning(unit_id)
-                school = (
-                    ctx.school_registry.get_for_unit(unit_id)
-                    if ctx.school_registry is not None
-                    else None
-                )
+                school = ctx.school_registry.get_for_unit(unit_id) if ctx.school_registry is not None else None
                 self._advance_ooda_completion(
                     ctx,
                     unit_id=unit_id,
@@ -6991,10 +6948,7 @@ class BattleManager:
         # A timing misunderstanding extends the original delay once.  Encoding
         # that extension up front avoids a second, ambiguous queue transition
         # and makes checkpoint continuation exact.
-        if (
-            propagation.was_misinterpreted
-            and propagation.misinterpretation_type == "timing"
-        ):
+        if propagation.was_misinterpreted and propagation.misinterpretation_type == "timing":
             delay_s *= 2.0
         self._bind_deferred_ooda_owner(unit_id=unit_id, battle=battle)
         record = DeferredOODADecision(
@@ -7031,8 +6985,7 @@ class BattleManager:
         existing_owner = self._deferred_battle_ids.get(unit_id)
         if existing_owner is not None and existing_owner != battle.battle_id:
             raise RuntimeError(
-                "OODA commander already owns a deferred decision: "
-                f"unit={unit_id!r}, battle={existing_owner!r}",
+                f"OODA commander already owns a deferred decision: unit={unit_id!r}, battle={existing_owner!r}",
             )
         self._deferred_battle_ids[unit_id] = battle.battle_id
 
@@ -7533,14 +7486,8 @@ class BattleManager:
         )
         friction_scale = max(0.0, 1.0 - c2_effectiveness)
         overrides = PropagationOverrides(
-            delay_sigma=(
-                calibration.get("order_propagation_delay_sigma", 0.4)
-                * friction_scale
-            ),
-            base_misinterpretation=(
-                calibration.get("order_misinterpretation_base", 0.05)
-                * friction_scale
-            ),
+            delay_sigma=(calibration.get("order_propagation_delay_sigma", 0.4) * friction_scale),
+            base_misinterpretation=(calibration.get("order_misinterpretation_base", 0.05) * friction_scale),
         )
         try:
             result = propagation_engine.propagate_order(
@@ -7573,11 +7520,7 @@ class BattleManager:
                 runtime=self._build_ooda_runtime(ctx),
                 completions=tuple(completions),
                 timestamp=timestamp,
-                battle=(
-                    None
-                    if battle is None
-                    else BattleIntervalView.from_battle(battle)
-                ),
+                battle=(None if battle is None else BattleIntervalView.from_battle(battle)),
                 battle_tick=battle_tick,
             ),
         )
@@ -7626,11 +7569,7 @@ class BattleManager:
                 units_by_side=units_by_side,
                 active_enemies=active_enemies,
                 dt_seconds=dt,
-                battle=(
-                    None
-                    if battle is None
-                    else BattleIntervalView.from_battle(battle)
-                ),
+                battle=(None if battle is None else BattleIntervalView.from_battle(battle)),
                 behavior_rules=behavior_rules,
                 enemy_position_arrays=enemy_pos_arrays,
             ),
@@ -8172,7 +8111,7 @@ class BattleManager:
 
         retained_matches = tuple(
             support
-            for support in fog_of_war.get_observer_track_supports(
+            for support in fog_of_war._observer_track_supports_for_owner(
                 decision.shooter_side,
             )
             if support.identity == evidence.identity
@@ -8538,11 +8477,7 @@ class BattleManager:
                 dt_seconds=dt,
                 timestamp=timestamp,
                 unit_index=_unit_index,
-                battle=(
-                    None
-                    if battle is None
-                    else BattleIntervalView.from_battle(battle)
-                ),
+                battle=(None if battle is None else BattleIntervalView.from_battle(battle)),
             ),
         )
 

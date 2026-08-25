@@ -10,6 +10,9 @@ import pytest
 from stochastic_warfare.core.indexed_rng import (
     FOWDecisionIdentity,
     FOWTargetKind,
+    IndexedFOWRNG,
+    IndexedRNGLifecycleError,
+    IndexedRNGValidationError,
     encode_fow_decision,
 )
 from stochastic_warfare.core.performance_receipts import (
@@ -19,15 +22,54 @@ from stochastic_warfare.core.performance_receipts import (
     FOWReceipt,
     FOWScanReceipt,
 )
-from stochastic_warfare.core.types import Position
+from stochastic_warfare.core.types import ModuleId, Position
 from stochastic_warfare.detection.detection import DetectionResult
 from stochastic_warfare.detection.estimation import StateEstimator
+from stochastic_warfare.detection.fog_of_war import _FOWFusionAccumulator
 from stochastic_warfare.detection.identification import ContactInfo, ContactLevel
 from stochastic_warfare.detection.intel_fusion import (
     IntelFusionEngine,
     SensorFusionCandidate,
 )
 from stochastic_warfare.detection.sensors import SensorType
+
+
+class _TextSubclass(str):
+    pass
+
+
+class _MutableNamespace(str):
+    def __new__(cls, value: str) -> _MutableNamespace:
+        instance = super().__new__(cls, value)
+        instance.accepted = True
+        return instance
+
+    def __eq__(self, other: object) -> bool:
+        return self.accepted and super().__eq__(other)
+
+    def __ne__(self, other: object) -> bool:
+        return not self.__eq__(other)
+
+    __hash__ = str.__hash__
+
+
+class _CountingNamespace(str):
+    def __new__(cls, value: str) -> _CountingNamespace:
+        instance = super().__new__(cls, value)
+        instance.comparisons = 0
+        return instance
+
+    def __ne__(self, other: object) -> bool:
+        self.comparisons += 1
+        return super().__ne__(other)
+
+
+class _IssuanceMutatingNamespace(str):
+    identity: FOWDecisionIdentity
+
+    def __ne__(self, other: object) -> bool:
+        object.__setattr__(self.identity, "schema_version", 2)
+        return super().__ne__(other)
 
 
 def _engine(seed: int = 7) -> IntelFusionEngine:
@@ -183,10 +225,7 @@ def test_equal_variance_uses_canonical_encoded_identity_tie_break() -> None:
         candidates,
         key=lambda candidate: encode_fow_decision(candidate.identity),
     )
-    expected_easting = (
-        representative.observer_position.easting
-        + representative.detection.range_m
-    )
+    expected_easting = representative.observer_position.easting + representative.detection.range_m
 
     engine = _engine()
     outcome = engine.submit_sensor_detection_batch_with_outcome(candidates)
@@ -213,6 +252,470 @@ def test_later_group_predicts_and_updates_once_for_multiple_candidates() -> None
     assert later_outcome.updates == 1
     assert later_outcome.position_measurement_groups == 1
     assert track.hits == 2
+
+
+def test_issued_preimage_requires_exact_identity_and_active_lifecycle() -> None:
+    candidate = _candidate(1)
+    indexed = IndexedFOWRNG(142_001)
+    allocation = indexed.begin_interval(
+        module=ModuleId.DETECTION,
+        engine_tick=1,
+        reporting_sides=("blue",),
+    )
+    decision = allocation.acquire_side("blue").issue(candidate.identity)
+
+    assert decision._issued_preimage(candidate.identity) == encode_fow_decision(
+        candidate.identity,
+    )
+
+    equal_identity = replace(candidate.identity)
+    assert equal_identity == candidate.identity
+    assert equal_identity is not candidate.identity
+    with pytest.raises(
+        IndexedRNGValidationError,
+        match="not its issued identity",
+    ):
+        decision._issued_preimage(equal_identity)
+
+    with pytest.raises(IndexedRNGLifecycleError, match="not active"):
+        decision._issued_preimage(candidate.identity)
+    with pytest.raises(IndexedRNGLifecycleError, match="not active"):
+        indexed.commit_interval(allocation)
+    assert indexed.committed_interval_count == 0
+    assert indexed.committed_entry_count == 0
+
+
+@pytest.mark.parametrize(
+    ("field_name", "mutated_value", "encoder_outcome"),
+    (
+        pytest.param(
+            "sensor_id",
+            "mutated-after-issue",
+            "changed",
+            id="scalar-value",
+        ),
+        pytest.param(
+            "sensor_id",
+            _TextSubclass("sensor-1"),
+            "invalid",
+            id="equal-text-subclass",
+        ),
+        pytest.param("engine_tick", 2, "unchanged", id="unencoded-tick-value"),
+        pytest.param("engine_tick", True, "invalid", id="bool-for-int"),
+        pytest.param("reporting_side", "red", "changed", id="reporting-side"),
+        pytest.param(
+            "observer_unit_id",
+            "observer-mutated",
+            "changed",
+            id="observer-unit-id",
+        ),
+        pytest.param(
+            "source_equipment_index",
+            2,
+            "changed",
+            id="source-equipment-index",
+        ),
+        pytest.param(
+            "source_equipment_index",
+            True,
+            "invalid",
+            id="bool-for-u64",
+        ),
+        pytest.param(
+            "modeled_role",
+            "area_search",
+            "changed",
+            id="modeled-role",
+        ),
+        pytest.param(
+            "target_kind",
+            FOWTargetKind.DECOY,
+            "changed",
+            id="target-kind",
+        ),
+        pytest.param("target_id", "target-2", "changed", id="target-id"),
+        pytest.param(
+            "opportunity_ordinal",
+            1,
+            "changed",
+            id="opportunity-ordinal",
+        ),
+        pytest.param(
+            "opportunity_ordinal",
+            False,
+            "invalid",
+            id="bool-for-u32",
+        ),
+        pytest.param(
+            "target_kind",
+            FOWTargetKind.UNIT.value,
+            "invalid",
+            id="raw-int-for-enum",
+        ),
+        pytest.param(
+            "schema_version",
+            True,
+            "invalid",
+            id="schema-version-type",
+        ),
+        pytest.param(
+            "namespace",
+            "MUTATED_NAMESPACE",
+            "invalid",
+            id="namespace-value",
+        ),
+        pytest.param(
+            "namespace",
+            _TextSubclass("FOW_DETECTION"),
+            "unchanged",
+            id="equal-namespace-subclass",
+        ),
+    ),
+)
+def test_issued_preimage_rejects_same_identity_mutated_after_issue(
+    field_name: str,
+    mutated_value: object,
+    encoder_outcome: str,
+) -> None:
+    identity = _candidate(1).identity
+    indexed = IndexedFOWRNG(142_004)
+    initial_transcript_digest = indexed.transcript_digest_hex
+    allocation = indexed.begin_interval(
+        module=ModuleId.DETECTION,
+        engine_tick=1,
+        reporting_sides=("blue",),
+    )
+    decision = allocation.acquire_side("blue").issue(identity)
+    issued_preimage = decision._issued_preimage(identity)
+    assert issued_preimage == encode_fow_decision(identity)
+
+    object.__setattr__(identity, field_name, mutated_value)
+    if encoder_outcome == "invalid":
+        with pytest.raises(IndexedRNGValidationError):
+            encode_fow_decision(identity)
+    else:
+        mutated_preimage = encode_fow_decision(identity)
+        if encoder_outcome == "unchanged":
+            assert mutated_preimage == issued_preimage
+        else:
+            assert mutated_preimage != issued_preimage
+    with pytest.raises(
+        IndexedRNGValidationError,
+        match="indexed decision identity changed after issuance",
+    ):
+        decision._issued_preimage(identity)
+
+    with pytest.raises(IndexedRNGLifecycleError, match="not active"):
+        decision._issued_preimage(identity)
+    with pytest.raises(IndexedRNGLifecycleError, match="not active"):
+        indexed.commit_interval(allocation)
+    assert indexed.committed_interval_count == 0
+    assert indexed.committed_entry_count == 0
+    assert indexed.transcript_digest_hex == initial_transcript_digest
+
+
+def test_issued_preimage_snapshot_does_not_retain_mutable_namespace_state() -> None:
+    identity = _candidate(1).identity
+    namespace = _MutableNamespace("FOW_DETECTION")
+    object.__setattr__(identity, "namespace", namespace)
+    indexed = IndexedFOWRNG(142_005)
+    initial_transcript_digest = indexed.transcript_digest_hex
+    allocation = indexed.begin_interval(
+        module=ModuleId.DETECTION,
+        engine_tick=1,
+        reporting_sides=("blue",),
+    )
+    decision = allocation.acquire_side("blue").issue(identity)
+    assert decision._issued_preimage(identity) == encode_fow_decision(identity)
+
+    namespace.accepted = False
+    with pytest.raises(
+        IndexedRNGValidationError,
+        match="indexed decision identity changed after issuance",
+    ):
+        decision._issued_preimage(identity)
+
+    with pytest.raises(IndexedRNGLifecycleError, match="not active"):
+        indexed.commit_interval(allocation)
+    assert indexed.committed_interval_count == 0
+    assert indexed.committed_entry_count == 0
+    assert indexed.transcript_digest_hex == initial_transcript_digest
+
+
+def test_issue_observes_custom_namespace_equality_once() -> None:
+    identity = _candidate(1).identity
+    namespace = _CountingNamespace("FOW_DETECTION")
+    object.__setattr__(identity, "namespace", namespace)
+    indexed = IndexedFOWRNG(142_006)
+    allocation = indexed.begin_interval(
+        module=ModuleId.DETECTION,
+        engine_tick=1,
+        reporting_sides=("blue",),
+    )
+
+    allocation.acquire_side("blue").issue(identity)
+
+    assert namespace.comparisons == 1
+    indexed.abort_interval(allocation)
+    assert indexed.committed_interval_count == 0
+    assert indexed.committed_entry_count == 0
+
+
+def test_issued_preimage_detects_namespace_comparator_identity_mutation() -> None:
+    identity = _candidate(1).identity
+    namespace = _IssuanceMutatingNamespace("FOW_DETECTION")
+    namespace.identity = identity
+    object.__setattr__(identity, "namespace", namespace)
+    indexed = IndexedFOWRNG(142_007)
+    initial_transcript_digest = indexed.transcript_digest_hex
+    allocation = indexed.begin_interval(
+        module=ModuleId.DETECTION,
+        engine_tick=1,
+        reporting_sides=("blue",),
+    )
+
+    try:
+        decision = allocation.acquire_side("blue").issue(identity)
+    except IndexedRNGValidationError:
+        pass
+    else:
+        with pytest.raises(
+            IndexedRNGValidationError,
+            match="indexed decision identity changed after issuance",
+        ):
+            decision._issued_preimage(identity)
+
+    with pytest.raises(IndexedRNGLifecycleError, match="not active"):
+        indexed.commit_interval(allocation)
+    assert indexed.committed_interval_count == 0
+    assert indexed.committed_entry_count == 0
+    assert indexed.transcript_digest_hex == initial_transcript_digest
+
+
+def test_prevalidated_fow_accumulator_matches_atomic_public_batch_exactly(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    initial = _candidate(0, observation_time_s=0.0, engine_tick=0)
+    later = (
+        _candidate(
+            4,
+            observation_time_s=5.0,
+            engine_tick=1,
+            observer_position=Position(4_000.0, 0.0, 0.0),
+        ),
+        _candidate(
+            2,
+            observation_time_s=5.0,
+            engine_tick=1,
+            observer_position=Position(2_000.0, 0.0, 0.0),
+        ),
+    )
+    public = _engine()
+    public_initial = public.submit_sensor_detection_batch_with_outcome((initial,))
+    public_outcome = public.submit_sensor_detection_batch_with_outcome(
+        later,
+        contact_id=public_initial.track_id,
+    )
+    detached_controls = tuple(_engine() for _ in range(2))
+    detached_initials = tuple(
+        detached.submit_sensor_detection_batch_with_outcome((initial,)) for detached in detached_controls
+    )
+
+    indexed = IndexedFOWRNG(142_002)
+    allocation = indexed.begin_interval(
+        module=ModuleId.DETECTION,
+        engine_tick=1,
+        reporting_sides=("blue",),
+    )
+    handle = allocation.acquire_side("blue")
+    issued_preimages = {
+        candidate.identity: handle.issue(candidate.identity)._issued_preimage(
+            candidate.identity,
+        )
+        for candidate in later
+    }
+    expected_representative = min(
+        later,
+        key=lambda candidate: issued_preimages[candidate.identity],
+    )
+
+    def reject_public_batch_preparation(*_args: object, **_kwargs: object) -> None:
+        raise AssertionError("private FOW fusion called public batch preparation")
+
+    monkeypatch.setattr(
+        IntelFusionEngine,
+        "_prepare_sensor_fusion_batch",
+        reject_public_batch_preparation,
+    )
+
+    for detached, detached_initial, ordered_candidates in zip(
+        detached_controls,
+        detached_initials,
+        (later, tuple(reversed(later))),
+        strict=True,
+    ):
+        first = ordered_candidates[0]
+        validated = detached._validate_prevalidated_fow_candidate(
+            first,
+            decision_preimage=issued_preimages[first.identity],
+        )
+        accumulator = _FOWFusionAccumulator.from_candidate(
+            validated,
+            first,
+            issued_preimages[first.identity],
+        )
+        for candidate in ordered_candidates[1:]:
+            validated = detached._validate_prevalidated_fow_candidate(
+                candidate,
+                decision_preimage=issued_preimages[candidate.identity],
+            )
+            assert validated.group_key == accumulator.representative.group_key
+            accumulator.accumulate(
+                validated,
+                candidate,
+                issued_preimages[candidate.identity],
+            )
+
+        assert accumulator.candidate_count == 2
+        assert accumulator.representative.identity is expected_representative.identity
+        assert accumulator.candidate_ledger[accumulator.representative_key[1]] is expected_representative
+        assert tuple(sorted(accumulator.candidate_ledger)) == tuple(
+            sorted(issued_preimages.values()),
+        )
+        prepared = detached._materialize_validated_sensor_fusion_candidate(
+            accumulator.representative,
+        )
+        detached_outcome = detached._submit_prevalidated_detached_sensor_fusion_with_outcome(
+            prepared,
+            candidate_count=accumulator.candidate_count,
+            contact_id=detached_initial.track_id,
+        )
+
+        assert detached_outcome == public_outcome
+        assert detached.get_state() == public.get_state()
+
+    indexed.abort_interval(allocation)
+
+
+@pytest.mark.parametrize(
+    ("field_name", "invalid_value"),
+    (
+        pytest.param("snr_db", float("nan"), id="snr"),
+        pytest.param("bearing_deg", float("inf"), id="bearing"),
+    ),
+)
+def test_malformed_nonrepresentative_rejects_before_private_submission(
+    monkeypatch: pytest.MonkeyPatch,
+    field_name: str,
+    invalid_value: float,
+) -> None:
+    initial = _candidate(0, observation_time_s=0.0, engine_tick=0)
+    representative = _candidate(
+        1,
+        probability=1.0,
+        range_m=1.0,
+        observation_time_s=5.0,
+        engine_tick=1,
+    )
+    nonrepresentative = _candidate(
+        2,
+        probability=0.5,
+        range_m=100.0,
+        observation_time_s=5.0,
+        engine_tick=1,
+    )
+    malformed = replace(
+        nonrepresentative,
+        detection=nonrepresentative.detection._replace(
+            **{field_name: invalid_value},
+        ),
+    )
+
+    public = _engine()
+    public_initial = public.submit_sensor_detection_batch_with_outcome((initial,))
+    public_before = public.get_state()
+    with pytest.raises(
+        ValueError,
+        match=rf"detection\.{field_name} must be a finite number",
+    ):
+        public.submit_sensor_detection_batch_with_outcome(
+            (representative, malformed),
+            contact_id=public_initial.track_id,
+        )
+    assert public.get_state() == public_before
+
+    private = _engine()
+    private_initial = private.submit_sensor_detection_batch_with_outcome((initial,))
+    private_before = private.get_state()
+    indexed = IndexedFOWRNG(142_003)
+    allocation = indexed.begin_interval(
+        module=ModuleId.DETECTION,
+        engine_tick=1,
+        reporting_sides=("blue",),
+    )
+    handle = allocation.acquire_side("blue")
+    representative_decision = handle.issue(representative.identity)
+    representative_preimage = representative_decision._issued_preimage(
+        representative.identity,
+    )
+    malformed_decision = handle.issue(malformed.identity)
+    malformed_preimage = malformed_decision._issued_preimage(
+        malformed.identity,
+    )
+    validated_representative = private._validate_prevalidated_fow_candidate(
+        representative,
+        decision_preimage=representative_preimage,
+    )
+    validated_nonrepresentative_control = private._validate_prevalidated_fow_candidate(
+        nonrepresentative,
+        decision_preimage=malformed_preimage,
+    )
+    assert validated_representative.effective_variance_m2 < validated_nonrepresentative_control.effective_variance_m2
+    accumulator = _FOWFusionAccumulator.from_candidate(
+        validated_representative,
+        representative,
+        representative_preimage,
+    )
+    private_submit_called = False
+
+    def unexpected_private_submit(*_args: object, **_kwargs: object) -> None:
+        nonlocal private_submit_called
+        private_submit_called = True
+        raise AssertionError("malformed nonrepresentative reached private submit")
+
+    monkeypatch.setattr(
+        IntelFusionEngine,
+        "_submit_prevalidated_detached_sensor_fusion_with_outcome",
+        unexpected_private_submit,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match=rf"detection\.{field_name} must be a finite number",
+    ):
+        validated_nonrepresentative = private._validate_prevalidated_fow_candidate(
+            malformed,
+            decision_preimage=malformed_preimage,
+        )
+        accumulator.accumulate(
+            validated_nonrepresentative,
+            malformed,
+            malformed_preimage,
+        )
+        prepared = private._materialize_validated_sensor_fusion_candidate(
+            accumulator.representative,
+        )
+        private._submit_prevalidated_detached_sensor_fusion_with_outcome(
+            prepared,
+            candidate_count=accumulator.candidate_count,
+            contact_id=private_initial.track_id,
+        )
+
+    assert private_submit_called is False
+    assert accumulator.candidate_count == 1
+    assert tuple(accumulator.candidate_ledger.values()) == (representative,)
+    assert private.get_state() == private_before
+    indexed.abort_interval(allocation)
 
 
 def test_gated_representative_replaces_without_retrying_looser_candidate() -> None:

@@ -80,7 +80,7 @@ revokes both closures and forbids the consolidation commit.
 | REM-052 | P2 | 139 | FOW update ownership | One canonical receipt-bearing owner; the legacy mutation boundary rejects explicitly | **Closed** | Yes | Yes | Yes | N/A | Yes | Yes | Yes | [Consolidation postmortem](devlog/consolidation-tiered-modular-monolith.md#postmortem) |
 | REM-053 | P2 | 140 | Checkpoint capture | One immutable context snapshot is reused for validation and final encoding | **Closed** | Yes | Yes | Yes | N/A | Yes | Yes | Yes | [Consolidation postmortem](devlog/consolidation-tiered-modular-monolith.md#postmortem) |
 | REM-054 | P1 | 141 | Performance approximation | Frozen v7 scan scheduling failed 13/16 pairs and Suwalki LOD failed 4/16, so current production rejects both controls rather than accepting unbounded fidelity loss | Queued | Yes | Yes | Yes | N/A | Yes | Yes | Yes | Sourced redesign, current rejection red, fresh disjoint paired evidence, and accepted independently verified re-enablement artifact |
-| REM-055 | P1 | 142 | FOW runtime cost | Phase 118's atomic FOW transaction preserves semantics but increased the matched ten-tick production median from 47.035449 s to 59.220597 s (+25.906%) | Queued | Yes | Yes | Yes | N/A | Yes | Yes | - | Preserve every integrity invariant while recovering the measured gross regression with persistent matched profile evidence |
+| REM-055 | P1 | 142 | FOW runtime cost | Phase 118's atomic FOW transaction preserves semantics but increased the matched ten-tick production median from 47.035449 s to 59.220597 s (+25.906%) | **Closed** | Yes | Yes | Yes | N/A | Yes | Yes | Yes | [Phase 142 postmortem](devlog/phase-142.md#postmortem) |
 
 ## REM-001 - Exact checkpoint restoration
 
@@ -3036,7 +3036,10 @@ revision whose final exact frozen-revision release gate is green.
 
 ## REM-054 - Performance approximations failed frozen semantic validation
 
-### Phase 118 finding and current boundary
+### Historical Phase 118 finding and pre-Phase-142 boundary
+
+The following matrix and status describe the boundary before Phase 142 began.
+The current closure candidate and matrix appear below.
 
 The complete schema-2 v7 study is valid negative evidence. Native scan
 scheduling passed only 3/16 paired cases and failed 13/16, including one
@@ -3135,8 +3138,8 @@ median of 2.757796 seconds, candidate median of 3.144280 seconds, and median
 paired ratio of 1.136065. That ratio is below the predeclared 1.20 benchmark
 policy limit, but the candidate is still 13.61% slower. Its semantic projection
 was exact. Because this comparison ran with FOW disabled, it does not measure
-recovery of the transactional-FOW cost and cannot close REM-055. REM-055 is
-still open and queued for Phase 142.
+recovery of the transactional-FOW cost and could not close REM-055. At that
+historical boundary, REM-055 remained open and queued for Phase 142.
 
 **Matrix:** `D=Yes, L=Yes, W=Yes, E=N/A, X=Yes, O=Yes, P=-`. The production
 cost is declared, loaded, wired, exercised, and outcome-measured. Enable/disable
@@ -3164,5 +3167,34 @@ before/after optimization receipt does not yet exist.
   uncertainty. Do not call a shared-host or single-workload result a universal
   speedup.
 
-**Status:** Queued for Phase 142 in Block 21. Phase 142 has not started, and
-this follow-up does not weaken Phase 118's qualified-negative semantic closure.
+### Phase 142 closure evidence
+
+Phase 142 removed causally measured redundant transaction work while retaining
+atomic all-owner publication, exact public-handle tamper rejection, indexed
+RNG identity, canonical ordering, correlation-safe fusion, defensive retained
+outcomes, observer-support continuation, receipts, and checkpoint restoration.
+
+The threshold history remains explicit. The original `0.80` target was not
+met. A formal `0.86` run failed at `0.8635476449973133`. After the owner
+explicitly accepted `0.87` as a bounded partial-recovery limit, a fresh run
+with that policy encoded before execution passed at `0.8611730824876394`.
+Dispersion, memory, deterministic equality, fresh-runtime continuation, and
+drift gates also passed. The accepted result SHA-256 is
+`6fac6f1f370302d247d1a00ad56af5e269622c85d81c90fbed4c5fbe2397578c`.
+
+The result is workload- and host-specific. It neither establishes a universal
+speedup nor claims full recovery of the original target. Further throughput
+work requires a separate measured optimization scope.
+
+The final source-bound call profile reduced total calls from 518,194,574 to
+473,385,421 and the non-additive transactional FOW enclosure from 23.116448 to
+9.683666 cumulative seconds while reproducing the semantic, checkpoint, and
+full-RNG digests. The raw artifact hashes and component-level comparison are
+recorded in the [Phase 142 devlog](devlog/phase-142.md#final-source-bound-call-profile).
+
+**Matrix:** `D=Yes, L=Yes, W=Yes, E=N/A, X=Yes, O=Yes, P=Yes`.
+
+**Status:** **Closed** on 2026-08-25 by the accepted
+[Phase 142 postmortem](devlog/phase-142.md#postmortem). The accepted result is
+a workload-specific partial recovery; it does not relabel the original `0.80`
+miss or establish a universal speed claim.

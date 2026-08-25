@@ -120,6 +120,22 @@ class _PreparedSensorFusionCandidate:
     group_key: tuple[int, str, int, str, float]
 
 
+@dataclass(frozen=True, slots=True)
+class _ValidatedSensorFusionCandidate:
+    """Fully checked candidate primitives before report materialization."""
+
+    identity: FOWDecisionIdentity
+    encoded_identity: bytes
+    observation_time_s: float
+    probability: float
+    target_easting: float
+    target_northing: float
+    position_uncertainty_m: float
+    confidence: float
+    effective_variance_m2: float
+    group_key: tuple[int, str, int, str, float]
+
+
 class SatellitePass(BaseModel):
     """Satellite overflight window."""
 
@@ -195,17 +211,10 @@ def _strict_identifier(value: Any, field_name: str) -> str:
 def _fow_track_ordinal(value: str) -> int | None:
     """Return a canonical side-local FOW track ordinal, if present."""
     suffix = value.removeprefix(_FOW_TRACK_ID_PREFIX)
-    if (
-        not value.startswith(_FOW_TRACK_ID_PREFIX)
-        or not suffix.isascii()
-        or not suffix.isdigit()
-    ):
+    if not value.startswith(_FOW_TRACK_ID_PREFIX) or not suffix.isascii() or not suffix.isdigit():
         return None
     ordinal = int(suffix)
-    if (
-        ordinal <= 0
-        or suffix != f"{ordinal:0{_FOW_TRACK_ID_MIN_WIDTH}d}"
-    ):
+    if ordinal <= 0 or suffix != f"{ordinal:0{_FOW_TRACK_ID_MIN_WIDTH}d}":
         return None
     return ordinal
 
@@ -333,10 +342,7 @@ class IntelDeliveryReceipt(BaseModel):
                 "observed_position must contain exactly three ENU numbers",
             )
         return Position(
-            *(
-                _strict_number(component, f"observed_position[{index}]")
-                for index, component in enumerate(components)
-            ),
+            *(_strict_number(component, f"observed_position[{index}]") for index, component in enumerate(components)),
         )
 
     @field_validator("source", mode="before")
@@ -350,11 +356,7 @@ class IntelDeliveryReceipt(BaseModel):
     def _temporal_contract(self) -> IntelDeliveryReceipt:
         if self.reporting_side == self.target_side:
             raise ValueError("receipt sides must differ")
-        if not (
-            self.observed_at_s
-            <= self.available_at_s
-            <= self.delivery_time_s
-        ):
+        if not (self.observed_at_s <= self.available_at_s <= self.delivery_time_s):
             raise ValueError("receipt times are not monotone")
         return self
 
@@ -412,8 +414,7 @@ class _DeliveryReceiptLedger:
         for receipt in ordered:
             if not isinstance(receipt, IntelDeliveryReceipt):
                 raise TypeError(
-                    "Delivery receipt ledger entries must be "
-                    "IntelDeliveryReceipt instances",
+                    "Delivery receipt ledger entries must be IntelDeliveryReceipt instances",
                 )
             if receipt.report_id in by_report_id:
                 raise ValueError(
@@ -444,8 +445,7 @@ class _DeliveryReceiptLedger:
         """Append one new receipt and advance the mutation epoch."""
         if not isinstance(receipt, IntelDeliveryReceipt):
             raise TypeError(
-                "Delivery receipt ledger entries must be "
-                "IntelDeliveryReceipt instances",
+                "Delivery receipt ledger entries must be IntelDeliveryReceipt instances",
             )
         if receipt.report_id in self._by_report_id:
             raise ValueError(
@@ -471,8 +471,7 @@ class _DeliveryReceiptLedger:
         """Keep the private index/revision exact under diagnostic mutation."""
         if not isinstance(receipt, IntelDeliveryReceipt):
             raise TypeError(
-                "Delivery receipt ledger entries must be "
-                "IntelDeliveryReceipt instances",
+                "Delivery receipt ledger entries must be IntelDeliveryReceipt instances",
             )
         prior = self._ordered[index]
         indexed = self._by_report_id.get(receipt.report_id)
@@ -608,7 +607,8 @@ def _fuse_two_reports(a: IntelReport, b: IntelReport) -> IntelReport:
         position_uncertainty_m=fused_unc,
         target_type=a.target_type or b.target_type,
         classification_confidence=max(
-            a.classification_confidence, b.classification_confidence,
+            a.classification_confidence,
+            b.classification_confidence,
         ),
         source_unit_id=a.source_unit_id or b.source_unit_id,
     )
@@ -678,10 +678,7 @@ class IntelFusionEngine:
         self,
     ) -> dict[str, dict[str, IMINTTrackAssociation]]:
         """Return a copy of the persisted owner/target associations."""
-        return {
-            side: dict(associations)
-            for side, associations in self._imint_target_tracks.items()
-        }
+        return {side: dict(associations) for side, associations in self._imint_target_tracks.items()}
 
     # ------------------------------------------------------------------
     # Intel report submission
@@ -715,10 +712,17 @@ class IntelFusionEngine:
         contact_id: str | None,
         *,
         allocate_fow_track: bool,
+        detached_track_update: bool = False,
     ) -> FusionSubmissionOutcome:
         """Submit one report while holding the fusion track lock."""
         if type(allocate_fow_track) is not bool:
             raise TypeError("allocate_fow_track must be a boolean")
+        if type(detached_track_update) is not bool:
+            raise TypeError("detached_track_update must be a boolean")
+        if detached_track_update and not allocate_fow_track:
+            raise ValueError(
+                "detached track updates require FOW replacement ownership",
+            )
         if report.target_position is None:
             return FusionSubmissionOutcome(track_id=None)
 
@@ -744,10 +748,12 @@ class IntelFusionEngine:
         noise_scale = 1.0 / reliability
         unc = position_uncertainty_m * noise_scale
         R = np.diag([unc * unc, unc * unc])
-        meas = np.array([
-            report.target_position.easting,
-            report.target_position.northing,
-        ])
+        meas = np.array(
+            [
+                report.target_position.easting,
+                report.target_position.northing,
+            ]
+        )
 
         # Contact info from report
         level = ContactLevel.DETECTED
@@ -770,7 +776,7 @@ class IntelFusionEngine:
         prediction_microseconds = 0
         if contact_id and contact_id in tracks:
             track = tracks[contact_id]
-            staged_track = copy.deepcopy(track)
+            staged_track = track if detached_track_update else copy.deepcopy(track)
             prediction_dt = _strict_number(
                 report.timestamp - track.state.last_update_time,
                 "intel report elapsed prediction",
@@ -798,7 +804,8 @@ class IntelFusionEngine:
                 # Preserve aliases held by ordinary world-view contacts and
                 # other fusion consumers while publishing the fully staged
                 # predict/update result atomically.
-                track.set_state(staged_track.get_state())
+                if not detached_track_update:
+                    track.set_state(staged_track.get_state())
                 return FusionSubmissionOutcome(
                     track_id=contact_id,
                     prediction_microseconds=prediction_microseconds,
@@ -832,7 +839,12 @@ class IntelFusionEngine:
             next_fow_ordinal = None
             tid = f"track-{next_track_counter:04d}"
         track = self._estimator.create_track(
-            tid, side, meas, R, ci, report.timestamp,
+            tid,
+            side,
+            meas,
+            R,
+            ci,
+            report.timestamp,
         )
         tracks[tid] = track
         self._track_counter = next_track_counter
@@ -936,10 +948,7 @@ class IntelFusionEngine:
         if association is None:
             staged_counter += 1
             track_id = f"track-{staged_counter:04d}"
-            if any(
-                track_id in side_tracks
-                for side_tracks in self._tracks.values()
-            ):
+            if any(track_id in side_tracks for side_tracks in self._tracks.values()):
                 raise ValueError(
                     "IMINT track counter would reuse an existing track ID",
                 )
@@ -969,10 +978,7 @@ class IntelFusionEngine:
                     "IMINT association references a missing track",
                 )
             staged_track = copy.deepcopy(expected_track)
-            prediction_dt = (
-                report.observed_at_s
-                - staged_track.state.last_update_time
-            )
+            prediction_dt = report.observed_at_s - staged_track.state.last_update_time
             if prediction_dt < 0.0:
                 raise ValueError(
                     "Space imagery observation predates track state",
@@ -1028,17 +1034,9 @@ class IntelFusionEngine:
             _expected_receipt_count=self._delivery_receipts.count,
             _expected_rng_state=rng_before,
             _expected_track=expected_track,
-            _expected_track_state=(
-                copy.deepcopy(expected_track.get_state())
-                if expected_track is not None
-                else None
-            ),
+            _expected_track_state=(copy.deepcopy(expected_track.get_state()) if expected_track is not None else None),
             _expected_association=association,
-            _expected_association_state=(
-                association.model_dump(mode="json")
-                if association is not None
-                else None
-            ),
+            _expected_association_state=(association.model_dump(mode="json") if association is not None else None),
             _staged_track=staged_track,
             _staged_association=staged_association,
             _staged_track_counter=staged_counter,
@@ -1067,26 +1065,14 @@ class IntelFusionEngine:
         ).get(receipt.resulting_track_id)
         if (
             self._track_counter != plan._expected_track_counter
-            or self._delivery_receipts.revision
-            != plan._expected_receipt_revision
-            or self._delivery_receipts.count
-            != plan._expected_receipt_count
+            or self._delivery_receipts.revision != plan._expected_receipt_revision
+            or self._delivery_receipts.count != plan._expected_receipt_count
             or current_association is not plan._expected_association
             or current_track is not plan._expected_track
-            or (
-                current_association.model_dump(mode="json")
-                if current_association is not None
-                else None
-            )
+            or (current_association.model_dump(mode="json") if current_association is not None else None)
             != plan._expected_association_state
-            or (
-                current_track.get_state()
-                if current_track is not None
-                else None
-            )
-            != plan._expected_track_state
-            or self._rng.bit_generator.state
-            != plan._expected_rng_state
+            or (current_track.get_state() if current_track is not None else None) != plan._expected_track_state
+            or self._rng.bit_generator.state != plan._expected_rng_state
             or self._delivery_receipts.get(receipt.report_id) is not None
         ):
             raise RuntimeError(
@@ -1095,9 +1081,7 @@ class IntelFusionEngine:
 
         self._rng.bit_generator.state = plan._staged_rng_state
         self._track_counter = plan._staged_track_counter
-        self._tracks.setdefault(receipt.reporting_side, {})[
-            receipt.resulting_track_id
-        ] = plan._staged_track
+        self._tracks.setdefault(receipt.reporting_side, {})[receipt.resulting_track_id] = plan._staged_track
         self._delivery_receipts.append(receipt)
         self._imint_target_tracks.setdefault(
             receipt.reporting_side,
@@ -1133,13 +1117,9 @@ class IntelFusionEngine:
         for side in sorted(self._imint_target_tracks):
             for target_id in sorted(self._imint_target_tracks[side]):
                 association = self._imint_target_tracks[side][target_id]
-                if (
-                    association.reporting_side != side
-                    or association.target_id != target_id
-                ):
+                if association.reporting_side != side or association.target_id != target_id:
                     raise ValueError(
-                        "IMINT lifecycle association key disagrees with "
-                        "its identity",
+                        "IMINT lifecycle association key disagrees with its identity",
                     )
                 if association.track_id in associated_track_ids:
                     raise ValueError(
@@ -1161,13 +1141,15 @@ class IntelFusionEngine:
                     raise ValueError(
                         "IMINT lifecycle track has the wrong owner",
                     )
-                transitions.append((
-                    track,
-                    self._imint_status(
-                        hits=track.hits,
-                        age_s=current_time - association.last_observed_at_s,
-                    ),
-                ))
+                transitions.append(
+                    (
+                        track,
+                        self._imint_status(
+                            hits=track.hits,
+                            age_s=current_time - association.last_observed_at_s,
+                        ),
+                    )
+                )
         return IMINTLifecyclePlan(transitions=tuple(transitions))
 
     @staticmethod
@@ -1195,11 +1177,65 @@ class IntelFusionEngine:
         index: int,
     ) -> _PreparedSensorFusionCandidate:
         """Validate and materialize one candidate without touching engine state."""
+        validated = IntelFusionEngine._validate_sensor_fusion_candidate(
+            candidate,
+            index=index,
+            encoded_identity=None,
+        )
+        return IntelFusionEngine._materialize_validated_sensor_fusion_candidate(
+            validated,
+        )
+
+    @staticmethod
+    def _validate_prevalidated_fow_candidate(
+        candidate: SensorFusionCandidate,
+        *,
+        decision_preimage: bytes,
+    ) -> _ValidatedSensorFusionCandidate:
+        """Fully validate one owner-built FOW candidate without a report."""
+        if type(decision_preimage) is not bytes or not decision_preimage:
+            raise TypeError(
+                "decision_preimage must be non-empty exact bytes",
+            )
+        return IntelFusionEngine._validate_sensor_fusion_candidate(
+            candidate,
+            index=0,
+            encoded_identity=decision_preimage,
+        )
+
+    @staticmethod
+    def _sensor_fusion_uncertainty(
+        range_m: float,
+        probability: float,
+    ) -> tuple[float, float]:
+        """Return exact report uncertainty and representative variance."""
+        position_uncertainty_m = max(
+            range_m * 0.05,
+            _MIN_POSITION_UNCERTAINTY_M,
+        )
+        effective_uncertainty_m = position_uncertainty_m / max(
+            probability,
+            0.01,
+        )
+        return (
+            position_uncertainty_m,
+            effective_uncertainty_m * effective_uncertainty_m,
+        )
+
+    @staticmethod
+    def _validate_sensor_fusion_candidate(
+        candidate: SensorFusionCandidate,
+        *,
+        index: int,
+        encoded_identity: bytes | None,
+    ) -> _ValidatedSensorFusionCandidate:
+        """Validate every candidate field and retain exact report primitives."""
         if type(candidate) is not SensorFusionCandidate:
             raise TypeError(
                 f"candidates[{index}] must be an exact SensorFusionCandidate",
             )
-        encoded_identity = encode_fow_decision(candidate.identity)
+        if encoded_identity is None:
+            encoded_identity = encode_fow_decision(candidate.identity)
         detection = candidate.detection
         if type(detection) is not DetectionResult:
             raise TypeError(
@@ -1289,8 +1325,7 @@ class IntelFusionEngine:
         )
         if detection.horizontal_range_m is None:
             raise ValueError(
-                f"candidates[{index}].detection must carry detector-emitted "
-                "horizontal_range_m",
+                f"candidates[{index}].detection must carry detector-emitted horizontal_range_m",
             )
         horizontal_range_m = _strict_number(
             detection.horizontal_range_m,
@@ -1299,8 +1334,7 @@ class IntelFusionEngine:
         )
         if horizontal_range_m > range_m:
             raise ValueError(
-                f"candidates[{index}].detection.horizontal_range_m must not "
-                "exceed range_m",
+                f"candidates[{index}].detection.horizontal_range_m must not exceed range_m",
             )
         observation_time_s = _strict_number(
             candidate.observation_time_s,
@@ -1317,34 +1351,25 @@ class IntelFusionEngine:
             observer_northing + horizontal_range_m * math.cos(bearing_rad),
             f"candidates[{index}] reconstructed target northing",
         )
-        position_uncertainty_m = max(
-            range_m * 0.05,
-            _MIN_POSITION_UNCERTAINTY_M,
-        )
-        effective_uncertainty_m = position_uncertainty_m / max(
+        position_uncertainty_m, effective_variance_m2 = IntelFusionEngine._sensor_fusion_uncertainty(
+            range_m,
             probability,
-            0.01,
         )
         effective_variance_m2 = _strict_number(
-            effective_uncertainty_m * effective_uncertainty_m,
+            effective_variance_m2,
             f"candidates[{index}] effective position variance",
             positive=True,
         )
-        report = IntelReport(
-            source=IntelSource.SENSOR,
-            timestamp=observation_time_s,
-            reliability=probability,
-            target_position=Position(target_easting, target_northing, 0.0),
-            position_uncertainty_m=position_uncertainty_m,
-            target_type=None,
-            classification_confidence=confidence,
-            source_unit_id=None,
-        )
         identity = candidate.identity
-        return _PreparedSensorFusionCandidate(
+        return _ValidatedSensorFusionCandidate(
             identity=identity,
             encoded_identity=encoded_identity,
-            report=report,
+            observation_time_s=observation_time_s,
+            probability=probability,
+            target_easting=target_easting,
+            target_northing=target_northing,
+            position_uncertainty_m=position_uncertainty_m,
+            confidence=confidence,
             effective_variance_m2=effective_variance_m2,
             group_key=(
                 identity.engine_tick,
@@ -1353,6 +1378,37 @@ class IntelFusionEngine:
                 identity.target_id,
                 observation_time_s,
             ),
+        )
+
+    @staticmethod
+    def _materialize_validated_sensor_fusion_candidate(
+        validated: _ValidatedSensorFusionCandidate,
+    ) -> _PreparedSensorFusionCandidate:
+        """Build one estimator report from already-validated primitives."""
+        if type(validated) is not _ValidatedSensorFusionCandidate:
+            raise TypeError(
+                "validated must be a validated sensor fusion candidate",
+            )
+        report = IntelReport(
+            source=IntelSource.SENSOR,
+            timestamp=validated.observation_time_s,
+            reliability=validated.probability,
+            target_position=Position(
+                validated.target_easting,
+                validated.target_northing,
+                0.0,
+            ),
+            position_uncertainty_m=validated.position_uncertainty_m,
+            target_type=None,
+            classification_confidence=validated.confidence,
+            source_unit_id=None,
+        )
+        return _PreparedSensorFusionCandidate(
+            identity=validated.identity,
+            encoded_identity=validated.encoded_identity,
+            report=report,
+            effective_variance_m2=validated.effective_variance_m2,
+            group_key=validated.group_key,
         )
 
     @classmethod
@@ -1371,18 +1427,14 @@ class IntelFusionEngine:
             raise ValueError("candidates must contain one complete fusion group")
 
         prepared = tuple(
-            cls._prepare_sensor_fusion_candidate(candidate, index=index)
-            for index, candidate in enumerate(materialized)
+            cls._prepare_sensor_fusion_candidate(candidate, index=index) for index, candidate in enumerate(materialized)
         )
         group_key = prepared[0].group_key
         if any(candidate.group_key != group_key for candidate in prepared[1:]):
             raise ValueError(
-                "candidates must share one exact engine-tick, side, target-kind, "
-                "target-ID, and observation-time group",
+                "candidates must share one exact engine-tick, side, target-kind, target-ID, and observation-time group",
             )
-        encoded_identities = tuple(
-            candidate.encoded_identity for candidate in prepared
-        )
+        encoded_identities = tuple(candidate.encoded_identity for candidate in prepared)
         if len(set(encoded_identities)) != len(encoded_identities):
             raise ValueError("candidates contain a duplicate decision identity")
         return prepared
@@ -1409,8 +1461,61 @@ class IntelFusionEngine:
                 representative.report,
                 contact_id,
                 allocate_fow_track=True,
+                detached_track_update=False,
             )
-        candidate_count = len(prepared)
+        return self._sensor_fusion_group_outcome(
+            outcome,
+            candidate_count=len(prepared),
+        )
+
+    def _submit_prevalidated_detached_sensor_fusion_with_outcome(
+        self,
+        representative: _PreparedSensorFusionCandidate,
+        *,
+        candidate_count: int,
+        contact_id: str | None,
+    ) -> FusionSubmissionOutcome:
+        """Submit one owner-private FOW representative without restaging."""
+        if type(representative) is not _PreparedSensorFusionCandidate:
+            raise TypeError(
+                "representative must be a prepared sensor fusion candidate",
+            )
+        if type(candidate_count) is not int or candidate_count <= 0:
+            raise ValueError("candidate_count must be a positive integer")
+        if contact_id is not None:
+            validate_fow_track_id(contact_id, "contact_id")
+        with self._track_lock:
+            reporting_side = representative.identity.reporting_side
+            if contact_id is not None:
+                tracks = self._tracks.get(reporting_side)
+                contact_track = None if tracks is None else tracks.get(contact_id)
+                if (
+                    type(contact_track) is not Track
+                    or contact_track.track_id != contact_id
+                    or contact_track.side != reporting_side
+                ):
+                    raise ValueError(
+                        "contact_id is not owned by the representative side",
+                    )
+            outcome = self._submit_report_locked(
+                reporting_side,
+                representative.report,
+                contact_id,
+                allocate_fow_track=True,
+                detached_track_update=True,
+            )
+        return self._sensor_fusion_group_outcome(
+            outcome,
+            candidate_count=candidate_count,
+        )
+
+    @staticmethod
+    def _sensor_fusion_group_outcome(
+        outcome: FusionSubmissionOutcome,
+        *,
+        candidate_count: int,
+    ) -> FusionSubmissionOutcome:
+        """Attach exact correlated-measurement accounting to one outcome."""
         return FusionSubmissionOutcome(
             track_id=outcome.track_id,
             prediction_microseconds=outcome.prediction_microseconds,
@@ -1461,8 +1566,7 @@ class IntelFusionEngine:
 
         if detection.horizontal_range_m is None:
             raise ValueError(
-                "successful sensor detection must carry detector-emitted "
-                "horizontal_range_m",
+                "successful sensor detection must carry detector-emitted horizontal_range_m",
             )
         slant_range_m = _strict_number(
             detection.range_m,
@@ -1637,12 +1741,10 @@ class IntelFusionEngine:
                 if i in used_ew or ew.target_position is None:
                     continue
                 dist = _position_distance(
-                    sp.target_position, ew.target_position,
+                    sp.target_position,
+                    ew.target_position,
                 )
-                threshold = (
-                    max(sp.position_uncertainty_m, ew.position_uncertainty_m)
-                    * association_radius_mult
-                )
+                threshold = max(sp.position_uncertainty_m, ew.position_uncertainty_m) * association_radius_mult
                 if dist < threshold and dist < best_dist:
                     best_ew = (i, ew)
                     best_dist = dist
@@ -1694,28 +1796,17 @@ class IntelFusionEngine:
     def get_state(self) -> dict[str, Any]:
         tracks_state: dict[str, dict[str, Any]] = {}
         for side, side_tracks in sorted(self._tracks.items()):
-            tracks_state[side] = {
-                tid: track.get_state() for tid, track in sorted(side_tracks.items())
-            }
+            tracks_state[side] = {tid: track.get_state() for tid, track in sorted(side_tracks.items())}
         return {
             "tracks": tracks_state,
             "track_counter": self._track_counter,
-            "fow_track_counters": {
-                side: counter
-                for side, counter in sorted(self._fow_track_counters.items())
-            },
+            "fow_track_counters": {side: counter for side, counter in sorted(self._fow_track_counters.items())},
             "rng_state": copy.deepcopy(self._rng.bit_generator.state),
             "satellite_passes": {
-                side: [
-                    satellite_pass.model_dump(mode="json")
-                    for satellite_pass in passes
-                ]
+                side: [satellite_pass.model_dump(mode="json") for satellite_pass in passes]
                 for side, passes in sorted(self._satellite_passes.items())
             },
-            "delivery_receipts": [
-                receipt.to_state()
-                for receipt in self._delivery_receipts
-            ],
+            "delivery_receipts": [receipt.to_state() for receipt in self._delivery_receipts],
             "imint_target_tracks": [
                 association.model_dump(mode="json")
                 for side in sorted(self._imint_target_tracks)
@@ -1807,19 +1898,14 @@ class IntelFusionEngine:
         if (
             not isinstance(covariance, list)
             or len(covariance) != 4
-            or any(
-                not isinstance(row, list) or len(row) != 4
-                for row in covariance
-            )
+            or any(not isinstance(row, list) or len(row) != 4 for row in covariance)
         ):
             raise ValueError("Fusion track covariance must be 4-by-4")
         normalized_position = [
-            _strict_number(value, f"track position[{index}]")
-            for index, value in enumerate(position)
+            _strict_number(value, f"track position[{index}]") for index, value in enumerate(position)
         ]
         normalized_velocity = [
-            _strict_number(value, f"track velocity[{index}]")
-            for index, value in enumerate(velocity)
+            _strict_number(value, f"track velocity[{index}]") for index, value in enumerate(velocity)
         ]
         normalized_covariance = [
             [
@@ -1836,10 +1922,7 @@ class IntelFusionEngine:
             "track last_update_time",
             non_negative=True,
         )
-        if (
-            checkpoint_elapsed_s is not None
-            and last_update > checkpoint_elapsed_s
-        ):
+        if checkpoint_elapsed_s is not None and last_update > checkpoint_elapsed_s:
             raise ValueError("Fusion track update is after checkpoint time")
         status = raw["status"]
         if isinstance(status, bool) or not isinstance(status, int):
@@ -1897,8 +1980,7 @@ class IntelFusionEngine:
         }
         if set(state) != expected_keys:
             raise ValueError(
-                "Intel fusion state keys must be exactly "
-                f"{sorted(expected_keys)!r}",
+                f"Intel fusion state keys must be exactly {sorted(expected_keys)!r}",
             )
         elapsed = (
             None
@@ -1910,11 +1992,7 @@ class IntelFusionEngine:
             )
         )
         raw_counter = state["track_counter"]
-        if (
-            isinstance(raw_counter, bool)
-            or not isinstance(raw_counter, int)
-            or raw_counter < 0
-        ):
+        if isinstance(raw_counter, bool) or not isinstance(raw_counter, int) or raw_counter < 0:
             raise ValueError(
                 "Intel fusion track_counter must be non-negative integer",
             )
@@ -1926,11 +2004,7 @@ class IntelFusionEngine:
             side = _strict_identifier(raw_side, "FOW track-counter side")
             if expected_sides is not None and side not in expected_sides:
                 raise ValueError(f"Unknown FOW track-counter side {side!r}")
-            if (
-                isinstance(raw_fow_counter, bool)
-                or not isinstance(raw_fow_counter, int)
-                or raw_fow_counter <= 0
-            ):
+            if isinstance(raw_fow_counter, bool) or not isinstance(raw_fow_counter, int) or raw_fow_counter <= 0:
                 raise ValueError(
                     "Intel fusion FOW track counter must be a positive integer",
                 )
@@ -1969,10 +2043,7 @@ class IntelFusionEngine:
                 if fow_ordinal is None:
                     raise ValueError("Intel fusion contains an unsupported track ID")
                 fow_ordinals_by_side[side].add(fow_ordinal)
-        expected_track_ids = {
-            f"track-{sequence:04d}"
-            for sequence in range(1, raw_counter + 1)
-        }
+        expected_track_ids = {f"track-{sequence:04d}" for sequence in range(1, raw_counter + 1)}
         if automatic_track_ids != expected_track_ids:
             raise ValueError(
                 "Intel fusion track_counter disagrees with issued track IDs",
@@ -2010,13 +2081,9 @@ class IntelFusionEngine:
             staged_rng.bit_generator.state = rng_state
         except (TypeError, ValueError) as exc:
             raise ValueError("Intel fusion rng_state is invalid") from exc
-        if (
-            authoritative_rng_state is not None
-            and rng_state != authoritative_rng_state
-        ):
+        if authoritative_rng_state is not None and rng_state != authoritative_rng_state:
             raise ValueError(
-                "Intel fusion RNG mirror disagrees with RNGManager DETECTION "
-                "state",
+                "Intel fusion RNG mirror disagrees with RNGManager DETECTION state",
             )
 
         raw_passes = state["satellite_passes"]
@@ -2037,10 +2104,7 @@ class IntelFusionEngine:
                     raise ValueError(
                         f"Invalid satellite pass {side}[{index}]: {exc}",
                     ) from exc
-                if (
-                    elapsed is not None
-                    and satellite_pass.start_time > elapsed
-                ):
+                if elapsed is not None and satellite_pass.start_time > elapsed:
                     raise ValueError(
                         "Satellite pass starts after checkpoint time",
                     )
@@ -2056,8 +2120,7 @@ class IntelFusionEngine:
                     )
                 ):
                     raise ValueError(
-                        "Satellite pass references unknown or mismatched "
-                        "Space topology",
+                        "Satellite pass references unknown or mismatched Space topology",
                     )
                 passes.append(satellite_pass)
             order = lambda item: (
@@ -2096,13 +2159,11 @@ class IntelFusionEngine:
             if elapsed is not None and receipt.delivery_time_s > elapsed:
                 raise ValueError("Receipt delivery is after checkpoint time")
             if expected_sides is not None and (
-                receipt.reporting_side not in expected_sides
-                or receipt.target_side not in expected_sides
+                receipt.reporting_side not in expected_sides or receipt.target_side not in expected_sides
             ):
                 raise ValueError("Receipt references an unknown scenario side")
             if expected_target_sides is not None and (
-                expected_target_sides.get(receipt.target_id)
-                != receipt.target_side
+                expected_target_sides.get(receipt.target_id) != receipt.target_side
             ):
                 raise ValueError(
                     "Receipt target is absent or on the wrong side",
@@ -2138,8 +2199,7 @@ class IntelFusionEngine:
                     f"Invalid imint_target_tracks[{index}]: {exc}",
                 ) from exc
             if expected_sides is not None and (
-                association.reporting_side not in expected_sides
-                or association.target_side not in expected_sides
+                association.reporting_side not in expected_sides or association.target_side not in expected_sides
             ):
                 raise ValueError(
                     "IMINT association references an unknown scenario side",
@@ -2152,16 +2212,11 @@ class IntelFusionEngine:
                 raise ValueError("Duplicate IMINT owner/target association")
             side_associations[association.target_id] = association
         flattened = [
-            association
-            for side in sorted(associations)
-            for _, association in sorted(associations[side].items())
+            association for side in sorted(associations) for _, association in sorted(associations[side].items())
         ]
         if len(flattened) != len(raw_associations):
             raise ValueError("Duplicate IMINT association")
-        if [
-            association.model_dump(mode="json")
-            for association in flattened
-        ] != raw_associations:
+        if [association.model_dump(mode="json") for association in flattened] != raw_associations:
             raise ValueError("IMINT associations are not canonically ordered")
         associated_track_ids: set[str] = set()
         for association in flattened:
@@ -2206,19 +2261,15 @@ class IntelFusionEngine:
                 )
                 if (
                     association.last_report_id != latest.report_id
-                    or association.last_observed_at_s
-                    != latest.observed_at_s
-                    or association.last_received_at_s
-                    != latest.delivery_time_s
+                    or association.last_observed_at_s != latest.observed_at_s
+                    or association.last_received_at_s != latest.delivery_time_s
                     or association.track_id != latest.resulting_track_id
                     or association.target_side != latest.target_side
                 ):
                     raise ValueError(
                         "IMINT association disagrees with its latest receipt",
                     )
-                if track.state.last_update_time != (
-                    association.last_observed_at_s
-                ):
+                if track.state.last_update_time != (association.last_observed_at_s):
                     raise ValueError(
                         "IMINT track epoch disagrees with association",
                     )
@@ -2255,10 +2306,7 @@ class IntelFusionEngine:
                 )
         for side_tracks in tracks.values():
             for track in side_tracks.values():
-                if (
-                    track.status is TrackStatus.STALE
-                    and track.track_id not in associated_track_ids
-                ):
+                if track.status is TrackStatus.STALE and track.track_id not in associated_track_ids:
                     raise ValueError(
                         "Fusion STALE track has no unique IMINT association",
                     )

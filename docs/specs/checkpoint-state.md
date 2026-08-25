@@ -358,13 +358,16 @@ mutation.
 
 Staging produces an exact-owner-bound plan with independent content and raw
 type/shape/alias fingerprints. Commit rejects a subclassed, foreign, or
-mutated plan, deep-copies the complete staged owner graph as one alias-
-preserving publication, and verifies both fingerprints again before publishing
-fusion, aliased contacts, RNG state, witnesses, supports, scan counts, and
-cadence. Disabled FOW permits explicit empty views and non-FOW Space tracks but
-rejects contacts, witnesses, supports, FOW IDs, or FOW counters. A dynamic
-roster change may leave durable FOW state while targeting is intentionally
-between intervals; the next step refreshes both owners.
+mutated plan. It validates scan-count primitives, jointly deep-copies the
+alias-sensitive world-view/contact, witness/support, RNG, fusion, and cadence
+graph, rebuilds the detached publication, and verifies both fingerprints
+again. It then separately prepares the scan-count, fusion, cadence, and
+observer-support payloads before the first live mutation. Publication assigns
+the validated shared RNG state once and performs only bounded owner swaps.
+Disabled FOW permits explicit empty views and non-FOW Space tracks but rejects
+contacts, witnesses, supports, FOW IDs, or FOW counters. A dynamic roster
+change may leave durable FOW state while targeting is intentionally between
+intervals; the next step refreshes both owners.
 Capture and restore reject non-pristine active/inactive deception state under
 REM-046 and custom/populated COP/data-link state under REM-036 because format
 118 does not serialize those owners. Versionless state cannot retain even

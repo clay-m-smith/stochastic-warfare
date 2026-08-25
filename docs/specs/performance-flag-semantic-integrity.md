@@ -634,10 +634,14 @@ prove equality for common identities rather than trusting only a digest.
 
 ### FOW cycle receipt
 
-`FogOfWarManager` shall expose a typed update boundary that returns the normal
-`SideWorldView` together with one immutable `FogOfWarCycleReceipt`. The legacy
-`update(...) -> SideWorldView` API may remain as a compatibility wrapper, but
-the production battle coordinator shall consume the receipt-bearing boundary.
+`FogOfWarManager` shall expose one typed transactional update boundary. The
+coordinator begins an owner-bound transaction; each
+`update_with_receipt(...)` call returns an owner-bound `FogOfWarSidePlan`
+whose immutable receipt and defensive outcome represent that reporting side.
+The coordinator then prevalidates the exact side-plan union, prepares and
+validates one publication commit, and performs only bounded owner swaps. The
+legacy `update(...) -> SideWorldView` entry point rejects deterministically;
+it is not a compatibility mutation path.
 
 Each successful side cycle records strict non-negative integers for:
 

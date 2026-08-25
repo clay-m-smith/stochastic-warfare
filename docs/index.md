@@ -106,14 +106,17 @@ scope and proof obligations.
 
 ## Engineering Status
 
-Phases 0 through 118 are complete; Phase 119 has not started. The current
-consolidation is an engineering program between phases, not a simulation-model
-phase. Its purpose is to make the repository easier to navigate and validate
-without changing calibration, stochastic authority, or accepted outcomes.
+Phases 0 through 118 and Phase 142 are complete. Phase 142 closed with an
+accepted bounded partial-recovery receipt; Phases 119 and 141 have not started.
+The completed consolidation is an engineering program between phases, not a
+simulation-model phase. Its purpose is to make the repository easier to
+navigate and validate without changing calibration, stochastic authority, or
+accepted outcomes.
 
 | Track | Status | Source of truth |
 |---|---|---|
 | Tiered modular-monolith consolidation | **Complete** | [Postmortem](devlog/consolidation-tiered-modular-monolith.md#postmortem) |
+| Transactional FOW runtime recovery / Phase 142 | **Complete** | [Phase 142 devlog](devlog/phase-142.md#postmortem) |
 | Current remediation sequence (Phases 119--127) | **Planned** | [Block 13 roadmap](development-phases-block13.md) |
 | Later remediation blocks | **Planned** | [Backlog](remediation-backlog.md) |
 | Completed phase history | **Retained** | [Phase index](devlog/index.md) |
@@ -125,13 +128,17 @@ Two negative evidence boundaries remain especially important:
   [historical outcome contract](specs/historical-outcome-envelope-integrity.md).
 - Phase 118 validated detection culling, SoA selection, and parallel per-side
   detection, while scan scheduling and non-default LOD remain explicitly
-  unsupported. Its transactional FOW path also retains a measured +25.906%
-  workload-specific runtime regression assigned to REM-055. See the
-  [performance integrity contract](specs/performance-flag-semantic-integrity.md).
+  unsupported. Its transactional FOW path recorded a +25.906%
+  workload-specific runtime regression. Phase 142 now has an explicitly
+  owner-approved partial-recovery receipt at a `0.861173` median paired ratio;
+  the original `0.80` target remains a miss, and no universal speed claim is
+  made. See the [Phase 142 devlog](devlog/phase-142.md).
 
 The consolidation closed REM-052 and REM-053 through their canonical FOW
-update and single-snapshot checkpoint boundaries. REM-055 remains open and
-queued; the closure does not claim recovery of its measured runtime cost.
+update and single-snapshot checkpoint boundaries. Phase 142 closed REM-055
+after accepted partial-recovery, semantic, continuation, scenario,
+exact-partition, documentation, cross-document, and postmortem evidence. It
+does not claim full recovery of the original target.
 
 The communications models likewise do not imply a loaded production network:
 REM-036 owns typed unit/link topology and end-to-end order delivery. The current

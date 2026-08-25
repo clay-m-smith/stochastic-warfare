@@ -13,12 +13,12 @@ import hashlib
 import json
 import math
 import threading
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field, fields, is_dataclass, replace
-from typing import Any
+from typing import Any, TypeAlias
 
 import numpy as np
-from shapely import STRtree
+from shapely import STRtree, box as vectorized_box, points as vectorized_points
 from shapely.geometry import Point, box
 
 from pydantic import BaseModel
@@ -27,7 +27,6 @@ from stochastic_warfare.core.indexed_rng import (
     FOWDecisionIdentity,
     FOWIndexedSideHandle,
     FOWTargetKind,
-    encode_fow_decision,
 )
 from stochastic_warfare.core.logging import get_logger
 from stochastic_warfare.core.performance_receipts import (
@@ -60,11 +59,12 @@ from stochastic_warfare.detection.deception import (
 from stochastic_warfare.detection.detection import (
     DetectionDecisionStage,
     DetectionEngine,
-    DetectionResult,
     DetectionScanCountEntry,
     DetectionScanCountSnapshot,
     DetectionScanIdentity,
     PreparedDetection,
+    _DetectionGeometry,
+    _detection_geometry,
 )
 from stochastic_warfare.detection.estimation import (
     StateEstimator,
@@ -79,6 +79,8 @@ from stochastic_warfare.detection.identification import (
 from stochastic_warfare.detection.intel_fusion import (
     IntelFusionEngine,
     SensorFusionCandidate,
+    _PreparedSensorFusionCandidate,
+    _ValidatedSensorFusionCandidate,
     validate_fow_track_id,
 )
 from stochastic_warfare.detection.observer_support import (
@@ -123,6 +125,64 @@ def _require_finite_witness_scalar(
     ):
         qualifier = "finite and non-negative" if non_negative else "finite"
         raise ValueError(f"{field_name} must be {qualifier}")
+
+
+def _exact_receipt_value_matches(value: object, expected: object) -> bool:
+    """Compare one bounded receipt graph without Python scalar aliases."""
+    if type(value) is not type(expected):
+        return False
+    if isinstance(expected, BaseModel):
+        try:
+            return all(
+                _exact_receipt_value_matches(
+                    getattr(value, name),
+                    getattr(expected, name),
+                )
+                for name in type(expected).model_fields
+            )
+        except AttributeError:
+            return False
+    if type(expected) in {tuple, list}:
+        return len(value) == len(expected) and all(
+            _exact_receipt_value_matches(item, expected_item)
+            for item, expected_item in zip(value, expected, strict=True)
+        )
+    if type(expected) is dict:
+        return len(value) == len(expected) and all(
+            _exact_receipt_value_matches(key, expected_key) and _exact_receipt_value_matches(item, expected_item)
+            for (key, item), (expected_key, expected_item) in zip(
+                value.items(),
+                expected.items(),
+                strict=True,
+            )
+        )
+    return value == expected
+
+
+def _exact_fow_receipt_matches(
+    value: object,
+    expected: FogOfWarCycleReceipt,
+) -> bool:
+    """Return whether one public receipt exactly matches its private authority."""
+    return type(value) is FogOfWarCycleReceipt and _exact_receipt_value_matches(
+        value,
+        expected,
+    )
+
+
+def _exact_fow_receipt_tuple_matches(
+    value: object,
+    expected: tuple[FogOfWarCycleReceipt, ...],
+) -> bool:
+    """Return whether one bounded public receipt tuple is type-exact."""
+    return (
+        type(value) is tuple
+        and len(value) == len(expected)
+        and all(
+            _exact_fow_receipt_matches(receipt, authoritative)
+            for receipt, authoritative in zip(value, expected, strict=True)
+        )
+    )
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -212,6 +272,100 @@ class ObserverDetectionWitness:
             "sensor_type": self.sensor_type,
             "bearing_deg": self.bearing_deg,
         }
+
+    def __deepcopy__(
+        self,
+        memo: dict[int, Any],
+    ) -> ObserverDetectionWitness:
+        """Detach this frozen scalar leaf without generic reconstruction."""
+        prior = memo.get(id(self))
+        if prior is not None:
+            return prior
+        detached = object.__new__(ObserverDetectionWitness)
+        memo[id(self)] = detached
+        side = self.side
+        object.__setattr__(
+            detached,
+            "side",
+            side if type(side) is str else copy.deepcopy(side, memo),
+        )
+        observer_unit_id = self.observer_unit_id
+        object.__setattr__(
+            detached,
+            "observer_unit_id",
+            (observer_unit_id if type(observer_unit_id) is str else copy.deepcopy(observer_unit_id, memo)),
+        )
+        target_id = self.target_id
+        object.__setattr__(
+            detached,
+            "target_id",
+            target_id if type(target_id) is str else copy.deepcopy(target_id, memo),
+        )
+        source_equipment_index = self.source_equipment_index
+        object.__setattr__(
+            detached,
+            "source_equipment_index",
+            (
+                source_equipment_index
+                if type(source_equipment_index) is int
+                else copy.deepcopy(source_equipment_index, memo)
+            ),
+        )
+        sensor_id = self.sensor_id
+        object.__setattr__(
+            detached,
+            "sensor_id",
+            sensor_id if type(sensor_id) is str else copy.deepcopy(sensor_id, memo),
+        )
+        modeled_role = self.modeled_role
+        object.__setattr__(
+            detached,
+            "modeled_role",
+            modeled_role if type(modeled_role) is str else copy.deepcopy(modeled_role, memo),
+        )
+        logical_time_s = self.logical_time_s
+        object.__setattr__(
+            detached,
+            "logical_time_s",
+            (logical_time_s if type(logical_time_s) in (int, float) else copy.deepcopy(logical_time_s, memo)),
+        )
+        detected = self.detected
+        object.__setattr__(
+            detached,
+            "detected",
+            detected if type(detected) is bool else copy.deepcopy(detected, memo),
+        )
+        probability = self.probability
+        object.__setattr__(
+            detached,
+            "probability",
+            (probability if type(probability) in (int, float) else copy.deepcopy(probability, memo)),
+        )
+        snr_db = self.snr_db
+        object.__setattr__(
+            detached,
+            "snr_db",
+            snr_db if type(snr_db) in (int, float) else copy.deepcopy(snr_db, memo),
+        )
+        range_m = self.range_m
+        object.__setattr__(
+            detached,
+            "range_m",
+            range_m if type(range_m) in (int, float) else copy.deepcopy(range_m, memo),
+        )
+        sensor_type = self.sensor_type
+        object.__setattr__(
+            detached,
+            "sensor_type",
+            sensor_type if type(sensor_type) is str else copy.deepcopy(sensor_type, memo),
+        )
+        bearing_deg = self.bearing_deg
+        object.__setattr__(
+            detached,
+            "bearing_deg",
+            (bearing_deg if type(bearing_deg) in (int, float) else copy.deepcopy(bearing_deg, memo)),
+        )
+        return detached
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -329,8 +483,8 @@ class FogOfWarRestorePlan:
     def observer_track_supports(
         self,
     ) -> tuple[ObserverTrackSupportState, ...]:
-        """Return the canonical immutable observer-support publication."""
-        return self._observer_track_supports
+        """Return a defensive canonical observer-support publication."""
+        return copy.deepcopy(self._observer_track_supports)
 
     @property
     def rng_state(self) -> dict[str, Any]:
@@ -373,6 +527,126 @@ class _ObserverSensorScan:
     modeled_role: str | None = None
 
 
+_TacticalAttachmentKey: TypeAlias = tuple[str, str, int, str, str]
+_TACTICAL_ATTACHMENT_U64_MAX = (1 << 64) - 1
+
+
+def _validated_tactical_attachment_key(
+    *,
+    reporting_side: str,
+    observer_unit_id: str,
+    source_equipment_index: int,
+    sensor_id: str,
+    modeled_role: str,
+) -> _TacticalAttachmentKey:
+    """Validate one live attachment key without constructing its model."""
+    for value, field_name in (
+        (reporting_side, "reporting_side"),
+        (observer_unit_id, "observer_unit_id"),
+        (sensor_id, "sensor_id"),
+        (modeled_role, "modeled_role"),
+    ):
+        if type(value) is not str or not value or value != value.strip():
+            raise ValueError(
+                f"fog-of-war attachment {field_name} must be non-empty trimmed text",
+            )
+        try:
+            value.encode("utf-8")
+        except UnicodeEncodeError as exc:
+            raise ValueError(
+                f"fog-of-war attachment {field_name} must be valid UTF-8",
+            ) from exc
+    if type(source_equipment_index) is not int or not 0 <= source_equipment_index <= _TACTICAL_ATTACHMENT_U64_MAX:
+        raise ValueError(
+            "fog-of-war attachment source_equipment_index must be an unsigned 64-bit integer",
+        )
+    return (
+        reporting_side,
+        observer_unit_id,
+        source_equipment_index,
+        sensor_id,
+        modeled_role,
+    )
+
+
+def _tactical_attachment_key(
+    identity: TacticalAttachmentIdentity,
+) -> _TacticalAttachmentKey:
+    """Return the exact scalar identity key without allocating a new model."""
+    return (
+        identity.reporting_side,
+        identity.observer_unit_id,
+        identity.source_equipment_index,
+        identity.sensor_id,
+        identity.modeled_role,
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class _BoundObserverSensorScan:
+    """One live scan bound to its cadence-owned attachment identity."""
+
+    scan: _ObserverSensorScan
+    attachment_key: _TacticalAttachmentKey
+    identity: TacticalAttachmentIdentity
+    cadence_decision: TacticalCadenceDecision
+    scan_identity: DetectionScanIdentity
+
+
+def _build_fow_target_tree(
+    targets: list[dict[str, Any]],
+) -> STRtree:
+    """Vectorize exact finite 2-D points, retaining the scalar anomaly path."""
+
+    def scalar_tree() -> STRtree:
+        return STRtree(
+            [
+                Point(
+                    target["position"].easting,
+                    target["position"].northing,
+                )
+                for target in targets
+            ]
+        )
+
+    eastings: list[float] = []
+    northings: list[float] = []
+    for target in targets:
+        position = target["position"]
+        if type(position) is not Position:
+            return scalar_tree()
+        raw_easting = position.easting
+        raw_northing = position.northing
+        if type(raw_easting) not in (int, float) or type(raw_northing) not in (
+            int,
+            float,
+        ):
+            return scalar_tree()
+        try:
+            easting = float(raw_easting)
+            northing = float(raw_northing)
+        except (OverflowError, TypeError, ValueError):
+            return scalar_tree()
+        if not math.isfinite(easting) or not math.isfinite(northing):
+            return scalar_tree()
+        eastings.append(easting)
+        northings.append(northing)
+    return STRtree(
+        vectorized_points(
+            np.asarray(eastings, dtype=np.float64),
+            np.asarray(northings, dtype=np.float64),
+        )
+    )
+
+
+_StagedObserver: TypeAlias = tuple[
+    dict[str, Any],
+    str,
+    TacticalObserverIdentity,
+    tuple[_BoundObserverSensorScan, ...],
+]
+
+
 @dataclass(frozen=True, slots=True)
 class _ObserverTrackSupportCandidate:
     """Successful radar measurement awaiting its final fusion generation."""
@@ -383,6 +657,89 @@ class _ObserverTrackSupportCandidate:
     range_m: float
     probability: float
     observation_time_s: float
+
+
+@dataclass(slots=True)
+class _FOWFusionAccumulator:
+    """Owner-private reduction plus complete downstream observation ledger."""
+
+    candidate_count: int
+    representative_key: tuple[float, bytes]
+    representative: _ValidatedSensorFusionCandidate
+    candidate_ledger: dict[bytes, SensorFusionCandidate]
+
+    @classmethod
+    def from_candidate(
+        cls,
+        validated: _ValidatedSensorFusionCandidate,
+        candidate: SensorFusionCandidate,
+        issued_preimage: bytes,
+    ) -> _FOWFusionAccumulator:
+        cls._validate_candidate_binding(
+            validated,
+            candidate,
+            issued_preimage,
+        )
+        return cls(
+            candidate_count=1,
+            representative_key=(
+                validated.effective_variance_m2,
+                issued_preimage,
+            ),
+            representative=validated,
+            candidate_ledger={issued_preimage: candidate},
+        )
+
+    def accumulate(
+        self,
+        validated: _ValidatedSensorFusionCandidate,
+        candidate: SensorFusionCandidate,
+        issued_preimage: bytes,
+    ) -> None:
+        """Count one unique candidate and retain its canonical minimum."""
+        self._validate_candidate_binding(
+            validated,
+            candidate,
+            issued_preimage,
+        )
+        if validated.group_key != self.representative.group_key:
+            raise ValueError(
+                "prevalidated FOW candidates disagree on their exact group",
+            )
+        if issued_preimage in self.candidate_ledger:
+            raise ValueError(
+                "prevalidated FOW fusion group contains a duplicate preimage",
+            )
+        candidate_key = (
+            validated.effective_variance_m2,
+            issued_preimage,
+        )
+        self.candidate_ledger[issued_preimage] = candidate
+        self.candidate_count += 1
+        if candidate_key < self.representative_key:
+            self.representative_key = candidate_key
+            self.representative = validated
+
+    @staticmethod
+    def _validate_candidate_binding(
+        validated: _ValidatedSensorFusionCandidate,
+        candidate: SensorFusionCandidate,
+        issued_preimage: bytes,
+    ) -> None:
+        if (
+            type(validated) is not _ValidatedSensorFusionCandidate
+            or type(candidate) is not SensorFusionCandidate
+            or type(issued_preimage) is not bytes
+            or not issued_preimage
+            or validated.identity is not candidate.identity
+            or validated.encoded_identity != issued_preimage
+            or type(validated.effective_variance_m2) is not float
+            or not math.isfinite(validated.effective_variance_m2)
+            or validated.effective_variance_m2 <= 0.0
+        ):
+            raise ValueError(
+                "prevalidated FOW candidate binding is inconsistent",
+            )
 
 
 @dataclass
@@ -464,6 +821,182 @@ class FogOfWarSideSnapshot:
     identities: tuple[FogOfWarContactIdentity, ...]
 
 
+class _DefensiveMappingPreview(dict[Any, Any]):
+    """Lazy detached mapping view for an opaque update handle.
+
+    The authoritative transaction graph stays in the manager-private
+    workspace.  Reads materialize a defensive snapshot; writes detach a local
+    diagnostic shadow and can therefore never reach that workspace.
+    """
+
+    __slots__ = ("__detached", "__mutated", "__snapshotter")
+    _MISSING = object()
+
+    def __init__(self, snapshotter: Callable[[], dict[Any, Any]]) -> None:
+        super().__init__()
+        self.__snapshotter: Callable[[], dict[Any, Any]] | None = snapshotter
+        self.__detached: dict[Any, Any] | None = None
+        self.__mutated = False
+
+    @property
+    def pristine(self) -> bool:
+        """Return whether a top-level diagnostic write was attempted."""
+        return not self.__mutated
+
+    def retire(self) -> None:
+        """Sever the callback and discard any private diagnostic shadow."""
+        self.__detached = None
+        self.__snapshotter = None
+
+    def _snapshot(self) -> dict[Any, Any]:
+        snapshotter = self.__snapshotter
+        if snapshotter is None:
+            raise RuntimeError("fog-of-war diagnostic preview is stale")
+        return snapshotter()
+
+    def _read(self) -> dict[Any, Any]:
+        detached = self.__detached
+        return self._snapshot() if detached is None else detached
+
+    def _write(self) -> dict[Any, Any]:
+        self.__mutated = True
+        if self.__detached is None:
+            self.__detached = self._snapshot()
+        return self.__detached
+
+    def __getitem__(self, key: Any) -> Any:
+        return self._read()[key]
+
+    def __setitem__(self, key: Any, value: Any) -> None:
+        self._write()[key] = copy.deepcopy(value)
+
+    def __delitem__(self, key: Any) -> None:
+        del self._write()[key]
+
+    def __iter__(self):  # type: ignore[no-untyped-def]
+        return iter(self._read())
+
+    def __len__(self) -> int:
+        return len(self._read())
+
+    def __contains__(self, key: object) -> bool:
+        return key in self._read()
+
+    def __repr__(self) -> str:
+        return repr(self._read())
+
+    def __eq__(self, other: object) -> bool:
+        return self._read() == other
+
+    def __copy__(self) -> dict[Any, Any]:
+        return self._read().copy()
+
+    def __deepcopy__(self, memo: dict[int, Any]) -> dict[Any, Any]:
+        snapshot = copy.deepcopy(self._read(), memo)
+        memo[id(self)] = snapshot
+        return snapshot
+
+    def get(self, key: Any, default: Any = None) -> Any:
+        return self._read().get(key, default)
+
+    def keys(self):  # type: ignore[no-untyped-def]
+        return self._read().keys()
+
+    def items(self):  # type: ignore[no-untyped-def]
+        return self._read().items()
+
+    def values(self):  # type: ignore[no-untyped-def]
+        return self._read().values()
+
+    def copy(self) -> dict[Any, Any]:
+        return self._read().copy()
+
+    def clear(self) -> None:
+        self.__mutated = True
+        self.__detached = {}
+
+    def pop(self, key: Any, default: Any = _MISSING) -> Any:
+        writable = self._write()
+        if default is self._MISSING:
+            return writable.pop(key)
+        return writable.pop(key, default)
+
+    def popitem(self) -> tuple[Any, Any]:
+        return self._write().popitem()
+
+    def setdefault(self, key: Any, default: Any = None) -> Any:
+        return self._write().setdefault(key, copy.deepcopy(default))
+
+    def update(self, *args: Any, **kwargs: Any) -> None:
+        values = dict(*args, **kwargs)
+        self._write().update(copy.deepcopy(values))
+
+    def __ior__(self, other: Mapping[Any, Any]):
+        self.update(other)
+        return self
+
+    def __or__(self, other: Mapping[Any, Any]):
+        if not isinstance(other, Mapping):
+            return NotImplemented
+        merged = self._read().copy()
+        merged.update(other)
+        return merged
+
+    def __ror__(self, other: Mapping[Any, Any]):
+        if not isinstance(other, Mapping):
+            return NotImplemented
+        merged = dict(other)
+        merged.update(self._read())
+        return merged
+
+
+class _DefensiveWorldViewPreview:
+    """Lazy detached preview preserving the useful ``SideWorldView`` surface."""
+
+    __slots__ = ("__side", "__snapshotter")
+
+    def __init__(
+        self,
+        side: str,
+        snapshotter: Callable[[], SideWorldView],
+    ) -> None:
+        self.__side = side
+        self.__snapshotter: Callable[[], SideWorldView] | None = snapshotter
+
+    def retire(self) -> None:
+        """Sever the callback once the opaque handle becomes stale."""
+        self.__snapshotter = None
+
+    def _snapshot(self) -> SideWorldView:
+        snapshotter = self.__snapshotter
+        if snapshotter is None:
+            raise RuntimeError("fog-of-war diagnostic preview is stale")
+        return snapshotter()
+
+    @property
+    def side(self) -> str:
+        return self.__side
+
+    @property
+    def contacts(self) -> dict[str, ContactRecord]:
+        return self._snapshot().contacts
+
+    @property
+    def last_update_time(self) -> float:
+        return self._snapshot().last_update_time
+
+    def get_state(self) -> dict[str, Any]:
+        return self._snapshot().get_state()
+
+    def __copy__(self) -> SideWorldView:
+        return self._snapshot()
+
+    def __deepcopy__(self, memo: dict[int, Any]) -> SideWorldView:
+        snapshot = self._snapshot()
+        memo[id(self)] = snapshot
+        return snapshot
+
+
 @dataclass(frozen=True, slots=True)
 class FogOfWarUpdateTransaction:
     """Owner-bound immutable baseline for one complete side union."""
@@ -479,8 +1012,9 @@ class FogOfWarUpdateTransaction:
     )
     _rng_state: dict[str, Any] = field(repr=False)
     _intel_fusion: dict[str, Any] = field(repr=False)
-    _scan_counts: DetectionScanCountSnapshot = field(repr=False)
+    _scan_counts: _DefensiveMappingPreview = field(repr=False)
     _owner_token: object = field(repr=False, compare=False)
+    _generation: int = field(repr=False, compare=False)
     _fingerprint: str = field(repr=False)
 
 
@@ -500,7 +1034,7 @@ class FogOfWarSidePlan:
 
     reporting_side: str
     receipt: FogOfWarCycleReceipt
-    _world_view: SideWorldView = field(repr=False)
+    _world_view: SideWorldView | _DefensiveWorldViewPreview = field(repr=False)
     _current_detection_witnesses: tuple[
         ObserverDetectionWitness,
         ...,
@@ -512,17 +1046,14 @@ class FogOfWarSidePlan:
     _scan_count_entries: tuple[DetectionScanCountEntry, ...] = field(repr=False)
     _transaction: FogOfWarUpdateTransaction = field(repr=False, compare=False)
     _owner_token: object = field(repr=False, compare=False)
+    _generation: int = field(repr=False, compare=False)
+    _outcome_source: _FogOfWarOutcomeSource = field(repr=False, compare=False)
     _fingerprint: str = field(repr=False)
 
     @property
     def outcome(self) -> FogOfWarCycleOutcome:
         """Return a defensive preview of the staged side publication."""
-        return FogOfWarCycleOutcome(
-            world_view=copy.deepcopy(self._world_view),
-            receipt=self.receipt,
-            witnesses=self._current_detection_witnesses,
-            observer_track_supports=self._observer_track_supports,
-        )
+        return self._outcome_source.side_outcome(self.reporting_side)
 
 
 @dataclass(frozen=True, slots=True)
@@ -543,28 +1074,19 @@ class FogOfWarPublicationPlan:
     _scan_counts: DetectionScanCountSnapshot = field(repr=False)
     _transaction: FogOfWarUpdateTransaction = field(repr=False, compare=False)
     _owner_token: object = field(repr=False, compare=False)
+    _generation: int = field(repr=False, compare=False)
+    _outcome_source: _FogOfWarOutcomeSource = field(repr=False, compare=False)
     _fingerprint: str = field(repr=False)
+
+    @property
+    def witnesses(self) -> tuple[ObserverDetectionWitness, ...]:
+        """Return immutable witnesses in canonical reporting-side order."""
+        return self._outcome_source.witnesses(self.reporting_sides)
 
     @property
     def outcomes(self) -> tuple[FogOfWarCycleOutcome, ...]:
         """Return defensive side outcomes in canonical reporting-side order."""
-        return tuple(
-            FogOfWarCycleOutcome(
-                world_view=copy.deepcopy(self._world_views[side]),
-                receipt=receipt,
-                witnesses=self._current_detection_witnesses.get(side, ()),
-                observer_track_supports=tuple(
-                    support
-                    for support in self._observer_track_supports
-                    if support.identity.attachment_identity.reporting_side == side
-                ),
-            )
-            for side, receipt in zip(
-                self.reporting_sides,
-                self.receipts,
-                strict=True,
-            )
-        )
+        return self._outcome_source.outcomes(self.reporting_sides)
 
 
 @dataclass(frozen=True, slots=True)
@@ -575,11 +1097,22 @@ class FogOfWarCommitPlan:
     receipts: tuple[FogOfWarCycleReceipt, ...]
     _publication: FogOfWarPublicationPlan = field(repr=False, compare=False)
     _owner_token: object = field(repr=False, compare=False)
+    _generation: int = field(repr=False, compare=False)
+    _outcome_source: _FogOfWarOutcomeSource = field(repr=False, compare=False)
 
     @property
     def outcomes(self) -> tuple[FogOfWarCycleOutcome, ...]:
         """Return defensive outcomes from the exact commit-ready state."""
-        return self._publication.outcomes
+        return self._outcome_source.outcomes(self.reporting_sides)
+
+
+@dataclass(frozen=True, slots=True)
+class _FOWScanCountValuesBinding:
+    """Private exact-object seal for one validated raw counter mapping."""
+
+    keys: tuple[tuple[Any, ...], ...]
+    counts: tuple[int, ...]
+    exact_builtin: bool
 
 
 @dataclass(slots=True)
@@ -592,10 +1125,146 @@ class _FogOfWarCommitPayload:
         tuple[ObserverDetectionWitness, ...],
     ]
     observer_track_supports: tuple[ObserverTrackSupportState, ...]
+    observer_track_support_map: dict[
+        ObserverTrackSupportIdentity,
+        ObserverTrackSupportState,
+    ]
+    receipts: tuple[FogOfWarCycleReceipt, ...]
+    rng_state: dict[str, Any]
     intel_fusion: dict[str, Any]
     scan_counts: DetectionScanCountSnapshot
     scan_count_values: dict[Any, int]
+    scan_count_values_binding: _FOWScanCountValuesBinding
     fingerprint: str
+
+
+@dataclass(slots=True)
+class _FogOfWarSideWorkspace:
+    """Manager-private authoritative result of one side-local update."""
+
+    plan: FogOfWarSidePlan
+    receipt: FogOfWarCycleReceipt
+    world_view: SideWorldView
+    current_detection_witnesses: tuple[ObserverDetectionWitness, ...]
+    observer_track_supports: tuple[ObserverTrackSupportState, ...]
+    fusion_delta: _FogOfWarFusionSideDelta
+    scan_count_values: dict[Any, int]
+    handle_bindings: tuple[object, ...]
+
+
+@dataclass(slots=True, weakref_slot=True)
+class _FogOfWarUpdateWorkspace:
+    """Single-use authoritative graph for one complete FOW update."""
+
+    generation: int
+    reporting_sides: tuple[str, ...]
+    world_views: dict[str, SideWorldView]
+    current_detection_witnesses: dict[
+        str,
+        tuple[ObserverDetectionWitness, ...],
+    ]
+    observer_track_supports: tuple[ObserverTrackSupportState, ...]
+    rng_state: dict[str, Any]
+    intel_fusion: dict[str, Any]
+    baseline_scan_count_values: dict[Any, int]
+    start_live_fingerprint: str
+    cadence_binding: tuple[TacticalCadencePlan, object, str] | None = None
+    transaction: FogOfWarUpdateTransaction | None = None
+    transaction_bindings: tuple[object, ...] = ()
+    side_workspaces: dict[str, _FogOfWarSideWorkspace] = field(default_factory=dict)
+    publication_scan_count_values: dict[Any, int] | None = None
+    publication_scan_count_values_binding: _FOWScanCountValuesBinding | None = None
+    prepared_scan_count_values_binding_fields: tuple[object, object, bool] | None = None
+    publication: FogOfWarPublicationPlan | None = None
+    publication_bindings: tuple[object, ...] = ()
+    commit_plan: FogOfWarCommitPlan | None = None
+    commit_bindings: tuple[object, ...] = ()
+    outcome_source: _FogOfWarOutcomeSource | None = None
+
+
+class _FogOfWarOutcomeSource:
+    """Read-only defensive outcome projection over a private workspace."""
+
+    __slots__ = ("__frozen_outcomes", "__workspace")
+
+    def __init__(self, workspace: _FogOfWarUpdateWorkspace) -> None:
+        self.__workspace: _FogOfWarUpdateWorkspace | None = workspace
+        self.__frozen_outcomes: dict[str, FogOfWarCycleOutcome] | None = None
+
+    def retire(self) -> None:
+        """Release an unfrozen workspace when its transaction aborts."""
+        self.__workspace = None
+
+    @staticmethod
+    def _workspace_outcome(
+        workspace: _FogOfWarUpdateWorkspace,
+        side: str,
+    ) -> FogOfWarCycleOutcome:
+        record = workspace.side_workspaces[side]
+        return FogOfWarCycleOutcome(
+            world_view=record.world_view,
+            receipt=record.receipt,
+            witnesses=record.current_detection_witnesses,
+            observer_track_supports=record.observer_track_supports,
+        )
+
+    @staticmethod
+    def _defensive_outcome(
+        outcome: FogOfWarCycleOutcome,
+    ) -> FogOfWarCycleOutcome:
+        """Detach every public outcome value from authoritative state."""
+        return copy.deepcopy(outcome)
+
+    def freeze(self, reporting_sides: tuple[str, ...]) -> None:
+        """Detach one stable outcome snapshot before the workspace moves live."""
+        if self.__frozen_outcomes is not None:
+            return
+        workspace = self.__workspace
+        if workspace is None:  # pragma: no cover - private lifecycle invariant
+            raise RuntimeError("fog-of-war outcome workspace is unavailable")
+        frozen_outcomes = {
+            side: self._defensive_outcome(
+                self._workspace_outcome(workspace, side),
+            )
+            for side in reporting_sides
+        }
+        self.__frozen_outcomes = frozen_outcomes
+        self.__workspace = None
+
+    def side_outcome(self, side: str) -> FogOfWarCycleOutcome:
+        frozen_outcomes = self.__frozen_outcomes
+        if frozen_outcomes is not None:
+            return self._defensive_outcome(frozen_outcomes[side])
+        workspace = self.__workspace
+        if workspace is None:  # pragma: no cover - private lifecycle invariant
+            raise RuntimeError("fog-of-war outcome workspace is unavailable")
+        return self._defensive_outcome(
+            self._workspace_outcome(workspace, side),
+        )
+
+    def witnesses(
+        self,
+        reporting_sides: tuple[str, ...],
+    ) -> tuple[ObserverDetectionWitness, ...]:
+        frozen_outcomes = self.__frozen_outcomes
+        if frozen_outcomes is not None:
+            return copy.deepcopy(
+                tuple(witness for side in reporting_sides for witness in frozen_outcomes[side].witnesses),
+            )
+        workspace = self.__workspace
+        if workspace is None:  # pragma: no cover - private lifecycle invariant
+            raise RuntimeError("fog-of-war outcome workspace is unavailable")
+        return copy.deepcopy(
+            tuple(
+                witness for side in reporting_sides for witness in workspace.current_detection_witnesses.get(side, ())
+            ),
+        )
+
+    def outcomes(
+        self,
+        reporting_sides: tuple[str, ...],
+    ) -> tuple[FogOfWarCycleOutcome, ...]:
+        return tuple(self.side_outcome(side) for side in reporting_sides)
 
 
 @dataclass(frozen=True, slots=True)
@@ -899,7 +1568,7 @@ def _update_plan_payload(
     observer_track_supports: tuple[ObserverTrackSupportState, ...],
     rng_state: dict[str, Any],
     intel_fusion: dict[str, Any],
-    scan_counts: DetectionScanCountSnapshot,
+    scan_counts: DetectionScanCountSnapshot | None,
     receipts: tuple[FogOfWarCycleReceipt, ...] = (),
 ) -> dict[str, Any]:
     observer_track_supports = _validated_observer_track_support_tuple(
@@ -907,7 +1576,7 @@ def _update_plan_payload(
         field_name="fog-of-war update observer supports",
     )
     fusion_tracks = intel_fusion["tracks"]
-    return {
+    payload = {
         "reporting_sides": list(reporting_sides),
         "world_views": {side: world_view.get_state() for side, world_view in sorted(world_views.items())},
         "contact_fusion_aliases": {
@@ -926,60 +1595,16 @@ def _update_plan_payload(
         ],
         "rng_state": rng_state,
         "intel_fusion": _fusion_plan_payload(intel_fusion),
-        "scan_counts": _scan_count_payload(scan_counts),
         "receipts": [receipt.to_state() for receipt in receipts],
     }
+    if scan_counts is not None:
+        payload["scan_counts"] = _scan_count_payload(scan_counts)
+    return payload
 
 
 def _update_plan_fingerprint(**kwargs: Any) -> str:
     encoded = json.dumps(
         _update_plan_payload(**kwargs),
-        allow_nan=False,
-        default=_restore_plan_json_default,
-        separators=(",", ":"),
-        sort_keys=True,
-    ).encode("utf-8")
-    return hashlib.sha256(encoded).hexdigest()
-
-
-def _side_update_plan_fingerprint(
-    *,
-    reporting_side: str,
-    world_view: SideWorldView,
-    current_detection_witnesses: tuple[ObserverDetectionWitness, ...],
-    observer_track_supports: tuple[ObserverTrackSupportState, ...],
-    rng_state: dict[str, Any],
-    fusion_delta: _FogOfWarFusionSideDelta,
-    scan_count_entries: tuple[DetectionScanCountEntry, ...],
-    receipt: FogOfWarCycleReceipt,
-) -> str:
-    observer_track_supports = _validated_observer_track_support_tuple(
-        observer_track_supports,
-        field_name="fog-of-war side-plan observer supports",
-    )
-    tracks = fusion_delta.tracks
-    encoded = json.dumps(
-        {
-            "reporting_side": reporting_side,
-            "world_view": world_view.get_state(),
-            "contact_fusion_aliases": {
-                contact_id: tracks.get(contact.track.track_id) is contact.track
-                for contact_id, contact in sorted(world_view.contacts.items())
-            },
-            "current_detection_witnesses": [witness.get_state() for witness in current_detection_witnesses],
-            "observer_track_supports": [
-                observer_track_support_state_to_state(support) for support in observer_track_supports
-            ],
-            "rng_state": rng_state,
-            "fusion_delta": {
-                "reporting_side": fusion_delta.reporting_side,
-                "track_counter": fusion_delta.track_counter,
-                "fow_track_counter": fusion_delta.fow_track_counter,
-                "tracks": {track_id: track.get_state() for track_id, track in sorted(tracks.items())},
-            },
-            "scan_counts": _scan_count_entries_payload(scan_count_entries),
-            "receipt": receipt.to_state(),
-        },
         allow_nan=False,
         default=_restore_plan_json_default,
         separators=(",", ":"),
@@ -1265,7 +1890,9 @@ class FogOfWarManager:
         self._cadence = cadence_scheduler or TacticalCadenceScheduler()
         self._plan_owner_token = object()
         self._update_owner_token = object()
+        self._update_generation = 0
         self._active_update_transaction: FogOfWarUpdateTransaction | None = None
+        self._update_workspace: _FogOfWarUpdateWorkspace | None = None
         self._active_publication_plan: FogOfWarPublicationPlan | None = None
         self._prepared_update_commit: FogOfWarCommitPlan | None = None
         self._prepared_update_payload: _FogOfWarCommitPayload | None = None
@@ -1372,6 +1999,15 @@ class FogOfWarManager:
         Checkpoints persist this bounded cache; the next side update replaces
         that side's tuple rather than extending a detection history.
         """
+        return copy.deepcopy(
+            self._current_detection_witnesses_for_owner(side),
+        )
+
+    def _current_detection_witnesses_for_owner(
+        self,
+        side: str | None = None,
+    ) -> tuple[ObserverDetectionWitness, ...]:
+        """Return exact live witnesses for trusted manager-internal use."""
         with self._witness_lock:
             if side is not None:
                 return self._current_detection_witnesses.get(side, ())
@@ -1385,6 +2021,15 @@ class FogOfWarManager:
         side: str | None = None,
     ) -> tuple[ObserverTrackSupportState, ...]:
         """Return canonical observer-owned support, optionally for one side."""
+        return copy.deepcopy(
+            self._observer_track_supports_for_owner(side),
+        )
+
+    def _observer_track_supports_for_owner(
+        self,
+        side: str | None = None,
+    ) -> tuple[ObserverTrackSupportState, ...]:
+        """Return exact live support for trusted manager-internal use."""
         if side is not None:
             _require_witness_id(side, "observer track support side")
         with self._witness_lock:
@@ -1444,12 +2089,16 @@ class FogOfWarManager:
             if self._active_witness_clear is not None:
                 raise RuntimeError("a fog-of-war witness clear is already active")
             with self._witness_lock:
-                baseline = copy.deepcopy(self._current_detection_witnesses)
-                supports = tuple(
-                    sorted(
-                        self._observer_track_supports.values(),
-                        key=lambda support: support.identity.sort_key(),
-                    )
+                baseline, supports = copy.deepcopy(
+                    (
+                        self._current_detection_witnesses,
+                        tuple(
+                            sorted(
+                                self._observer_track_supports.values(),
+                                key=lambda support: support.identity.sort_key(),
+                            )
+                        ),
+                    ),
                 )
             plan = FogOfWarWitnessClearPlan(
                 _baseline=baseline,
@@ -1611,6 +2260,95 @@ class FogOfWarManager:
                 )
         return tuple(scans)
 
+    @staticmethod
+    def _vectorized_strtree_candidate_indices(
+        target_tree: STRtree,
+        staged_observers: list[_StagedObserver],
+    ) -> tuple[tuple[int, ...], ...] | None:
+        """Batch the ordinary finite broad phase without changing its order.
+
+        A ``None`` result keeps malformed or non-standard spatial inputs on
+        the scalar compatibility path, where their established exception and
+        indexed-RNG ordering remains unchanged.
+        """
+        candidate_indices: list[list[int]] = [[] for _ in staged_observers]
+        active_observer_indices: list[int] = []
+        minimum_eastings: list[float] = []
+        minimum_northings: list[float] = []
+        maximum_eastings: list[float] = []
+        maximum_northings: list[float] = []
+
+        def finite_float(value: object) -> float | None:
+            if isinstance(value, bool) or not isinstance(
+                value,
+                (int, float),
+            ):
+                return None
+            try:
+                normalized = float(value)
+            except (OverflowError, TypeError, ValueError):
+                return None
+            return normalized if math.isfinite(normalized) else None
+
+        for observer_index, (own, _, _, sensor_scans) in enumerate(
+            staged_observers,
+        ):
+            observer_position = own.get("position")
+            if type(observer_position) is not Position:
+                return None
+            easting = finite_float(observer_position.easting)
+            northing = finite_float(observer_position.northing)
+            if easting is None or northing is None:
+                return None
+            try:
+                maximum_range = max(
+                    (
+                        bound_scan.scan.sensor.effective_range
+                        for bound_scan in sensor_scans
+                        if bound_scan.scan.sensor.operational
+                    ),
+                    default=0.0,
+                )
+            except (AttributeError, OverflowError, TypeError, ValueError):
+                return None
+            reach = finite_float(maximum_range)
+            if reach is None:
+                return None
+            if reach <= 0.0:
+                continue
+            bounds = (
+                easting - reach,
+                northing - reach,
+                easting + reach,
+                northing + reach,
+            )
+            if not all(math.isfinite(value) for value in bounds):
+                return None
+            active_observer_indices.append(observer_index)
+            minimum_eastings.append(bounds[0])
+            minimum_northings.append(bounds[1])
+            maximum_eastings.append(bounds[2])
+            maximum_northings.append(bounds[3])
+
+        if not active_observer_indices:
+            return tuple(tuple() for _ in staged_observers)
+
+        query_boxes = vectorized_box(
+            np.asarray(minimum_eastings, dtype=np.float64),
+            np.asarray(minimum_northings, dtype=np.float64),
+            np.asarray(maximum_eastings, dtype=np.float64),
+            np.asarray(maximum_northings, dtype=np.float64),
+        )
+        query_pairs = target_tree.query(query_boxes)
+        for active_index, target_index in zip(
+            query_pairs[0],
+            query_pairs[1],
+            strict=True,
+        ):
+            observer_index = active_observer_indices[int(active_index)]
+            candidate_indices[observer_index].append(int(target_index))
+        return tuple(tuple(sorted(indices)) for indices in candidate_indices)
+
     # ------------------------------------------------------------------
     # Phase 69c: Deception passthrough API
     # ------------------------------------------------------------------
@@ -1659,24 +2397,6 @@ class FogOfWarManager:
         return reporting_sides
 
     @staticmethod
-    def _bind_world_views_to_fusion(
-        world_views: dict[str, SideWorldView],
-        intel_fusion: dict[str, Any],
-    ) -> None:
-        tracks = intel_fusion["tracks"]
-        for side, world_view in world_views.items():
-            if world_view.side != side:
-                raise ValueError("fog-of-war world-view owner changed during staging")
-            side_tracks = tracks.get(side, {})
-            for contact in world_view.contacts.values():
-                staged_track = side_tracks.get(contact.track.track_id)
-                if staged_track is None or staged_track.get_state() != contact.track.get_state():
-                    raise ValueError(
-                        "fog-of-war contact cannot bind to its staged fusion track",
-                    )
-                contact.track = staged_track
-
-    @staticmethod
     def _validate_update_aliases(
         world_views: dict[str, SideWorldView],
         intel_fusion: dict[str, Any],
@@ -1695,6 +2415,7 @@ class FogOfWarManager:
         *,
         expected_side: str,
     ) -> None:
+        """Validate private side-local fusion topology without restaging tracks."""
         if type(delta) is not _FogOfWarFusionSideDelta:
             raise TypeError("fusion delta must be a _FogOfWarFusionSideDelta")
         if delta.reporting_side != expected_side:
@@ -1714,13 +2435,10 @@ class FogOfWarManager:
                 raise ValueError("fusion delta track ID must be non-empty text")
             if type(track) is not Track:
                 raise TypeError("fusion delta contains a non-Track value")
-            track_state = track.get_state()
-            self._intel_fusion._stage_track(
-                track_state,
-                map_side=expected_side,
-                map_track_id=track_id,
-                checkpoint_elapsed_s=None,
-            )
+            if track.track_id != track_id or track.side != expected_side:
+                raise ValueError(
+                    "fusion delta track topology disagrees with its owner",
+                )
             if track_id.startswith("track-") and track_id[6:].isdigit():
                 sequence = int(track_id[6:])
                 if sequence <= 0 or sequence > delta.track_counter:
@@ -1739,15 +2457,6 @@ class FogOfWarManager:
         elif delta.fow_track_counter is not None:
             raise ValueError("fusion delta FOW track counter has no issued tracks")
 
-    @staticmethod
-    def _side_scan_count_entries(
-        snapshot: DetectionScanCountSnapshot,
-        side: str,
-    ) -> tuple[DetectionScanCountEntry, ...]:
-        return tuple(
-            entry for entry in snapshot.entries if entry.scan_identity is not None and entry.scan_identity.side == side
-        )
-
     def _stage_live_update_baseline(
         self,
         reporting_sides: tuple[str, ...],
@@ -1757,27 +2466,35 @@ class FogOfWarManager:
         tuple[ObserverTrackSupportState, ...],
         dict[str, Any],
         dict[str, Any],
-        DetectionScanCountSnapshot,
+        dict[Any, int],
     ]:
         self.validate_internal_bindings()
         self.validate_live_contact_bindings()
         rng_state = copy.deepcopy(self._rng.bit_generator.state)
-        fusion_state = self._intel_fusion.get_state()
-        intel_fusion = self._intel_fusion.stage_state(
-            fusion_state,
-            authoritative_rng_state=rng_state,
-        )
-        world_views = copy.deepcopy(self._world_views)
-        self._bind_world_views_to_fusion(world_views, intel_fusion)
+        with self._intel_fusion._track_lock:
+            fusion_state = self._intel_fusion.get_state()
+            intel_fusion = self._intel_fusion.stage_state(
+                fusion_state,
+                authoritative_rng_state=rng_state,
+            )
+            world_view_copy_memo = self._world_view_copy_memo(
+                intel_fusion,
+            )
+            world_views = copy.deepcopy(
+                self._world_views,
+                world_view_copy_memo,
+            )
         with self._witness_lock:
-            witnesses = copy.deepcopy(self._current_detection_witnesses)
+            witnesses = self._copy_detection_witness_map(
+                self._current_detection_witnesses,
+            )
             observer_track_supports = tuple(
                 sorted(
                     self._observer_track_supports.values(),
                     key=lambda support: support.identity.sort_key(),
                 )
             )
-        scan_counts = self._detection.snapshot_scan_counts()
+        scan_count_values = self._detection._snapshot_scan_count_values()
         if self._rng.bit_generator.state != rng_state:
             raise RuntimeError("fog-of-war baseline staging advanced conventional RNG")
         self._validate_update_aliases(world_views, intel_fusion)
@@ -1787,22 +2504,206 @@ class FogOfWarManager:
             observer_track_supports,
             rng_state,
             intel_fusion,
-            scan_counts,
+            scan_count_values,
+        )
+
+    def _world_view_copy_memo(
+        self,
+        intel_fusion: dict[str, Any],
+    ) -> dict[int, Track]:
+        """Bind live contact tracks to their already-detached staged copies."""
+        staged_tracks = intel_fusion.get("tracks")
+        if type(staged_tracks) is not dict:
+            raise ValueError("staged fog-of-war fusion tracks are invalid")
+        memo: dict[int, Track] = {}
+        for side, world_view in self._world_views.items():
+            if world_view.side != side:
+                raise ValueError(
+                    "fog-of-war world-view owner changed during staging",
+                )
+            live_side_tracks = self._intel_fusion._tracks.get(side, {})
+            staged_side_tracks = staged_tracks.get(side, {})
+            if type(staged_side_tracks) is not dict:
+                raise ValueError(
+                    "staged fog-of-war fusion side tracks are invalid",
+                )
+            for contact in world_view.contacts.values():
+                live_track = live_side_tracks.get(contact.track.track_id)
+                staged_track = staged_side_tracks.get(contact.track.track_id)
+                if (
+                    live_track is not contact.track
+                    or type(staged_track) is not Track
+                    or staged_track.track_id != contact.track.track_id
+                    or staged_track.side != side
+                    or staged_track.get_state() != live_track.get_state()
+                ):
+                    raise ValueError(
+                        "fog-of-war contact cannot bind to its staged fusion track",
+                    )
+                prior = memo.get(id(live_track))
+                if prior is not None and prior is not staged_track:
+                    raise ValueError(
+                        "fog-of-war live track maps to multiple staged tracks",
+                    )
+                memo[id(live_track)] = staged_track
+        return memo
+
+    @staticmethod
+    def _copy_detection_witness_map(
+        witnesses: dict[str, tuple[ObserverDetectionWitness, ...]],
+    ) -> dict[str, tuple[ObserverDetectionWitness, ...]]:
+        """Detach frozen scalar-only witnesses without recursive graph work."""
+        memo: dict[int, Any] = {}
+        return {
+            copy.deepcopy(side, memo): tuple(copy.deepcopy(witness, memo) for witness in side_witnesses)
+            for side, side_witnesses in witnesses.items()
+        }
+
+    def _bind_update_cadence_plan(
+        self,
+        workspace: _FogOfWarUpdateWorkspace,
+        cadence_plan: TacticalCadencePlan,
+    ) -> None:
+        """Bind one active cadence authority for all isolated side workers."""
+        binding = self._cadence._active_interval_binding_for_owner(
+            cadence_plan,
+        )
+        with self._update_transaction_lock:
+            if self._update_workspace is not workspace:
+                raise ValueError("fog-of-war update transaction workspace is stale")
+            if workspace.cadence_binding is None:
+                workspace.cadence_binding = binding
+            elif workspace.cadence_binding is not binding:
+                raise ValueError(
+                    "fog-of-war update cadence plan is foreign or stale",
+                )
+
+    @staticmethod
+    def _workspace_mapping_preview(
+        workspace: _FogOfWarUpdateWorkspace,
+        field_name: str,
+    ) -> _DefensiveMappingPreview:
+        return _DefensiveMappingPreview(
+            lambda: copy.deepcopy(getattr(workspace, field_name)),
         )
 
     @staticmethod
-    def _transaction_fingerprint(
-        transaction: FogOfWarUpdateTransaction,
-    ) -> str:
-        return _update_plan_fingerprint(
-            reporting_sides=transaction.reporting_sides,
-            world_views=transaction._world_views,
-            current_detection_witnesses=(transaction._current_detection_witnesses),
-            observer_track_supports=transaction._observer_track_supports,
-            rng_state=transaction._rng_state,
-            intel_fusion=transaction._intel_fusion,
-            scan_counts=transaction._scan_counts,
+    def _scan_count_values_binding(
+        values: dict[Any, int],
+    ) -> _FOWScanCountValuesBinding:
+        """Bind raw mapping order and exact key objects after canonical staging."""
+        if type(values) is not dict:
+            raise ValueError("fog-of-war scan-count values have invalid topology")
+        return _FOWScanCountValuesBinding(
+            keys=tuple(values),
+            counts=tuple(values.values()),
+            exact_builtin=all(
+                DetectionEngine._raw_scan_count_is_exact_builtin(key, count) for key, count in values.items()
+            ),
         )
+
+    @staticmethod
+    def _validate_scan_count_values_binding(
+        values: dict[Any, int],
+        binding: _FOWScanCountValuesBinding,
+        *,
+        field_name: str,
+    ) -> None:
+        """Reject raw counter replacement without rebuilding public entries."""
+        if (
+            type(values) is not dict
+            or type(binding) is not _FOWScanCountValuesBinding
+            or len(values) != len(binding.keys)
+            or len(values) != len(binding.counts)
+        ):
+            raise ValueError(f"{field_name} scan counts changed")
+        for (current_key, current_count), expected_key, expected_count in zip(
+            values.items(),
+            binding.keys,
+            binding.counts,
+            strict=True,
+        ):
+            if (
+                current_key is not expected_key
+                or type(current_count) is not type(expected_count)
+                or current_count != expected_count
+                or not DetectionEngine._raw_scan_count_is_exact_builtin(
+                    current_key,
+                    current_count,
+                )
+            ):
+                raise ValueError(f"{field_name} scan counts changed")
+
+    def _validate_scan_count_snapshot_values(
+        self,
+        snapshot: DetectionScanCountSnapshot,
+        values: dict[Any, int],
+        *,
+        field_name: str,
+        verify_snapshot_fingerprint: bool,
+    ) -> None:
+        """Require one canonical snapshot to describe exact raw count values."""
+        if type(snapshot) is not DetectionScanCountSnapshot or type(values) is not dict:
+            raise ValueError(f"{field_name} scan counts have invalid private topology")
+        try:
+            for key, count in values.items():
+                self._detection._validate_raw_scan_count(key, count)
+            entries = snapshot.entries
+            fingerprint_changed = verify_snapshot_fingerprint and (
+                self._detection._scan_count_fingerprint(entries) != snapshot._fingerprint
+            )
+            if fingerprint_changed or len(entries) != len(values):
+                raise ValueError
+            missing = object()
+            for entry in entries:
+                count = values.get(
+                    self._detection._scan_count_key(entry),
+                    missing,
+                )
+                if count is missing or type(count) is not type(entry.count) or count != entry.count:
+                    raise ValueError
+        except (AttributeError, TypeError, UnicodeError, ValueError) as exc:
+            raise ValueError(f"{field_name} scan counts changed") from exc
+
+    @staticmethod
+    def _validate_mapping_preview(
+        value: object,
+        expected: _DefensiveMappingPreview,
+        *,
+        field_name: str,
+    ) -> None:
+        if type(value) is not _DefensiveMappingPreview or value is not expected:
+            raise ValueError(f"{field_name} handle binding was mutated")
+        if not expected.pristine:
+            raise ValueError(f"{field_name} diagnostic preview was mutated")
+
+    @staticmethod
+    def _retire_update_previews(
+        workspace: _FogOfWarUpdateWorkspace,
+    ) -> None:
+        """Sever every lazy diagnostic callback before workspace release."""
+        outcome_source = workspace.outcome_source
+        if outcome_source is not None:
+            outcome_source.retire()
+        transaction_bindings = workspace.transaction_bindings
+        for index in (1, 2, 4, 5, 6):
+            preview = transaction_bindings[index]
+            if type(preview) is _DefensiveMappingPreview:
+                preview.retire()
+        for side_workspace in workspace.side_workspaces.values():
+            bindings = side_workspace.handle_bindings
+            world_view_preview = bindings[1]
+            tracks_preview = bindings[5]
+            if type(world_view_preview) is _DefensiveWorldViewPreview:
+                world_view_preview.retire()
+            if type(tracks_preview) is _DefensiveMappingPreview:
+                tracks_preview.retire()
+        publication_bindings = workspace.publication_bindings
+        if publication_bindings:
+            for index in (3, 4, 6):
+                preview = publication_bindings[index]
+                if type(preview) is _DefensiveMappingPreview:
+                    preview.retire()
 
     def begin_update_transaction(
         self,
@@ -1823,24 +2724,75 @@ class FogOfWarManager:
                 observer_track_supports,
                 rng_state,
                 intel_fusion,
-                scan_counts,
+                scan_count_values,
             ) = self._stage_live_update_baseline(sides)
+            self._update_generation += 1
+            generation = self._update_generation
+            workspace = _FogOfWarUpdateWorkspace(
+                generation=generation,
+                reporting_sides=sides,
+                world_views=world_views,
+                current_detection_witnesses=witnesses,
+                observer_track_supports=observer_track_supports,
+                rng_state=rng_state,
+                intel_fusion=intel_fusion,
+                baseline_scan_count_values=scan_count_values,
+                start_live_fingerprint=_update_plan_fingerprint(
+                    reporting_sides=sides,
+                    world_views=world_views,
+                    current_detection_witnesses=witnesses,
+                    observer_track_supports=observer_track_supports,
+                    rng_state=rng_state,
+                    intel_fusion=intel_fusion,
+                    scan_counts=None,
+                ),
+            )
+            outcome_source = _FogOfWarOutcomeSource(workspace)
+            workspace.outcome_source = outcome_source
+            world_views_preview = self._workspace_mapping_preview(
+                workspace,
+                "world_views",
+            )
+            witnesses_preview = self._workspace_mapping_preview(
+                workspace,
+                "current_detection_witnesses",
+            )
+            supports_preview = copy.deepcopy(observer_track_supports)
+            rng_preview = self._workspace_mapping_preview(workspace, "rng_state")
+            fusion_preview = self._workspace_mapping_preview(
+                workspace,
+                "intel_fusion",
+            )
+            scan_counts_preview = self._workspace_mapping_preview(
+                workspace,
+                "baseline_scan_count_values",
+            )
+            handle_seal = f"fog-of-war-update:{generation}"
             transaction = FogOfWarUpdateTransaction(
                 reporting_sides=sides,
-                _world_views=world_views,
-                _current_detection_witnesses=witnesses,
-                _observer_track_supports=observer_track_supports,
-                _rng_state=rng_state,
-                _intel_fusion=intel_fusion,
-                _scan_counts=scan_counts,
+                _world_views=world_views_preview,
+                _current_detection_witnesses=witnesses_preview,
+                _observer_track_supports=supports_preview,
+                _rng_state=rng_preview,
+                _intel_fusion=fusion_preview,
+                _scan_counts=scan_counts_preview,
                 _owner_token=self._update_owner_token,
-                _fingerprint="",
+                _generation=generation,
+                _fingerprint=handle_seal,
             )
-            transaction = replace(
-                transaction,
-                _fingerprint=self._transaction_fingerprint(transaction),
+            workspace.transaction = transaction
+            workspace.transaction_bindings = (
+                sides,
+                world_views_preview,
+                witnesses_preview,
+                supports_preview,
+                rng_preview,
+                fusion_preview,
+                scan_counts_preview,
+                handle_seal,
             )
             self._active_update_transaction = transaction
+            self._update_workspace = workspace
             self._active_publication_plan = None
             self._prepared_update_commit = None
             self._prepared_update_payload = None
@@ -1851,24 +2803,74 @@ class FogOfWarManager:
     def _validate_update_transaction(
         self,
         transaction: FogOfWarUpdateTransaction,
-    ) -> None:
+    ) -> _FogOfWarUpdateWorkspace:
         if type(transaction) is not FogOfWarUpdateTransaction:
             raise TypeError("transaction must be a FogOfWarUpdateTransaction")
         if transaction._owner_token is not self._update_owner_token:
             raise ValueError("fog-of-war update transaction belongs to another manager")
         if self._active_update_transaction is not transaction:
             raise ValueError("fog-of-war update transaction is stale or inactive")
-        self._detection._validated_scan_counts(transaction._scan_counts)
-        if self._transaction_fingerprint(transaction) != transaction._fingerprint:
-            raise ValueError("fog-of-war update transaction was mutated")
+        workspace = self._update_workspace
+        if workspace is None or workspace.transaction is not transaction:
+            raise ValueError("fog-of-war update transaction workspace is stale")
+        (
+            reporting_sides,
+            world_views_preview,
+            witnesses_preview,
+            supports_preview,
+            rng_preview,
+            fusion_preview,
+            scan_counts_preview,
+            handle_seal,
+        ) = workspace.transaction_bindings
+        if (
+            transaction.reporting_sides is not reporting_sides
+            or type(transaction._generation) is not int
+            or transaction._generation is not workspace.generation
+            or transaction._fingerprint is not handle_seal
+        ):
+            raise ValueError("fog-of-war update transaction metadata was mutated")
+        self._validate_mapping_preview(
+            transaction._world_views,
+            world_views_preview,
+            field_name="fog-of-war transaction world views",
+        )
+        self._validate_mapping_preview(
+            transaction._current_detection_witnesses,
+            witnesses_preview,
+            field_name="fog-of-war transaction witnesses",
+        )
+        if (
+            type(transaction._observer_track_supports) is not tuple
+            or transaction._observer_track_supports is not supports_preview
+        ):
+            raise ValueError(
+                "fog-of-war transaction observer supports must be an exact ObserverTrackSupportState tuple",
+            )
+        self._validate_mapping_preview(
+            transaction._rng_state,
+            rng_preview,
+            field_name="fog-of-war transaction RNG state",
+        )
+        self._validate_mapping_preview(
+            transaction._intel_fusion,
+            fusion_preview,
+            field_name="fog-of-war transaction fusion state",
+        )
+        self._validate_mapping_preview(
+            transaction._scan_counts,
+            scan_counts_preview,
+            field_name="fog-of-war transaction scan counts",
+        )
+        return workspace
 
     def _claim_update_side(
         self,
         transaction: FogOfWarUpdateTransaction,
         side: str,
-    ) -> None:
+    ) -> _FogOfWarUpdateWorkspace:
         with self._update_transaction_lock:
-            self._validate_update_transaction(transaction)
+            workspace = self._validate_update_transaction(transaction)
             if self._update_transaction_poisoned:
                 raise RuntimeError("fog-of-war update transaction owner is poisoned")
             if side not in transaction.reporting_sides:
@@ -1876,14 +2878,34 @@ class FogOfWarManager:
             if side in self._update_in_progress_sides or side in self._issued_side_plans:
                 raise ValueError("reporting side was already staged in this transaction")
             self._update_in_progress_sides.add(side)
+            return workspace
 
-    def _register_side_plan(self, plan: FogOfWarSidePlan) -> None:
+    def _register_side_plan(
+        self,
+        workspace: _FogOfWarUpdateWorkspace,
+        side_workspace: _FogOfWarSideWorkspace,
+    ) -> None:
         with self._update_transaction_lock:
-            self._validate_update_transaction(plan._transaction)
+            plan = side_workspace.plan
+            transaction = plan._transaction
+            expected_side = side_workspace.handle_bindings[-1]
+            if (
+                transaction._owner_token is not self._update_owner_token
+                or self._active_update_transaction is not transaction
+                or self._update_workspace is not workspace
+                or type(plan._generation) is not int
+                or plan._generation is not workspace.generation
+                or type(plan.reporting_side) is not str
+                or plan.reporting_side is not expected_side
+            ):
+                raise ValueError("fog-of-war side plan transaction is foreign or stale")
             if plan.reporting_side not in self._update_in_progress_sides:
                 raise ValueError("fog-of-war side plan has no active staging claim")
             self._update_in_progress_sides.remove(plan.reporting_side)
+            workspace.world_views[plan.reporting_side] = side_workspace.world_view
+            workspace.intel_fusion["tracks"][plan.reporting_side] = side_workspace.fusion_delta.tracks
             self._issued_side_plans[plan.reporting_side] = plan
+            workspace.side_workspaces[plan.reporting_side] = side_workspace
 
     def _poison_update_transaction(
         self,
@@ -1892,8 +2914,24 @@ class FogOfWarManager:
         with self._update_transaction_lock:
             if transaction._owner_token is not self._update_owner_token:
                 raise ValueError("fog-of-war update transaction belongs to another manager")
-            if self._active_update_transaction is transaction:
-                self._active_update_transaction = None
+            workspace = self._update_workspace
+            if (
+                self._active_update_transaction is not transaction
+                or workspace is None
+                or workspace.transaction is not transaction
+            ):
+                if (
+                    self._update_transaction_poisoned
+                    and self._active_update_transaction is None
+                    and workspace is None
+                    and type(transaction._generation) is int
+                    and transaction._generation is self._update_generation
+                ):
+                    return
+                raise ValueError("fog-of-war update transaction is stale or inactive")
+            self._retire_update_previews(workspace)
+            self._active_update_transaction = None
+            self._update_workspace = None
             self._active_publication_plan = None
             self._prepared_update_commit = None
             self._prepared_update_payload = None
@@ -1940,29 +2978,25 @@ class FogOfWarManager:
     ) -> FogOfWarSidePlan:
         """Stage one reporting side against an isolated transaction baseline."""
         _require_witness_id(side, "fog-of-war side")
-        self._claim_update_side(transaction, side)
+        workspace = self._claim_update_side(transaction, side)
         try:
-            self._cadence.validate_interval_plan(cadence_plan)
+            self._bind_update_cadence_plan(workspace, cadence_plan)
             staging_rng = copy.deepcopy(self._rng)
-            staging_rng.bit_generator.state = copy.deepcopy(transaction._rng_state)
-            baseline_world_views = {side: transaction._world_views[side]} if side in transaction._world_views else {}
-            world_views, side_tracks = copy.deepcopy(
-                (
-                    baseline_world_views,
-                    transaction._intel_fusion["tracks"].get(side, {}),
-                )
+            staging_rng.bit_generator.state = copy.deepcopy(workspace.rng_state)
+            world_view = workspace.world_views.setdefault(
+                side,
+                SideWorldView(side=side),
             )
-            side_fow_counter = transaction._intel_fusion["fow_track_counters"].get(side)
+            world_views = {side: world_view}
+            side_tracks = workspace.intel_fusion["tracks"].setdefault(side, {})
+            side_fow_counter = workspace.intel_fusion["fow_track_counters"].get(
+                side,
+            )
             fusion_delta = _FogOfWarFusionSideDelta(
                 reporting_side=side,
-                track_counter=transaction._intel_fusion["track_counter"],
+                track_counter=workspace.intel_fusion["track_counter"],
                 fow_track_counter=side_fow_counter,
                 tracks=side_tracks,
-            )
-            self._validate_fusion_side_delta(fusion_delta, expected_side=side)
-            self._validate_update_aliases(
-                world_views,
-                {"tracks": {side: side_tracks}},
             )
             estimator = StateEstimator(
                 rng=staging_rng,
@@ -1975,11 +3009,13 @@ class FogOfWarManager:
             fusion._track_counter = fusion_delta.track_counter
             fusion._tracks = {side: side_tracks}
             fusion._fow_track_counters = {} if side_fow_counter is None else {side: side_fow_counter}
-            side_scan_counts = self._detection.stage_scan_counts(
-                self._side_scan_count_entries(transaction._scan_counts, side),
-            )
-            detection = self._detection.fork_scan_counts(
-                side_scan_counts,
+            side_scan_count_values = {
+                key: count
+                for key, count in workspace.baseline_scan_count_values.items()
+                if len(key) == 5 and key[0] == side
+            }
+            detection = self._detection._fork_scan_count_values(
+                side_scan_count_values,
                 rng=staging_rng,
             )
             staging = FogOfWarManager(
@@ -1992,13 +3028,11 @@ class FogOfWarManager:
             )
             staging._world_views = world_views
             with staging._witness_lock:
-                side_witnesses = transaction._current_detection_witnesses.get(side)
-                staging._current_detection_witnesses = (
-                    {} if side_witnesses is None else {side: copy.deepcopy(side_witnesses)}
-                )
+                side_witnesses = workspace.current_detection_witnesses.get(side)
+                staging._current_detection_witnesses = {} if side_witnesses is None else {side: side_witnesses}
                 staging._observer_track_supports = {
                     support.identity: support
-                    for support in transaction._observer_track_supports
+                    for support in workspace.observer_track_supports
                     if support.identity.attachment_identity.reporting_side == side
                 }
             staging.validate_live_contact_bindings()
@@ -2024,7 +3058,7 @@ class FogOfWarManager:
                 transmission_loss=transmission_loss,
                 jam_snr_penalty_db=jam_snr_penalty_db,
             )
-            if staging_rng.bit_generator.state != transaction._rng_state:
+            if staging_rng.bit_generator.state != workspace.rng_state:
                 raise RuntimeError(
                     "receipt-bearing fog-of-war advanced conventional RNG",
                 )
@@ -2045,48 +3079,90 @@ class FogOfWarManager:
                 fow_track_counter=fusion._fow_track_counters.get(side),
                 tracks=fusion._tracks[side],
             )
-            self._validate_fusion_side_delta(
-                post_fusion_delta,
-                expected_side=side,
-            )
             world_view = outcome.world_view
-            self._validate_update_aliases(
-                {side: world_view},
-                {"tracks": {side: post_fusion_delta.tracks}},
+            witnesses = staging._current_detection_witnesses_for_owner(side)
+            observer_track_supports = staging._observer_track_supports_for_owner(
+                side,
             )
-            witnesses = staging.get_current_detection_witnesses(side)
-            observer_track_supports = staging.get_observer_track_supports(side)
-            scan_count_entries = staging._detection.snapshot_scan_counts().entries
-            if any(entry.scan_identity is None or entry.scan_identity.side != side for entry in scan_count_entries):
+            with staging._detection._scan_count_lock:
+                scan_count_values = dict(staging._detection._scan_counts)
+            if any(
+                type(key) is not tuple or len(key) != 5 or key[0] != side or type(count) is not int or count <= 0
+                for key, count in scan_count_values.items()
+            ):
                 raise RuntimeError(
                     "receipt-bearing fog-of-war produced a foreign-side scan count",
                 )
-            plan = FogOfWarSidePlan(
-                reporting_side=side,
-                receipt=outcome.receipt,
-                _world_view=world_view,
-                _current_detection_witnesses=witnesses,
-                _observer_track_supports=observer_track_supports,
-                _fusion_delta=post_fusion_delta,
-                _scan_count_entries=scan_count_entries,
-                _transaction=transaction,
-                _owner_token=self._update_owner_token,
-                _fingerprint="",
-            )
-            plan = replace(
-                plan,
-                _fingerprint=_side_update_plan_fingerprint(
-                    reporting_side=side,
-                    world_view=plan._world_view,
-                    current_detection_witnesses=(plan._current_detection_witnesses),
-                    observer_track_supports=plan._observer_track_supports,
-                    rng_state=transaction._rng_state,
-                    fusion_delta=plan._fusion_delta,
-                    scan_count_entries=plan._scan_count_entries,
-                    receipt=plan.receipt,
+            authoritative_receipt = outcome.receipt
+            (
+                public_receipt,
+                public_witnesses,
+                public_supports,
+            ) = copy.deepcopy(
+                (
+                    authoritative_receipt,
+                    witnesses,
+                    observer_track_supports,
                 ),
             )
-            self._register_side_plan(plan)
+            public_scan_count_entries: tuple[DetectionScanCountEntry, ...] = ()
+            tracks_preview = _DefensiveMappingPreview(
+                lambda: copy.deepcopy(
+                    workspace.intel_fusion["tracks"].get(side, {}),
+                ),
+            )
+            public_fusion_delta = _FogOfWarFusionSideDelta(
+                reporting_side=side,
+                track_counter=post_fusion_delta.track_counter,
+                fow_track_counter=post_fusion_delta.fow_track_counter,
+                tracks=tracks_preview,
+            )
+            world_view_preview = _DefensiveWorldViewPreview(
+                side,
+                lambda: copy.deepcopy(workspace.world_views[side]),
+            )
+            outcome_source = workspace.outcome_source
+            if outcome_source is None:  # pragma: no cover - private construction
+                raise RuntimeError("fog-of-war outcome source is unavailable")
+            handle_seal = f"fog-of-war-side:{workspace.generation}:{side}"
+            plan = FogOfWarSidePlan(
+                reporting_side=side,
+                receipt=public_receipt,
+                _world_view=world_view_preview,
+                _current_detection_witnesses=public_witnesses,
+                _observer_track_supports=public_supports,
+                _fusion_delta=public_fusion_delta,
+                _scan_count_entries=public_scan_count_entries,
+                _transaction=transaction,
+                _owner_token=self._update_owner_token,
+                _generation=workspace.generation,
+                _outcome_source=outcome_source,
+                _fingerprint=handle_seal,
+            )
+            side_workspace = _FogOfWarSideWorkspace(
+                plan=plan,
+                receipt=authoritative_receipt,
+                world_view=world_view,
+                current_detection_witnesses=witnesses,
+                observer_track_supports=observer_track_supports,
+                fusion_delta=post_fusion_delta,
+                scan_count_values=scan_count_values,
+                handle_bindings=(
+                    public_receipt,
+                    world_view_preview,
+                    public_witnesses,
+                    public_supports,
+                    public_fusion_delta,
+                    tracks_preview,
+                    public_scan_count_entries,
+                    transaction,
+                    outcome_source,
+                    handle_seal,
+                    side,
+                ),
+            )
+            self._validate_side_workspace(workspace, side_workspace)
+            self._register_side_plan(workspace, side_workspace)
             return plan
         except BaseException:
             self._poison_update_transaction(transaction)
@@ -2150,14 +3226,16 @@ class FogOfWarManager:
             raise TypeError("soa_selection must be a strict boolean")
 
         logical_time_s = float(current_time)
-        staged_observers: list[
+        unbound_observers: list[
             tuple[
                 dict[str, Any],
                 str,
+                TacticalObserverIdentity,
                 tuple[_ObserverSensorScan, ...],
+                tuple[_TacticalAttachmentKey, ...],
             ]
         ] = []
-        roster_identities: set[TacticalAttachmentIdentity] = set()
+        roster_attachment_keys: set[_TacticalAttachmentKey] = set()
         observer_identities: set[TacticalObserverIdentity] = set()
         for observer_index, own in enumerate(own_units):
             observer_unit_id = own.get("unit_id")
@@ -2173,24 +3251,34 @@ class FogOfWarManager:
                 raise ValueError("fog-of-war side roster contains a duplicate observer")
             observer_identities.add(observer_identity)
             scans = self._observer_sensor_scans(own)
+            attachment_keys: list[_TacticalAttachmentKey] = []
             for scan in scans:
                 if scan.source_equipment_index is None or scan.modeled_role is None:
                     raise ValueError(
                         "receipt-bearing fog-of-war requires typed sensor attachments",
                     )
-                identity = TacticalAttachmentIdentity(
-                    reporting_side=side,
-                    observer_unit_id=observer_unit_id,
+                attachment_key = _validated_tactical_attachment_key(
+                    reporting_side=observer_identity.reporting_side,
+                    observer_unit_id=observer_identity.observer_unit_id,
                     source_equipment_index=scan.source_equipment_index,
                     sensor_id=scan.sensor.sensor_id,
                     modeled_role=scan.modeled_role,
                 )
-                if identity in roster_identities:
+                if attachment_key in roster_attachment_keys:
                     raise ValueError(
                         "fog-of-war side roster contains a duplicate attachment identity",
                     )
-                roster_identities.add(identity)
-            staged_observers.append((own, observer_unit_id, scans))
+                roster_attachment_keys.add(attachment_key)
+                attachment_keys.append(attachment_key)
+            unbound_observers.append(
+                (
+                    own,
+                    observer_unit_id,
+                    observer_identity,
+                    scans,
+                    tuple(attachment_keys),
+                ),
+            )
 
         tier_map: dict[TacticalObserverIdentity, FogOfWarLodTier] = {}
         for observer, tier in lod_tiers.items():
@@ -2204,16 +3292,55 @@ class FogOfWarManager:
         if set(tier_map) != observer_identities:
             raise ValueError("lod_tiers must exactly cover the reporting-side observer roster")
 
-        side_decisions = {
-            decision.identity: decision
-            for decision in cadence_plan.decisions
-            if decision.identity.reporting_side == side
-        }
-        if len(side_decisions) != sum(decision.identity.reporting_side == side for decision in cadence_plan.decisions):
-            raise ValueError("cadence plan contains duplicate side attachment identities")
-        if set(side_decisions) != roster_identities:
+        side_decisions: dict[
+            _TacticalAttachmentKey,
+            TacticalCadenceDecision,
+        ] = {}
+        for decision in cadence_plan.decisions:
+            identity = decision.identity
+            if identity.reporting_side != side:
+                continue
+            attachment_key = _tactical_attachment_key(identity)
+            if attachment_key in side_decisions:
+                raise ValueError(
+                    "cadence plan contains duplicate side attachment identities",
+                )
+            side_decisions[attachment_key] = decision
+        if set(side_decisions) != roster_attachment_keys:
             raise ValueError(
                 "cadence plan must exactly cover the reporting-side attachment roster",
+            )
+
+        staged_observers: list[_StagedObserver] = []
+        for own, observer_unit_id, observer_identity, scans, attachment_keys in unbound_observers:
+            bound_scans: list[_BoundObserverSensorScan] = []
+            for scan, attachment_key in zip(
+                scans,
+                attachment_keys,
+                strict=True,
+            ):
+                cadence_decision = side_decisions[attachment_key]
+                identity = cadence_decision.identity
+                bound_scans.append(
+                    _BoundObserverSensorScan(
+                        scan=scan,
+                        attachment_key=attachment_key,
+                        identity=identity,
+                        cadence_decision=cadence_decision,
+                        scan_identity=DetectionScanIdentity(
+                            side=identity.reporting_side,
+                            observer_unit_id=identity.observer_unit_id,
+                            source_equipment_index=(identity.source_equipment_index),
+                        ),
+                    ),
+                )
+            staged_observers.append(
+                (
+                    own,
+                    observer_unit_id,
+                    observer_identity,
+                    tuple(bound_scans),
+                ),
             )
 
         all_targets: list[dict[str, Any]] = []
@@ -2257,15 +3384,7 @@ class FogOfWarManager:
 
         target_tree: STRtree | None = None
         if detection_culling and all_targets:
-            target_tree = STRtree(
-                [
-                    Point(
-                        target["position"].easting,
-                        target["position"].northing,
-                    )
-                    for target in all_targets
-                ]
-            )
+            target_tree = _build_fow_target_tree(all_targets)
         target_positions: np.ndarray | None = None
         if not detection_culling and soa_selection and all_targets:
             target_positions = np.asarray(
@@ -2356,31 +3475,31 @@ class FogOfWarManager:
         self.clear_current_detection_witnesses(side)
         staged_witnesses: list[ObserverDetectionWitness] = []
         staged_fusion_groups: dict[
-            tuple[int, str, FOWTargetKind, str, float],
-            list[SensorFusionCandidate],
+            tuple[int, str, int, str, float],
+            _FOWFusionAccumulator,
         ] = {}
         staged_support_candidates: dict[
             FOWDecisionIdentity,
             _ObserverTrackSupportCandidate,
         ] = {}
+        staged_support_identities: dict[
+            _TacticalAttachmentKey,
+            TacticalAttachmentIdentity,
+        ] = {}
         world_view = self.get_world_view(side)
         world_view.last_update_time = logical_time_s
 
         attachment_contexts: dict[
-            TacticalAttachmentIdentity,
-            tuple[_ObserverSensorScan, Position],
+            _TacticalAttachmentKey,
+            tuple[_BoundObserverSensorScan, Position],
         ] = {}
-        for own, observer_unit_id, sensor_scans in staged_observers:
+        for own, _observer_unit_id, _observer_identity, sensor_scans in staged_observers:
             observer_position = own["position"]
-            for scan in sensor_scans:
-                identity = TacticalAttachmentIdentity(
-                    reporting_side=side,
-                    observer_unit_id=observer_unit_id,
-                    source_equipment_index=scan.source_equipment_index,
-                    sensor_id=scan.sensor.sensor_id,
-                    modeled_role=scan.modeled_role,
+            for bound_scan in sensor_scans:
+                attachment_contexts[bound_scan.attachment_key] = (
+                    bound_scan,
+                    observer_position,
                 )
-                attachment_contexts[identity] = (scan, observer_position)
         unit_targets = {
             target["unit_id"]: target for target in all_targets if target["_fow_target_kind"] is FOWTargetKind.UNIT
         }
@@ -2389,11 +3508,12 @@ class FogOfWarManager:
             ObserverTrackSupportIdentity,
             ObserverTrackSupportState,
         ] = {}
-        for support in self.get_observer_track_supports(side):
+        for support in self._observer_track_supports_for_owner(side):
             attachment_identity = support.identity.attachment_identity
-            attachment_context = attachment_contexts.get(attachment_identity)
+            attachment_key = _tactical_attachment_key(attachment_identity)
+            attachment_context = attachment_contexts.get(attachment_key)
             target = unit_targets.get(support.identity.target_id)
-            decision = side_decisions.get(attachment_identity)
+            decision = side_decisions.get(attachment_key)
             contact = world_view.contacts.get(support.identity.target_id)
             if (
                 attachment_context is None
@@ -2417,15 +3537,16 @@ class FogOfWarManager:
                 or attachment_identity.sensor_id not in contact.reporting_sensors
             ):
                 continue
-            scan, observer_position = attachment_context
+            bound_scan, observer_position = attachment_context
+            scan = bound_scan.scan
             target_unit = target.get("unit")
             target_domain = getattr(target_unit, "domain", None)
             try:
                 modeled_role = SensorModeledRole(
-                    attachment_identity.modeled_role,
+                    bound_scan.identity.modeled_role,
                 )
                 cadence_state = cadence_plan.state_for(
-                    attachment_identity,
+                    bound_scan.identity,
                 )
                 supported = observer_track_support_role_is_supported(
                     sensor_type=scan.sensor.sensor_type,
@@ -2457,31 +3578,29 @@ class FogOfWarManager:
         with self._witness_lock:
             self._observer_track_supports = retained_supports
 
-        for own, observer_unit_id, sensor_scans in staged_observers:
-            observer_identity = TacticalObserverIdentity(
-                reporting_side=side,
-                observer_unit_id=observer_unit_id,
+        vectorized_candidate_indices = (
+            None
+            if target_tree is None
+            else self._vectorized_strtree_candidate_indices(
+                target_tree,
+                staged_observers,
             )
+        )
+        for observer_index, (
+            own,
+            observer_unit_id,
+            observer_identity,
+            sensor_scans,
+        ) in enumerate(staged_observers):
             tier = tier_map[observer_identity]
-            observer_decisions: dict[
-                TacticalAttachmentIdentity,
-                TacticalCadenceDecision,
-            ] = {}
             operational_sensors: list[SensorInstance] = []
-            for scan in sensor_scans:
-                identity = TacticalAttachmentIdentity(
-                    reporting_side=side,
-                    observer_unit_id=observer_unit_id,
-                    source_equipment_index=scan.source_equipment_index,
-                    sensor_id=scan.sensor.sensor_id,
-                    modeled_role=scan.modeled_role,
-                )
-                cadence_decision = side_decisions[identity]
+            for bound_scan in sensor_scans:
+                scan = bound_scan.scan
+                cadence_decision = bound_scan.cadence_decision
                 if cadence_decision.operational is not scan.sensor.operational:
                     raise ValueError(
                         "cadence decision operational state disagrees with its live sensor",
                     )
-                observer_decisions[identity] = cadence_decision
                 cadence_counts["attachment_cycles"] += 1
                 cadence_counts["native_ready"] += int(cadence_decision.native_ready)
                 cadence_counts["lod_ready"] += int(cadence_decision.lod_ready)
@@ -2527,17 +3646,22 @@ class FogOfWarManager:
             if target_tree is not None:
                 selection_counts["strtree_queries"] += 1
                 if maximum_range > 0.0:
-                    candidate_indices = sorted(
-                        int(index)
-                        for index in target_tree.query(
-                            box(
-                                observer_position.easting - maximum_range,
-                                observer_position.northing - maximum_range,
-                                observer_position.easting + maximum_range,
-                                observer_position.northing + maximum_range,
+                    if vectorized_candidate_indices is None:
+                        candidate_indices = tuple(
+                            sorted(
+                                int(index)
+                                for index in target_tree.query(
+                                    box(
+                                        observer_position.easting - maximum_range,
+                                        observer_position.northing - maximum_range,
+                                        observer_position.easting + maximum_range,
+                                        observer_position.northing + maximum_range,
+                                    )
+                                )
                             )
                         )
-                    )
+                    else:
+                        candidate_indices = vectorized_candidate_indices[observer_index]
                     scan_targets = [all_targets[index] for index in candidate_indices]
                 else:
                     scan_targets = []
@@ -2570,71 +3694,82 @@ class FogOfWarManager:
                 target_position = target["position"]
                 target_signature = target["signature"]
                 target_unit = target.get("unit")
-                for scan in sensor_scans:
-                    identity = TacticalAttachmentIdentity(
-                        reporting_side=side,
-                        observer_unit_id=observer_unit_id,
-                        source_equipment_index=scan.source_equipment_index,
-                        sensor_id=scan.sensor.sensor_id,
-                        modeled_role=scan.modeled_role,
-                    )
-                    cadence_decision = observer_decisions[identity]
+                geometry: _DetectionGeometry | None = None
+                for bound_scan in sensor_scans:
+                    scan = bound_scan.scan
+                    identity = bound_scan.identity
+                    cadence_decision = bound_scan.cadence_decision
                     if not cadence_decision.admitted:
                         continue
                     detection_counts["api_calls"] += 1
-                    prepared = self._detection.prepare_detection(
+                    if geometry is None:
+                        target_height = target.get("target_height", 0.0)
+                        target_concealment = target.get("concealment", 0.0)
+                        target_posture = target.get("posture", 0)
+                        target_illumination = target.get(
+                            "illumination_lux",
+                            illumination_lux,
+                        )
+                        target_visibility = target.get(
+                            "visibility_m",
+                            visibility_m,
+                        )
+                        target_thermal_contrast = target.get(
+                            "thermal_contrast",
+                            thermal_contrast,
+                        )
+                        target_ambient_noise = target.get(
+                            "ambient_noise_db",
+                            ambient_noise_db,
+                        )
+                        target_atmospheric_attenuation = target.get(
+                            "atmospheric_atten_db_per_km",
+                            atmospheric_atten_db_per_km,
+                        )
+                        target_transmission_loss = target.get(
+                            "transmission_loss",
+                            transmission_loss,
+                        )
+                        target_jam_penalty = target.get(
+                            "jam_snr_penalty_db",
+                            jam_snr_penalty_db,
+                        )
+                        geometry = _detection_geometry(
+                            observer_position,
+                            target_position,
+                        )
+                    prepared = self._detection._prepare_fow_detection(
                         observer_position,
                         target_position,
                         scan.sensor,
                         target_signature,
+                        geometry=geometry,
                         target_unit=target_unit,
                         observer_height=observer_height,
-                        target_height=target.get("target_height", 0.0),
-                        concealment=target.get("concealment", 0.0),
-                        posture=target.get("posture", 0),
-                        illumination_lux=target.get(
-                            "illumination_lux",
-                            illumination_lux,
-                        ),
-                        visibility_m=target.get("visibility_m", visibility_m),
-                        thermal_contrast=target.get(
-                            "thermal_contrast",
-                            thermal_contrast,
-                        ),
-                        ambient_noise_db=target.get(
-                            "ambient_noise_db",
-                            ambient_noise_db,
-                        ),
-                        atmospheric_atten_db_per_km=target.get(
-                            "atmospheric_atten_db_per_km",
-                            atmospheric_atten_db_per_km,
-                        ),
-                        transmission_loss=target.get(
-                            "transmission_loss",
-                            transmission_loss,
-                        ),
+                        target_height=target_height,
+                        concealment=target_concealment,
+                        posture=target_posture,
+                        illumination_lux=target_illumination,
+                        visibility_m=target_visibility,
+                        thermal_contrast=target_thermal_contrast,
+                        ambient_noise_db=target_ambient_noise,
+                        atmospheric_atten_db_per_km=(target_atmospheric_attenuation),
+                        transmission_loss=target_transmission_loss,
                         observer_heading_deg=observer_heading,
                         target_id=target_id,
-                        scan_identity=DetectionScanIdentity(
-                            side=side,
-                            observer_unit_id=observer_unit_id,
-                            source_equipment_index=(identity.source_equipment_index),
-                        ),
-                        jam_snr_penalty_db=target.get(
-                            "jam_snr_penalty_db",
-                            jam_snr_penalty_db,
-                        ),
+                        scan_identity=bound_scan.scan_identity,
+                        jam_snr_penalty_db=target_jam_penalty,
                     )
                     indexed_decision = None
                     decision_identity: FOWDecisionIdentity | None = None
-                    if isinstance(prepared, DetectionResult):
-                        stage_field = stage_fields.get(prepared.decision_stage)
+                    if isinstance(prepared, DetectionDecisionStage):
+                        stage_field = stage_fields.get(prepared)
                         if stage_field is None:
                             raise ValueError(
                                 "admitted operational detection returned an unreceipted stage",
                             )
                         detection_counts[stage_field] += 1
-                        result = prepared
+                        continue
                     elif isinstance(prepared, PreparedDetection):
                         decision_identity = FOWDecisionIdentity(
                             engine_tick=current_tick,
@@ -2666,7 +3801,7 @@ class FogOfWarManager:
                                 recovery_key,
                                 set(),
                             ).add(identity)
-                    else:  # pragma: no cover - closed prepare_detection union
+                    else:  # pragma: no cover - closed private preparation union
                         raise TypeError("detection preparation returned an invalid type")
 
                     if not result.detected:
@@ -2674,6 +3809,10 @@ class FogOfWarManager:
                     if decision_identity is None:
                         raise ValueError(
                             "successful detection lacks its indexed decision identity",
+                        )
+                    if indexed_decision is None:  # pragma: no cover - paired construction
+                        raise RuntimeError(
+                            "successful detection lost its indexed decision handle",
                         )
                     detection_counts["successes"] += 1
                     staged_witnesses.append(
@@ -2723,16 +3862,27 @@ class FogOfWarManager:
                         observer_position=observer_position,
                         observation_time_s=logical_time_s,
                     )
-                    fusion_key = (
-                        decision_identity.engine_tick,
-                        decision_identity.reporting_side,
-                        decision_identity.target_kind,
-                        decision_identity.target_id,
-                        logical_time_s,
+                    issued_preimage = indexed_decision._issued_preimage(
+                        decision_identity,
                     )
-                    staged_fusion_groups.setdefault(fusion_key, []).append(
+                    validated_candidate = self._intel_fusion._validate_prevalidated_fow_candidate(
                         fusion_candidate,
+                        decision_preimage=issued_preimage,
                     )
+                    fusion_key = validated_candidate.group_key
+                    accumulator = staged_fusion_groups.get(fusion_key)
+                    if accumulator is None:
+                        staged_fusion_groups[fusion_key] = _FOWFusionAccumulator.from_candidate(
+                            validated_candidate,
+                            fusion_candidate,
+                            issued_preimage,
+                        )
+                    else:
+                        accumulator.accumulate(
+                            validated_candidate,
+                            fusion_candidate,
+                            issued_preimage,
+                        )
                     if target["_fow_target_kind"] is FOWTargetKind.UNIT and cadence_decision.native_period > 1:
                         try:
                             modeled_role = SensorModeledRole(
@@ -2745,9 +3895,21 @@ class FogOfWarManager:
                         except ValueError:
                             supports_track = False
                         if supports_track:
+                            support_attachment_identity = staged_support_identities.get(
+                                bound_scan.attachment_key,
+                            )
+                            if support_attachment_identity is None:
+                                support_attachment_identity = TacticalAttachmentIdentity(
+                                    reporting_side=identity.reporting_side,
+                                    observer_unit_id=(identity.observer_unit_id),
+                                    source_equipment_index=(identity.source_equipment_index),
+                                    sensor_id=identity.sensor_id,
+                                    modeled_role=identity.modeled_role,
+                                )
+                                staged_support_identities[bound_scan.attachment_key] = support_attachment_identity
                             staged_support_candidates[decision_identity] = _ObserverTrackSupportCandidate(
                                 identity=ObserverTrackSupportIdentity(
-                                    attachment_identity=identity,
+                                    attachment_identity=(support_attachment_identity),
                                     target_id=target_id,
                                 ),
                                 sensor_type=result.sensor_type,
@@ -2762,24 +3924,50 @@ class FogOfWarManager:
             key=lambda key: (
                 key[0],
                 key[1].encode("utf-8"),
-                key[2].value,
+                key[2],
                 key[3].encode("utf-8"),
                 key[4],
             ),
         )
         for fusion_key in canonical_fusion_keys:
+            accumulator = staged_fusion_groups[fusion_key]
+            representative_candidate = accumulator.candidate_ledger.get(
+                accumulator.representative_key[1],
+            )
+            if (
+                accumulator.candidate_count != len(accumulator.candidate_ledger)
+                or representative_candidate is None
+                or representative_candidate.identity is not accumulator.representative.identity
+            ):
+                raise RuntimeError(
+                    "prevalidated FOW fusion accumulator is inconsistent",
+                )
             candidates = tuple(
-                sorted(
-                    staged_fusion_groups[fusion_key],
-                    key=lambda candidate: encode_fow_decision(
-                        candidate.identity,
-                    ),
+                candidate
+                for _preimage, candidate in sorted(
+                    accumulator.candidate_ledger.items(),
                 )
             )
+            prepared_representative = self._intel_fusion._materialize_validated_sensor_fusion_candidate(
+                accumulator.representative,
+            )
+            if (
+                type(prepared_representative) is not _PreparedSensorFusionCandidate
+                or prepared_representative.group_key != fusion_key
+                or (
+                    prepared_representative.effective_variance_m2,
+                    prepared_representative.encoded_identity,
+                )
+                != accumulator.representative_key
+            ):
+                raise RuntimeError(
+                    "prevalidated FOW representative changed during materialization",
+                )
             target_id = fusion_key[3]
             existing_contact = world_view.contacts.get(target_id)
-            fusion_outcome = self._intel_fusion.submit_sensor_detection_batch_with_outcome(
-                candidates,
+            fusion_outcome = self._intel_fusion._submit_prevalidated_detached_sensor_fusion_with_outcome(
+                prepared_representative,
+                candidate_count=accumulator.candidate_count,
                 contact_id=(None if existing_contact is None else existing_contact.track.track_id),
             )
             fusion_counts["position_measurement_candidates"] += fusion_outcome.position_measurement_candidates
@@ -2832,8 +4020,7 @@ class FogOfWarManager:
                 horizontal_range_m = candidate.detection.horizontal_range_m
                 if horizontal_range_m is None:
                     raise ValueError(
-                        "observer support detection lacks detector-emitted "
-                        "horizontal_range_m",
+                        "observer support detection lacks detector-emitted horizontal_range_m",
                     )
                 bearing_rad = math.radians(candidate.detection.bearing_deg)
                 support = ObserverTrackSupportState(
@@ -2846,14 +4033,8 @@ class FogOfWarManager:
                     native_phase_residue=phase,
                     native_due_ordinal=native_due_ordinal,
                     position_m=(
-                        float(
-                            candidate.observer_position.easting
-                            + horizontal_range_m * math.sin(bearing_rad)
-                        ),
-                        float(
-                            candidate.observer_position.northing
-                            + horizontal_range_m * math.cos(bearing_rad)
-                        ),
+                        float(candidate.observer_position.easting + horizontal_range_m * math.sin(bearing_rad)),
+                        float(candidate.observer_position.northing + horizontal_range_m * math.cos(bearing_rad)),
                     ),
                     velocity_mps=(0.0, 0.0),
                     covariance=(
@@ -2953,7 +4134,7 @@ class FogOfWarManager:
             engine_tick=current_tick,
             observers=len(staged_observers),
             targets=len(all_targets),
-            sensors=len(roster_identities),
+            sensors=len(roster_attachment_keys),
             target_opportunities=(len(staged_observers) * len(all_targets)),
             selection=FOWSelectionReceipt(**selection_counts),
             scan=FOWScanReceipt(
@@ -2987,109 +4168,151 @@ class FogOfWarManager:
             observer_track_supports=published_supports,
         )
 
-    @staticmethod
-    def _scan_entry_key(
-        entry: DetectionScanCountEntry,
-    ) -> tuple[DetectionScanIdentity | None, str, str]:
-        return entry.scan_identity, entry.sensor_id, entry.target_id
+    def _validate_side_workspace(
+        self,
+        workspace: _FogOfWarUpdateWorkspace,
+        side_workspace: _FogOfWarSideWorkspace,
+    ) -> None:
+        side = side_workspace.plan.reporting_side
+        receipt = side_workspace.receipt
+        world_view = side_workspace.world_view
+        witnesses = side_workspace.current_detection_witnesses
+        supports = side_workspace.observer_track_supports
+        fusion_delta = side_workspace.fusion_delta
+        if (
+            receipt.reporting_side != side
+            or world_view.side != side
+            or any(witness.side != side for witness in witnesses)
+            or any(support.identity.attachment_identity.reporting_side != side for support in supports)
+        ):
+            raise ValueError("fog-of-war side workspace owner topology is inconsistent")
+        support_identities = tuple(support.identity for support in supports)
+        if len(set(support_identities)) != len(support_identities) or supports != tuple(
+            sorted(
+                supports,
+                key=lambda support: support.identity.sort_key(),
+            )
+        ):
+            raise ValueError(
+                "fog-of-war side workspace observer supports are not canonical",
+            )
+        self._validate_fusion_side_delta(
+            fusion_delta,
+            expected_side=side,
+        )
+        self._validate_update_aliases(
+            {side: world_view},
+            {"tracks": {side: fusion_delta.tracks}},
+        )
+
+        if fusion_delta.track_counter != workspace.intel_fusion["track_counter"]:
+            raise ValueError("fog-of-war side workspace changed the global fusion track counter")
+        baseline_counter = workspace.intel_fusion["fow_track_counters"].get(
+            side,
+        )
+        staged_counter = fusion_delta.fow_track_counter
+        if staged_counter is None and baseline_counter is not None:
+            raise ValueError("fog-of-war side workspace removed its issued track counter")
+        if baseline_counter is not None and staged_counter is not None and staged_counter < baseline_counter:
+            raise ValueError("fog-of-war side workspace rewound its track counter")
+
+        baseline_counts = {
+            key: count
+            for key, count in workspace.baseline_scan_count_values.items()
+            if len(key) == 5 and key[0] == side
+        }
+        staged_counts = side_workspace.scan_count_values
+        if any(
+            type(key) is not tuple or len(key) != 5 or key[0] != side or type(count) is not int or count <= 0
+            for key, count in staged_counts.items()
+        ):
+            raise ValueError("fog-of-war side workspace contains a foreign scan count")
+        for key, baseline_count in baseline_counts.items():
+            staged_count = staged_counts.get(key)
+            if staged_count is None:
+                raise ValueError("fog-of-war side workspace removed a scan count")
+            if staged_count < baseline_count:
+                raise ValueError("fog-of-war side workspace rewound a scan count")
 
     def _validate_side_plan(
         self,
         transaction: FogOfWarUpdateTransaction,
         plan: FogOfWarSidePlan,
-    ) -> None:
+    ) -> _FogOfWarSideWorkspace:
         if type(plan) is not FogOfWarSidePlan:
             raise TypeError("side_plans contains an invalid plan")
+        workspace = self._update_workspace
+        if workspace is None or workspace.transaction is not transaction:
+            raise ValueError("fog-of-war side plan workspace is stale")
+        if type(plan.reporting_side) is not str:
+            raise ValueError("fog-of-war side plan metadata was mutated")
+        side_workspace = workspace.side_workspaces.get(plan.reporting_side)
         if (
             plan._owner_token is not self._update_owner_token
             or plan._transaction is not transaction
             or self._issued_side_plans.get(plan.reporting_side) is not plan
+            or side_workspace is None
+            or side_workspace.plan is not plan
+            or type(plan._generation) is not int
+            or plan._generation is not workspace.generation
         ):
             raise ValueError("fog-of-war side plan is foreign or stale")
-        fingerprint = _side_update_plan_fingerprint(
-            reporting_side=plan.reporting_side,
-            world_view=plan._world_view,
-            current_detection_witnesses=plan._current_detection_witnesses,
-            observer_track_supports=plan._observer_track_supports,
-            rng_state=transaction._rng_state,
-            fusion_delta=plan._fusion_delta,
-            scan_count_entries=plan._scan_count_entries,
-            receipt=plan.receipt,
-        )
-        if fingerprint != plan._fingerprint:
-            raise ValueError("fog-of-war side plan was mutated")
+        (
+            public_receipt,
+            world_view_preview,
+            public_witnesses,
+            public_supports,
+            public_fusion_delta,
+            tracks_preview,
+            public_scan_count_entries,
+            expected_transaction,
+            outcome_source,
+            handle_seal,
+            expected_reporting_side,
+        ) = side_workspace.handle_bindings
         if (
-            plan.receipt.reporting_side != plan.reporting_side
-            or plan._world_view.side != plan.reporting_side
-            or any(witness.side != plan.reporting_side for witness in plan._current_detection_witnesses)
-            or any(
-                support.identity.attachment_identity.reporting_side != plan.reporting_side
-                for support in plan._observer_track_supports
+            plan.reporting_side is not expected_reporting_side
+            or plan.receipt is not public_receipt
+            or not _exact_fow_receipt_matches(
+                plan.receipt,
+                side_workspace.receipt,
             )
+            or plan._world_view is not world_view_preview
+            or plan._current_detection_witnesses is not public_witnesses
+            or plan._fusion_delta is not public_fusion_delta
+            or plan._scan_count_entries is not public_scan_count_entries
+            or plan._transaction is not expected_transaction
+            or plan._outcome_source is not outcome_source
+            or plan._fingerprint is not handle_seal
         ):
-            raise ValueError("fog-of-war side plan owner topology is inconsistent")
-        support_identities = tuple(support.identity for support in plan._observer_track_supports)
-        if len(set(support_identities)) != len(support_identities) or plan._observer_track_supports != tuple(
-            sorted(
-                plan._observer_track_supports,
-                key=lambda support: support.identity.sort_key(),
-            )
-        ):
+            raise ValueError("fog-of-war side plan metadata was mutated")
+        if type(plan._current_detection_witnesses) is not tuple or type(plan._scan_count_entries) is not tuple:
+            raise ValueError("fog-of-war side plan diagnostic tuple shape was mutated")
+        if type(plan._observer_track_supports) is not tuple or plan._observer_track_supports is not public_supports:
             raise ValueError(
-                "fog-of-war side plan observer supports are not canonical",
+                "fog-of-war side plan observer supports must be an exact ObserverTrackSupportState tuple",
             )
-        self._validate_fusion_side_delta(
-            plan._fusion_delta,
-            expected_side=plan.reporting_side,
-        )
-        self._validate_update_aliases(
-            {plan.reporting_side: plan._world_view},
-            {"tracks": {plan.reporting_side: plan._fusion_delta.tracks}},
-        )
-
-        if plan._fusion_delta.track_counter != transaction._intel_fusion["track_counter"]:
-            raise ValueError("fog-of-war side plan changed the global fusion track counter")
-        baseline_counter = transaction._intel_fusion["fow_track_counters"].get(
-            plan.reporting_side,
-        )
-        staged_counter = plan._fusion_delta.fow_track_counter
-        if staged_counter is None and baseline_counter is not None:
-            raise ValueError("fog-of-war side plan removed its issued track counter")
-        if baseline_counter is not None and staged_counter is not None and staged_counter < baseline_counter:
-            raise ValueError("fog-of-war side plan rewound its track counter")
-
-        self._detection.stage_scan_counts(plan._scan_count_entries)
-        baseline_counts = {
-            self._scan_entry_key(entry): entry
-            for entry in self._side_scan_count_entries(
-                transaction._scan_counts,
-                plan.reporting_side,
-            )
-        }
-        staged_counts = {self._scan_entry_key(entry): entry for entry in plan._scan_count_entries}
-        if len(staged_counts) != len(plan._scan_count_entries):
-            raise ValueError("fog-of-war side plan has duplicate scan counts")
-        if any(
-            entry.scan_identity is None or entry.scan_identity.side != plan.reporting_side
-            for entry in plan._scan_count_entries
+        if (
+            type(plan._fusion_delta) is not _FogOfWarFusionSideDelta
+            or plan._fusion_delta.reporting_side is not expected_reporting_side
+            or plan._fusion_delta.track_counter is not side_workspace.fusion_delta.track_counter
+            or plan._fusion_delta.fow_track_counter is not side_workspace.fusion_delta.fow_track_counter
         ):
-            raise ValueError("fog-of-war side plan contains a foreign scan count")
-        for key in set(baseline_counts) | set(staged_counts):
-            baseline_entry = baseline_counts.get(key)
-            staged_entry = staged_counts.get(key)
-            if baseline_entry is not None and staged_entry is None:
-                raise ValueError("fog-of-war side plan removed a scan count")
-            if baseline_entry is not None and staged_entry is not None and staged_entry.count < baseline_entry.count:
-                raise ValueError("fog-of-war side plan rewound a scan count")
+            raise ValueError("fog-of-war side plan fusion metadata was mutated")
+        self._validate_mapping_preview(
+            plan._fusion_delta.tracks,
+            tracks_preview,
+            field_name="fog-of-war side fusion tracks",
+        )
+        return side_workspace
 
     def _live_update_fingerprint(
         self,
-        transaction: FogOfWarUpdateTransaction,
+        reporting_sides: tuple[str, ...],
     ) -> str:
         self.validate_internal_bindings()
         self.validate_live_contact_bindings()
         rng_state = copy.deepcopy(self._rng.bit_generator.state)
-        scan_counts = self._detection.snapshot_scan_counts()
         with self._intel_fusion._track_lock, self._witness_lock:
             ledger = self._intel_fusion._delivery_receipts
             staged_ledger = type(ledger)(
@@ -3107,7 +4330,7 @@ class FogOfWarManager:
                 "imint_target_tracks": self._intel_fusion._imint_target_tracks,
             }
             return _update_plan_fingerprint(
-                reporting_sides=transaction.reporting_sides,
+                reporting_sides=reporting_sides,
                 world_views=self._world_views,
                 current_detection_witnesses=self._current_detection_witnesses,
                 observer_track_supports=tuple(
@@ -3118,7 +4341,7 @@ class FogOfWarManager:
                 ),
                 rng_state=rng_state,
                 intel_fusion=intel_fusion,
-                scan_counts=scan_counts,
+                scan_counts=None,
             )
 
     def prevalidate_update_transaction(
@@ -3130,138 +4353,245 @@ class FogOfWarManager:
         if type(side_plans) is not tuple:
             raise TypeError("side_plans must be an immutable tuple")
         with self._update_transaction_lock:
-            self._validate_update_transaction(transaction)
+            workspace = self._validate_update_transaction(transaction)
             if self._active_publication_plan is not None:
                 raise RuntimeError("fog-of-war transaction was already prevalidated")
             if self._update_in_progress_sides:
                 raise RuntimeError("fog-of-war side staging is still in progress")
-            if tuple(plan.reporting_side for plan in side_plans) != transaction.reporting_sides:
+            if tuple(plan.reporting_side for plan in side_plans) != workspace.reporting_sides:
                 raise ValueError("side_plans must be the exact canonical reporting-side union")
-            if set(self._issued_side_plans) != set(transaction.reporting_sides):
+            if set(self._issued_side_plans) != set(workspace.reporting_sides):
                 raise ValueError("fog-of-war transaction is missing a reporting-side plan")
-            if self._live_update_fingerprint(transaction) != transaction._fingerprint:
-                raise RuntimeError("live fog-of-war state changed during isolated staging")
-            for plan in side_plans:
-                self._validate_side_plan(transaction, plan)
+            side_workspaces = tuple(self._validate_side_plan(transaction, plan) for plan in side_plans)
 
-            world_views, witnesses, intel_fusion = copy.deepcopy(
-                (
-                    transaction._world_views,
-                    transaction._current_detection_witnesses,
-                    transaction._intel_fusion,
-                ),
-            )
-            supports_by_identity = {support.identity: support for support in transaction._observer_track_supports}
-            merged_scan_counts = {self._scan_entry_key(entry): entry for entry in transaction._scan_counts.entries}
-            for plan in side_plans:
-                side = plan.reporting_side
-                side_world_view, side_tracks = copy.deepcopy(
-                    (
-                        plan._world_view,
-                        plan._fusion_delta.tracks,
-                    ),
-                )
-                world_views[side] = side_world_view
-                intel_fusion["tracks"][side] = side_tracks
-                if plan._fusion_delta.fow_track_counter is not None:
-                    intel_fusion["fow_track_counters"][side] = plan._fusion_delta.fow_track_counter
+            supports_by_identity = {support.identity: support for support in workspace.observer_track_supports}
+            merged_scan_count_values = dict(workspace.baseline_scan_count_values)
+            for side_workspace in side_workspaces:
+                side = side_workspace.plan.reporting_side
+                fusion_delta = side_workspace.fusion_delta
+                if fusion_delta.fow_track_counter is not None:
+                    workspace.intel_fusion["fow_track_counters"][side] = fusion_delta.fow_track_counter
                 else:
-                    intel_fusion["fow_track_counters"].pop(side, None)
-                witnesses[side] = copy.deepcopy(
-                    plan._current_detection_witnesses,
-                )
+                    workspace.intel_fusion["fow_track_counters"].pop(side, None)
+                workspace.current_detection_witnesses[side] = side_workspace.current_detection_witnesses
                 supports_by_identity = {
                     identity: support
                     for identity, support in supports_by_identity.items()
                     if identity.attachment_identity.reporting_side != side
                 }
-                for support in plan._observer_track_supports:
+                for support in side_workspace.observer_track_supports:
                     if support.identity in supports_by_identity:
                         raise ValueError(
                             "fog-of-war publication observer support identity overlaps",
                         )
                     supports_by_identity[support.identity] = support
-                for key in tuple(merged_scan_counts):
-                    identity = key[0]
-                    if identity is not None and identity.side == side:
-                        del merged_scan_counts[key]
-                for entry in plan._scan_count_entries:
-                    merged_scan_counts[self._scan_entry_key(entry)] = entry
+                for key in tuple(merged_scan_count_values):
+                    if len(key) == 5 and key[0] == side:
+                        del merged_scan_count_values[key]
+                merged_scan_count_values.update(side_workspace.scan_count_values)
 
-            scan_counts = self._detection.stage_scan_counts(
-                tuple(
-                    sorted(
-                        merged_scan_counts.values(),
-                        key=DetectionScanCountEntry.sort_key,
-                    )
-                ),
+            workspace.world_views = {side: workspace.world_views[side] for side in sorted(workspace.world_views)}
+            workspace.current_detection_witnesses = {
+                side: workspace.current_detection_witnesses[side]
+                for side in sorted(workspace.current_detection_witnesses)
+            }
+            workspace.intel_fusion["tracks"] = {
+                side: workspace.intel_fusion["tracks"][side] for side in sorted(workspace.intel_fusion["tracks"])
+            }
+            workspace.intel_fusion["fow_track_counters"] = {
+                side: workspace.intel_fusion["fow_track_counters"][side]
+                for side in sorted(workspace.intel_fusion["fow_track_counters"])
+            }
+            scan_counts = self._detection._stage_fow_scan_count_values(
+                merged_scan_count_values,
             )
-            self._validate_update_aliases(world_views, intel_fusion)
-            receipts = tuple(plan.receipt for plan in side_plans)
+            scan_count_values_binding = self._scan_count_values_binding(
+                merged_scan_count_values,
+            )
             observer_track_supports = tuple(
                 sorted(
                     supports_by_identity.values(),
                     key=lambda support: support.identity.sort_key(),
                 )
             )
+            workspace.observer_track_supports = observer_track_supports
+            workspace.publication_scan_count_values = merged_scan_count_values
+            workspace.publication_scan_count_values_binding = scan_count_values_binding
+            self._validate_update_aliases(
+                workspace.world_views,
+                workspace.intel_fusion,
+            )
+            authoritative_receipts = tuple(side_workspace.receipt for side_workspace in side_workspaces)
+            public_receipts = tuple(side_workspace.plan.receipt for side_workspace in side_workspaces)
+            world_views_preview = self._workspace_mapping_preview(
+                workspace,
+                "world_views",
+            )
+            witnesses_preview = self._workspace_mapping_preview(
+                workspace,
+                "current_detection_witnesses",
+            )
+            supports_preview = copy.deepcopy(observer_track_supports)
+            fusion_preview = self._workspace_mapping_preview(
+                workspace,
+                "intel_fusion",
+            )
+            outcome_source = workspace.outcome_source
+            if outcome_source is None:  # pragma: no cover - private construction
+                raise RuntimeError("fog-of-war outcome source is unavailable")
+            handle_seal = f"fog-of-war-publication:{workspace.generation}"
             publication = FogOfWarPublicationPlan(
-                reporting_sides=transaction.reporting_sides,
-                receipts=receipts,
-                _world_views=world_views,
-                _current_detection_witnesses=witnesses,
-                _observer_track_supports=observer_track_supports,
-                _intel_fusion=intel_fusion,
+                reporting_sides=workspace.reporting_sides,
+                receipts=public_receipts,
+                _world_views=world_views_preview,
+                _current_detection_witnesses=witnesses_preview,
+                _observer_track_supports=supports_preview,
+                _intel_fusion=fusion_preview,
                 _scan_counts=scan_counts,
                 _transaction=transaction,
                 _owner_token=self._update_owner_token,
-                _fingerprint="",
+                _generation=workspace.generation,
+                _outcome_source=outcome_source,
+                _fingerprint=handle_seal,
             )
-            publication = replace(
-                publication,
-                _fingerprint=_update_plan_fingerprint(
-                    reporting_sides=publication.reporting_sides,
-                    world_views=publication._world_views,
-                    current_detection_witnesses=(publication._current_detection_witnesses),
-                    observer_track_supports=(publication._observer_track_supports),
-                    rng_state=transaction._rng_state,
-                    intel_fusion=publication._intel_fusion,
-                    scan_counts=publication._scan_counts,
-                    receipts=publication.receipts,
-                ),
+            workspace.publication = publication
+            workspace.publication_bindings = (
+                workspace.reporting_sides,
+                public_receipts,
+                authoritative_receipts,
+                world_views_preview,
+                witnesses_preview,
+                supports_preview,
+                fusion_preview,
+                scan_counts,
+                scan_counts._entries,
+                scan_counts._owner_token,
+                scan_counts._fingerprint,
+                transaction,
+                outcome_source,
+                handle_seal,
             )
             self._active_publication_plan = publication
             return publication
 
-    @staticmethod
-    def _publication_fingerprint(
+    def _validate_publication_plan(
+        self,
+        workspace: _FogOfWarUpdateWorkspace,
         publication: FogOfWarPublicationPlan,
-    ) -> str:
-        transaction = publication._transaction
-        return _update_plan_fingerprint(
-            reporting_sides=publication.reporting_sides,
-            world_views=publication._world_views,
-            current_detection_witnesses=(publication._current_detection_witnesses),
-            observer_track_supports=publication._observer_track_supports,
-            rng_state=transaction._rng_state,
-            intel_fusion=publication._intel_fusion,
-            scan_counts=publication._scan_counts,
-            receipts=publication.receipts,
+    ) -> None:
+        if type(publication) is not FogOfWarPublicationPlan:
+            raise TypeError("publication must be a FogOfWarPublicationPlan")
+        if (
+            publication._owner_token is not self._update_owner_token
+            or self._active_publication_plan is not publication
+            or workspace.publication is not publication
+            or type(publication._generation) is not int
+            or publication._generation is not workspace.generation
+        ):
+            raise ValueError("fog-of-war publication is foreign or stale")
+        (
+            reporting_sides,
+            public_receipts,
+            authoritative_receipts,
+            world_views_preview,
+            witnesses_preview,
+            supports_preview,
+            fusion_preview,
+            scan_counts,
+            scan_entries,
+            scan_owner,
+            scan_fingerprint,
+            transaction,
+            outcome_source,
+            handle_seal,
+        ) = workspace.publication_bindings
+        if (
+            publication.reporting_sides is not reporting_sides
+            or publication.receipts is not public_receipts
+            or not _exact_fow_receipt_tuple_matches(
+                publication.receipts,
+                authoritative_receipts,
+            )
+            or publication._transaction is not transaction
+            or publication._outcome_source is not outcome_source
+            or publication._fingerprint is not handle_seal
+        ):
+            raise ValueError("fog-of-war publication metadata was mutated")
+        self._validate_mapping_preview(
+            publication._world_views,
+            world_views_preview,
+            field_name="fog-of-war publication world views",
         )
+        self._validate_mapping_preview(
+            publication._current_detection_witnesses,
+            witnesses_preview,
+            field_name="fog-of-war publication witnesses",
+        )
+        if (
+            type(publication._observer_track_supports) is not tuple
+            or publication._observer_track_supports is not supports_preview
+        ):
+            raise ValueError(
+                "fog-of-war publication observer supports must be an exact ObserverTrackSupportState tuple",
+            )
+        self._validate_mapping_preview(
+            publication._intel_fusion,
+            fusion_preview,
+            field_name="fog-of-war publication fusion state",
+        )
+        if (
+            type(publication._scan_counts) is not DetectionScanCountSnapshot
+            or publication._scan_counts is not scan_counts
+            or publication._scan_counts._entries is not scan_entries
+            or publication._scan_counts._owner_token is not scan_owner
+            or publication._scan_counts._fingerprint is not scan_fingerprint
+        ):
+            raise ValueError("fog-of-war publication scan-count metadata was mutated")
+
+    @staticmethod
+    def _prepare_observer_track_support_map(
+        supports: tuple[ObserverTrackSupportState, ...],
+    ) -> dict[ObserverTrackSupportIdentity, ObserverTrackSupportState]:
+        """Materialize the authoritative support index before publication."""
+        return {support.identity: support for support in supports}
+
+    @staticmethod
+    def _validate_observer_track_support_map(
+        supports: tuple[ObserverTrackSupportState, ...],
+        support_map: object,
+    ) -> None:
+        """Bind one prepared support index to its sealed canonical tuple."""
+        if type(support_map) is not dict:
+            raise ValueError(
+                "fog-of-war commit payload observer support map changed",
+            )
+        items = tuple(support_map.items())
+        if len(items) != len(supports) or any(
+            key is not support.identity or value is not support
+            for (key, value), support in zip(
+                items,
+                supports,
+                strict=True,
+            )
+        ):
+            raise ValueError(
+                "fog-of-war commit payload observer support map changed",
+            )
 
     @staticmethod
     def _commit_payload_fingerprint(
         payload: _FogOfWarCommitPayload,
-        plan: FogOfWarCommitPlan,
+        reporting_sides: tuple[str, ...],
     ) -> str:
         return _update_plan_fingerprint(
-            reporting_sides=plan.reporting_sides,
+            reporting_sides=reporting_sides,
             world_views=payload.world_views,
             current_detection_witnesses=(payload.current_detection_witnesses),
             observer_track_supports=payload.observer_track_supports,
-            rng_state=plan._publication._transaction._rng_state,
+            rng_state=payload.rng_state,
             intel_fusion=payload.intel_fusion,
             scan_counts=payload.scan_counts,
-            receipts=plan.receipts,
+            receipts=payload.receipts,
         )
 
     def prepare_update_commit(
@@ -3273,61 +4603,98 @@ class FogOfWarManager:
             raise TypeError("publication must be a FogOfWarPublicationPlan")
         with self._update_transaction_lock:
             transaction = publication._transaction
-            self._validate_update_transaction(transaction)
-            if (
-                publication._owner_token is not self._update_owner_token
-                or self._active_publication_plan is not publication
-            ):
-                raise ValueError("fog-of-war publication is foreign or stale")
+            workspace = self._validate_update_transaction(transaction)
+            self._validate_publication_plan(workspace, publication)
             if self._prepared_update_commit is not None:
                 raise RuntimeError("fog-of-war publication commit was already prepared")
-            if self._publication_fingerprint(publication) != publication._fingerprint:
-                raise ValueError("fog-of-war publication was mutated")
-            self._detection._validated_scan_counts(publication._scan_counts)
-            if self._live_update_fingerprint(transaction) != transaction._fingerprint:
-                raise RuntimeError("live fog-of-war state changed before publication")
-
-            world_views, witnesses, intel_fusion = copy.deepcopy(
-                (
-                    publication._world_views,
-                    publication._current_detection_witnesses,
-                    publication._intel_fusion,
-                ),
+            scan_count_values = workspace.publication_scan_count_values
+            scan_count_values_binding = workspace.publication_scan_count_values_binding
+            if (
+                scan_count_values is None or scan_count_values_binding is None
+            ):  # pragma: no cover - private precondition
+                raise RuntimeError("fog-of-war publication scan counts are unavailable")
+            scan_counts = publication._scan_counts
+            self._validate_scan_count_snapshot_values(
+                scan_counts,
+                scan_count_values,
+                field_name="fog-of-war publication",
+                verify_snapshot_fingerprint=True,
             )
-            observer_track_supports = copy.deepcopy(
-                _validated_observer_track_support_tuple(
-                    publication._observer_track_supports,
-                    field_name="fog-of-war publication observer supports",
-                ),
+            if type(scan_count_values_binding.exact_builtin) is not bool:
+                raise ValueError("fog-of-war scan-count binding flag changed")
+            if scan_count_values_binding.exact_builtin:
+                self._validate_scan_count_values_binding(
+                    scan_count_values,
+                    scan_count_values_binding,
+                    field_name="fog-of-war publication",
+                )
+            observer_track_supports = _validated_observer_track_support_tuple(
+                workspace.observer_track_supports,
+                field_name="fog-of-war workspace observer supports",
             )
-            self._validate_update_aliases(world_views, intel_fusion)
-            scan_counts = self._detection.stage_scan_counts(
-                publication._scan_counts.entries,
+            observer_track_support_map = self._prepare_observer_track_support_map(
+                observer_track_supports,
             )
-            scan_count_values = self._detection._validated_scan_counts(scan_counts)
-            prepared_fusion = self._intel_fusion._prepare_commit_state(intel_fusion)
-            self._validate_update_aliases(world_views, prepared_fusion)
-            if self._rng.bit_generator.state != transaction._rng_state:
+            self._validate_observer_track_support_map(
+                observer_track_supports,
+                observer_track_support_map,
+            )
+            prepared_fusion = self._intel_fusion._prepare_commit_state(
+                workspace.intel_fusion,
+            )
+            self._validate_update_aliases(
+                workspace.world_views,
+                prepared_fusion,
+            )
+            if self._rng.bit_generator.state != workspace.rng_state:
                 raise RuntimeError("fog-of-war preparation changed conventional RNG")
 
+            authoritative_receipts = tuple(
+                workspace.side_workspaces[side].receipt for side in workspace.reporting_sides
+            )
+            public_receipts = publication.receipts
+            outcome_source = workspace.outcome_source
+            if outcome_source is None:  # pragma: no cover - private construction
+                raise RuntimeError("fog-of-war outcome source is unavailable")
+            outcome_source.freeze(workspace.reporting_sides)
             plan = FogOfWarCommitPlan(
-                reporting_sides=publication.reporting_sides,
-                receipts=publication.receipts,
+                reporting_sides=workspace.reporting_sides,
+                receipts=public_receipts,
                 _publication=publication,
                 _owner_token=self._update_owner_token,
+                _generation=workspace.generation,
+                _outcome_source=outcome_source,
             )
             payload = _FogOfWarCommitPayload(
-                world_views=world_views,
-                current_detection_witnesses=witnesses,
+                world_views=workspace.world_views,
+                current_detection_witnesses=(workspace.current_detection_witnesses),
                 observer_track_supports=observer_track_supports,
+                observer_track_support_map=observer_track_support_map,
+                receipts=authoritative_receipts,
+                rng_state=workspace.rng_state,
                 intel_fusion=prepared_fusion,
                 scan_counts=scan_counts,
                 scan_count_values=scan_count_values,
+                scan_count_values_binding=scan_count_values_binding,
                 fingerprint="",
             )
             payload.fingerprint = self._commit_payload_fingerprint(
                 payload,
-                plan,
+                workspace.reporting_sides,
+            )
+            workspace.commit_plan = plan
+            workspace.prepared_scan_count_values_binding_fields = (
+                scan_count_values_binding.keys,
+                scan_count_values_binding.counts,
+                scan_count_values_binding.exact_builtin,
+            )
+            workspace.commit_bindings = (
+                workspace.reporting_sides,
+                public_receipts,
+                authoritative_receipts,
+                publication,
+                outcome_source,
+                observer_track_support_map,
             )
             self._prepared_update_commit = plan
             self._prepared_update_payload = payload
@@ -3338,38 +4705,147 @@ class FogOfWarManager:
         plan: FogOfWarCommitPlan,
     ) -> None:
         """Revalidate every fallible invariant before an outer owner commits."""
-        if type(plan) is not FogOfWarCommitPlan:
-            raise TypeError("plan must be a FogOfWarCommitPlan")
         with self._update_transaction_lock:
-            publication = plan._publication
-            transaction = publication._transaction
-            self._validate_update_transaction(transaction)
-            if (
-                plan._owner_token is not self._update_owner_token
-                or self._prepared_update_commit is not plan
-                or self._active_publication_plan is not publication
-            ):
-                raise ValueError("fog-of-war commit plan is foreign or stale")
-            if self._publication_fingerprint(publication) != publication._fingerprint:
-                raise ValueError("fog-of-war publication was mutated")
+            workspace = self._validated_prepared_workspace(plan)
             payload = self._prepared_update_payload
             if payload is None:
                 raise ValueError("fog-of-war commit payload is stale")
-            payload_scan_count_values = self._detection._validated_scan_counts(
-                payload.scan_counts,
+            publication = workspace.publication
+            scan_count_values_binding = payload.scan_count_values_binding
+            binding_fields = workspace.prepared_scan_count_values_binding_fields
+            if (
+                publication is None
+                or payload.scan_counts is not publication._scan_counts
+                or payload.scan_count_values is not workspace.publication_scan_count_values
+                or scan_count_values_binding is not workspace.publication_scan_count_values_binding
+                or binding_fields is None
+                or scan_count_values_binding.keys is not binding_fields[0]
+                or scan_count_values_binding.counts is not binding_fields[1]
+                or scan_count_values_binding.exact_builtin is not binding_fields[2]
+            ):
+                raise ValueError("fog-of-war commit payload scan counts are stale")
+            if scan_count_values_binding.exact_builtin:
+                self._validate_scan_count_values_binding(
+                    payload.scan_count_values,
+                    scan_count_values_binding,
+                    field_name="fog-of-war commit payload",
+                )
+            else:
+                self._validate_scan_count_snapshot_values(
+                    payload.scan_counts,
+                    payload.scan_count_values,
+                    field_name="fog-of-war commit payload",
+                    verify_snapshot_fingerprint=True,
+                )
+            self._validate_observer_track_support_map(
+                payload.observer_track_supports,
+                payload.observer_track_support_map,
             )
-            if payload_scan_count_values != payload.scan_count_values:
-                raise ValueError("fog-of-war commit payload scan counts changed")
-            if self._commit_payload_fingerprint(payload, plan) != payload.fingerprint:
+            if (
+                self._commit_payload_fingerprint(
+                    payload,
+                    workspace.reporting_sides,
+                )
+                != payload.fingerprint
+            ):
                 raise ValueError("fog-of-war commit payload was mutated")
             self._validate_update_aliases(
                 payload.world_views,
                 payload.intel_fusion,
             )
-            if self._live_update_fingerprint(transaction) != transaction._fingerprint:
+            if not self._detection._live_scan_count_values_equal(
+                workspace.baseline_scan_count_values,
+            ):
+                raise RuntimeError(
+                    "live fog-of-war scan counts changed before publication",
+                )
+            if self._live_update_fingerprint(workspace.reporting_sides) != workspace.start_live_fingerprint:
                 raise RuntimeError("live fog-of-war state changed before publication")
-            if self._rng.bit_generator.state != transaction._rng_state:
+            if payload.rng_state != workspace.rng_state or self._rng.bit_generator.state != workspace.rng_state:
                 raise RuntimeError("fog-of-war preparation changed conventional RNG")
+
+    def _validated_prepared_workspace(
+        self,
+        plan: FogOfWarCommitPlan,
+    ) -> _FogOfWarUpdateWorkspace:
+        """Return the workspace for one exact active prepared plan."""
+        if type(plan) is not FogOfWarCommitPlan:
+            raise TypeError("plan must be a FogOfWarCommitPlan")
+        workspace = self._update_workspace
+        if workspace is None or workspace.commit_plan is not plan:
+            raise ValueError("fog-of-war commit plan is foreign or stale")
+        transaction = workspace.transaction
+        publication = workspace.publication
+        if (
+            transaction is None
+            or publication is None
+            or plan._publication is not publication
+            or plan._owner_token is not self._update_owner_token
+            or self._prepared_update_commit is not plan
+            or self._active_publication_plan is not publication
+            or type(plan._generation) is not int
+            or plan._generation is not workspace.generation
+        ):
+            raise ValueError("fog-of-war commit plan is foreign or stale")
+        self._validate_update_transaction(transaction)
+        self._validate_publication_plan(workspace, publication)
+        (
+            reporting_sides,
+            public_receipts,
+            authoritative_receipts,
+            expected_publication,
+            outcome_source,
+            expected_support_map,
+        ) = workspace.commit_bindings
+        payload = self._prepared_update_payload
+        if (
+            plan.reporting_sides is not reporting_sides
+            or plan.receipts is not public_receipts
+            or not _exact_fow_receipt_tuple_matches(
+                plan.receipts,
+                authoritative_receipts,
+            )
+            or plan._publication is not expected_publication
+            or plan._outcome_source is not outcome_source
+            or payload is None
+            or payload.observer_track_support_map is not expected_support_map
+        ):
+            raise ValueError("fog-of-war commit plan metadata was mutated")
+        return workspace
+
+    def _prepared_outcomes_for_owner(
+        self,
+        plan: FogOfWarCommitPlan,
+    ) -> tuple[FogOfWarCycleOutcome, ...]:
+        """Return ephemeral read-only outcomes over the pending live graph.
+
+        This manager-private projection is valid only while ``plan`` is the
+        active prepared commit.  Its world views alias the authoritative
+        payload and must not be mutated or retained beyond the outer commit.
+        Immutable receipts, witnesses, and support records are safely shared.
+        """
+        with self._update_transaction_lock:
+            workspace = self._validated_prepared_workspace(plan)
+            payload = self._prepared_update_payload
+            (
+                _reporting_sides,
+                _public_receipts,
+                authoritative_receipts,
+                _publication,
+                _outcome_source,
+                _support_map,
+            ) = workspace.commit_bindings
+            if (
+                payload is None
+                or payload.world_views is not workspace.world_views
+                or payload.current_detection_witnesses is not workspace.current_detection_witnesses
+                or payload.observer_track_supports is not workspace.observer_track_supports
+                or payload.receipts is not authoritative_receipts
+            ):
+                raise ValueError("fog-of-war commit payload is stale")
+            return tuple(
+                _FogOfWarOutcomeSource._workspace_outcome(workspace, side) for side in workspace.reporting_sides
+            )
 
     def _commit_prevalidated_update(
         self,
@@ -3377,9 +4853,15 @@ class FogOfWarManager:
     ) -> None:
         """Publish a fully validated update using only bounded state swaps."""
         with self._update_transaction_lock:
+            workspace = self._update_workspace
+            if (
+                workspace is None or workspace.commit_plan is not plan or self._prepared_update_commit is not plan
+            ):  # pragma: no cover - private precondition
+                raise RuntimeError("fog-of-war commit workspace is unavailable")
             payload = self._prepared_update_payload
             if payload is None:  # pragma: no cover - private precondition
                 raise RuntimeError("fog-of-war commit payload is unavailable")
+            self._retire_update_previews(workspace)
             self._detection._commit_prevalidated_scan_counts(
                 payload.scan_count_values,
             )
@@ -3389,10 +4871,9 @@ class FogOfWarManager:
             self._world_views = payload.world_views
             with self._witness_lock:
                 self._current_detection_witnesses = payload.current_detection_witnesses
-                self._observer_track_supports = {
-                    support.identity: support for support in payload.observer_track_supports
-                }
+                self._observer_track_supports = payload.observer_track_support_map
             self._active_update_transaction = None
+            self._update_workspace = None
             self._active_publication_plan = None
             self._prepared_update_commit = None
             self._prepared_update_payload = None
@@ -4480,8 +5961,9 @@ class FogOfWarManager:
             raise ValueError(
                 "Fog-of-war restore plan is foreign or was mutated",
             )
-        self._cadence.validate_restore_plan(staged_state._cadence_plan)
-        self._detection._validated_scan_counts(staged_state._scan_counts)
+        scan_count_values = self._detection._validated_scan_counts(
+            staged_state._scan_counts,
+        )
         try:
             (
                 world_views,
@@ -4526,16 +6008,38 @@ class FogOfWarManager:
             raise ValueError(
                 "Fog-of-war restore plan is foreign or was mutated",
             )
-        self._detection.commit_scan_counts(scan_counts)
-        self._intel_fusion.commit_state(intel_fusion)
-        self._cadence.commit_state(cadence_plan)
-        self._world_views = dict(world_views)
+
+        prepared_fusion = self._intel_fusion._prepare_commit_state(
+            intel_fusion,
+        )
+        prepared_cadence = self._cadence._prepare_restore_commit(
+            cadence_plan,
+        )
+        prepared_supports = self._prepare_observer_track_support_map(
+            observer_track_supports,
+        )
+        self._validate_observer_track_support_map(
+            observer_track_supports,
+            prepared_supports,
+        )
+
+        # Every fallible validation, detachment, and container construction is
+        # complete.  The shared RNG assignment is the final validated setter;
+        # the remaining private commits publish by bounded swaps only.
         self._rng.bit_generator.state = rng_state
+        self._detection._commit_prevalidated_scan_counts(
+            scan_count_values,
+        )
+        self._intel_fusion._commit_prevalidated_fow_state(
+            prepared_fusion,
+        )
+        self._cadence._commit_prevalidated_restore(
+            prepared_cadence,
+        )
+        self._world_views = world_views
         with self._witness_lock:
-            self._current_detection_witnesses = {
-                side: side_witnesses for side, side_witnesses in (current_detection_witnesses.items())
-            }
-            self._observer_track_supports = {support.identity: support for support in observer_track_supports}
+            self._current_detection_witnesses = current_detection_witnesses
+            self._observer_track_supports = prepared_supports
 
     def set_state(self, state: dict[str, Any]) -> None:
         """Validate and atomically restore standalone fog/fusion state."""

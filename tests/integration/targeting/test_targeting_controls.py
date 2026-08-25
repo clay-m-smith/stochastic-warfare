@@ -13,6 +13,7 @@ import pytest
 
 from stochastic_warfare.core.events import Event
 from stochastic_warfare.core.types import ModuleId
+from stochastic_warfare.detection.fog_of_war import FogOfWarPublicationPlan
 from stochastic_warfare.detection.sensors import SensorInstance
 from stochastic_warfare.simulation.battle import BattleContext
 from stochastic_warfare.simulation.loadouts import (
@@ -1051,6 +1052,90 @@ def _observation_commit_state(session: RuntimeSession) -> dict[str, Any]:
     }
 
 
+def test_disabled_lod_skips_empty_witness_promotion_restage_exactly(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """An empty disabled-LOD promotion set preserves the canonical plan."""
+    variant_id = "phase142-empty-witness-promotion-fast-path"
+    prepared = _prepare(
+        _duel(
+            "mark_iv_tank",
+            "german_sturmtruppen",
+            fog_of_war=True,
+            calibration={
+                "enable_lod": False,
+                "enable_parallel_detection": False,
+            },
+        ),
+        variant_id=variant_id,
+    )
+    control = _build(prepared, variant_id=variant_id, seed=142_055)
+    candidate = _build(prepared, variant_id=variant_id, seed=142_055)
+    control_battles = tuple(control.engine.battle_manager.active_battles)
+    candidate_battles = tuple(candidate.engine.battle_manager.active_battles)
+    assert len(control_battles) == len(candidate_battles) == 1
+
+    control_canonical = control.engine.battle_manager.prepare_tactical_interval(
+        control.context,
+        control_battles,
+        5.0,
+    )
+    expected = {
+        "battle_ids": tuple(battle.battle_id for battle in control_canonical),
+        "observation": _observation_commit_state(control),
+        "targeting": control.context.tactical_targeting.get_state(),
+        "battle": control.engine.battle_manager.get_state(),
+    }
+
+    def _reject_empty_restage(_plan: object, observers: object) -> None:
+        assert tuple(observers) == ()
+        raise AssertionError("empty witness promotions were restaged")
+
+    promotions = candidate.engine.battle_manager._lod_witness_promotions
+
+    def _record_empty_witness_input(
+        context: object,
+        *,
+        witnesses: object,
+        lod_tiers: object,
+    ) -> object:
+        assert tuple(witnesses) == ()
+        return promotions(
+            context,
+            witnesses=witnesses,
+            lod_tiers=lod_tiers,
+        )
+
+    def _reject_witness_snapshot(_publication: object) -> object:
+        raise AssertionError("disabled LOD copied the FOW witness publication")
+
+    monkeypatch.setattr(
+        candidate.context.fog_of_war.cadence,
+        "stage_witness_promotions",
+        _reject_empty_restage,
+    )
+    monkeypatch.setattr(
+        candidate.engine.battle_manager,
+        "_lod_witness_promotions",
+        _record_empty_witness_input,
+    )
+    monkeypatch.setattr(
+        FogOfWarPublicationPlan,
+        "witnesses",
+        property(_reject_witness_snapshot),
+    )
+    candidate_canonical = candidate.engine.battle_manager.prepare_tactical_interval(
+        candidate.context,
+        candidate_battles,
+        5.0,
+    )
+
+    assert tuple(battle.battle_id for battle in candidate_canonical) == (expected["battle_ids"])
+    assert _observation_commit_state(candidate) == expected["observation"]
+    assert candidate.context.tactical_targeting.get_state() == expected["targeting"]
+    assert candidate.engine.battle_manager.get_state() == expected["battle"]
+
+
 def test_enabled_em_owner_fault_aborts_before_fow_and_downstream_commit(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -1310,6 +1395,61 @@ def test_cross_owner_precommit_fault_leaves_every_observation_owner_unpublished(
         )
 
     assert _observation_commit_state(session) == observation_before
+    assert context.fog_of_war.cadence.poisoned is True
+    assert context.tactical_targeting.latest_pictures() == ()
+
+
+def test_outer_precommit_rejects_ephemeral_fow_outcome_tamper_without_publication(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The final all-owner gate seals manager-private ephemeral outcomes."""
+    variant_id = "phase142-final-outer-fow-tamper-guard"
+    session = _build(
+        _prepare(
+            _duel(
+                "mark_iv_tank",
+                "german_sturmtruppen",
+                fog_of_war=True,
+            ),
+            variant_id=variant_id,
+        ),
+        variant_id=variant_id,
+        seed=142_055,
+    )
+    context = session.context
+    battles = tuple(session.engine.battle_manager.active_battles)
+    observation_before = _observation_commit_state(session)
+    targeting_before = context.tactical_targeting.get_state()
+    validate_targeting = context.tactical_targeting.validate_publication_plan
+
+    def _tamper_after_targeting_validation(plan: object) -> None:
+        validate_targeting(plan)
+        prepared = context.fog_of_war._prepared_update_commit
+        payload = context.fog_of_war._prepared_update_payload
+        workspace = context.fog_of_war._update_workspace
+        assert prepared is not None
+        assert payload is not None
+        assert workspace is not None
+        owner_outcome = context.fog_of_war._prepared_outcomes_for_owner(prepared)[0]
+        side = owner_outcome.world_view.side
+        assert payload.world_views is workspace.world_views
+        assert owner_outcome.world_view is payload.world_views[side]
+        owner_outcome.world_view.last_update_time += 1.0
+
+    monkeypatch.setattr(
+        context.tactical_targeting,
+        "validate_publication_plan",
+        _tamper_after_targeting_validation,
+    )
+    with pytest.raises(ValueError, match="commit payload was mutated"):
+        session.engine.battle_manager.prepare_tactical_interval(
+            context,
+            battles,
+            5.0,
+        )
+
+    assert _observation_commit_state(session) == observation_before
+    assert context.tactical_targeting.get_state() == targeting_before
     assert context.fog_of_war.cadence.poisoned is True
     assert context.tactical_targeting.latest_pictures() == ()
 

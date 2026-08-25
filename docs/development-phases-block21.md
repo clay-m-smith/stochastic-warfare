@@ -2,7 +2,7 @@
 
 **Phase range:** 141--142
 
-**Status:** Planned follow-up handoff; Phases 141 and 142 have not started
+**Status:** Phase 142 complete; Phase 141 has not started
 
 Block 21 owns future remediation of the two performance approximations that
 failed the immutable Phase 118 v7 semantic study. Creating this roadmap does
@@ -46,7 +46,9 @@ the coherent Phase 141 commit pass.
 
 ## Phase 142 - Transactional FOW Runtime-Cost Integrity
 
-Status: **Not started**. REM-055 (P1) remains queued.
+Status: **Complete**. REM-055 (P1) is closed by the accepted implementation,
+owner-approved bounded partial-recovery receipt, documentation audit, and
+postmortem.
 
 Reduce the production cost introduced by Phase 118's atomic FOW transaction
 without removing its failure atomicity, owner-bound mutation detection,
@@ -73,3 +75,23 @@ determinism, convention, scenario, slow, benchmark, and documentation gates;
 and create one coherent Phase 142 commit. The pre-existing targeting loop may
 be reported as the dominant absolute hotspot, but it must not be presented as
 the cause of the Phase 118 regression without separate evidence.
+
+The implementation now satisfies the behavioral and measurement portions of
+that exit gate. The original `0.80` target was not met, and a formal `0.86`
+run failed at `0.8635476449973133`. After explicit post-observation owner
+approval of `0.87`, a fresh native-policy run passed with a median paired ratio
+of `0.8611730824876394`, relative ranges of `0.013218477867904395` and
+`0.016081253468878523`, and peak Python-allocation ratio of
+`0.9504173671075903`. Exact outcomes, ordered events, receipts, conventional
+and indexed RNG state, checkpoint bytes, and fresh-runtime continuation were
+preserved. The exact 13,015-node revision-bound test union also passed with no
+failures, errors, or skips. A final source-bound call profile also reduced
+total calls from 518,194,574 to 473,385,421 and the non-additive transactional
+FOW enclosure from 23.116448 to 9.683666 cumulative seconds; the phase devlog
+records the raw artifact hashes and component comparison.
+
+This is an accepted partial recovery on one declared production workload. It
+does not satisfy the original `0.80` target, create a universal speed claim,
+change sensor or targeting semantics, or re-enable scan scheduling or LOD.
+See the [Phase 142 devlog](devlog/phase-142.md) for the threshold history,
+evidence identities, validation, and limitations.

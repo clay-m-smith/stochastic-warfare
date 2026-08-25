@@ -488,8 +488,7 @@ class TacticalCadenceDecision:
         if self.admitted is not (expected is TacticalCadenceDisposition.ADMITTED):
             raise ValueError("cadence decision admitted flag is inconsistent")
         if type(self.recoveries) is not tuple or any(
-            type(recovery) is not TacticalCadenceRecovery
-            for recovery in self.recoveries
+            type(recovery) is not TacticalCadenceRecovery for recovery in self.recoveries
         ):
             raise ValueError(
                 "cadence decision recoveries must be a tuple of TacticalCadenceRecovery",
@@ -500,17 +499,12 @@ class TacticalCadenceDecision:
             raise ValueError(
                 "cadence decision recoveries must contain at most one event per axis in canonical order",
             )
-        if self.recoveries and (
-            not self.admitted or not self.operational or self.first_cycle
-        ):
+        if self.recoveries and (not self.admitted or not self.operational or self.first_cycle):
             raise ValueError(
                 "cadence decision recoveries require a later operational admission",
             )
         for recovery in self.recoveries:
-            if (
-                recovery.axis is TacticalCadenceRecoveryAxis.NATIVE
-                and recovery.deferral_period != self.native_period
-            ):
+            if recovery.axis is TacticalCadenceRecoveryAxis.NATIVE and recovery.deferral_period != self.native_period:
                 raise ValueError(
                     "native cadence recovery origin period must equal the decision native period",
                 )
@@ -801,10 +795,7 @@ class TacticalCadencePlan:
                 raise ValueError(
                     "cadence plan decisions must be TacticalCadenceDecision values",
                 )
-            if any(
-                recovery.admission_ordinal != self.ordinal
-                for recovery in decision.recoveries
-            ):
+            if any(recovery.admission_ordinal != self.ordinal for recovery in decision.recoveries):
                 raise ValueError(
                     "cadence recovery admission ordinal must equal its plan ordinal",
                 )
@@ -871,6 +862,22 @@ class TacticalCadenceCommitPlan:
 
 
 @dataclass(frozen=True, slots=True)
+class _TacticalCadenceCommitPayload:
+    """Manager-private detached graph for one validated interval commit."""
+
+    commit_plan: TacticalCadenceCommitPlan
+    ordinal: int
+    states: Mapping[
+        TacticalAttachmentIdentity,
+        TacticalCadenceAttachmentState,
+    ]
+    phase_assignments: Mapping[
+        TacticalAttachmentIdentity,
+        TacticalNativePhaseAssignment,
+    ]
+
+
+@dataclass(frozen=True, slots=True)
 class TacticalCadenceRestorePlan:
     """Validated owner-bound cadence checkpoint publication."""
 
@@ -882,6 +889,22 @@ class TacticalCadenceRestorePlan:
     phase_assignments_sha256: str
     _owner_token: object
     _fingerprint: str
+
+
+@dataclass(frozen=True, slots=True)
+class _TacticalCadenceRestorePayload:
+    """Manager-private detached graph for one validated state restore."""
+
+    states: Mapping[
+        TacticalAttachmentIdentity,
+        TacticalCadenceAttachmentState,
+    ]
+    phase_assignments: Mapping[
+        TacticalAttachmentIdentity,
+        TacticalNativePhaseAssignment,
+    ]
+    committed_ordinal: int
+    complete_from_tick_zero: bool
 
 
 def _identity_from_state(value: object, *, label: str) -> TacticalAttachmentIdentity:
@@ -1262,28 +1285,6 @@ def _interval_plan_fingerprint(plan: TacticalCadencePlan) -> str:
     )
 
 
-def _commit_plan_fingerprint(plan: TacticalCadenceCommitPlan) -> str:
-    return _canonical_sha256(
-        {
-            "ordinal": plan.ordinal,
-            "states": [
-                state.get_state()
-                for _, state in sorted(
-                    plan._states.items(),
-                    key=lambda item: item[0].sort_key(),
-                )
-            ],
-            "phase_assignments": [
-                assignment.get_state()
-                for assignment in _canonical_phase_assignments(
-                    plan._phase_assignments.values(),
-                )
-            ],
-            "interval_plan": _interval_plan_fingerprint(plan._interval_plan),
-        }
-    )
-
-
 def _restore_plan_fingerprint(plan: TacticalCadenceRestorePlan) -> str:
     return _canonical_sha256(
         {
@@ -1295,6 +1296,70 @@ def _restore_plan_fingerprint(plan: TacticalCadenceRestorePlan) -> str:
             "native_phase_assignments_sha256": plan.phase_assignments_sha256,
         }
     )
+
+
+def _detached_attachment_identity(
+    identity: TacticalAttachmentIdentity,
+) -> TacticalAttachmentIdentity:
+    """Copy one validated attachment identity into a private graph."""
+    return TacticalAttachmentIdentity(
+        reporting_side=identity.reporting_side,
+        observer_unit_id=identity.observer_unit_id,
+        source_equipment_index=identity.source_equipment_index,
+        sensor_id=identity.sensor_id,
+        modeled_role=identity.modeled_role,
+    )
+
+
+def _detached_cadence_state_graph(
+    *,
+    states: Iterable[TacticalCadenceAttachmentState],
+    phase_assignments: Iterable[TacticalNativePhaseAssignment],
+) -> tuple[
+    dict[TacticalAttachmentIdentity, TacticalCadenceAttachmentState],
+    dict[TacticalAttachmentIdentity, TacticalNativePhaseAssignment],
+]:
+    """Copy one cadence graph with one canonical identity per attachment."""
+    detached_identities: dict[
+        tuple[str, str, int, str, str],
+        TacticalAttachmentIdentity,
+    ] = {}
+
+    def detached_identity(
+        identity: TacticalAttachmentIdentity,
+    ) -> TacticalAttachmentIdentity:
+        key = (
+            identity.reporting_side,
+            identity.observer_unit_id,
+            identity.source_equipment_index,
+            identity.sensor_id,
+            identity.modeled_role,
+        )
+        detached = detached_identities.get(key)
+        if detached is None:
+            detached = _detached_attachment_identity(identity)
+            detached_identities[key] = detached
+        return detached
+
+    detached_states: dict[
+        TacticalAttachmentIdentity,
+        TacticalCadenceAttachmentState,
+    ] = {}
+    for state in states:
+        identity = detached_identity(state.identity)
+        detached_states[identity] = replace(state, identity=identity)
+
+    detached_phase_assignments: dict[
+        TacticalAttachmentIdentity,
+        TacticalNativePhaseAssignment,
+    ] = {}
+    for assignment in phase_assignments:
+        identity = detached_identity(assignment.identity)
+        detached_phase_assignments[identity] = replace(
+            assignment,
+            identity=identity,
+        )
+    return detached_states, detached_phase_assignments
 
 
 class TacticalCadenceScheduler:
@@ -1328,7 +1393,17 @@ class TacticalCadenceScheduler:
         self._owner_token = object()
         self._active_plan: TacticalCadencePlan | None = None
         self._active_plan_fingerprint: str | None = None
+        self._active_plan_binding: (
+            tuple[
+                TacticalCadencePlan,
+                object,
+                str,
+            ]
+            | None
+        ) = None
         self._prepared_commit: TacticalCadenceCommitPlan | None = None
+        self._prepared_commit_payload: _TacticalCadenceCommitPayload | None = None
+        self._prepared_commit_bindings: tuple[object, ...] = ()
         self._poisoned = False
 
     @property
@@ -1380,7 +1455,16 @@ class TacticalCadenceScheduler:
                 "cadence checkpoint is unavailable after a poisoned interval",
             )
 
-    def _validate_active_plan(self, plan: object) -> TacticalCadencePlan:
+    def _active_interval_binding_for_owner(
+        self,
+        plan: object,
+    ) -> tuple[TacticalCadencePlan, object, str]:
+        """Return the exact manager-private binding for one active plan.
+
+        The binding is intentionally an O(1) authority check for trusted
+        staging owners.  The full active-plan content seal remains mandatory
+        at cadence prepare and final outer validation boundaries.
+        """
         if self._poisoned:
             raise RuntimeError("cadence scheduler is poisoned")
         if type(plan) is not TacticalCadencePlan:
@@ -1389,9 +1473,21 @@ class TacticalCadenceScheduler:
             raise ValueError("cadence plan belongs to another scheduler")
         if self._active_plan is not plan:
             raise ValueError("cadence plan is stale or is not active")
-        if self._active_plan_fingerprint is None or _interval_plan_fingerprint(plan) != self._active_plan_fingerprint:
+        binding = self._active_plan_binding
+        if (
+            binding is None
+            or binding[0] is not plan
+            or binding[1] is not self._owner_token
+            or binding[2] is not self._active_plan_fingerprint
+        ):
+            raise ValueError("cadence plan binding is stale or invalid")
+        return binding
+
+    def _validate_active_plan(self, plan: object) -> TacticalCadencePlan:
+        binding = self._active_interval_binding_for_owner(plan)
+        if _interval_plan_fingerprint(binding[0]) != binding[2]:
             raise ValueError("cadence plan was mutated after staging")
-        return plan
+        return binding[0]
 
     def validate_interval_plan(self, plan: TacticalCadencePlan) -> None:
         """Preflight one owner-bound active interval without mutation."""
@@ -1420,7 +1516,21 @@ class TacticalCadenceScheduler:
             raise ValueError("complete cadence roster contains duplicate identities")
         requests = tuple(sorted(requests, key=lambda request: request.identity.sort_key()))
 
-        staged_assignments = dict(self._phase_assignments)
+        plan_identities = {request.identity: _detached_attachment_identity(request.identity) for request in requests}
+        staged_assignments: dict[
+            TacticalAttachmentIdentity,
+            TacticalNativePhaseAssignment,
+        ] = {}
+        for assignment in self._phase_assignments.values():
+            plan_identity = plan_identities.get(assignment.identity)
+            if plan_identity is None:
+                plan_identity = _detached_attachment_identity(
+                    assignment.identity,
+                )
+            staged_assignments[plan_identity] = replace(
+                assignment,
+                identity=plan_identity,
+            )
         next_group_ordinal: dict[_NativePhaseGroupKey, int] = {}
         for assignment in self._phase_assignments.values():
             candidate = _checked_add(
@@ -1433,7 +1543,8 @@ class TacticalCadenceScheduler:
                 candidate,
             )
         for request in requests:
-            assignment = staged_assignments.get(request.identity)
+            plan_identity = plan_identities[request.identity]
+            assignment = staged_assignments.get(plan_identity)
             if assignment is not None:
                 if assignment.native_period != request.native_period:
                     raise ValueError(
@@ -1448,12 +1559,12 @@ class TacticalCadenceScheduler:
             )
             assignment_ordinal = next_group_ordinal.get(group, 0)
             assignment = TacticalNativePhaseAssignment(
-                identity=request.identity,
+                identity=plan_identity,
                 native_period=request.native_period,
                 native_assignment_ordinal=assignment_ordinal,
                 native_phase_residue=assignment_ordinal % request.native_period,
             )
-            staged_assignments[request.identity] = assignment
+            staged_assignments[plan_identity] = assignment
             next_group_ordinal[group] = _checked_add(
                 assignment_ordinal,
                 1,
@@ -1463,12 +1574,13 @@ class TacticalCadenceScheduler:
         decisions: list[TacticalCadenceDecision] = []
         staged_states: list[TacticalCadenceAttachmentState] = []
         for request in requests:
-            assignment = staged_assignments[request.identity]
+            plan_identity = plan_identities[request.identity]
+            assignment = staged_assignments[plan_identity]
             existing = self._states.get(request.identity)
             first_cycle = existing is None
             if existing is None:
                 state = TacticalCadenceAttachmentState(
-                    identity=request.identity,
+                    identity=plan_identity,
                     native_period=request.native_period,
                     native_assignment_ordinal=(assignment.native_assignment_ordinal),
                     native_phase_residue=assignment.native_phase_residue,
@@ -1527,6 +1639,7 @@ class TacticalCadenceScheduler:
                     )
                 state = replace(
                     state,
+                    identity=plan_identity,
                     native_next_due=native_next_due,
                     native_pending_ready=native_pending,
                     lod_next_due=lod_next_due,
@@ -1547,7 +1660,7 @@ class TacticalCadenceScheduler:
                 ordinal=ordinal,
             )
             decision = TacticalCadenceDecision(
-                identity=request.identity,
+                identity=plan_identity,
                 native_period=request.native_period,
                 native_assignment_ordinal=assignment.native_assignment_ordinal,
                 native_phase_residue=assignment.native_phase_residue,
@@ -1574,8 +1687,16 @@ class TacticalCadenceScheduler:
             _owner_token=self._owner_token,
         )
         self._active_plan = plan
-        self._active_plan_fingerprint = _interval_plan_fingerprint(plan)
+        fingerprint = _interval_plan_fingerprint(plan)
+        self._active_plan_fingerprint = fingerprint
+        self._active_plan_binding = (
+            plan,
+            self._owner_token,
+            fingerprint,
+        )
         self._prepared_commit = None
+        self._prepared_commit_payload = None
+        self._prepared_commit_bindings = ()
         return plan
 
     def stage_witness_promotions(
@@ -1624,7 +1745,13 @@ class TacticalCadenceScheduler:
             _staged_states=tuple(staged_states),
         )
         self._active_plan = updated
-        self._active_plan_fingerprint = _interval_plan_fingerprint(updated)
+        fingerprint = _interval_plan_fingerprint(updated)
+        self._active_plan_fingerprint = fingerprint
+        self._active_plan_binding = (
+            updated,
+            self._owner_token,
+            fingerprint,
+        )
         return updated
 
     def prepare_interval_commit(
@@ -1641,13 +1768,28 @@ class TacticalCadenceScheduler:
             _phase_assignments={assignment.identity: assignment for assignment in plan.phase_assignments},
             _interval_plan=plan,
             _owner_token=self._owner_token,
-            _fingerprint="",
+            _fingerprint=f"tactical-cadence-commit:{plan.ordinal + 1}",
         )
-        prepared = replace(
-            prepared,
-            _fingerprint=_commit_plan_fingerprint(prepared),
+        states, phase_assignments = _detached_cadence_state_graph(
+            states=plan.staged_states,
+            phase_assignments=plan.phase_assignments,
+        )
+        payload = _TacticalCadenceCommitPayload(
+            commit_plan=prepared,
+            ordinal=prepared.ordinal,
+            states=MappingProxyType(states),
+            phase_assignments=MappingProxyType(phase_assignments),
         )
         self._prepared_commit = prepared
+        self._prepared_commit_payload = payload
+        self._prepared_commit_bindings = (
+            prepared.ordinal,
+            prepared._states,
+            prepared._phase_assignments,
+            prepared._interval_plan,
+            prepared._owner_token,
+            prepared._fingerprint,
+        )
         return prepared
 
     def validate_prepared_interval_commit(
@@ -1660,7 +1802,26 @@ class TacticalCadenceScheduler:
         self._validate_active_plan(plan._interval_plan)
         if plan._owner_token is not self._owner_token or self._prepared_commit is not plan:
             raise ValueError("cadence commit plan is foreign or stale")
-        if _commit_plan_fingerprint(plan) != plan._fingerprint:
+        payload = self._prepared_commit_payload
+        if payload is None or payload.commit_plan is not plan:
+            raise ValueError("cadence commit payload is foreign or stale")
+        (
+            ordinal,
+            states,
+            phase_assignments,
+            interval_plan,
+            owner_token,
+            handle_seal,
+        ) = self._prepared_commit_bindings
+        if (
+            type(plan.ordinal) is not int
+            or plan.ordinal != ordinal
+            or plan._states is not states
+            or plan._phase_assignments is not phase_assignments
+            or plan._interval_plan is not interval_plan
+            or plan._owner_token is not owner_token
+            or plan._fingerprint is not handle_seal
+        ):
             raise ValueError("cadence commit plan was mutated after preparation")
 
     def _commit_prevalidated_interval(
@@ -1668,12 +1829,18 @@ class TacticalCadenceScheduler:
         plan: TacticalCadenceCommitPlan,
     ) -> None:
         """Publish a prevalidated cadence plan using only bounded swaps."""
-        self._states = plan._states
-        self._phase_assignments = plan._phase_assignments
-        self._committed_ordinal = plan.ordinal
+        payload = self._prepared_commit_payload
+        if payload is None or payload.commit_plan is not plan:  # pragma: no cover
+            raise RuntimeError("validated cadence commit payload is unavailable")
+        self._states = payload.states
+        self._phase_assignments = payload.phase_assignments
+        self._committed_ordinal = payload.ordinal
         self._active_plan = None
         self._active_plan_fingerprint = None
+        self._active_plan_binding = None
         self._prepared_commit = None
+        self._prepared_commit_payload = None
+        self._prepared_commit_bindings = ()
 
     def commit_prepared_interval(
         self,
@@ -1692,7 +1859,10 @@ class TacticalCadenceScheduler:
         self._validate_active_plan(plan)
         self._active_plan = None
         self._active_plan_fingerprint = None
+        self._active_plan_binding = None
         self._prepared_commit = None
+        self._prepared_commit_payload = None
+        self._prepared_commit_bindings = ()
         self._poisoned = True
 
     def get_state(self) -> dict[str, Any]:
@@ -1860,13 +2030,37 @@ class TacticalCadenceScheduler:
                 "cadence completeness cannot be promoted after legacy restore",
             )
 
+    def _prepare_restore_commit(
+        self,
+        plan: TacticalCadenceRestorePlan,
+    ) -> _TacticalCadenceRestorePayload:
+        """Validate and detach every value needed by a restore commit."""
+        self.validate_restore_plan(plan)
+        states, phase_assignments = _detached_cadence_state_graph(
+            states=plan.attachment_states,
+            phase_assignments=plan.phase_assignments,
+        )
+        return _TacticalCadenceRestorePayload(
+            states=states,
+            phase_assignments=phase_assignments,
+            committed_ordinal=plan.committed_ordinal,
+            complete_from_tick_zero=plan.complete_from_tick_zero,
+        )
+
+    def _commit_prevalidated_restore(
+        self,
+        payload: _TacticalCadenceRestorePayload,
+    ) -> None:
+        """Publish one manager-private restore payload by bounded swaps."""
+        self._states = payload.states
+        self._phase_assignments = payload.phase_assignments
+        self._committed_ordinal = payload.committed_ordinal
+        self._complete_from_tick_zero = payload.complete_from_tick_zero
+
     def commit_state(self, plan: TacticalCadenceRestorePlan) -> None:
         """Atomically publish one owner-bound validated restore plan."""
-        self.validate_restore_plan(plan)
-        self._states = {state.identity: state for state in plan.attachment_states}
-        self._phase_assignments = {assignment.identity: assignment for assignment in plan.phase_assignments}
-        self._committed_ordinal = plan.committed_ordinal
-        self._complete_from_tick_zero = plan.complete_from_tick_zero
+        payload = self._prepare_restore_commit(plan)
+        self._commit_prevalidated_restore(payload)
 
     def set_state(self, state: object) -> None:
         """Validate and atomically restore strict cadence checkpoint state."""

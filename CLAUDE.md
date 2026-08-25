@@ -7,8 +7,9 @@ models, a headless Python engine, FastAPI service, and React frontend. Modern
 warfare is the primary data package, with four historical-era packages and
 integrated maritime warfare.
 
-**Current status**: Phases 105 through 118 and Block 12 are complete. Phase 119
-has not started. Phase
+**Current status**: Phases 105 through 118, Phase 142, and Block 12 are
+complete. Phase 142 closed with an accepted bounded partial-recovery receipt.
+Phases 119 and 141 have not started. Phase
 117's typed historical-claim ledger, production backtest, conservative public
 projection, and persisted failure artifact passed documentation,
 cross-document review, and postmortem; REM-030 is closed. Its frozen 20-seed
@@ -62,9 +63,13 @@ from either terminal archive or externally contended execution. The separate
 matched production profile measured a 1.259063 median runtime ratio (+25.906%)
 and enclosed 81.60% of the instrumented delta beneath the transactional FOW
 update. Phase 118 preserves those integrity checks and does not promote a speed
-claim; REM-055 / Phase 142 owns the measured runtime regression. The accepted
-qualified-negative postmortem closed Phase 118 / REM-031; Phase 119 has not
-started.
+claim. Phase 142 now retains exact semantic, continuation, and 13,015-node
+partition evidence plus an explicitly owner-approved partial-recovery result:
+the fresh native-policy median paired ratio is `0.8611730824876394` against a
+final `0.87` boundary. The original `0.80` target remains a miss, and no
+universal speed claim follows. The accepted Phase 142 postmortem closed
+REM-055. The accepted qualified-negative postmortem closed Phase
+118 / REM-031; Phase 119 has not started.
 
 The observer-support codec, checkpoint topology, and archived/dormant
 scan-deferral algorithm contract remain preserved, but current supported
@@ -73,8 +78,10 @@ emission controls are rejected. REM-054 / Phase 141 owns restoring a supported
 production-reachable path; structural availability is not a current capability
 claim.
 REM-055 / Phase 142 separately owns the transactional-FOW runtime cost found by
-the Phase 118 profile. Any optimization must retain atomicity, tamper detection,
-indexed stochastic identity, receipts, continuation, and exact outcomes.
+the Phase 118 profile. Its completed implementation retains atomicity,
+tamper detection, indexed stochastic identity, receipts, continuation, and
+exact outcomes while accepting only bounded partial recovery on the declared
+workload.
 
 REM-041 through REM-043 are assigned to planned Block 14.
 REM-044 is assigned to planned Block 15 for sourced per-sensor range/bearing/
@@ -334,7 +341,7 @@ All phase details are in `docs/devlog/` (one file per phase). Per-phase tables i
 | Block 18 | 134 | Source-synchronous 73 Easting engagement and natural-boundary fidelity | Planned |
 | Block 19 | 135–137 | Build-time/no-Git accepted-evidence attestation, Web UI semantics, and Escalation/DEW configuration integrity | Planned |
 | Block 20 | 138–140 | Detection scan-state lifecycle (Phase 138 planned); FOW ownership/checkpoint follow-ups (Phases 139–140 retired before start) | Mixed |
-| Block 21 | 141--142 | Performance-approximation re-enablement and transactional FOW runtime-cost integrity | Planned |
+| Block 21 | 141--142 | Performance-approximation re-enablement and transactional FOW runtime-cost integrity | Mixed: Phase 141 not started; Phase 142 complete |
 
 ### Block 11 Detail (COMPLETE)
 

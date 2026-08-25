@@ -260,10 +260,12 @@ against the production path and fresh command output.
 
 The tiered modular-monolith program is **Complete** as of 2026-08-23 under its
 accepted postmortem. Phase 119 has not started. REM-052 and REM-053 are closed,
-their planned Phases 139 and 140 are retired before start, and REM-055 remains
-open pending its separately owned performance decision. The status transition
-is valid only for a revision whose final exact frozen-revision release gate is
-green; failure revokes it and forbids the consolidation commit. See the
+their planned Phases 139 and 140 are retired before start, and REM-055 is
+closed by the accepted Phase 142 postmortem after an explicitly owner-approved
+bounded partial-recovery decision and fresh native-policy pass. The
+consolidation status transition is valid only for a revision whose final exact
+frozen-revision release gate is green; failure revokes it and forbids the
+consolidation commit. See the
 [consolidation contract](tiered-modular-monolith.md),
 [remediation backlog](../remediation-backlog.md), and
 [compact engineering log](../devlog/consolidation-tiered-modular-monolith.md).

@@ -77,6 +77,23 @@ class FOWDecisionIdentity:
 
 
 @dataclass(frozen=True, slots=True)
+class _FOWDecisionIdentitySnapshot:
+    """Compact immutable issuance seal for one validated decision identity."""
+
+    engine_tick: int
+    reporting_side: str
+    observer_unit_id: str
+    source_equipment_index: int
+    sensor_id: str
+    modeled_role: str
+    target_kind: FOWTargetKind
+    target_id: str
+    opportunity_ordinal: int
+    schema_version: int
+    namespace_type: type[object]
+
+
+@dataclass(frozen=True, slots=True)
 class FOWIndexedEntry:
     """One committed decision entry, including exact evidence material."""
 
@@ -242,6 +259,94 @@ def encode_fow_decision(identity: FOWDecisionIdentity) -> bytes:
     )
 
 
+def _fow_decision_identity_snapshot(
+    identity: FOWDecisionIdentity,
+) -> _FOWDecisionIdentitySnapshot:
+    """Capture validated scalar values without retaining mutable namespace state."""
+    return _FOWDecisionIdentitySnapshot(
+        engine_tick=identity.engine_tick,
+        reporting_side=identity.reporting_side,
+        observer_unit_id=identity.observer_unit_id,
+        source_equipment_index=identity.source_equipment_index,
+        sensor_id=identity.sensor_id,
+        modeled_role=identity.modeled_role,
+        target_kind=identity.target_kind,
+        target_id=identity.target_id,
+        opportunity_ordinal=identity.opportunity_ordinal,
+        schema_version=identity.schema_version,
+        namespace_type=type(identity.namespace),
+    )
+
+
+def _fow_decision_identity_prefix_matches_snapshot(
+    identity: FOWDecisionIdentity,
+    snapshot: _FOWDecisionIdentitySnapshot,
+) -> bool:
+    """Check fields observed before the encoder's namespace comparison."""
+    return not (
+        type(identity.engine_tick) is not int
+        or identity.engine_tick != snapshot.engine_tick
+        or type(identity.schema_version) is not int
+        or identity.schema_version != snapshot.schema_version
+        or type(identity.namespace) is not snapshot.namespace_type
+    )
+
+
+def _fow_decision_identity_suffix_matches_snapshot(
+    identity: FOWDecisionIdentity,
+    snapshot: _FOWDecisionIdentitySnapshot,
+) -> bool:
+    """Check the remaining strict fields after namespace validation."""
+    return (
+        type(identity.target_kind) is FOWTargetKind
+        and identity.target_kind is snapshot.target_kind
+        and type(identity.reporting_side) is str
+        and identity.reporting_side == snapshot.reporting_side
+        and type(identity.observer_unit_id) is str
+        and identity.observer_unit_id == snapshot.observer_unit_id
+        and type(identity.source_equipment_index) is int
+        and identity.source_equipment_index == snapshot.source_equipment_index
+        and type(identity.sensor_id) is str
+        and identity.sensor_id == snapshot.sensor_id
+        and type(identity.modeled_role) is str
+        and identity.modeled_role == snapshot.modeled_role
+        and type(identity.target_id) is str
+        and identity.target_id == snapshot.target_id
+        and type(identity.opportunity_ordinal) is int
+        and identity.opportunity_ordinal == snapshot.opportunity_ordinal
+    )
+
+
+def _fow_decision_identity_strict_fields_match_snapshot(
+    identity: FOWDecisionIdentity,
+    snapshot: _FOWDecisionIdentitySnapshot,
+) -> bool:
+    """Check all non-callback identity fields without observing namespace."""
+    return _fow_decision_identity_prefix_matches_snapshot(
+        identity,
+        snapshot,
+    ) and _fow_decision_identity_suffix_matches_snapshot(identity, snapshot)
+
+
+def _fow_decision_identity_matches_snapshot(
+    identity: FOWDecisionIdentity,
+    snapshot: _FOWDecisionIdentitySnapshot,
+) -> bool:
+    """Compare one issued identity in encoder order without allocating."""
+    if not _fow_decision_identity_prefix_matches_snapshot(identity, snapshot):
+        return False
+    namespace = identity.namespace
+    try:
+        if namespace != INDEXED_FOW_NAMESPACE:
+            return False
+    except Exception:  # An accepted comparator that now fails is tampering.
+        return False
+    return identity.namespace is namespace and _fow_decision_identity_strict_fields_match_snapshot(
+        identity,
+        snapshot,
+    )
+
+
 def raw_u64_to_uniform(raw: int) -> float:
     """Convert a raw unsigned lane to binary64 without a distribution API."""
     value = _strict_uint(raw, bits=64, label="raw Philox lane")
@@ -305,14 +410,25 @@ class _ReusablePhilox:
 class FOWIndexedDecision:
     """Lane-disciplined access to one identity-addressed Philox block."""
 
-    __slots__ = ("_adjudication", "_entry", "_handle", "_mask")
+    __slots__ = (
+        "_adjudication",
+        "_entry",
+        "_handle",
+        "_identity",
+        "_identity_snapshot",
+        "_mask",
+    )
 
     def __init__(
         self,
         handle: FOWIndexedSideHandle,
+        identity: FOWDecisionIdentity,
+        identity_snapshot: _FOWDecisionIdentitySnapshot,
         entry: FOWIndexedEntry,
     ) -> None:
         self._handle = handle
+        self._identity = identity
+        self._identity_snapshot = identity_snapshot
         self._entry = entry
         self._mask = 0
         self._adjudication: FOWDetectionAdjudication | None = None
@@ -331,6 +447,29 @@ class FOWIndexedDecision:
     def consumed_lane_mask(self) -> int:
         """Return the currently consumed lane mask (zero before detection)."""
         return self._mask
+
+    def _issued_preimage(
+        self,
+        identity: FOWDecisionIdentity,
+    ) -> bytes:
+        """Return the preimage already validated for this exact identity."""
+        try:
+            self._handle._require_open()
+            if identity is not self._identity:
+                raise IndexedRNGValidationError(
+                    "indexed decision identity is not its issued identity",
+                )
+            if not _fow_decision_identity_matches_snapshot(
+                identity,
+                self._identity_snapshot,
+            ):
+                raise IndexedRNGValidationError(
+                    "indexed decision identity changed after issuance",
+                )
+            return self._entry.decision_preimage
+        except (IndexedRNGLifecycleError, IndexedRNGValidationError):
+            self._handle._allocation._poison()
+            raise
 
     def detection_uniform(self, *, probability: float) -> float:
         """Consume lane zero and bind its exact modeled adjudication."""
@@ -465,7 +604,20 @@ class FOWIndexedSideHandle:
         """Issue one unique block for a complete, handle-bound identity."""
         try:
             self._require_open()
+            if type(identity) is not FOWDecisionIdentity:
+                raise IndexedRNGValidationError(
+                    "identity must be an exact FOWDecisionIdentity",
+                )
+            identity_snapshot = _fow_decision_identity_snapshot(identity)
+            issued_namespace = identity.namespace
             preimage = encode_fow_decision(identity)
+            if identity.namespace is not issued_namespace or not _fow_decision_identity_strict_fields_match_snapshot(
+                identity,
+                identity_snapshot,
+            ):
+                raise IndexedRNGValidationError(
+                    "indexed decision identity changed during issuance",
+                )
             if identity.engine_tick != self.engine_tick:
                 raise IndexedRNGValidationError("identity engine_tick disagrees with its allocation")
             if identity.reporting_side != self._side:
@@ -480,7 +632,12 @@ class FOWIndexedSideHandle:
                 raw_lanes=raw_lanes,
                 consumed_lane_mask=0,
             )
-            decision = FOWIndexedDecision(self, entry)
+            decision = FOWIndexedDecision(
+                self,
+                identity,
+                identity_snapshot,
+                entry,
+            )
             self._decisions.append(decision)
             return decision
         except (IndexedRNGLifecycleError, IndexedRNGValidationError):
@@ -593,6 +750,7 @@ class FOWIndexedAllocation:
     def abort(self) -> None:
         """Abort this interval and make incomplete evidence fail closed."""
         self._poison()
+
 
 class IndexedFOWRNG:
     """Persisted indexed key/transcript owner used by :class:`RNGManager`."""

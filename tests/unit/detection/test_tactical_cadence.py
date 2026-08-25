@@ -6,14 +6,17 @@ import copy
 from dataclasses import replace
 import hashlib
 import json
+from types import MappingProxyType
 
 import pytest
 
+import stochastic_warfare.detection.cadence as cadence_module
 from stochastic_warfare.detection.cadence import (
     CADENCE_SCHEMA_VERSION,
     TacticalAttachmentIdentity,
     TacticalCadenceAttachment,
     TacticalCadenceDisposition,
+    TacticalCadencePlan,
     TacticalCadenceRecovery,
     TacticalCadenceRecoveryAxis,
     TacticalCadenceScheduler,
@@ -144,6 +147,216 @@ def test_prepared_commit_plan_freezes_state_mapping_until_bounded_swap() -> None
     scheduler.commit_prepared_interval(prepared)
     assert scheduler.committed_ordinal == 1
     assert scheduler.state_for(identity) == interval.state_for(identity)
+
+
+def test_active_and_retained_interval_plan_never_alias_committed_state() -> None:
+    scheduler = TacticalCadenceScheduler()
+    identity = _identity()
+    request = _attachment(identity, native_period=2, lod_period=3)
+    _commit_cycle(scheduler, [request])
+    live_identity = scheduler.attachment_states[0].identity
+    live_state = scheduler.attachment_states[0]
+    live_assignment = scheduler.phase_assignments[0]
+    live_state_before = live_state.get_state()
+    live_assignment_before = live_assignment.get_state()
+
+    plan = scheduler.stage_interval(
+        [_attachment(live_identity, native_period=2, lod_period=3)],
+    )
+    decision = plan.decisions[0]
+    staged_state = plan.staged_states[0]
+    staged_assignment = plan.phase_assignments[0]
+    assert decision.identity is staged_state.identity
+    assert decision.identity is staged_assignment.identity
+    assert decision.identity == live_identity
+    assert decision.identity is not live_identity
+    assert staged_state is not live_state
+    assert staged_assignment is not live_assignment
+
+    original_sensor_id = decision.identity.sensor_id
+    original_next_due = staged_state.native_next_due
+    original_period = staged_assignment.native_period
+    object.__setattr__(decision.identity, "sensor_id", "mutated-plan-sensor")
+    object.__setattr__(staged_state, "native_next_due", original_next_due + 1)
+    object.__setattr__(staged_assignment, "native_period", original_period + 1)
+
+    assert live_identity.sensor_id == original_sensor_id
+    assert live_state.get_state() == live_state_before
+    assert live_assignment.get_state() == live_assignment_before
+
+    object.__setattr__(decision.identity, "sensor_id", original_sensor_id)
+    object.__setattr__(staged_state, "native_next_due", original_next_due)
+    object.__setattr__(staged_assignment, "native_period", original_period)
+    scheduler.commit_interval(plan)
+    committed_state = scheduler.get_state()
+
+    object.__setattr__(decision.identity, "sensor_id", "retained-plan-sensor")
+    object.__setattr__(staged_state, "native_next_due", original_next_due + 1)
+    object.__setattr__(staged_assignment, "native_period", original_period + 1)
+    assert scheduler.get_state() == committed_state
+
+
+def test_prepared_commit_rejects_public_metadata_and_nested_plan_tamper() -> None:
+    scheduler = TacticalCadenceScheduler()
+    identity = _identity()
+    request = _attachment(identity, native_period=2, lod_period=3)
+    _commit_cycle(scheduler, [request])
+    committed_ordinal = scheduler.committed_ordinal
+    committed_states = scheduler.attachment_states
+    committed_assignments = scheduler.phase_assignments
+
+    interval = scheduler.stage_interval([request])
+    original_operational = interval.decisions[0].operational
+    object.__setattr__(
+        interval.decisions[0],
+        "operational",
+        not original_operational,
+    )
+    with pytest.raises(ValueError, match="mutated"):
+        scheduler.prepare_interval_commit(interval)
+    assert scheduler.committed_ordinal == committed_ordinal
+    assert scheduler.attachment_states == committed_states
+    assert scheduler.phase_assignments == committed_assignments
+
+    object.__setattr__(
+        interval.decisions[0],
+        "operational",
+        original_operational,
+    )
+    prepared = scheduler.prepare_interval_commit(interval)
+    original_prepared_ordinal = prepared.ordinal
+    object.__setattr__(prepared, "ordinal", original_prepared_ordinal + 1)
+    with pytest.raises(ValueError, match="mutated"):
+        scheduler.validate_prepared_interval_commit(prepared)
+    assert scheduler.committed_ordinal == committed_ordinal
+    assert scheduler.attachment_states == committed_states
+    assert scheduler.phase_assignments == committed_assignments
+
+    object.__setattr__(prepared, "ordinal", original_prepared_ordinal)
+    staged_state = interval.staged_states[0]
+    original_next_due = staged_state.native_next_due
+    object.__setattr__(staged_state, "native_next_due", original_next_due + 1)
+    with pytest.raises(ValueError, match="mutated"):
+        scheduler.validate_prepared_interval_commit(prepared)
+    assert scheduler.committed_ordinal == committed_ordinal
+    assert scheduler.attachment_states == committed_states
+    assert scheduler.phase_assignments == committed_assignments
+
+    object.__setattr__(staged_state, "native_next_due", original_next_due)
+    foreign = TacticalCadenceScheduler()
+    with pytest.raises(ValueError, match="another scheduler|foreign"):
+        foreign.validate_prepared_interval_commit(prepared)
+    scheduler.commit_prepared_interval(prepared)
+    committed = scheduler.get_state()
+    with pytest.raises(ValueError, match="stale|active"):
+        scheduler.validate_prepared_interval_commit(prepared)
+
+    object.__setattr__(prepared, "ordinal", prepared.ordinal + 100)
+    object.__setattr__(interval.decisions[0], "operational", not original_operational)
+    object.__setattr__(staged_state, "native_next_due", original_next_due + 1)
+    assert scheduler.get_state() == committed
+
+
+def test_active_owner_binding_is_constant_time_but_final_seal_is_mandatory(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    scheduler = TacticalCadenceScheduler()
+    interval = scheduler.stage_interval([_attachment()])
+    binding = scheduler._active_interval_binding_for_owner(interval)
+    original_fingerprint = cadence_module._interval_plan_fingerprint
+    fingerprint_calls = 0
+
+    def observed_fingerprint(plan: TacticalCadencePlan) -> str:
+        nonlocal fingerprint_calls
+        fingerprint_calls += 1
+        return original_fingerprint(plan)
+
+    monkeypatch.setattr(
+        cadence_module,
+        "_interval_plan_fingerprint",
+        observed_fingerprint,
+    )
+
+    assert scheduler._active_interval_binding_for_owner(interval) is binding
+    assert fingerprint_calls == 0
+    with pytest.raises(ValueError, match="stale or is not active"):
+        scheduler._active_interval_binding_for_owner(replace(interval))
+    assert fingerprint_calls == 0
+    foreign = TacticalCadenceScheduler()
+    with pytest.raises(ValueError, match="another scheduler"):
+        foreign._active_interval_binding_for_owner(interval)
+    assert fingerprint_calls == 0
+
+    decision = interval.decisions[0]
+    original_operational = decision.operational
+    object.__setattr__(decision, "operational", not original_operational)
+    assert scheduler._active_interval_binding_for_owner(interval) is binding
+    assert fingerprint_calls == 0
+    with pytest.raises(ValueError, match="mutated"):
+        scheduler.validate_interval_plan(interval)
+    assert fingerprint_calls == 1
+
+    object.__setattr__(decision, "operational", original_operational)
+    scheduler.commit_interval(interval)
+    calls_after_commit = fingerprint_calls
+    with pytest.raises(ValueError, match="stale or is not active"):
+        scheduler._active_interval_binding_for_owner(interval)
+    assert fingerprint_calls == calls_after_commit
+
+
+def test_prepared_commit_rejects_equal_handle_replacements_and_bool_ordinal() -> None:
+    scheduler = TacticalCadenceScheduler()
+    interval = scheduler.stage_interval([_attachment()])
+    prepared = scheduler.prepare_interval_commit(interval)
+    committed_before = scheduler.committed_ordinal
+
+    original_ordinal = prepared.ordinal
+    assert original_ordinal == 1
+    object.__setattr__(prepared, "ordinal", True)
+    with pytest.raises(ValueError, match="mutated"):
+        scheduler.validate_prepared_interval_commit(prepared)
+    assert scheduler.committed_ordinal == committed_before
+    object.__setattr__(prepared, "ordinal", original_ordinal)
+
+    for field_name in ("_states", "_phase_assignments"):
+        original_mapping = getattr(prepared, field_name)
+        equal_replacement = MappingProxyType(dict(original_mapping))
+        assert equal_replacement == original_mapping
+        assert equal_replacement is not original_mapping
+        object.__setattr__(prepared, field_name, equal_replacement)
+        with pytest.raises(ValueError, match="mutated"):
+            scheduler.validate_prepared_interval_commit(prepared)
+        assert scheduler.committed_ordinal == committed_before
+        object.__setattr__(prepared, field_name, original_mapping)
+
+    original_seal = prepared._fingerprint
+    equal_seal = (original_seal + "\0")[:-1]
+    assert equal_seal == original_seal
+    assert equal_seal is not original_seal
+    object.__setattr__(prepared, "_fingerprint", equal_seal)
+    with pytest.raises(ValueError, match="mutated"):
+        scheduler.validate_prepared_interval_commit(prepared)
+    assert scheduler.committed_ordinal == committed_before
+    object.__setattr__(prepared, "_fingerprint", original_seal)
+
+    scheduler.commit_prepared_interval(prepared)
+    assert scheduler.committed_ordinal == 1
+
+
+def test_prevalidated_commit_publishes_manager_private_ordinal() -> None:
+    scheduler = TacticalCadenceScheduler()
+    interval = scheduler.stage_interval([_attachment()])
+    prepared = scheduler.prepare_interval_commit(interval)
+    expected_ordinal = prepared.ordinal
+    expected_states = interval.staged_states
+
+    scheduler.validate_prepared_interval_commit(prepared)
+    object.__setattr__(prepared, "ordinal", expected_ordinal + 100)
+    scheduler._commit_prevalidated_interval(prepared)
+
+    assert scheduler.committed_ordinal == expected_ordinal
+    assert scheduler.attachment_states == expected_states
+    assert scheduler.has_active_interval is False
 
 
 def test_complete_roster_is_canonical_and_rejects_duplicate_identity() -> None:
@@ -309,14 +522,12 @@ def test_native_and_lod_recovery_evidence_are_identity_and_axis_separate() -> No
     scheduler.commit_interval(deferred)
 
     recovered = scheduler.stage_interval(roster)
-    assert tuple(
-        recovery.axis
-        for recovery in recovered.decision_for(native_identity).recoveries
-    ) == (TacticalCadenceRecoveryAxis.NATIVE,)
-    assert tuple(
-        recovery.axis
-        for recovery in recovered.decision_for(lod_identity).recoveries
-    ) == (TacticalCadenceRecoveryAxis.LOD,)
+    assert tuple(recovery.axis for recovery in recovered.decision_for(native_identity).recoveries) == (
+        TacticalCadenceRecoveryAxis.NATIVE,
+    )
+    assert tuple(recovery.axis for recovery in recovered.decision_for(lod_identity).recoveries) == (
+        TacticalCadenceRecoveryAxis.LOD,
+    )
     native_state = recovered.state_for(native_identity)
     lod_state = recovered.state_for(lod_identity)
     assert (native_state.native_recovery_admissions, native_state.lod_recovery_admissions) == (1, 0)
@@ -691,6 +902,53 @@ def test_checkpoint_round_trip_is_exact_json_and_owner_bound() -> None:
     foreign = TacticalCadenceScheduler()
     with pytest.raises(ValueError, match="another scheduler"):
         foreign.commit_state(restore_plan)
+
+
+def test_retained_restore_plan_graph_never_aliases_committed_state() -> None:
+    source = TacticalCadenceScheduler()
+    identity = _identity()
+    _commit_cycle(
+        source,
+        [_attachment(identity, native_period=2, lod_period=3)],
+    )
+    target = TacticalCadenceScheduler()
+    restore = target.stage_state(source.get_state())
+    restored_state = restore.attachment_states[0]
+    restored_assignment = restore.phase_assignments[0]
+    target.commit_state(restore)
+
+    live_state = target.attachment_states[0]
+    live_assignment = target.phase_assignments[0]
+    assert live_state.identity is live_assignment.identity
+    assert live_state.identity == restored_state.identity
+    assert live_state.identity is not restored_state.identity
+    assert live_state.identity is not restored_assignment.identity
+    assert live_state is not restored_state
+    assert live_assignment is not restored_assignment
+    committed = target.get_state()
+
+    object.__setattr__(
+        restored_state.identity,
+        "sensor_id",
+        "retained-restore-state",
+    )
+    object.__setattr__(
+        restored_assignment.identity,
+        "sensor_id",
+        "retained-restore-assignment",
+    )
+    object.__setattr__(
+        restored_state,
+        "native_next_due",
+        restored_state.native_next_due + 1,
+    )
+    object.__setattr__(
+        restored_assignment,
+        "native_period",
+        restored_assignment.native_period + 1,
+    )
+
+    assert target.get_state() == committed
 
 
 def _checkpoint_with_two_attachments() -> dict[str, object]:
